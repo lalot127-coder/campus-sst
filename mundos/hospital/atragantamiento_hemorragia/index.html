@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Atragantamiento y hemorragia</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Fuentes verificadas (02_fuentes_verificadas/registro_fuentes.md y extractos/primeros_auxilios_AHA2025_IFRC2025.md, consulta 04/10/2026)
+const F = {
+  ovA: 'AHA 2025, Parte 7 (OVACE adulto: ciclos de 5 golpes en la espalda + 5 compresiones abdominales)',
+  ovL: 'AHA/AAP 2025, Parte 6 (OVACE lactante: 5 golpes en la espalda + 5 compresiones en el pecho; no abdominales)',
+  tec: 'IFRC 2025, p. 240 (golpes entre los omóplatos; puño entre costillas y ombligo, hacia adentro y arriba)',
+  inc: 'AHA 2025, Parte 7 (si queda inconsciente: RCP; no barrido a ciegas)',
+  leve: 'AHA 2025, Parte 7 (obstrucción leve: dejar toser y observar)',
+  hem: 'Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024 (presión directa)',
+  tor: 'Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024 (torniquete hasta que deje de sangrar)',
+  prot: 'IFRC 2025, p. 256 (protección; no hielo ni puntos de presión; EMS)',
+};
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Atragantamiento y hemorragia', icono: '🚨', clave: 'atragantamiento_hemorragia',
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xF1E7DD,
+  vistas: [[[2.4, 2.2, 3.0], [0, 1.0, 0]], [[-2.6, 1.8, 1.2], [0, 1.0, 0]], [[0, 3.6, 2.0], [0, 0.5, 0]]] });
+const { caja, cil, esfera, capsula, tocable, letrero, scene, M } = W;
+
+// ------------------------------------------------------------------ escenario: fonda / taller
+const piso = new THREE.Mesh(new THREE.PlaneGeometry(10, 8), M(0xBFA88E)); piso.rotation.x = -Math.PI / 2; scene.add(piso);
+caja(10, 3, 0.1, 0xF7EFE4, 0, 1.5, -3); caja(0.1, 3, 8, 0xF7EFE4, -5, 1.5, 0);
+const rot = letrero('FONDA "LA PLAZA" · TALLER', 2.4, 0.3, '#B01824'); rot.position.set(0, 2.45, -2.94); scene.add(rot);
+const mesa = caja(1.2, 0.05, 0.8, 0x9C7A5B, 1.6, 0.75, -1.2); cil(0.04, 0.72, 0x6B4E35, 1.6, 0.37, -1.2);
+const plato = cil(0.16, 0.02, 0xFFFFFF, 1.5, 0.79, -1.1);
+// botiquín y torniquete en la pared
+const boti = caja(0.5, 0.4, 0.15, 0xFFFFFF, -2.6, 1.3, -2.9); tocable(boti, 'botiquin', 0.6);
+const cruz = letrero('+', 0.22, 0.22, '#2E7D32'); cruz.position.set(-2.6, 1.3, -2.81); scene.add(cruz);
+const cel = caja(0.09, 0.015, 0.17, 0x14161C, 1.2, 0.79, -1.4); tocable(cel, 'cel', 0.4);
+// persona de pie (adulto) — víctima de atragantamiento / persona con herida en la pierna
+const piel = 0xD9A57E;
+const per = new THREE.Group(); scene.add(per);
+const tor = capsula(0.2, 0.6, 0xB01824); tor.position.y = 1.05; per.add(tor);
+const cab = esfera(0.14, piel, 0, 1.62, 0, per);
+const pierD = capsula(0.09, 0.75, 0x31394A); pierD.position.set(0.1, 0.45, 0); per.add(pierD);
+const pierI = capsula(0.09, 0.75, 0x31394A); pierI.position.set(-0.1, 0.45, 0); per.add(pierI);
+const brazos = [capsula(0.06, 0.5, piel), capsula(0.06, 0.5, piel)]; brazos[0].position.set(0.27, 1.05, 0); brazos[1].position.set(-0.27, 1.05, 0); brazos.forEach(b => per.add(b));
+const zona = (x, y, z, t, s = 0.25) => { const m = esfera(0.05, 0xffffff, x, y, z, per); m.material.transparent = true; m.material.opacity = 0; tocable(m, t, s); return m; };
+const espalda = zona(0, 1.2, -0.22, 'espalda'), abdomen = zona(0, 0.9, 0.22, 'abdomen'), pechoZ = zona(0, 1.22, 0.22, 'pecho'), boca = zona(0, 1.6, 0.14, 'boca', 0.16);
+const herida = new THREE.Mesh(new THREE.CircleGeometry(0.06, 16), new THREE.MeshBasicMaterial({ color: 0x8B0000 }));
+herida.position.set(0.1, 0.5, 0.095); herida.visible = false; per.add(herida); tocable(herida, 'herida', 0.22);
+const sobreHerida = zona(0.1, 0.75, 0.1, 'arriba', 0.18);
+const tq = cil(0.1, 0.06, 0x111111, 0.1, 0.7, 0); tq.visible = false; per.add(tq);
+const gasa = caja(0.12, 0.12, 0.02, 0xFFFFFF, 0.1, 0.5, 0.11); gasa.visible = false; per.add(gasa);
+// gotas de sangre animadas
+const gotas = []; for (let i = 0; i < 6; i++) { const g = esfera(0.02, 0x9B0000, 0.1, 0.45, 0.12, scene); g.visible = false; gotas.push(g); }
+let sangra = false; W.cuadro.push(t => { gotas.forEach((g, i) => { g.visible = sangra; const k = (t * 1.6 + i / 6) % 1; g.position.set(0.1, 0.45 - k * 0.45, 0.14 + k * 0.05); }); });
+// bebé (lactante) en brazos del rescatador: se representa sobre la mesa
+const bebe = new THREE.Group(); bebe.position.set(-0.8, 0.8, 0.4); bebe.visible = false; scene.add(bebe);
+caja(0.7, 0.05, 0.45, 0xD9C2A8, 0, -0.05, 0, bebe);
+const bT = capsula(0.08, 0.16, 0xFFF3C4); bT.rotation.z = Math.PI / 2; bT.position.set(0, 0.09, 0); bebe.add(bT);
+esfera(0.08, piel, -0.22, 0.09, 0, bebe);
+const bz = (x, y, t) => { const m = esfera(0.04, 0xffffff, x, y, 0, bebe); m.material.transparent = true; m.material.opacity = 0; tocable(m, t, 0.15); return m; };
+const bEsp = bz(0, 0.02, 'espalda'), bPecho = bz(-0.04, 0.18, 'pecho'), bAbd = bz(0.1, 0.18, 'abdomen');
+// guantes
+const guantes = caja(0.16, 0.04, 0.1, 0x3FA7C6, -2.3, 0.82, -1.0); tocable(guantes, 'guantes', 0.4);
+caja(0.5, 0.78, 0.4, 0x8899AA, -2.3, 0.39, -1.0);
+
+// ------------------------------------------------------------------ utilidades
+const tocarPaso = ({ titulo, texto, fuente, objetivo, errores = {}, alAcertar, resaltar, efecto }) => ({ titulo, texto, fuente,
+  iniciar() { W.resaltar(resaltar || []); },
+  tocar(o) { const t = o.userData.tipo; if (t === objetivo) { W.resaltar([]); efecto && efecto(); W.bien(alAcertar || 'Correcto.', fuente); W.siguiente(); }
+    else if (errores[t]) W.mal(errores[t][0], errores[t][1] || fuente, !!errores[t][2]); } });
+const preguntaPaso = ({ titulo, texto, fuente, p, ops, ok, retro }) => ({ titulo, texto, fuente, iniciar() { W.pregunta(p, ops, ok, fuente, () => W.siguiente(), false, retro); } });
+// Serie: tocar la zona correcta n veces (golpes o compresiones)
+function seriePaso({ titulo, texto, fuente, objetivo, n = 5, resaltar, errores = {}, anim, fin }) {
+  let k = 0;
+  return { titulo, texto, fuente, iniciar() { k = 0; W.resaltar(resaltar || []); },
+    tocar(o) { const t = o.userData.tipo;
+      if (t === objetivo) { k++; anim && anim(); W.$('pTxt').innerHTML = texto + `<br><b>${k}/${n}</b>`; if (k === n) { W.resaltar([]); W.bien(fin || 'Serie completa.', fuente); W.siguiente(); } }
+      else if (errores[t]) W.mal(errores[t][0], errores[t][1] || fuente, !!errores[t][2]); } };
+}
+const sacude = (obj, dz = 0.04) => { const z0 = obj.position.z; obj.position.z = z0 + dz; setTimeout(() => obj.position.z = z0, 120); };
+
+// ------------------------------------------------------------------ casos [FICTICIO – ejercicio didáctico]
+const ADULTO = () => [
+  { titulo: 'Inicio', texto: 'Fonda, 14:00 h.', sinPuntos: true, iniciar() { W.aviso('<h2>🍽️ Caso 1: atragantamiento en la fonda</h2><p>Doña Rosa, 50 años, come carne y de pronto se lleva las manos al cuello.</p><p class="ficticio">[FICTICIO – ejercicio didáctico]</p>', () => W.siguiente(), 'Comenzar'); } },
+  preguntaPaso({ titulo: 'Reconoce', texto: 'Le preguntas: «¿Se está atragantando?». Mueve la cabeza que sí, pero no puede hablar ni toser.', fuente: F.ovA,
+    p: '¿Qué tipo de obstrucción es?', ops: ['Leve: dejarla toser', 'Grave: actuar de inmediato y pedir que llamen al 911', 'No es nada'], ok: [1], retro: 'Obstrucción grave.' }),
+  tocarPaso({ titulo: 'Activa la ayuda', texto: 'Toca el <b>celular</b> de la mesa: pide a alguien que llame al 911 mientras actúas.', fuente: F.ovA, objetivo: 'cel', resaltar: [cel],
+    errores: { boca: ['No metas los dedos a ciegas.', F.inc, true] } }),
+  seriePaso({ titulo: '5 golpes en la espalda', texto: 'Inclínala hacia adelante y da <b>5 golpes firmes entre los omóplatos</b>: toca su espalda 5 veces.', fuente: F.tec, objetivo: 'espalda', resaltar: [espalda],
+    errores: { abdomen: ['Cambio 2025: primero los 5 golpes en la espalda.', F.ovA], boca: ['No metas los dedos a ciegas.', F.inc, true] }, anim: () => sacude(per) }),
+  seriePaso({ titulo: '5 compresiones abdominales', texto: 'Por detrás, puño entre las costillas y el ombligo, hacia adentro y arriba: toca el <b>abdomen</b> 5 veces.', fuente: F.tec, objetivo: 'abdomen', resaltar: [abdomen],
+    errores: { pecho: ['En un adulto (sin embarazo avanzado) son compresiones abdominales.', F.ovA] }, anim: () => sacude(per, -0.04), fin: '¡El trozo de carne salió! Respira y tose.' }),
+  preguntaPaso({ titulo: 'Después', texto: 'Doña Rosa ya respira.', fuente: F.ovA, p: '¿Qué sigue?', ops: ['Que la valore un servicio médico y quedarte con ella', 'Que siga comiendo como si nada', 'Darle más golpes'], ok: [0], retro: 'Recibió compresiones: que la valoren; quédate con ella hasta que llegue la ayuda.' }),
+];
+const LACTANTE = () => [
+  { titulo: 'Inicio', texto: 'Mesa de la fonda.', sinPuntos: true, iniciar() { per.visible = false; bebe.visible = true; W.aviso('<h2>👶 Caso 2: lactante atragantado</h2><p>Un bebé de 9 meses se pone morado; no llora ni hace ruido tras meterse un trozo de fruta. Lo tienes en tus brazos (sobre la mesa en la escena).</p><p class="ficticio">[FICTICIO – ejercicio didáctico]</p>', () => W.siguiente(), 'Comenzar'); } },
+  preguntaPaso({ titulo: 'Reconoce', texto: 'No llora, no tose, no respira.', fuente: F.ovL, p: '¿Qué haces?', ops: ['Pedir que llamen al 911 y empezar las maniobras de lactante', 'Darle agua', 'Esperar a que llore'], ok: [0], retro: 'Obstrucción grave en lactante.' }),
+  seriePaso({ titulo: '5 golpes en la espalda', texto: 'Bien sostenido boca abajo: <b>5 golpes firmes entre los omóplatos</b>. Toca su espalda 5 veces.', fuente: `${F.ovL}; IFRC 2025, p. 240`, objetivo: 'espalda', resaltar: [bEsp],
+    errores: { abdomen: ['NUNCA compresiones abdominales en lactantes.', F.ovL, true] }, anim: () => sacude(bebe, 0.02) }),
+  seriePaso({ titulo: '5 compresiones en el pecho', texto: 'Boca arriba: <b>5 compresiones en el centro del pecho</b> (como en su RCP). Toca 5 veces.', fuente: F.ovL, objetivo: 'pecho', resaltar: [bPecho, bAbd],
+    errores: { abdomen: ['NUNCA compresiones abdominales en lactantes.', F.ovL, true] }, anim: () => { bT.scale.y = 0.85; setTimeout(() => bT.scale.y = 1, 140); }, fin: '¡Salió la fruta y el bebé llora!' }),
+  preguntaPaso({ titulo: 'Si hubiera perdido el conocimiento…', texto: 'Pregunta de repaso.', fuente: F.inc, p: 'Si el bebé deja de responder durante las maniobras…', ops: ['Empiezo la RCP con compresiones y saco solo el objeto si lo veo', 'Meto el dedo hasta el fondo', 'Lo sacudo'], ok: [0], retro: 'RCP; nunca barrido a ciegas.' }),
+];
+const HEMORRAGIA = () => [
+  { titulo: 'Inicio', texto: 'Taller detrás de la fonda.', sinPuntos: true, iniciar() { per.visible = true; bebe.visible = false; herida.visible = true; sangra = true; W.aviso('<h2>🩸 Caso 3: corte en el muslo</h2><p>Un ayudante se cortó el muslo con una lámina. La sangre sale a chorro.</p><p class="ficticio">[FICTICIO – ejercicio didáctico]</p>', () => W.siguiente(), 'Comenzar'); } },
+  tocarPaso({ titulo: 'Protégete', texto: 'Antes de tocar la sangre, toca los <b>guantes</b>.', fuente: F.prot, objetivo: 'guantes', resaltar: [guantes],
+    errores: { herida: ['Primero protégete (guantes; si no hay, bolsas de plástico o tela).', F.prot] }, alAcertar: 'Guantes puestos. Pide que llamen al 911.' }),
+  tocarPaso({ titulo: 'Presión directa', texto: 'Toca la <b>herida</b> para aplicar presión directa firme con gasa.', fuente: F.hem, objetivo: 'herida', resaltar: [herida],
+    efecto: () => { gasa.visible = true; }, alAcertar: 'Presionas con fuerza… pero sigue saliendo sangre a chorro.' }),
+  preguntaPaso({ titulo: 'No se detiene', texto: 'Después de presionar con fuerza, sigue sangrando a chorro: amenaza la vida.', fuente: F.tor,
+    p: '¿Qué sigue?', ops: ['Poner hielo', 'Aplicar un torniquete y apretarlo hasta que deje de sangrar', 'Presionar un "punto de presión" en la ingle', 'Lavar con agua oxigenada'], ok: [1], retro: 'Hielo y puntos de presión no se recomiendan.' }),
+  tocarPaso({ titulo: 'Coloca el torniquete', texto: 'Toca el <b>botiquín</b> para sacar el torniquete comercial.', fuente: F.tor, objetivo: 'botiquin', resaltar: [boti] }),
+  tocarPaso({ titulo: 'Aprieta', texto: 'Toca la <b>pierna lesionada</b> (zona que brilla) para colocar el torniquete como lo practicaste y apretarlo.', fuente: F.tor, objetivo: 'arriba', resaltar: [sobreHerida],
+    efecto: () => { tq.visible = true; sangra = false; }, alAcertar: 'Apretado hasta que dejó de sangrar.' }),
+  preguntaPaso({ titulo: 'Mientras llega la ambulancia', texto: 'Ya no sangra.', fuente: `${F.prot}; IFRC 2025, p. 257 (mantener el torniquete hasta que llegue EMS; abrigar)`, p: '¿Qué haces ahora?', ops: ['Quedarte con él, mantener el torniquete puesto, abrigarlo y vigilarlo hasta que llegue el 911', 'Aflojar el torniquete para ver si ya paró', 'Mandarlo a su casa'], ok: [0], retro: 'El torniquete se deja colocado hasta que llegue el servicio de emergencias.' }),
+];
+
+W.inicio([{ id: 'adulto', txt: '🍽️ <b>Caso 1:</b> Adulto atragantado · 5 golpes + 5 compresiones abdominales' },
+  { id: 'bebe', txt: '👶 <b>Caso 2:</b> Lactante atragantado · espalda + pecho' },
+  { id: 'hem', txt: '🩸 <b>Caso 3:</b> Hemorragia en el muslo · presión directa y torniquete' }],
+  id => { per.visible = id !== 'bebe'; bebe.visible = id === 'bebe'; herida.visible = id === 'hem'; sangra = false; tq.visible = false; gasa.visible = false;
+    return id === 'adulto' ? ADULTO() : id === 'bebe' ? LACTANTE() : HEMORRAGIA(); },
+  'Basado en: Guías AHA 2025 (Partes 6 y 7), Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024 e IFRC 2025. Casos ficticios con fines didácticos.');
+
+if (location.search.includes('qa')) window.__qa = { espalda, abdomen, pechoZ, boca, cel, bEsp, bPecho, bAbd, herida, sobreHerida, boti, guantes, tocar: W.tocar, estado: W.qa };
+</script>
+</body>
+</html>
