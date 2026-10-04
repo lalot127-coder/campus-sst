@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Información · Campus de Simulación SST · CERS</title>
+<script src="../../motor/compartir.js"></script><script src="../../motor/acceso.js"></script>
+<style>
+:root{--navy:#0E3A6B;--azul:#154F90;--cian:#3FA7C6;--cielo:#8CCDE0;--hielo:#E8F5F9;--texto:#1B2633;--tenue:#5B6B7C}
+*{box-sizing:border-box}body{margin:0;font-family:Calibri,"Segoe UI",system-ui,sans-serif;color:var(--texto);background:linear-gradient(160deg,#E8F5F9,#fff)}
+#barra{position:sticky;top:0;display:flex;gap:7px;align-items:center;padding:7px 10px;background:rgba(14,58,107,.97);color:#fff;z-index:10;flex-wrap:wrap}
+#barra img{height:34px;border-radius:7px;background:#fff;padding:2px}#barra b{font-size:1.05rem}#barra .der{margin-left:auto;display:flex;gap:5px}
+button{font-family:inherit;cursor:pointer}.sec{background:var(--hielo);color:var(--navy);border:0;border-radius:11px;padding:7px 10px;font-size:.92rem;font-weight:700}.rojo{background:#C62828;color:#fff}
+nav{display:flex;gap:6px;flex-wrap:wrap;padding:10px;max-width:1050px;margin:0 auto}nav button{background:#fff;color:var(--navy);border:2px solid var(--cielo);border-radius:999px;padding:7px 13px;font-weight:800}
+nav button.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+main{max-width:1050px;margin:0 auto;padding:0 12px 30px}section{display:none;background:#fff;border-radius:18px;padding:18px;box-shadow:0 3px 14px rgba(14,58,107,.1)}section.on{display:block}
+h1{color:var(--navy);margin:.1rem 0 .5rem}h2{color:var(--navy);margin:1rem 0 .4rem;font-size:1.2rem}p,li{line-height:1.45}
+.dos{display:grid;grid-template-columns:330px 1fr;gap:18px;align-items:start}.banner{width:100%;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.wa{display:inline-block;background:#25D366;color:#fff;text-decoration:none;font-weight:800;border-radius:14px;padding:12px 18px;font-size:1.05rem}
+.tarj{background:var(--hielo);border-radius:14px;padding:12px 14px;margin:8px 0}.chip{display:inline-block;background:var(--azul);color:#fff;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.85rem;margin:2px}
+.leg p,.leg li{font-size:.95rem}.nota{font-size:.88rem;color:var(--tenue);font-style:italic}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid var(--hielo);padding:7px;text-align:left;vertical-align:top}
+#qrWa svg{width:170px;height:170px}
+@media (max-width:760px){.dos{grid-template-columns:1fr}.txt{display:none}}
+</style>
+</head>
+<body>
+<div id="barra"><img src="../../recursos/logo_CERS.jpeg" alt="CERS"><b>ℹ️ Información del Campus</b>
+<div class="der"><button class="sec" onclick="location.href='../../index.html?plaza'">⬅<span class="txt"> Campus</span></button><button class="sec" id="bComp">🔗</button><button class="sec rojo" onclick="location.href='../../index.html?salir'">✖<span class="txt"> Salir</span></button></div></div>
+<nav id="nav"></nav>
+<main>
+<section id="inicio"><div class="dos"><img class="banner" src="../../recursos/banner_AMISI_CERS.jpg" alt="Consultoría integral en seguridad y salud">
+<div><h1>Campus de Simulación en Seguridad y Salud en el Trabajo</h1>
+<p>Plataforma de capacitación interactiva de <b>CERS · Consultoría integral en seguridad y salud</b>: simuladores 3D, realidad virtual y mixta, juegos, biblioteca normativa con fuentes oficiales y evaluación de lo aprendido.</p>
+<div class="tarj"><b>Ing. Carlos Eduardo Roa Sánchez</b><br>Consultor e instructor en Seguridad y Salud en el Trabajo<br>📱 WhatsApp: <b>241 179 4542</b> · ✉️ <a href="mailto:c.roa@amisimx.org">c.roa@amisimx.org</a><br>📍 Apizaco, Tlaxcala, México</div>
+<a class="wa" id="waInfo" target="_blank" rel="noopener">💬 Escríbeme por WhatsApp</a><div id="qrWa"></div><p class="nota">Escanea con tu celular para escribirme.</p>
+<h2>Servicios</h2><p><span class="chip">Ergonomía especializada</span><span class="chip">Factores psicosociales</span><span class="chip">Programas normativos</span><span class="chip">Capacitación</span><span class="chip">Consultoría SST e higiene</span><span class="chip">Formatos y manuales</span><span class="chip">Protección civil</span></p></div></div></section>
+
+<section id="acceso"><h1>🔑 Cómo obtener acceso</h1><p id="estadoAcc"></p>
+<div class="tarj"><b>Gratis para todos, siempre:</b> recorrer el campus, la <b>Cafetería</b> (juegos), la <b>Biblioteca</b> normativa y esta página de <b>Información</b>.</div>
+<div class="tarj"><b>Código semanal:</b> se entrega un QR que abre los simuladores indicados. <b>Vence cada domingo a las 23:55 h</b> (hora del centro de México); la semana siguiente se entrega un QR nuevo.</div>
+<div class="tarj"><b>Acceso para empresas y particulares:</b> puertas o edificios específicos por el tiempo contratado, edificio exclusivo con los procesos de tu empresa, o cursos completos con su simulador. Solicítalo por WhatsApp.</div>
+<h2>Precios</h2><table><tr><th>Concepto</th><th>Precio</th></tr>
+<tr><td>Una puerta para una persona</td><td>$100 al mes</td></tr>
+<tr><td>Una puerta para una empresa (hasta 25 personas)</td><td>$3,000 al mes o $30,000 al año</td></tr>
+<tr><td>Edificio completo para una empresa</td><td>$8,000 al mes</td></tr>
+<tr><td>Curso nuevo con su puerta exclusiva</td><td>$30,000, más mantenimiento de $2,000 al mes o $8,000 al año (mantenimiento 1 vez al mes)</td></tr>
+<tr><td>Edificio exclusivo con los procesos de la empresa</td><td>$100,000, más mantenimiento de $4,000 al mes o $8,000 al año (mantenimiento 1 vez al mes)</td></tr>
+<tr><td>Práctica presencial con el visor de realidad virtual</td><td>$800 por participante (mínimo 5), más viáticos</td></tr>
+<tr><td>Curso presencial con el visor</td><td>$12,000 hasta 20 personas, más viáticos</td></tr>
+<tr><td>Curso presencial con acceso a la plataforma del curso</td><td>$600 por persona (mínimo 10, hasta 50), más viáticos</td></tr></table>
+<p class="nota">Precios en pesos mexicanos. Para contratar o pedir factura, escríbeme por WhatsApp.</p>
+<p><a class="wa" id="waAcc" target="_blank" rel="noopener">💬 Solicitar acceso por WhatsApp</a></p>
+<p>¿Ya tienes un código o enlace? <button class="sec" id="bCodigo">Activar mi código</button></p>
+<p class="nota">El código es personal e intransferible; cada uno está firmado digitalmente y la plataforma rechaza códigos alterados o vencidos.</p></section>
+
+<section id="alcances"><h1>🌐 Alcances del mundo</h1>
+<table><tr><th>Edificio</th><th>Qué incluye</th></tr>
+<tr><td>☕ Cafetería</td><td>Memorama de señales, Adivina quién de las NOM, Serpientes y escaleras con preguntas, Ruleta de preguntas.</td></tr>
+<tr><td>📚 Biblioteca</td><td>Leyes, reglamentos, NOM, tratados y guías oficiales por dependencia, con liga oficial, copia para leer y referencia APA. Reto "encuentra la norma".</td></tr>
+<tr><td>🚨 Protección civil</td><td>Uso de extintores con fuego virtual (clases A, B, C y K, NOM-002-STPS-2010) en pantalla, realidad virtual y realidad mixta; evacuación al punto de reunión.</td></tr>
+<tr><td>🏥 Hospital</td><td>Camilleros, higiene de manos (5 momentos y técnica), RPBI.</td></tr>
+<tr><td>⚖️ Laboral STPS</td><td>Recepción del inspector y visita de inspección.</td></tr>
+<tr><td>🏢 Empresa · RH</td><td>Jornada laboral de 40 horas: auditoría del checador y mesa de ayuda.</td></tr>
+<tr><td>🏭 Industria</td><td>Próximamente: maquinaria, alturas y manejo de cargas.</td></tr></table>
+<h2>Dispositivos</h2><p>Computadora, tablet y celular con navegador actualizado. Meta Quest 3S: navegador del visor (realidad virtual y mixta en el simulador de extintores).</p>
+<h2>Importante</h2><ul><li>Es una herramienta de apoyo a la capacitación: no sustituye la capacitación presencial obligatoria ni la constancia DC-3.</li>
+<li>El contenido normativo cita su fuente y la fecha de consulta; verifica siempre la versión vigente en el DOF.</li>
+<li>Los casos y personajes de los simuladores son ficticios con fines didácticos.</li></ul></section>
+
+<section id="guia"><h1>🧭 Guía de uso</h1><ol>
+<li><b>Entra</b> con tu nombre y arma tu avatar (sexo, tono de piel, ropa, lentes, gorra o casco).</li>
+<li><b>Camina</b> tocando el piso (o con W A S D / flechas). Toca un edificio para ir y entrar; dentro, toca una puerta.</li>
+<li><b>Botones:</b> ⬅ Atrás (lugar anterior), ↺/🏠 Inicio (entrada del campus), 🚪 Salir (pantalla de inicio), 🔗 Compartir (enlace y QR), 👥 Jugar en grupo.</li>
+<li><b>Señales:</b> toca cualquier señal, extintor o hidrante para saber qué significa y en qué norma está. Sigue las flechas verdes al punto de reunión.</li>
+<li><b>Puertas con 🔒:</b> requieren acceso; toca para pedirlo por WhatsApp.</li>
+<li><b>Jugar en grupo:</b> 👥 → Crear sala → comparte el código o QR. En el aula, la persona instructora usa el servidor de aula y todos se conectan al mismo wifi.</li>
+<li><b>Realidad virtual o mixta:</b> abre el simulador de extintores desde el navegador del visor y toca "🥽 Realidad virtual" o "🔲 Realidad mixta". El gatillo del control descarga el extintor.</li>
+<li><b>Resultados:</b> al terminar cada simulador ves tu puntaje y puedes imprimirlo o guardarlo en PDF. En el aula se envía a la computadora de la persona instructora.</li></ol></section>
+
+<section id="privacidad" class="leg"><h1>🔐 Aviso de privacidad integral</h1>
+<p><b>Responsable:</b> Carlos Eduardo Roa Sánchez (CERS · Consultoría integral en seguridad y salud), con domicilio en Andador Esperanza 113, Fraccionamiento Hogares Ferrocarrileros 2, Apizaco, Tlaxcala, C.P. 90329, México. Correo: c.roa@amisimx.org.</p>
+<h2>Datos que se tratan</h2><ul><li>El <b>nombre o alias</b> que escribes y la <b>apariencia de tu avatar</b>.</li><li><b>Resultados</b> de simuladores y juegos (puntaje, errores, tiempo).</li>
+<li>En juego en grupo: tu nombre, avatar y posición dentro del campus se comparten con las personas de la misma sala mientras estás conectado (no se almacenan).</li>
+<li>Si me escribes por WhatsApp o correo: tu número o correo y lo que me envíes.</li><li>Si compras un acceso: los datos que pida la plataforma de pago para cobrar y facturar. <b>No recibo ni guardo datos de tarjetas</b>.</li></ul>
+<p>No se solicitan datos personales sensibles.</p>
+<h2>Finalidades</h2><p><b>Necesarias:</b> permitir el uso de la plataforma, mostrar tus resultados, enviarlos a la persona instructora cuando participas en un curso con servidor de aula, atender tus solicitudes de acceso, emitir y controlar tus códigos de acceso. <b>Adicional (puedes negarte escribiendo al correo):</b> enviarte información de cursos y servicios.</p>
+<h2>Dónde se guardan</h2><p>El nombre, el avatar y los resultados se guardan <b>en tu propio dispositivo</b> (almacenamiento local del navegador); puedes borrarlos limpiando los datos del sitio. En cursos con servidor de aula, los resultados se guardan en la computadora de la persona instructora como evidencia de la capacitación.</p>
+<h2>Transferencias y proveedores</h2><p>No vendo ni transfiero tus datos. Para funcionar, la plataforma usa proveedores que pueden registrar datos técnicos de conexión (por ejemplo, dirección IP): el servicio de alojamiento web, el servicio de conexión para salas en línea (PeerJS) y, en compras, la plataforma de pago que elijas.</p>
+<h2>Derechos ARCO y revocación</h2><p>Puedes acceder, rectificar, cancelar u oponerte al tratamiento de tus datos, o revocar tu consentimiento, enviando un correo a c.roa@amisimx.org con tu nombre, un medio para responderte y la descripción de tu solicitud. Respuesta en un máximo de 20 días hábiles (Ley Federal de Protección de Datos Personales en Posesión de los Particulares, DOF 20/03/2025).</p>
+<h2>Uso de tecnologías</h2><p>La plataforma no usa cookies de publicidad ni de rastreo. Usa el almacenamiento local del navegador para recordar tu avatar, tus resultados y tu código de acceso.</p>
+<h2>Cambios</h2><p>Cualquier cambio se publicará en esta sección. Última actualización: 03/10/2026.</p></section>
+
+<section id="terminos" class="leg"><h1>📜 Términos y condiciones de uso</h1><ol>
+<li><b>Propiedad.</b> La plataforma, su código, diseño, simuladores, juegos, textos, imágenes y la marca CERS son propiedad de Carlos Eduardo Roa Sánchez. Las leyes y normas oficiales citadas son documentos públicos de sus autoridades emisoras.</li>
+<li><b>Licencia de uso.</b> El acceso es personal, intransferible y temporal, por el periodo de tu código. No se vende la plataforma ni su código.</li>
+<li><b>Prohibido:</b> copiar, clonar, descargar para redistribuir, modificar, revender, sublicenciar, hacer ingeniería inversa, compartir códigos de acceso o usar la plataforma con fines comerciales sin autorización por escrito.</li>
+<li><b>Códigos de acceso.</b> Los códigos semanales vencen el domingo a las 23:55 h (centro de México); los de cliente, en la fecha contratada. Puedo suspender un acceso si se usa en contra de estos términos.</li>
+<li><b>Contenido educativo.</b> Apoya la capacitación; no sustituye la capacitación presencial, la evaluación de competencias ni la constancia DC-3. Los casos son ficticios. Verifica la vigencia de las normas en el DOF.</li>
+<li><b>Pagos.</b> Los accesos de pago se cobran y facturan a través de la plataforma de pago indicada al contratar, con sus propias condiciones de cobro, facturación y reembolso.</li>
+<li><b>Responsabilidad.</b> La plataforma se ofrece "tal como está". No me hago responsable por fallas de internet, del dispositivo o de servicios de terceros, ni por el uso que se dé a la información fuera de la capacitación.</li>
+<li><b>Legislación.</b> Estos términos se rigen por las leyes de los Estados Unidos Mexicanos.</li></ol>
+<p class="nota">Versión 03/10/2026. Recomendación: que un abogado revise estos términos y el aviso antes de vender accesos.</p></section>
+
+<section id="creditos"><h1>📚 Fuentes y créditos</h1><p>Todas las citas normativas provienen del registro de fuentes verificadas del agente (consulta 02-03/10/2026) y se pueden leer en la <a href="../biblioteca/index.html">Biblioteca</a>. Señalética: NOM-026-STPS-2008 y NOM-003-SEGOB-2011. Extintores y emergencias: NOM-002-STPS-2010.</p>
+<p>Tecnología: Three.js (licencia MIT), PeerJS (licencia MIT), qrcode-generator (licencia MIT).</p></section>
+</main>
+<script>
+const TABS = [['inicio', '🏠 Inicio y contacto'], ['acceso', '🔑 Acceso'], ['alcances', '🌐 Alcances'], ['guia', '🧭 Guía de uso'], ['privacidad', '🔐 Aviso de privacidad'], ['terminos', '📜 Términos de uso'], ['creditos', '📚 Fuentes']];
+const nav = document.getElementById('nav');
+function ir(id) { document.querySelectorAll('section').forEach(s => s.classList.toggle('on', s.id === id)); nav.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === id)); history.replaceState(null, '', '#' + id); scrollTo(0, 0); }
+TABS.forEach(([id, t]) => { const b = document.createElement('button'); b.dataset.t = id; b.textContent = t; b.onclick = () => ir(id); nav.appendChild(b); });
+const h0 = location.hash.slice(1); ir(TABS.some(t => t[0] === h0) ? h0 : 'inicio');
+const wa = Acceso.whatsapp('Hola, me interesa la plataforma Campus de Simulación SST de CERS.');
+document.getElementById('waInfo').href = wa; document.getElementById('waAcc').href = Acceso.whatsapp('Hola, solicito acceso a la plataforma Campus de Simulación SST.');
+const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+s.onload = () => { const q = qrcode(0, 'M'); q.addData(wa); q.make(); document.getElementById('qrWa').innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); }; document.head.appendChild(s);
+document.getElementById('bCodigo').onclick = () => Acceso.bloquear({ titulo: 'Activar mi código de acceso' });
+document.getElementById('bComp').onclick = () => Compartir.abrir(Compartir.url('index.html'), 'Información · Campus de Simulación SST · CERS');
+Acceso.listo.then(() => document.getElementById('estadoAcc').textContent = Acceso.textoEstado());
+</script>
+</body>
+</html>
