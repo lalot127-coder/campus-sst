@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · La visita de inspección STPS</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Fuentes verificadas (02_fuentes_verificadas/registro_fuentes.md, consulta 03/10/2026)
+const F = {
+  testigos: 'RGITAS art. 30 (reforma DOF 23/08/2022)',
+  comision: 'RGITAS art. 32; NOM-019-STPS-2011',
+  docs: 'RGITAS arts. 29, 30 y 34',
+  subsanar: 'RGITAS art. 34',
+  dolo: 'RGITAS arts. 28 fr. V y 61 fr. I',
+  entrevista: 'RGITAS art. 33',
+  cohecho: 'CPF art. 222 fr. II; LFT art. 547 fr. IV',
+  acta: 'RGITAS arts. 17 y 35',
+  plazo: 'RGITAS art. 36 (reforma DOF 23/08/2022)',
+  cinco: 'RGITAS arts. 35 y 51',
+  simulacro: 'NOM-002-STPS-2010, 5.7',
+};
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'La visita de inspección', icono: '📋', clave: 'laboral_visita_inspeccion',
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xE3E9EE,
+  vistas: [[[0, 4.2, 6.2], [0, 0.8, -0.5]], [[-3.2, 2.6, 2.6], [-3.2, 0.9, -0.8]], [[3.4, 2.8, 2.8], [3.0, 0.9, -1.0]]] });
+const { caja, cil, letrero, scene, tocable, M } = W;
+const { persona, decidir, ficha } = window.Laboral;
+
+// ------------------------------------------------------------------ Textiles del Altiplano [FICTICIO]
+const piso = new THREE.Mesh(new THREE.PlaneGeometry(14, 10), M(0xCDD5DB)); piso.rotation.x = -Math.PI / 2; scene.add(piso);
+caja(14, 3.2, 0.12, 0xF2F4F6, 0, 1.6, -3.4); caja(0.12, 3.2, 10, 0xF2F4F6, -7, 1.6, 0); caja(0.12, 3.2, 10, 0xF2F4F6, 7, 1.6, 0);
+caja(0.08, 2.4, 3.6, 0xE0E6EA, 0.6, 1.2, -1.6);   // muro que separa oficina y planta
+const r1 = letrero('SALA DE JUNTAS', 1.6, 0.28, '#1F4E79'); r1.position.set(-3.2, 2.7, -3.33); scene.add(r1);
+const r2 = letrero('PLANTA · CORTE Y COSTURA', 2.4, 0.28, '#2E75B6'); r2.position.set(3.6, 2.7, -3.33); scene.add(r2);
+// sala de juntas: mesa, acta, anaquel con carpetas
+caja(2.2, 0.06, 1.1, 0x8D6E63, -3.2, 0.78, 0.2); cil(0.06, 0.76, 0x5D4037, -3.2, 0.38, 0.2);
+const acta = caja(0.3, 0.02, 0.4, 0xFFFFFF, -2.8, 0.82, 0.3); tocable(acta, 'acta', 0.5);
+const sActa = letrero('ACTA', 0.4, 0.12, '#B7791F'); sActa.position.set(-2.8, 1.05, 0.3); scene.add(sActa);
+caja(1.8, 1.8, 0.4, 0xBCAAA4, -3.2, 0.9, -3.05);
+const CARP = {};
+[['cgt', 'CGT', 0x1F4E79, -3.85], ['cap', 'CAPACITACIÓN', 0xB7791F, -3.2], ['sst', 'SST', 0x2E7D32, -2.55]].forEach(([k, n, c, x]) => {
+  const cp = caja(0.42, 0.55, 0.3, c, x, 1.35, -2.82); tocable(cp, 'carp_' + k, 0.5); CARP[k] = cp;
+  const l = letrero(n, 0.5, 0.12, '#263238'); l.position.set(x, 1.72, -2.66); scene.add(l); });
+const originales = caja(0.6, 0.3, 0.4, 0x795548, -2.1, 0.15, -2.6); tocable(originales, 'originales', 0.6);
+const sOri = letrero('ORIGINALES', 0.6, 0.12, '#795548'); sOri.position.set(-2.1, 0.45, -2.38); scene.add(sOri);
+// personas
+const insp = persona(W, { x: -3.2, z: 1.3, ry: Math.PI, ropa: 0x37474F, gafete: true, etiqueta: 'INSPECTOR(A) STPS' });
+persona(W, { x: -1.6, z: 0.4, ry: -Math.PI / 2, ropa: 0xB7791F, etiqueta: 'TÚ · RESPONSABLE' });
+const comision = persona(W, { x: -5.4, z: -0.6, ry: Math.PI / 2, ropa: 0x2E7D32, etiqueta: 'COMISIÓN SEG. E HIG.', tipo: 'comision' });
+const t1 = persona(W, { x: -5.6, z: 1.6, ry: Math.PI / 2, ropa: 0x6D4C41, etiqueta: 'TESTIGO 1', tipo: 'testigo1' });
+const t2 = persona(W, { x: -4.7, z: 2.4, ry: Math.PI, ropa: 0x5E35B1, etiqueta: 'TESTIGO 2', tipo: 'testigo2' });
+// planta: máquinas, operador, extintor y señal caída
+for (const [x, z] of [[2.2, -1.6], [3.4, -1.6], [4.6, -1.6], [2.2, 0.2], [3.4, 0.2], [4.6, 0.2]]) { caja(0.9, 0.75, 0.6, 0x90A4AE, x, 0.38, z); caja(0.25, 0.3, 0.2, 0x546E7A, x + 0.2, 0.9, z); }
+const operador = persona(W, { x: 3.4, z: 1.0, ry: Math.PI, ropa: 0x0288D1, etiqueta: 'OPERADOR(A)', tipo: 'operador' });
+const extintor = cil(0.13, 0.55, 0xC62828, 6.3, 0.75, -2.6); cil(0.04, 0.12, 0x263238, 6.3, 1.1, -2.6); tocable(extintor, 'extintor', 0.6);
+const sExt = letrero('EXTINTOR · SIN RECARGA', 1.1, 0.16, '#C62828'); sExt.position.set(6.3, 1.45, -2.5); scene.add(sExt);
+const senal = caja(0.45, 0.02, 0.45, 0x2E7D32, 5.3, 0.02, 1.6); tocable(senal, 'senal', 0.6);
+const sSen = letrero('RUTA DE EVACUACIÓN', 0.5, 0.1, '#2E7D32'); sSen.rotation.x = -Math.PI / 2; sSen.position.set(5.3, 0.04, 1.6); scene.add(sSen);
+// calendario para agendar los 5 días
+const cal = caja(0.5, 0.5, 0.04, 0xFFFFFF, -5.0, 1.7, -3.32); tocable(cal, 'calendario', 0.6);
+const sCal = letrero('📅 AGENDA', 0.5, 0.14, '#1F4E79'); sCal.position.set(-5.0, 2.05, -3.3); scene.add(sCal);
+
+// ------------------------------------------------------------------ pasos
+let caso = 'ord';
+const intro = txt => ({ titulo: 'Inicio', texto: 'Lee la situación.', sinPuntos: true,
+  iniciar() { W.aviso(txt + '<p class="ficticio">[FICTICIO – ejercicio didáctico] Textiles del Altiplano, S.A. de C.V. · confección textil · 80 personas · competencia federal (LFT art. 527).</p>', () => W.siguiente(), 'Comenzar'); } });
+
+const pasoTestigos = () => { let n = 0; const vistos = new Set(); return { titulo: 'Testigos del acta', texto: 'Inicia la diligencia. Toca a las <b>dos personas</b> que propondrás como testigos.', fuente: F.testigos,
+  iniciar() { decidir(W, '¿Quién propone a los testigos del acta?', [
+    { t: 'El patrón propone a dos testigos; si se niega, los designa el inspector', ok: true, fb: 'Dos testigos propuestos por la parte patronal.', f: F.testigos },
+    { t: 'No hacen falta testigos', ok: false, fb: 'El acta se levanta en presencia de dos testigos.', f: F.testigos },
+    { t: 'Solo el inspector puede elegirlos', ok: false, fb: 'Los propone el patrón; solo si se niega, los designa el inspector.', f: F.testigos },
+  ], () => W.resaltar([t1.torso, t2.torso])); },
+  tocar(o) { const t = o.userData.tipo; if ((t === 'testigo1' || t === 'testigo2') && !vistos.has(t)) { vistos.add(t); n++; W.toast('info', `Testigo ${n} propuesto.`);
+    if (n === 2) { W.resaltar([]); W.siguiente(); } } } }; };
+
+const pasoComision = () => ({ titulo: 'Convoca a la comisión', texto: 'El inspector pide el auxilio de las comisiones. Toca a la <b>comisión de seguridad e higiene</b>.', fuente: F.comision,
+  iniciar() { W.resaltar([comision.torso]); },
+  tocar(o) { if (o.userData.tipo !== 'comision' || this._h) return; this._h = true; W.resaltar([]); W.bien('El inspector debe solicitar el auxilio de las comisiones y del personal con experiencia.', F.comision); W.siguiente(); } });
+
+const pasoDocs = () => { const pide = caso === 'ord' ? ['cgt', 'cap'] : ['sst']; const dados = new Set();
+  const nom = { cgt: 'Condiciones generales (reglamento interior)', cap: 'Capacitación (DC-3)', sst: 'SST (investigación del accidente, comisión y simulacros)' };
+  return { titulo: 'Exhibe solo lo requerido', texto: `El inspector pide: <b>${pide.map(k => nom[k]).join(' y ')}</b>. Toca las carpetas que corresponden (entrega copias).`, fuente: F.docs,
+  iniciar() { W.resaltar([...Object.values(CARP), originales]); },
+  tocar(o) { const t = o.userData.tipo;
+    if (t === 'originales') { W.mal('No entregues originales sin registro: exhibe, entrega copias y anota qué exhibiste.', F.docs); return; }
+    if (!t || !t.startsWith('carp_')) return; const k = t.slice(5);
+    if (!pide.includes(k)) { W.mal('Entrega solo lo que te requieren en la orden o el citatorio.', F.docs); return; }
+    if (dados.has(k)) return; dados.add(k); W.toast('info', `📁 Copia de ${nom[k]} exhibida y registrada.`);
+    if (dados.size === pide.length) { W.resaltar([]); W.bien('Exhibiste lo requerido, en copia, y quedó registrado.', F.docs); W.siguiente(); } } }; };
+
+const pasoRecorrido = () => ({ titulo: 'El recorrido', texto: 'El inspector va a recorrer la planta.', fuente: 'RGITAS arts. 30 y 32',
+  iniciar() { decidir(W, 'El inspector va a recorrer la planta. ¿Qué haces?', [
+    { t: 'Lo acompaño con la comisión durante todo el recorrido', ok: true, fb: 'Acompaña siempre: lo que veas te servirá para tus observaciones al acta.', f: 'RGITAS arts. 30 y 32' },
+    { t: 'Lo dejo solo para no estorbar', ok: false, fb: 'Acompaña siempre la diligencia.', f: 'RGITAS art. 30' },
+    { t: 'Le digo que solo puede ver la oficina', ok: false, crit: true, fb: 'Limitar el acceso a lo ordenado es oponerse a la inspección.', f: 'RGITAS art. 30; LFT art. 1004-A' },
+  ], () => W.siguiente()); } });
+
+const pasoSenal = () => ({ titulo: 'Subsana en el acto', texto: 'Durante el recorrido ven una <b>señal de ruta de evacuación caída</b> en el piso. Tócala para recolocarla.', fuente: F.subsanar,
+  iniciar() { W.resaltar([senal]); },
+  tocar(o) { if (o.userData.tipo !== 'senal' || this._h) return; this._h = true; W.resaltar([]);
+    W.mover(senal.position, new THREE.Vector3(6.85, 1.6, 1.6), 600); senal.rotation.set(0, 0, Math.PI / 2); sSen.visible = false;
+    setTimeout(() => decidir(W, 'Ya recolocaste la señal. ¿Qué pides?', [
+      { t: 'Que quede asentado en el acta de cierre el hecho y la solución realizada', ok: true, fb: 'Lo que subsanas durante la visita queda asentado en el acta.', f: F.subsanar },
+      { t: 'Nada: mejor que no se entere', ok: false, fb: 'Pide que conste: es tu evidencia de cumplimiento.', f: F.subsanar },
+    ], () => W.siguiente()), 700); } });
+
+const pasoExtintor = () => ({ titulo: 'Un hallazgo real', texto: 'Toca el <b>extintor sin recarga</b> que el inspector va a revisar.', fuente: F.dolo,
+  iniciar() { W.resaltar([extintor]); },
+  tocar(o) { if (o.userData.tipo !== 'extintor' || this._h) return; this._h = true; W.resaltar([]);
+    decidir(W, 'El extintor no tiene recarga vigente y alguien sugiere esconderlo en la bodega antes de que pase el inspector.', [
+      { t: 'Lo escondemos rápido', ok: false, crit: true, fb: 'Ocultar es conducirse con dolo: detona extraordinarias y presume intencionalidad en la multa.', f: F.dolo },
+      { t: 'No se esconde: lo reconozco, se asienta y programo la recarga con fecha y evidencia', ok: true, fb: 'Transparencia + plan de corrección con evidencia.', f: F.dolo },
+    ], () => W.siguiente()); } });
+
+const pasoEntrevista = () => ({ titulo: 'La entrevista', texto: 'Toca al <b>operador</b>: el inspector lo va a entrevistar.', fuente: F.entrevista,
+  iniciar() { W.resaltar([operador.torso]); },
+  tocar(o) { if (o.userData.tipo !== 'operador' || this._h) return; this._h = true; W.resaltar([]);
+    decidir(W, 'El inspector va a entrevistar al operador sobre su EPP y su capacitación. ¿Qué haces?', [
+      { t: 'Me quedo a su lado y le digo qué contestar', ok: false, crit: true, fb: 'Aleccionar es conducirse con falsedad; el inspector puede separar a las partes.', f: 'RGITAS arts. 33 y 28 fr. V' },
+      { t: 'Permito la entrevista; puede ser por separado y sus datos quedan bajo reserva', ok: true, fb: 'Preguntas en sentido positivo, solo de la materia; datos bajo reserva.', f: F.entrevista },
+      { t: 'Le pido al operador que diga que sí recibió capacitación aunque no sea cierto', ok: false, crit: true, fb: 'Inducir respuestas falsas es falsedad y agrava la sanción.', f: 'RGITAS arts. 28 fr. V y 61 fr. I' },
+    ], () => W.siguiente()); } });
+
+const pasoArreglo = () => ({ titulo: 'Una sugerencia peligrosa', texto: 'Alguien de la empresa tiene una "idea".', fuente: F.cohecho,
+  iniciar() { decidir(W, 'Un compañero te dice en voz baja: "Ofrécele algo al inspector para que no anote lo del accidente".', [
+    { t: 'Le ofrezco una "atención" discreta', ok: false, crit: true, fb: 'Es cohecho: delito para quien da u ofrece. Los servicios de la STPS son gratuitos.', f: F.cohecho },
+    { t: 'Me niego: no se ofrece nada; las diferencias van al acta y a las pruebas', ok: true, fb: 'Nunca ofrezcas ni aceptes dádivas.', f: F.cohecho },
+  ], () => W.siguiente()); } });
+
+const pasoActa = () => ({ titulo: 'El cierre del acta', texto: 'Toca el <b>acta</b> sobre la mesa.', fuente: F.acta,
+  iniciar() { W.resaltar([acta]); },
+  tocar(o) { if (o.userData.tipo !== 'acta' || this._h) return; this._h = true; W.resaltar([]);
+    ficha(W, `<h3>📄 Acta de inspección (extracto)</h3><p>…se hace constar que el patrón exhibió ${caso === 'ord' ? 'reglamento interior de 2019 y DC-3 de 40 de 80 trabajadores' : 'investigación del accidente; la comisión no acreditó recorridos 2024-2025; último simulacro hace 18 meses'}; extintor sin recarga vigente; la señal de ruta de evacuación fue recolocada durante la visita (art. 34)…</p><p class="ficticio">[FICTICIO]</p>`,
+      () => decidir(W, 'El inspector te pide firmar. ¿Qué haces?', [
+        { t: 'Firmo rápido sin leer porque ya es tarde', ok: false, crit: true, fb: 'Los hechos del acta se tienen por ciertos: léela antes de firmar.', f: F.acta },
+        { t: 'Leo completa, asiento mis observaciones, firmo y pido mi copia (y la de la comisión)', ok: true, fb: 'Firmar no es aceptar; negarte no invalida el acta. Pide copia.', f: F.acta },
+        { t: 'Me niego a firmar para que el acta no valga', ok: false, fb: 'La negativa a firmar no afecta la validez del acta: mejor observa y firma.', f: 'RGITAS art. 35' },
+      ], () => W.siguiente())); } });
+
+const pasoPlazos = () => ({ titulo: 'Los plazos', texto: 'Ya se fue el inspector. ¿Cuánto tiempo tienes?', fuente: F.plazo,
+  iniciar() { W.pregunta('En materia de seguridad y salud, ¿cuál es el plazo MÁXIMO que puede darte la autoridad para corregir (como la recarga del extintor)?',
+    ['5 días', 'Hasta 30 días hábiles', 'De 30 a 90 días hábiles', 'Un año'], [1], F.plazo, () => W.siguiente(), false,
+    'Reforma 2022: desde aplicación inmediata hasta 30 días hábiles; prórroga excepcional por causas ajenas, sin pasar de 30 días.'); } });
+
+const pasoAgenda = () => ({ titulo: 'Tus 5 días', texto: 'Toca la <b>agenda</b> para programar tus observaciones y pruebas por escrito.', fuente: F.cinco,
+  iniciar() { W.resaltar([cal]); },
+  tocar(o) { if (o.userData.tipo !== 'calendario' || this._h) return; this._h = true; W.resaltar([]);
+    W.pregunta('¿Cuántos días tienes después del acta para formular observaciones y ofrecer pruebas por escrito?', ['3', '5', '15', '30'], [1],
+      F.cinco, () => W.siguiente(), false, '5 días: si acreditas cumplimiento, se archiva.'); } });
+
+const CASOS = {
+  ord: () => [intro('<h2>📅 Caso 1: inspección ordinaria</h2><p>Llegó con citatorio y orden verificada. El inspector pide condiciones generales (reglamento interior) y capacitación (DC-3). Tú eres el responsable que atiende.</p>'),
+    pasoTestigos(), pasoComision(), pasoDocs(), pasoRecorrido(), pasoSenal(), pasoExtintor(), pasoEntrevista(), pasoActa(), pasoPlazos(), pasoAgenda()],
+  acc: () => [intro('<h2>🚑 Caso 2: extraordinaria por accidente</h2><p>Ayer hubo un accidente en corte con hospitalización. Hoy, sin citatorio, llega la autoridad con orden verificada. Pide la documentación de SST.</p>'),
+    pasoTestigos(), pasoComision(), pasoDocs(), pasoRecorrido(), pasoExtintor(), pasoEntrevista(), pasoArreglo(), pasoSenal(), pasoActa(), pasoPlazos(), pasoAgenda()],
+};
+
+W.inicio([{ id: 'ord', txt: '📅 <b>Caso 1:</b> Ordinaria con citatorio (CGT y capacitación)' }, { id: 'acc', txt: '🚑 <b>Caso 2:</b> Extraordinaria por accidente (SST)' }],
+  id => { caso = id; return CASOS[id](); },
+  'Basado en: RGITAS (DOF 17/06/2014, reforma 23/08/2022) arts. 17, 28, 30, 32-36 y 51; LFT arts. 547 y 1004-A; CPF art. 222. Empresa, personas y documentos ficticios.');
+
+if (location.search.includes('qa')) window.__qa = { t1: t1.torso, t2: t2.torso, comision: comision.torso, cgt: CARP.cgt, cap: CARP.cap, sst: CARP.sst, originales,
+  senal, extintor, operador: operador.torso, acta, cal, tocar: W.tocar, estado: W.qa };
+</script>
+</body>
+</html>
