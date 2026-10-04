@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Biblioteca normativa · Campus SST</title>
+<style>
+:root{--navy:#0E3A6B;--azul:#154F90;--cian:#3FA7C6;--cielo:#8CCDE0;--hielo:#E8F5F9;--texto:#1B2633;--tenue:#5B6B7C;--bien:#2E7D32;--mal:#C62828}
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:#E9DCC9;color:var(--texto)}
+canvas{display:block;touch-action:none}
+#barra{position:fixed;top:0;left:0;right:0;display:flex;gap:7px;align-items:center;padding:7px 10px;background:rgba(14,58,107,.96);color:#fff;z-index:12;flex-wrap:wrap}
+#barra img{height:34px;border-radius:7px;background:#fff;padding:2px}#barra b{font-size:1.02rem}
+#barra .der{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap}
+button{font-family:inherit;cursor:pointer}.sec{background:var(--hielo);color:var(--navy);border:0;border-radius:11px;padding:7px 10px;font-size:.92rem;font-weight:700;white-space:nowrap}
+.sec.rojo{background:#C62828;color:#fff}.prim{background:var(--azul);color:#fff;border:0;border-radius:12px;padding:10px 16px;font-size:1rem;font-weight:800}
+.chip{background:var(--azul);border-radius:999px;padding:4px 11px;font-weight:700;font-size:.9rem}
+#guia{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:5;background:rgba(255,255,255,.96);border-radius:14px;padding:10px 16px;box-shadow:0 4px 14px rgba(0,0,0,.15);color:var(--navy);font-weight:700;text-align:center;width:min(560px,calc(100vw - 24px))}
+#guia small{display:block;color:var(--tenue);font-weight:500}
+#panel{position:fixed;right:10px;top:62px;bottom:10px;width:min(400px,calc(100vw - 20px));background:#fff;border-radius:16px;box-shadow:0 6px 24px rgba(14,58,107,.3);z-index:8;display:none;flex-direction:column;overflow:hidden}
+#panel header{padding:12px 14px;color:#fff}#panel header h2{margin:0;font-size:1.15rem}#panel header small{opacity:.9}
+#panel .buscar{padding:8px 12px;border-bottom:1px solid var(--hielo)}#panel input{width:100%;font-size:1rem;padding:9px;border-radius:10px;border:1px solid var(--cielo)}
+#lista{overflow:auto;padding:6px 10px 12px;flex:1}
+.doc{display:block;width:100%;text-align:left;background:var(--hielo);border:0;border-left:6px solid var(--c);border-radius:10px;padding:9px 11px;margin:7px 0;color:var(--texto);font-size:.95rem}
+.doc b{display:block;color:var(--navy)}.doc .est{display:inline-block;font-size:.75rem;font-weight:800;border-radius:999px;padding:1px 7px;margin-top:3px;background:#DDEFE0;color:#1B5E20}.doc .est.no{background:#FFE7C2;color:#8A4B00}
+.etq{position:fixed;left:0;top:0;transform:translate(-50%,-100%);z-index:4;background:#fff;border-radius:999px;padding:4px 9px;font-weight:800;font-size:.8rem;box-shadow:0 3px 10px rgba(0,0,0,.25);border:3px solid var(--c);color:var(--navy);cursor:pointer;white-space:nowrap}
+.modal{position:fixed;inset:0;background:rgba(14,58,107,.72);display:none;align-items:center;justify-content:center;z-index:20;padding:10px}
+.caja{background:#fff;border-radius:18px;padding:16px;max-width:900px;width:100%;max-height:94vh;overflow:auto;-webkit-user-select:text;user-select:text}
+.caja h2{margin:.1rem 0 .3rem;color:var(--navy)}.ficha{display:grid;grid-template-columns:150px 1fr;gap:3px 10px;font-size:.95rem;margin:8px 0}.ficha b{color:var(--tenue)}
+.apa{background:#FFF8E6;border-left:5px solid #E0A82E;border-radius:8px;padding:10px;font-size:.95rem;margin:8px 0;word-break:break-word}
+.acc{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}.acc a,.acc button{text-decoration:none}
+#lector{width:100%;height:68vh;border:1px solid var(--cielo);border-radius:10px;display:none;margin-top:6px;background:#fafafa}
+.aviso{font-size:.85rem;color:var(--tenue);font-style:italic}
+#reto{position:fixed;left:50%;top:62px;transform:translateX(-50%);z-index:7;background:#FFF4D6;border:3px solid #E0A82E;border-radius:14px;padding:9px 14px;font-weight:800;color:#5A3A00;text-align:center;width:min(640px,calc(100vw - 20px));display:none}
+#reto small{display:block;font-weight:600;color:#7A5A1A}
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);max-width:min(620px,92vw);padding:11px 15px;border-radius:14px;color:#fff;z-index:30;display:none;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#toast.ok{background:var(--bien)}#toast.no{background:var(--mal)}#toast.info{background:var(--azul)}
+@media (max-width:760px){#panel{top:auto;height:58vh}.txt{display:none}.ficha{grid-template-columns:1fr}#reto{top:auto;bottom:10px}}
+</style>
+<script src="../../motor/senales.js"></script>
+<script src="../../motor/compartir.js"></script>
+<script src="../../biblioteca/catalogo.js"></script>
+<script src="../../motor/acceso.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="barra"><img src="../../recursos/logo_CERS.jpeg" alt="CERS"><b>📚 Biblioteca normativa</b><span class="chip" id="cReto" style="display:none"></span>
+<div class="der"><button class="sec" id="bAtras" title="Regresar al edificio">⬅<span class="txt"> Atrás</span></button><button class="sec" id="bInicio" title="Inicio del campus">🏠<span class="txt"> Inicio</span></button>
+<button class="sec" id="bBuscar">🔍<span class="txt"> Buscar</span></button><button class="sec" id="bReto">🎯<span class="txt"> Reto</span></button><button class="sec" id="bComp">🔗<span class="txt"> Compartir</span></button><button class="sec rojo" id="bSalir">✖<span class="txt"> Salir</span></button></div></div>
+<div id="guia">Toca un estante para ver sus documentos<small>Cada documento tiene su ficha, la liga oficial, la copia para leer aquí y la referencia en formato APA</small></div>
+<div id="reto"></div><div id="toast"></div><div id="etiquetas"></div>
+<div id="panel"><header id="pHead"></header><div class="buscar"><input id="q" type="search" placeholder="Buscar en toda la biblioteca (ej. señales, jornada, RPBI)"></div><div id="lista"></div>
+  <div style="padding:8px 12px;border-top:1px solid var(--hielo)"><button class="sec" id="bCerrarP" style="width:100%">Cerrar lista</button></div></div>
+<div class="modal" id="modal"><div class="caja" id="mCont"></div></div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+const $ = s => document.querySelector(s);
+const P = new URLSearchParams(location.search), QA = P.has('qa');
+const ESTA = Object.fromEntries(ESTANTES.map(e => [e.id, e])), DOC = Object.fromEntries(DOCUMENTOS.map(d => [d.id, d]));
+const CAMPUS = '../../index.html';
+const alCampus = q => { location.href = CAMPUS + q; };
+$('#bAtras').onclick = () => alCampus('?mundo=biblioteca'); $('#bInicio').onclick = () => alCampus('?plaza'); $('#bSalir').onclick = () => alCampus('?salir');
+$('#bComp').onclick = () => Compartir.abrir(Compartir.url('index.html' + (RETO.on ? '?reto' : '')), RETO.on ? '🎯 Reto de la Biblioteca normativa' : '📚 Biblioteca normativa · Campus SST');
+
+// ============================================================================ ESCENA
+const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(innerWidth, innerHeight); document.body.prepend(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x3E2F24);
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 80);
+const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 2; controls.maxDistance = 20; controls.enablePan = false;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a66, 1.2)); const sol = new THREE.DirectionalLight(0xffffff, 1.0); sol.position.set(3, 9, 6); scene.add(sol);
+const MATS = {}; const M = c => MATS[c] || (MATS[c] = new THREE.MeshStandardMaterial({ color: c, roughness: .75 }));
+const caja = (w, h, d, c, x, y, z, p = scene) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(c)); m.position.set(x, y, z); p.add(m); return m; };
+const cil = (r, h, c, x, y, z, p = scene) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 20), M(c)); m.position.set(x, y, z); p.add(m); return m; };
+const tex = s => { const t = new THREE.TextureLoader().load(s); t.colorSpace = THREE.SRGBColorSpace; return t; };
+const plano = (w, h, map, x, y, z, p = scene, ry = 0, transp = false) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map, transparent: transp })); m.position.set(x, y, z); m.rotation.y = ry; p.add(m); return m; };
+function rotulo(txt, color, w, h) { const cv = document.createElement('canvas'); cv.width = 1024; cv.height = Math.round(1024 * h / w); const g = cv.getContext('2d');
+  g.fillStyle = color; g.fillRect(0, 0, cv.width, cv.height); g.fillStyle = '#fff'; let fs = cv.height * 0.5; g.font = `bold ${fs}px Calibri, sans-serif`;
+  while (g.measureText(txt).width > cv.width * 0.92) { fs -= 2; g.font = `bold ${fs}px Calibri, sans-serif`; } g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, cv.width / 2, cv.height / 2);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; }
+const tocables = [];
+// sala
+const W = 20, D = 14, H = 5;
+caja(W, 0.1, D, 0xB98B5E, 0, -0.05, 0); caja(W, H, 0.2, 0xF3EBDD, 0, H / 2, -D / 2); caja(0.2, H, D, 0xEFE5D4, -W / 2, H / 2, 0); caja(0.2, H, D, 0xEFE5D4, W / 2, H / 2, 0);
+caja(9, 0.02, 6, 0x7A2E2E, 0, 0.01, 1.2);   // alfombra
+for (let x = -9; x <= 9; x += 2) caja(0.04, 0.012, D, 0xA97C50, x, 0.006, 0);
+// estantes por dependencia / tipo de norma
+const POS = [[-6.75, -6.55, 0], [-2.25, -6.55, 0], [2.25, -6.55, 0], [6.75, -6.55, 0], [-9.55, -3, Math.PI / 2], [-9.55, 1.6, Math.PI / 2], [9.55, -3, -Math.PI / 2], [9.55, 1.6, -Math.PI / 2]];
+const EST3D = {};
+ESTANTES.forEach((e, i) => { const [x, z, ry] = POS[i]; const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g);
+  const col = new THREE.Color(e.color), madera = 0x6D4C33;
+  const fondo = caja(4, 2.9, 0.08, madera, 0, 1.45, -0.28, g); [-2, 2].forEach(dx => caja(0.1, 2.9, 0.6, madera, dx, 1.45, 0, g));
+  for (let k = 0; k < 5; k++) caja(4, 0.07, 0.6, madera, 0, 0.05 + k * 0.7, 0, g);
+  const n = DOCUMENTOS.filter(d => d.estante === e.id).length;
+  for (let k = 0; k < 4; k++) { let xx = -1.85; while (xx < 1.8) { const w = 0.08 + Math.random() * 0.07, h = 0.42 + Math.random() * 0.2; const tono = col.clone().offsetHSL((Math.random() - .5) * .08, 0, (Math.random() - .5) * .25);
+    const lb = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.4), new THREE.MeshStandardMaterial({ color: tono, roughness: .8 })); lb.position.set(xx + w / 2, 0.09 + k * 0.7 + h / 2, 0.02); g.add(lb); xx += w + 0.012; } }
+  const placa = plano(3.6, 0.5, rotulo(`${e.nombre} (${n})`, e.color, 3.6, 0.5), 0, 3.15, 0.05, g);
+  const zona = new THREE.Mesh(new THREE.BoxGeometry(4.1, 3.4, 0.9), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); zona.position.set(0, 1.6, 0.1); g.add(zona);
+  zona.userData = { estante: e.id }; tocables.push(zona); g.updateMatrixWorld();
+  EST3D[e.id] = { g, frente: new THREE.Vector3(0, 2.0, 5.6).applyMatrix4(g.matrixWorld), centro: new THREE.Vector3(0, 1.5, 0).applyMatrix4(g.matrixWorld), etq: new THREE.Vector3(0, 3.55, 0).applyMatrix4(g.matrixWorld) }; });
+// logos en la pared del fondo
+caja(1.6, 1.5, 0.05, 0xffffff, 0, 4.15, -6.88); plano(1.3, 1.35, tex('../../recursos/logo_CERS.jpeg'), 0, 4.15, -6.84);
+// mesas de lectura, sillas, lámparas
+function mesa(x, z) { caja(3.2, 0.08, 1.3, 0x8B5A2B, x, 0.78, z); [[-1.45, -.5], [1.45, -.5], [-1.45, .5], [1.45, .5]].forEach(([dx, dz]) => caja(0.08, 0.78, 0.08, 0x5D3A1A, x + dx, 0.39, z + dz));
+  [-0.9, 0.9].forEach(dx => { cil(0.03, 0.4, 0x37474F, x + dx, 1.02, z); const l = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.18, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0x2E7D32, side: THREE.DoubleSide })); l.position.set(x + dx, 1.25, z); scene.add(l);
+    [-1, 1].forEach(s => { const g = new THREE.Group(); g.position.set(x + dx, 0, z + s * 1.0); g.rotation.y = s > 0 ? Math.PI : 0; scene.add(g); caja(0.45, 0.05, 0.45, 0x3FA7C6, 0, 0.47, 0, g); caja(0.45, 0.5, 0.05, 0x3FA7C6, 0, 0.72, -0.21, g);
+      [[-.19, -.19], [.19, -.19], [-.19, .19], [.19, .19]].forEach(([a, b]) => caja(0.04, 0.47, 0.04, 0x37474F, a, 0.23, b, g)); }); });
+  const lib = caja(0.3, 0.06, 0.22, 0xC62828, x - 0.3, 0.85, z); lib.rotation.y = 0.3; }
+mesa(-3.2, 1.4); mesa(3.2, 1.4);
+// mostrador de información, plantas, salida y equipo contra incendio (NOM-003-SEGOB-2011 / NOM-026-STPS-2008)
+caja(2.6, 1.05, 0.8, 0x5D4037, 5.8, 0.52, 4.6); caja(2.7, 0.06, 0.9, 0xEFE5D4, 5.8, 1.07, 4.6);
+function planta(x, z) { cil(0.3, 0.5, 0xB0723A, x, 0.25, z); const f = new THREE.Mesh(new THREE.IcosahedronGeometry(0.5, 1), M(0x4E9A5A)); f.position.set(x, 0.95, z); scene.add(f); }
+planta(-8.8, 5.6); planta(8.6, -5.6); planta(-8.6, -5.6);
+const texS = {}; function senal(id, w, x, y, z, ry) { const cv = Senales.canvas(id, 256); const t = texS[id] || (texS[id] = new THREE.CanvasTexture(cv)); t.colorSpace = THREE.SRGBColorSpace;
+  const m = plano(w, w * cv.height / cv.width, t, x, y, z, scene, ry, true); m.userData = { senal: id }; tocables.push(m); return m; }
+caja(0.12, 2.3, 1.3, 0x2E7D32, 9.88, 1.15, 5.2);   // puerta de salida (pared derecha)
+senal('salida', 1.1, 9.83, 2.75, 5.2, -Math.PI / 2); senal('ruta', 0.9, 9.83, 1.6, 2.6, -Math.PI / 2);
+senal('informacion', 0.6, 5.8, 1.8, 5.02, 0); senal('no_fumar', 0.6, -9.83, 2.2, 5.0, Math.PI / 2); senal('extintor', 0.55, 9.83, 1.75, 3.7, -Math.PI / 2);
+{ const e = cil(0.12, 0.55, 0xD3122A, 9.6, 0.4, 3.7); e.userData = { senal: 'extintor' }; tocables.push(e); }
+senal('menor_riesgo', 0.6, -9.83, 2.2, -0.6, Math.PI / 2);
+
+// etiquetas HTML de los estantes
+const capa = $('#etiquetas'), etqs = ESTANTES.map(e => { const el = document.createElement('div'); el.className = 'etq'; el.style.setProperty('--c', e.color); el.textContent = `${e.icono} ${e.corto}`; el.title = e.nombre; el.onclick = () => abrirEstante(e.id); capa.appendChild(el); return { el, e }; });
+const v = new THREE.Vector3();
+function etiquetas() { etqs.forEach(({ el, e }) => { v.copy(EST3D[e.id].etq).project(camera); const vis = v.z < 1 && Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05 && !enfocado;
+  el.style.display = vis ? 'block' : 'none'; if (vis) { el.style.left = (v.x + 1) / 2 * innerWidth + 'px'; el.style.top = (1 - v.y) / 2 * innerHeight + 'px'; } }); }
+
+// ============================================================================ NAVEGACIÓN Y PANEL
+const VISTA0 = [new THREE.Vector3(0, 6.2, 13.5), new THREE.Vector3(0, 1.6, -1.5)];
+camera.position.copy(VISTA0[0]); controls.target.copy(VISTA0[1]);
+const tweens = []; const mover = (vv, a, ms) => new Promise(r => tweens.push({ v: vv, de: vv.clone(), a: a.clone(), t0: performance.now(), ms, r }));
+let enfocado = null;
+function abrirEstante(id) { enfocado = id; const e = EST3D[id]; mover(camera.position, e.frente, 800); mover(controls.target, e.centro, 800); $('#guia').style.display = 'none'; listar(id); }
+function vistaGeneral() { enfocado = null; mover(camera.position, VISTA0[0], 800); mover(controls.target, VISTA0[1], 800); }
+function listar(id, q = '') {
+  const e = id ? ESTA[id] : null; $('#panel').style.display = 'flex';
+  $('#pHead').style.background = e ? e.color : '#0E3A6B'; $('#pHead').innerHTML = e ? `<h2>${e.icono} ${e.nombre}</h2><small>${e.desc}</small>` : `<h2>🔍 Toda la biblioteca</h2><small>${DOCUMENTOS.length} documentos verificados</small>`;
+  const n = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(), qq = n(q);
+  const docs = DOCUMENTOS.filter(d => (!id || d.estante === id) && (!qq || n(d.clave + ' ' + d.titulo + ' ' + d.uso + ' ' + d.emisor).includes(qq)));
+  $('#lista').innerHTML = docs.map(d => `<button class="doc" data-id="${d.id}" style="--c:${ESTA[d.estante].color}"><b>${d.clave}</b>${d.titulo}<br><span class="est ${/vigente|en vigor/i.test(d.estado) ? '' : 'no'}">${d.estado}</span> <small>· ${d.publicacion}</small></button>`).join('') || '<p>Sin resultados.</p>';
+  $('#lista').querySelectorAll('.doc').forEach(b => b.onclick = () => leer(b.dataset.id));
+}
+$('#q').oninput = e => listar(e.target.value ? null : enfocado, e.target.value);
+$('#bBuscar').onclick = () => { listar(null); $('#q').focus(); };
+$('#bCerrarP').onclick = () => { $('#panel').style.display = 'none'; vistaGeneral(); };
+function toast(t, cls = 'info', ms = 2800) { const el = $('#toast'); el.className = cls; el.innerHTML = t; el.style.display = 'block'; clearTimeout(el._t); el._t = setTimeout(() => el.style.display = 'none', ms); }
+
+function leer(id) {
+  const d = DOC[id], e = ESTA[d.estante], local = d.archivo ? '../../biblioteca/docs/' + encodeURIComponent(d.archivo) : '';
+  $('#mCont').innerHTML = `<div style="border-left:8px solid ${e.color};padding-left:10px"><small style="color:${e.color};font-weight:800">${e.icono} ${e.nombre}</small><h2>${d.clave}</h2><div>${d.titulo}</div></div>
+    <div class="ficha"><b>Emite</b><span>${d.emisor}</span><b>Publicación</b><span>${d.publicacion}</span><b>Estado</b><span>${d.estado}</span><b>Verificado</b><span>${d.consulta} (registro de fuentes del agente)</span><b>En los cursos</b><span>${d.uso}</span></div>
+    <div class="apa"><b>Referencia (APA 7)</b><br><span id="apaTxt">${apa(d)}</span></div>
+    <div class="acc">${RETO.on ? '<button class="prim" id="bEsEste" style="background:#2E7D32">✅ Este es el documento del reto</button>' : ''}
+      ${local ? `<button class="prim" id="bLeer">📖 Leer aquí</button><a class="sec" href="${local}" target="_blank" rel="noopener">📄 Abrir copia en otra pestaña</a>` : ''}
+      <a class="sec" href="${d.url}" target="_blank" rel="noopener">🌐 Fuente oficial</a><button class="sec" id="bCopiar">📋 Copiar referencia</button><button class="sec" id="bCerrarM">Cerrar</button></div>
+    ${local ? '' : '<p class="aviso">Este documento no tiene copia en la biblioteca: se consulta en la fuente oficial.</p>'}
+    <iframe id="lector" title="${d.clave}"></iframe>
+    <p class="aviso">La copia local es para consulta; el texto con validez es el publicado en el DOF o en la fuente oficial. Revisa siempre la versión vigente.</p>`;
+  $('#modal').style.display = 'flex';
+  $('#bCerrarM').onclick = () => $('#modal').style.display = 'none';
+  $('#bCopiar').onclick = async e => { const t = apa(d, false); try { await navigator.clipboard.writeText(t); } catch (x) { } e.target.textContent = '✅ Copiada'; };
+  const bl = $('#bLeer'); if (bl) bl.onclick = () => { const f = $('#lector'); if (f.style.display === 'block') { f.style.display = 'none'; bl.textContent = '📖 Leer aquí'; return; }
+    f.src = local; f.style.display = 'block'; bl.textContent = '✖ Cerrar lector'; if (/Android|iPhone|iPad/i.test(navigator.userAgent) && /\.pdf$/i.test(d.archivo)) toast('En celular, si el PDF no se ve aquí usa "Abrir copia en otra pestaña".', 'info', 4500); };
+  const be = $('#bEsEste'); if (be) be.onclick = () => responderReto(id);
+}
+$('#modal').onclick = e => { if (e.target.id === 'modal') $('#modal').style.display = 'none'; };
+
+// ============================================================================ RETO: ENCUENTRA LA NORMA
+const RETOS = [
+  { q: 'Colores y señales de seguridad e higiene en los centros de trabajo', ok: ['nom026'] },
+  { q: 'Señales de protección civil: ruta de evacuación y punto de reunión', ok: ['nom003'] },
+  { q: 'La gradualidad de la jornada: 48 h en 2026 hasta 40 h en 2030', ok: ['decreto_lft', 'lft', 'cpeum_jornada'] },
+  { q: 'Las comisiones de seguridad e higiene y sus recorridos de verificación', ok: ['nom019'] },
+  { q: 'Selección, uso y manejo del equipo de protección personal', ok: ['nom017'] },
+  { q: 'Factores de riesgo psicosocial en el trabajo', ok: ['nom035'] },
+  { q: 'Clasificación y envasado de los residuos peligrosos biológico-infecciosos (RPBI)', ok: ['nom087'] },
+  { q: 'Plazos que da la STPS para corregir y el procedimiento de inspección', ok: ['rgitas', 'rgitas_2022'] },
+  { q: 'El convenio internacional sobre seguridad y salud de los trabajadores', ok: ['c155'] },
+  { q: 'Qué debe decir el aviso de privacidad de los participantes', ok: ['lfpdppp'] },
+  { q: 'Prevención y protección contra incendios: brigadas y simulacros', ok: ['nom002'] },
+  { q: 'Masas máximas que puede cargar una persona trabajadora', ok: ['nom036'] },
+];
+const RETO = { on: false, lista: [], i: 0, pts: 0, fallas: 0, t0: 0 };
+function iniciarReto() { RETO.on = true; RETO.lista = [...RETOS].sort(() => Math.random() - .5).slice(0, 8); RETO.i = 0; RETO.pts = 0; RETO.fallas = 0; RETO.t0 = Date.now(); pintarReto();
+  toast('🎯 Busca el documento en el estante correcto, ábrelo y toca "Este es el documento del reto".', 'info', 4500); }
+function pintarReto() { const r = RETO.lista[RETO.i]; $('#reto').style.display = 'block'; $('#reto').innerHTML = `🎯 Reto ${RETO.i + 1}/${RETO.lista.length}: ¿Dónde lo buscarías?<small>${r.q}</small>`;
+  $('#cReto').style.display = 'inline-block'; $('#cReto').textContent = `🎯 ${RETO.pts} pts`; }
+function responderReto(id) { const r = RETO.lista[RETO.i];
+  if (r.ok.includes(id)) { RETO.pts += 10; $('#modal').style.display = 'none'; toast(`✅ ¡Correcto! ${DOC[id].clave}`, 'ok'); RETO.i++; if (RETO.i >= RETO.lista.length) return finReto(); pintarReto(); }
+  else { RETO.pts = Math.max(0, RETO.pts - 3); RETO.fallas++; toast(`❌ No es ese. Pista: está en el estante "${ESTA[DOC[r.ok[0]].estante].nombre}".`, 'no', 4200); pintarReto(); } }
+async function finReto() {
+  RETO.on = false; $('#reto').style.display = 'none'; $('#cReto').textContent = `🎯 ${RETO.pts} pts`; const max = RETO.lista.length * 10, pct = Math.round(RETO.pts / max * 100), s = Math.round((Date.now() - RETO.t0) / 1000);
+  let nombre = 'Participante'; try { nombre = JSON.parse(localStorage.getItem('campus_perfil') || '{}').nombre || nombre; } catch (e) { }
+  const reg = { modulo: 'Biblioteca: encuentra la norma', nombre, caso: '', fecha: new Date().toLocaleString('es-MX'), puntos: RETO.pts, porcentaje: pct, criticos: 0, errores: RETO.fallas, segundos: s, resultado: pct >= 80 ? 'Aprobado' : 'Repasar' };
+  try { const k = 'sim_biblioteca_reto', a = JSON.parse(localStorage.getItem(k) || '[]'); a.push(reg); localStorage.setItem(k, JSON.stringify(a)); } catch (e) { }
+  let ok = false; if (location.protocol.startsWith('http')) try { ok = (await fetch('/api/registro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tipo: 'simulador', fila: reg }) })).ok; } catch (e) { }
+  $('#mCont').innerHTML = `<h2>${pct >= 80 ? '🏆 ¡Excelente búsqueda!' : '💪 Sigue practicando'}</h2><p><b>${nombre}</b> · ${RETO.pts}/${max} puntos (${pct}%) · ${RETO.fallas} intento(s) fallido(s) · ${Math.floor(s / 60)} min ${s % 60} s</p>
+    <p class="aviso">${ok ? '✅ Resultado registrado en la computadora de la persona instructora.' : 'Resultado guardado en este dispositivo.'}</p><div class="acc"><button class="prim" id="bOtra">Jugar otra vez</button><button class="sec" id="bFin">Seguir explorando</button></div>`;
+  $('#modal').style.display = 'flex'; $('#bOtra').onclick = () => { $('#modal').style.display = 'none'; iniciarReto(); }; $('#bFin').onclick = () => { $('#modal').style.display = 'none'; $('#cReto').style.display = 'none'; };
+}
+$('#bReto').onclick = iniciarReto;
+
+// ============================================================================ TOQUES Y CICLO
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let abajo = null;
+renderer.domElement.addEventListener('pointerdown', e => abajo = [e.clientX, e.clientY]);
+renderer.domElement.addEventListener('pointerup', e => { if (!abajo || Math.hypot(e.clientX - abajo[0], e.clientY - abajo[1]) > 10) return;
+  ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ptr, camera); const h = ray.intersectObjects(tocables, false)[0]; if (!h) return;
+  const u = h.object.userData; if (u.estante) abrirEstante(u.estante);
+  if (u.senal) { const s = Senales.POR_ID[u.senal]; $('#mCont').innerHTML = `<h2>${s.nombre}</h2><img src="${Senales.dataURL(u.senal, 256)}" style="width:150px;display:block;margin:auto"><p><b>${s.tipo}.</b> ${s.significado}</p><p class="aviso">Fuente: ${s.norma}</p><button class="prim" onclick="document.getElementById('modal').style.display='none'">Cerrar</button>`; $('#modal').style.display = 'flex'; } });
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+renderer.setAnimationLoop(() => { const ahora = performance.now();
+  for (let i = tweens.length - 1; i >= 0; i--) { const t = tweens[i]; const k = Math.min(1, (ahora - t.t0) / t.ms); const ee = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; t.v.lerpVectors(t.de, t.a, ee); if (k >= 1) { tweens.splice(i, 1); t.r(); } }
+  controls.update(); renderer.render(scene, camera); etiquetas(); });
+Acceso.proteger('📚 Biblioteca normativa', CAMPUS + '?mundo=biblioteca');
+if (P.has('reto')) iniciarReto();
+if (P.get('estante') && ESTA[P.get('estante')]) abrirEstante(P.get('estante'));
+if (QA) window.__qa = { abrirEstante, leer, responderReto, iniciarReto, RETO, DOCUMENTOS, ESTANTES, vistaGeneral };
+</script>
+</body>
+</html>
