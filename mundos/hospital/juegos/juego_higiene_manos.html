@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manos que salvan · Juego</title>
+<style>
+:root{--navy:#0E3A6B;--azul:#154F90;--cian:#3FA7C6;--cielo:#8CCDE0;--hielo:#E8F5F9;--texto:#1B2633;--tenue:#5B6B7C;--bien:#2E7D32;--mal:#C62828;--oro:#E0A800}
+*{box-sizing:border-box}body{margin:0;font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:var(--hielo);color:var(--texto)}
+header{background:var(--azul);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
+header h1{margin:0;font-size:1.35rem}header .pts{margin-left:auto;background:var(--cian);border-radius:999px;padding:6px 14px;font-weight:800}
+main{max-width:760px;margin:0 auto;padding:14px}
+.caja{background:#fff;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 1px 5px rgba(0,0,0,.08)}
+h2{color:var(--navy);margin:.2rem 0 .6rem}.k{color:var(--cian);font-weight:800;letter-spacing:.06em;font-size:.85rem}
+input[type=text]{width:100%;font-size:1.1rem;padding:12px;border:1px solid var(--cielo);border-radius:12px;margin:8px 0}
+button{font-family:inherit;cursor:pointer}.prim{background:var(--azul);color:#fff;border:0;border-radius:14px;padding:13px 20px;font-size:1.1rem;font-weight:800}
+.sec{background:var(--hielo);color:var(--navy);border:0;border-radius:14px;padding:12px 18px;font-size:1rem}
+.escena{font-size:1.25rem;line-height:1.35;background:var(--hielo);border-radius:14px;padding:16px;margin:8px 0 12px;min-height:90px}
+.nums{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.nums button{font-size:1.6rem;font-weight:900;padding:16px 0;border-radius:14px;border:0;background:var(--azul);color:#fff}
+.nums small{display:block;font-size:.62rem;font-weight:600;line-height:1.1;margin-top:4px}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}.dos button{border:0;border-radius:16px;padding:18px 10px;font-size:1.15rem;font-weight:800;color:#fff}
+.agua{background:var(--azul)}.gel{background:var(--cian)}
+.lista button{display:block;width:100%;text-align:left;border:0;border-radius:12px;padding:12px;margin:7px 0;background:var(--hielo);font-size:1.02rem;color:var(--texto)}
+.ok{background:#E8F5E9!important;outline:2px solid var(--bien)}.no{background:#FDECEA!important;outline:2px solid var(--mal)}
+.retro{border-radius:12px;padding:12px;margin-top:10px;font-size:1.02rem}.retro.si{background:#E8F5E9}.retro.no{background:#FDECEA}
+.retro small{display:block;color:var(--tenue);font-style:italic;margin-top:4px}
+.tiempo{height:10px;background:var(--hielo);border-radius:9px;overflow:hidden;margin:6px 0}.tiempo i{display:block;height:100%;background:var(--cian);transition:width .25s linear}
+table{width:100%;border-collapse:collapse}td,th{padding:7px;border-bottom:1px solid var(--hielo);text-align:left}
+.podio td:first-child{font-weight:900;color:var(--oro);font-size:1.2rem}
+.oculto{display:none}.ficticio{font-size:.8rem;color:var(--tenue)}
+</style>
+<script src="../../../motor/acceso.js"></script><script>addEventListener('load', () => Acceso.proteger('🎮 Manos que salvan', '../../../index.html?mundo=hospital'));</script>
+</head>
+<body>
+<header><span style="font-size:1.6rem">🖐️</span><h1>Manos que salvan</h1><span class="pts" id="pts">0 pts</span></header>
+<main id="app"></main>
+<script>
+// Fuentes verificadas: 02_fuentes_verificadas/registro_fuentes.md (consulta 03/10/2026). Escenas [FICTICIO – ejercicio didáctico].
+const F={mom:'AESP 2023, AE5A (p. 46); 5 momentos OMS', nom1:'NOM-045-SSA2-2005, 10.6.1.1', nom3:'NOM-045-SSA2-2005, 10.6.1.3; OMS (2006)', oms:'OMS, cartel "How to handwash / How to handrub" (2006)'};
+const NOMBRES=['Antes de tocar al paciente','Antes de tarea limpia/aséptica','Después de líquidos corporales','Después de tocar al paciente','Después del entorno del paciente'];
+const R1=[['Antes de tomarle la presión arterial.',1],['Antes de canalizar una vena periférica.',2],['Después de limpiar un derrame de vómito.',3],['Después de tomarle el pulso.',4],
+  ['Cambiaste el suero sin tocar al paciente y te vas.',5],['Antes de curar una herida quirúrgica.',2],['Después de vaciar una bolsa colectora de orina.',3],['Antes de ayudar al paciente a sentarse.',1],
+  ['Limpiaste los barandales y la mesa puente; no tocaste al paciente.',5],['Le acomodaste la almohada al paciente (lo tocaste) y te retiras.',4]];
+const R2=[['Tus manos tienen sangre visible.','agua',F.nom3],['Vas de un paciente a otro; manos sin suciedad visible.','gel',F.nom3],['Te salpicó orina en la mano.','agua',F.nom3],
+  ['Antes de tocar al paciente; tus manos están limpias a la vista.','gel',F.nom3],['Llegas al hospital e inicias tu turno.','agua',F.nom1],['Retiraste ropa de cama con manchas de vómito.','agua',F.nom3]];
+const MOVS=['Palma con palma','Palma sobre dorso, dedos entrelazados','Palma con palma, dedos entrelazados','Dorso de los dedos contra la palma','Pulgares en rotación','Yemas en rotación sobre la palma'];
+const $=s=>document.querySelector(s), app=$('#app');
+let nombre='', pts=0, aciertos=0, total=0, reloj=null, t0=0;
+const baraja=a=>[...a].sort(()=>Math.random()-.5);
+function marcador(){ $('#pts').textContent=pts+' pts'; }
+async function registrar(fila){ if(!location.protocol.startsWith('http')) return false; try{const r=await fetch('/api/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo:'juego',fila})});return r.ok}catch(e){return false} }
+function leer(){try{return JSON.parse(localStorage.getItem('juego_higiene_manos')||'[]')}catch(e){return []}}
+function guardar(r){try{const a=leer();a.push(r);localStorage.setItem('juego_higiene_manos',JSON.stringify(a))}catch(e){}}
+function cuenta(seg, alAgotar){ clearInterval(reloj); const fin=Date.now()+seg*1000; reloj=setInterval(()=>{const r=Math.max(0,fin-Date.now()); const b=$('#barra'); if(b) b.style.width=(r/seg/10)+'%'; if(r<=0){clearInterval(reloj); alAgotar();}},200); return ()=>Math.max(0,Math.ceil((fin-Date.now())/1000)); }
+
+function inicio(){
+  app.innerHTML=`<div class="caja"><div class="k">JUEGO · HIGIENE DE MANOS</div><h2>¿Listo para salvar vidas?</h2>
+  <p>3 rondas: <b>¿Qué momento es?</b> · <b>¿Agua o alcohol?</b> · <b>Ordena la técnica</b>. Más rápido = más puntos.</p>
+  <input type="text" id="nom" placeholder="Tu nombre completo" autocomplete="name"><button class="prim" id="go">¡Jugar!</button> <button class="sec" id="podio">🏆 Podio (instructora)</button>
+  <p class="ficticio">Escenas ficticias con fines didácticos. Fuentes: NOM-045-SSA2-2005, Acciones Esenciales para la Seguridad del Paciente 2023 (AE 5) y OMS.</p></div>`;
+  $('#go').onclick=()=>{ nombre=$('#nom').value.trim(); if(!nombre) return alert('Escribe tu nombre.'); t0=Date.now(); ronda1(baraja(R1).slice(0,6),0); };
+  $('#podio').onclick=podio;
+}
+function retro(ok, txt, fuente){ return `<div class="retro ${ok?'si':'no'}">${ok?'✅ ':'❌ '}${txt}<small>Fuente: ${fuente}</small></div>`; }
+function siguienteBtn(fn){ const b=document.createElement('button'); b.className='prim'; b.textContent='Siguiente ▶'; b.style.marginTop='10px'; b.onclick=fn; app.querySelector('.caja').appendChild(b); }
+
+function ronda1(lista,i){
+  if(i>=lista.length) return ronda2(baraja(R2).slice(0,5),0);
+  const [esc,n]=lista[i]; total++;
+  app.innerHTML=`<div class="caja"><div class="k">RONDA 1 · ¿QUÉ MOMENTO ES? (${i+1}/${lista.length})</div><div class="tiempo"><i id="barra" style="width:100%"></i></div>
+   <div class="escena">${esc}</div><div class="nums">${[1,2,3,4,5].map(k=>`<button data-k="${k}">${k}<small>${NOMBRES[k-1]}</small></button>`).join('')}</div><div id="r"></div></div>`;
+  let resp=false; const resta=cuenta(15,()=>{ if(!resp){resp=true; document.querySelectorAll('.nums button').forEach(b=>b.disabled=true); $('#r').innerHTML=retro(false,`Se acabó el tiempo. Era el momento ${n}: ${NOMBRES[n-1]}.`,F.mom); siguienteBtn(()=>ronda1(lista,i+1));} });
+  document.querySelectorAll('.nums button').forEach(b=>b.onclick=()=>{ if(resp) return; resp=true; clearInterval(reloj); const k=+b.dataset.k, ok=k===n;
+    if(ok){pts+=50+resta()*5; aciertos++;} marcador(); b.classList.add(ok?'ok':'no'); document.querySelectorAll('.nums button').forEach(x=>x.disabled=true);
+    $('#r').innerHTML=retro(ok, ok?`¡Correcto! Momento ${n}: ${NOMBRES[n-1]}.`:`Era el momento ${n}: ${NOMBRES[n-1]}.`, F.mom); siguienteBtn(()=>ronda1(lista,i+1)); });
+}
+function ronda2(lista,i){
+  if(i>=lista.length) return ronda3();
+  const [esc,c,fuente]=lista[i]; total++;
+  app.innerHTML=`<div class="caja"><div class="k">RONDA 2 · ¿AGUA Y JABÓN O ALCOHOL GEL? (${i+1}/${lista.length})</div><div class="tiempo"><i id="barra" style="width:100%"></i></div>
+   <div class="escena">${esc}</div><div class="dos"><button class="agua" data-c="agua">🚰 Agua y jabón<br><small>40-60 s</small></button><button class="gel" data-c="gel">🧴 Alcohol gel<br><small>20-30 s</small></button></div><div id="r"></div></div>`;
+  let resp=false; const resta=cuenta(12,()=>{ if(!resp){resp=true; $('#r').innerHTML=retro(false,'Se acabó el tiempo. Respuesta: '+(c==='agua'?'agua y jabón.':'alcohol gel.'),fuente); siguienteBtn(()=>ronda2(lista,i+1));} });
+  document.querySelectorAll('.dos button').forEach(b=>b.onclick=()=>{ if(resp) return; resp=true; clearInterval(reloj); const ok=b.dataset.c===c; if(ok){pts+=50+resta()*5; aciertos++;} marcador(); b.classList.add(ok?'ok':'no');
+    const exp=c==='agua'?(fuente===F.nom1?'Al entrar en contacto con el ambiente hospitalario: agua corriente, jabón y toalla desechable.':'Con sangre, líquidos corporales o suciedad visible: agua y jabón.'):'Sin suciedad visible ni líquidos: alcohol gel (> 60% con emolientes), lo más práctico en el punto de atención.';
+    $('#r').innerHTML=retro(ok, exp, fuente); siguienteBtn(()=>ronda2(lista,i+1)); });
+}
+function ronda3(){
+  total++; let k=0, errores=0; const orden=baraja(MOVS.map((m,i)=>[m,i]));
+  app.innerHTML=`<div class="caja"><div class="k">RONDA 3 · ORDENA LA TÉCNICA</div><h2>Toca los 6 movimientos en orden</h2><div class="tiempo"><i id="barra" style="width:100%"></i></div>
+   <div class="lista" id="lista"></div><div id="r"></div></div>`;
+  const fin=()=>{ clearInterval(reloj); const ok=errores===0; if(ok) aciertos++; $('#r').innerHTML=retro(ok, ok?'¡Técnica perfecta!':`Completaste la técnica con ${errores} error(es). Repásala en el cartel.`, F.oms); siguienteBtn(final); };
+  const resta=cuenta(40,()=>{ if(k<6){ errores=6; fin(); document.querySelectorAll('#lista button').forEach(b=>b.disabled=true);} });
+  $('#lista').innerHTML=orden.map(([m,i])=>`<button data-i="${i}">${m}</button>`).join('');
+  document.querySelectorAll('#lista button').forEach(b=>b.onclick=()=>{ const i=+b.dataset.i; if(i===k){ b.classList.add('ok'); b.disabled=true; b.textContent=(k+1)+'. '+b.textContent; k++; pts+=20; marcador(); if(k===6){ pts+=resta()*3; marcador(); fin(); } }
+    else { errores++; b.classList.add('no'); setTimeout(()=>b.classList.remove('no'),500); } });
+}
+async function final(){
+  const seg=Math.round((Date.now()-t0)/1000), pct=Math.round(aciertos/total*100);
+  const fila={nombre, puntos:pts, aciertos, total, pct, segundos:seg, fecha:new Date().toLocaleString('es-MX')}; guardar(fila);
+  app.innerHTML=`<div class="caja"><div class="k">FIN DEL JUEGO</div><h2>${pct>=80?'🏆':'💪'} ${nombre}: ${pts} puntos</h2><p>Aciertos: <b>${aciertos}/${total} (${pct}%)</b> · Tiempo: ${seg} s</p>
+   <p id="est" class="ficticio">Enviando a la instructora…</p><button class="prim" onclick="location.reload()">Jugar otra vez</button> <button class="sec" id="podio">🏆 Podio</button></div>`;
+  $('#podio').onclick=podio; const ok=await registrar(fila); $('#est').textContent=ok?'✅ Puntaje registrado en la computadora de la instructora.':'Puntaje guardado en este dispositivo.';
+}
+async function podio(){
+  let a=null; if(location.protocol.startsWith('http')){ try{const r=await fetch('/api/registro?tipo=juego',{cache:'no-store'}); if(r.ok) a=(await r.json()).filas.map(x=>({...x,puntos:+x.puntos,pct:+x.pct}));}catch(e){} }
+  const fuente=a?'computadora de la instructora':'este dispositivo'; a=a||leer(); a.sort((x,y)=>y.puntos-x.puntos);
+  app.innerHTML=`<div class="caja"><div class="k">PODIO · ${fuente}</div><h2>🏆 Mejores puntajes (${a.length})</h2><table class="podio"><tr><th>#</th><th>Nombre</th><th>Puntos</th><th>Aciertos</th></tr>
+   ${a.map((r,i)=>`<tr><td>${i+1}</td><td>${String(r.nombre).replace(/</g,'&lt;')}</td><td>${r.puntos}</td><td>${r.pct}%</td></tr>`).join('')||'<tr><td colspan=4>Sin registros</td></tr>'}</table><br>
+   <button class="prim" id="csv">Descargar CSV</button> <button class="sec" onclick="location.reload()">Volver</button></div>`;
+  $('#csv').onclick=()=>{const t='Nombre,Puntos,Aciertos,Total,Porcentaje,Segundos,Fecha\n'+a.map(r=>[r.nombre,r.puntos,r.aciertos,r.total,r.pct,r.segundos,r.fecha].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+    const b=new Blob(['﻿'+t],{type:'text/csv'}); const l=document.createElement('a'); l.href=URL.createObjectURL(b); l.download='resultados_juego_higiene_manos.csv'; l.click();};
+}
+inicio();
+</script>
+</body>
+</html>
