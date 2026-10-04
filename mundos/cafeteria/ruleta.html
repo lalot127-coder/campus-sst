@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ruleta de preguntas SST</title>
+<script src="../../motor/compartir.js"></script><script src="../../recursos/banco_trivia.js"></script><script src="../../motor/senales.js"></script><script src="../../biblioteca/catalogo.js"></script><script src="../../motor/banco.js"></script><script src="comun.js"></script>
+<style>
+.juego{display:grid;grid-template-columns:360px minmax(0,1fr);gap:12px;align-items:start}
+.rueda{position:relative;width:100%;max-width:360px;margin:auto}.rueda canvas{width:100%;display:block}
+.rueda .flecha{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:30px solid #0E3A6B;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+.op{display:block;width:100%;text-align:left;background:#E8F5F9;border:2px solid transparent;border-radius:12px;padding:11px;margin:7px 0;font-size:1rem;color:#1B2633}
+.op.bien{background:#DDF3E3;border-color:#2E7D32}.op.mal{background:#FCE0E0;border-color:#C62828}
+.marc{display:flex;gap:8px;flex-wrap:wrap}.marc span{background:#fff;border-radius:999px;padding:5px 12px;font-weight:800;color:#0E3A6B;box-shadow:0 2px 8px rgba(0,0,0,.08)}.marc span.turno{outline:3px solid #E0A82E}
+@media (max-width:760px){.juego{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <div class="tarjeta"><h1>🎡 Ruleta de preguntas</h1><p class="tenue">Gira la ruleta: cae en un tema y responde. 10 rondas. Puedes jugar solo o en dos equipos que se turnan. Banco unificado: preguntas de juego de todos los cursos, de las señales y de la biblioteca, cada una con su fuente.</p>
+    <label><input type="radio" name="modo" value="1" checked> Individual</label> &nbsp; <label><input type="radio" name="modo" value="2"> Dos equipos</label></div>
+  <div class="juego">
+    <div class="tarjeta"><div class="rueda"><div class="flecha"></div><canvas id="cv" width="720" height="720"></canvas></div><br><button class="prim" id="bGirar" style="width:100%">🎡 Girar</button><div class="marc" id="marc" style="margin-top:10px"></div></div>
+    <div class="tarjeta" id="preg"><p class="tenue">Gira la ruleta para comenzar.</p></div>
+  </div>
+</main>
+<script>
+Juego.iniciar({ titulo: 'Ruleta de preguntas', icono: '🎡' });
+const $ = s => document.querySelector(s);
+const TEMAS = Banco.temas();
+const COL = ['#154F90', '#2E7D32', '#B8662E', '#6A3FA0', '#C62828', '#0D6EB8', '#37474F', '#00897B'];
+const RONDAS = 10; let ang = 0, girando = false, ronda = 0, equipos = [{ n: 'Puntos', p: 0 }], turno = 0, t0 = Date.now(), aciertos = 0;
+const g = $('#cv').getContext('2d');
+function rueda() { const n = TEMAS.length, R = 350; g.clearRect(0, 0, 720, 720); g.save(); g.translate(360, 360); g.rotate(ang);
+  TEMAS.forEach((t, i) => { const a0 = i * 2 * Math.PI / n, a1 = (i + 1) * 2 * Math.PI / n; g.fillStyle = COL[i % COL.length]; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, R, a0, a1); g.closePath(); g.fill();
+    g.strokeStyle = '#fff'; g.lineWidth = 6; g.stroke(); g.save(); g.rotate((a0 + a1) / 2); g.fillStyle = '#fff'; g.font = 'bold ' + (TEMAS.length > 6 ? 27 : 34) + 'px Calibri, sans-serif'; g.textAlign = 'right'; g.textBaseline = 'middle';
+    const pal = t.tema.split(' '); const mitad = Math.ceil(pal.length / 2); [pal.slice(0, mitad).join(' '), pal.slice(mitad).join(' ')].filter(Boolean).forEach((l, k, arr) => g.fillText(l, R - 24, (k - (arr.length - 1) / 2) * 38)); g.restore(); });
+  g.fillStyle = '#fff'; g.beginPath(); g.arc(0, 0, 46, 0, 7); g.fill(); g.restore(); g.font = '50px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('🦺', 360, 362); }
+function marc() { $('#marc').innerHTML = `<span>Ronda ${Math.min(ronda + 1, RONDAS)}/${RONDAS}</span>` + equipos.map((e, i) => `<span class="${equipos.length > 1 && i === turno ? 'turno' : ''}">${e.n}: ${e.p}</span>`).join(''); }
+document.querySelectorAll('input[name=modo]').forEach(r => r.onchange = () => { if (ronda) return Juego.toast('El modo se cambia al iniciar una nueva partida.', 'info');
+  equipos = r.value === '2' ? [{ n: 'Equipo A', p: 0 }, { n: 'Equipo B', p: 0 }] : [{ n: 'Puntos', p: 0 }]; marc(); });
+$('#bGirar').onclick = () => { if (girando || ronda >= RONDAS) return; girando = true; $('#bGirar').disabled = true;
+  const n = TEMAS.length, i = Math.floor(Math.random() * n), centro = (i + 0.5) * 2 * Math.PI / n;
+  const destino = -Math.PI / 2 - centro + Math.PI * 2 * (5 + Math.floor(Math.random() * 3)), ini = ang % (Math.PI * 2), dur = 2600, t1 = performance.now();
+  (function anim(t) { const k = Math.min(1, (t - t1) / dur), e = 1 - Math.pow(1 - k, 3); ang = ini + (destino - ini) * e; rueda(); if (k < 1) requestAnimationFrame(anim); else { girando = false; preguntar(TEMAS[i]); } })(t1); };
+function preguntar(t) {
+  const q = Banco.alAzar(t.tema); const orden = Juego.barajar(q.o.map((o, k) => ({ o, k })));
+  $('#preg').innerHTML = `<small style="font-weight:800;color:#3FA7C6">${t.tema}${equipos.length > 1 ? ' · responde ' + equipos[turno].n : ''}</small><h2 style="color:#0E3A6B;margin:.2rem 0">${q.p}</h2>${q.img ? `<img src="${q.img}" style="height:130px;display:block;margin:6px auto">` : ''}${orden.map(x => `<button class="op" data-k="${x.k}">${x.o}</button>`).join('')}<div id="retro"></div>`;
+  document.querySelectorAll('#preg .op').forEach(b => b.onclick = () => { if ($('#preg').dataset.hecho) return; $('#preg').dataset.hecho = 1; const ok = +b.dataset.k === q.r;
+    document.querySelectorAll('#preg .op').forEach(x => { if (+x.dataset.k === q.r) x.classList.add('bien'); }); if (!ok) b.classList.add('mal');
+    if (ok) { equipos[turno].p += 10; aciertos++; }
+    $('#retro').innerHTML = `<p><b>${ok ? '✅ ¡Correcto!' : '❌ No es correcta.'}</b> ${q.rf || ''}</p><p class="fuente">Fuente: ${q.f}</p><button class="prim" id="bSig">${ronda + 1 >= RONDAS ? 'Ver resultado' : 'Siguiente ronda'}</button>`;
+    $('#bSig').onclick = siguiente; });
+  delete $('#preg').dataset.hecho;
+}
+function siguiente() { ronda++; turno = (turno + 1) % equipos.length; marc(); $('#bGirar').disabled = false; $('#preg').innerHTML = '<p class="tenue">Gira la ruleta.</p>'; if (ronda >= RONDAS) fin(); }
+async function fin() { $('#bGirar').disabled = true; const s = Math.round((Date.now() - t0) / 1000), pct = Math.round(aciertos / RONDAS * 100);
+  const ok = equipos.length === 1 ? await Juego.registrar({ modulo: 'Cafetería: ruleta de preguntas', puntos: equipos[0].p, porcentaje: pct, errores: RONDAS - aciertos, segundos: s, resultado: pct >= 80 ? 'Aprobado' : 'Repasar' }) : false;
+  const gan = equipos.length > 1 ? (equipos[0].p === equipos[1].p ? 'Empate' : `Gana ${equipos[0].p > equipos[1].p ? equipos[0].n : equipos[1].n}`) : `${aciertos}/${RONDAS} correctas (${pct}%)`;
+  Juego.modal(`<h2>🏆 ${gan}</h2><p>${equipos.map(e => `${e.n}: <b>${e.p}</b>`).join(' · ')}</p><p class="fuente">${ok ? '✅ Resultado enviado a la persona instructora.' : ''}</p><button class="prim" onclick="location.reload()">Jugar otra vez</button>`); }
+if (!TEMAS.length) $('#preg').innerHTML = '<p>No se encontró el banco de preguntas (recursos/banco_trivia.js). Ejecuta: python 05_herramientas/banco_simulador.py</p>';
+rueda(); marc();
+</script>
+</body>
+</html>

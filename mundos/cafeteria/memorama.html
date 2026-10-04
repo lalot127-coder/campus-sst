@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Memorama de señales</title>
+<script src="../../motor/senales.js"></script><script src="../../motor/compartir.js"></script><script src="comun.js"></script>
+<style>
+#tablero{display:grid;gap:8px;grid-template-columns:repeat(var(--cols,4),1fr);max-width:min(560px,calc((100vh - 230px) * .75 * var(--cols,4) / var(--rows,4)));margin:0 auto}
+.carta{aspect-ratio:3/4;perspective:700px;cursor:pointer;border:0;background:none;padding:0}
+.carta .in{position:relative;width:100%;height:100%;transition:transform .45s;transform-style:preserve-3d}
+.carta.vuelta .in,.carta.ok .in{transform:rotateY(180deg)}
+.cara{position:absolute;inset:0;border-radius:12px;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(14,58,107,.18)}
+.dorso{background:linear-gradient(135deg,#0E3A6B,#3FA7C6);color:#fff;font-size:2rem;font-weight:900}
+.frente{background:#fff;transform:rotateY(180deg);padding:6px;flex-direction:column;text-align:center;font-weight:800;color:#0E3A6B;font-size:clamp(.72rem,2.6vw,1rem);line-height:1.15}
+.frente img{max-width:92%;max-height:80%}
+.carta.ok .frente{outline:4px solid #2E7D32}
+.marc{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:8px 0}.marc span{background:#fff;border-radius:999px;padding:5px 12px;font-weight:800;color:#0E3A6B;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.niv{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<main>
+  <div class="tarjeta"><h1>🧩 Memorama de señales de seguridad</h1>
+    <p class="tenue">Encuentra las parejas: cada señal con su nombre. Las señales siguen los colores y formas de la NOM-026-STPS-2008 y la NOM-003-SEGOB-2011 (verde = condición segura, rojo = prohibición y equipo contra incendio, amarillo = precaución, azul = obligación).</p>
+    <div class="niv"><button class="sec" data-n="6">Fácil · 6 parejas</button><button class="prim" data-n="8">Normal · 8 parejas</button><button class="sec" data-n="10">Difícil · 10 parejas</button></div></div>
+  <div class="marc"><span id="mPar">Parejas: 0/8</span><span id="mMov">Movimientos: 0</span><span id="mTiempo">0:00</span></div>
+  <div id="tablero"></div>
+  <p class="fuente" style="text-align:center">Símbolos simplificados con fines didácticos. Fuentes: NOM-026-STPS-2008 (DOF 25/11/2008) Apéndices A-D; NOM-003-SEGOB-2011 (DOF 23/12/2011) 5.1-5.2. Consúltalas en la Biblioteca del campus.</p>
+</main>
+<script>
+Juego.iniciar({ titulo: 'Memorama de señales', icono: '🧩' });
+const $ = s => document.querySelector(s);
+let pares = 8, abiertas = [], hechas = 0, movs = 0, t0 = 0, reloj = null, bloqueo = false;
+function nuevo(n) {
+  pares = n; abiertas = []; hechas = 0; movs = 0; t0 = 0; clearInterval(reloj); $('#mTiempo').textContent = '0:00';
+  document.querySelectorAll('.niv button').forEach(b => b.className = +b.dataset.n === n ? 'prim' : 'sec');
+  const elegidas = Juego.barajar(Senales.LISTA).slice(0, n);
+  const cartas = Juego.barajar(elegidas.flatMap(s => [{ id: s.id, tipo: 'img' }, { id: s.id, tipo: 'txt' }]));
+  $('#tablero').style.setProperty('--cols', n > 8 ? 5 : 4); $('#tablero').style.setProperty('--rows', n > 8 ? 4 : n * 2 / 4);
+  $('#tablero').innerHTML = cartas.map((c, i) => { const s = Senales.POR_ID[c.id];
+    return `<button class="carta" data-id="${c.id}" data-i="${i}" aria-label="Carta"><div class="in"><div class="cara dorso">?</div><div class="cara frente">${c.tipo === 'img' ? `<img src="${Senales.dataURL(c.id, 200)}" alt="señal">` : s.nombre}</div></div></button>`; }).join('');
+  document.querySelectorAll('.carta').forEach(b => b.onclick = () => voltear(b)); marcador();
+}
+function marcador() { $('#mPar').textContent = `Parejas: ${hechas}/${pares}`; $('#mMov').textContent = `Movimientos: ${movs}`; }
+function voltear(b) {
+  if (bloqueo || b.classList.contains('vuelta') || b.classList.contains('ok')) return;
+  if (!t0) { t0 = Date.now(); reloj = setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000); $('#mTiempo').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }, 1000); }
+  b.classList.add('vuelta'); abiertas.push(b);
+  if (abiertas.length < 2) return;
+  movs++; const [a, c] = abiertas; abiertas = [];
+  if (a.dataset.id === c.dataset.id) { a.classList.add('ok'); c.classList.add('ok'); hechas++; const s = Senales.POR_ID[a.dataset.id];
+    Juego.toast(`✅ <b>${s.nombre}</b>: ${s.significado}<br><small>${s.norma}</small>`, 'ok', 4200); marcador(); if (hechas === pares) fin(); }
+  else { bloqueo = true; setTimeout(() => { a.classList.remove('vuelta'); c.classList.remove('vuelta'); bloqueo = false; }, 900); marcador(); }
+}
+async function fin() {
+  clearInterval(reloj); const s = Math.floor((Date.now() - t0) / 1000), pct = Math.min(100, Math.round(pares / movs * 100));
+  const ok = await Juego.registrar({ modulo: 'Cafetería: memorama de señales', caso: `${pares} parejas`, puntos: pares * 10, porcentaje: pct, errores: movs - pares, segundos: s, resultado: 'Completado' });
+  Juego.modal(`<h2>🏆 ¡Memorama completo!</h2><p>${pares} parejas en <b>${movs}</b> movimientos y ${Math.floor(s / 60)} min ${s % 60} s · precisión ${pct}%.</p>
+    <p class="fuente">${ok ? '✅ Resultado enviado a la persona instructora.' : 'Resultado guardado en este dispositivo.'}</p><button class="prim" onclick="Juego.cerrar();nuevo(pares)">Jugar otra vez</button> <button class="sec" onclick="location.href=Juego.base+'index.html?mundo=cafeteria'">Volver a la cafetería</button>`);
+}
+document.querySelectorAll('.niv button').forEach(b => b.onclick = () => nuevo(+b.dataset.n));
+nuevo(8);
+</script>
+</body>
+</html>

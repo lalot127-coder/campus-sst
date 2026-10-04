@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Serpientes y escaleras de la seguridad</title>
+<script src="../../motor/compartir.js"></script><script src="../../recursos/banco_trivia.js"></script><script src="../../motor/senales.js"></script><script src="../../biblioteca/catalogo.js"></script><script src="../../motor/banco.js"></script><script src="comun.js"></script>
+<style>
+.juego{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:12px}
+#tab{position:relative;display:grid;grid-template-columns:repeat(10,1fr);gap:3px;background:#0E3A6B;padding:4px;border-radius:14px;aspect-ratio:2/1}
+.c{position:relative;border-radius:6px;font-size:.72rem;font-weight:800;color:#0E3A6B;padding:2px 3px;display:flex;flex-direction:column;justify-content:space-between}
+.c:nth-child(odd){background:#E8F5F9}.c:nth-child(even){background:#fff}.c.esc{background:#DDF3E3!important}.c.ser{background:#FCE0E0!important}.c.meta{background:#FFE9A8!important}
+.c .ic{font-size:1rem;align-self:flex-end}
+#lineas{position:absolute;inset:4px;pointer-events:none;z-index:3;width:calc(100% - 8px);height:calc(100% - 8px)}
+.fichas{display:flex;gap:2px;flex-wrap:wrap;position:absolute;bottom:2px;left:3px}.f{width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.lado .jug{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;margin:4px 0;font-weight:700}.lado .jug.turno{background:#FFF4D6;outline:2px solid #E0A82E}
+#dado{font-size:3.2rem;text-align:center;line-height:1;margin:6px 0}
+.cfg input{font-size:1rem;padding:8px;border-radius:9px;border:1px solid var(--cielo);width:100%;margin:3px 0}
+.msj{border-radius:12px;padding:10px;margin-top:8px;font-size:.95rem}.msj.bien{background:#DDF3E3}.msj.mal{background:#FCE0E0}
+@media (max-width:760px){.juego{grid-template-columns:1fr}#tab{aspect-ratio:auto;grid-template-rows:repeat(5,52px)}}
+</style>
+</head>
+<body>
+<main>
+  <div class="tarjeta" id="config"><h1>🎲 Serpientes y escaleras de la seguridad</h1>
+    <p class="tenue">Las <b>escaleras</b> son buenas prácticas que te hacen subir; las <b>serpientes</b> son actos inseguros que te regresan. Cada una dice en qué norma se apoya. Juegan de 1 a 4 personas en el mismo dispositivo, por turnos. <b>Para que tu tiro valga, contesta bien la pregunta</b>; si fallas, te quedas en tu lugar.</p>
+    <div class="cfg" id="cfgJug"></div><button class="sec" id="bMas">➕ Agregar jugador</button> <button class="prim" id="bJugar">¡A jugar!</button></div>
+  <div class="juego" id="juego" style="display:none">
+    <div><div id="tab"><svg id="lineas"></svg></div></div>
+    <div class="tarjeta lado"><div id="jugs"></div><div id="dado">🎲</div><button class="prim" id="bTirar" style="width:100%">Tirar el dado</button><div id="msj"></div></div>
+  </div>
+  <p class="fuente">Fuentes en cada casilla especial. Consulta las normas completas en la Biblioteca del campus.</p>
+</main>
+<script>
+Juego.iniciar({ titulo: 'Serpientes y escaleras', icono: '🎲' });
+const $ = s => document.querySelector(s);
+const META = 50, COLORES = ['#C62828', '#154F90', '#2E7D32', '#E0A82E'];
+const ESCALERAS = [
+  { de: 3, a: 18, t: 'Usaste el equipo de protección personal asignado y lo revisaste antes de usarlo.', f: 'NOM-017-STPS-2024, 5.9 y capítulo 6' },
+  { de: 8, a: 28, t: 'Participaste en el simulacro de evacuación.', f: 'NOM-002-STPS-2010, 5.7' },
+  { de: 14, a: 27, t: 'Ubicaste la ruta de evacuación y el punto de reunión.', f: 'NOM-003-SEGOB-2011, 5.1' },
+  { de: 21, a: 40, t: 'La carga era pesada: la levantaron entre dos personas.', f: 'NOM-036-1-STPS-2018, 8.3 b) 3)' },
+  { de: 25, a: 36, t: 'Te lavaste las manos antes de tocar al paciente (5 momentos).', f: 'OMS (2009) Guidelines on Hand Hygiene; AESP, Acción Esencial 5' },
+  { de: 32, a: 49, t: 'La comisión de seguridad e higiene hizo su recorrido trimestral y reportó lo que encontró.', f: 'NOM-019-STPS-2011, 9.5' },
+];
+const SERPIENTES = [
+  { de: 17, a: 4, t: 'Fumaste junto a la señal de "Prohibido fumar".', f: 'NOM-026-STPS-2008, Apéndice A, A.1' },
+  { de: 31, a: 11, t: 'Un hombre de 30 años cargó solo un bulto de 30 kg: rebasa la masa máxima de 25 kg.', f: 'NOM-036-1-STPS-2018, 8.3 b) 2)' },
+  { de: 37, a: 24, t: 'Tapaste la señal del extintor con cajas: las señales deben verse sin obstrucción.', f: 'NOM-003-SEGOB-2011, 6.4 y 10.2.4' },
+  { de: 43, a: 23, t: 'Ignoraste la señal amarilla de superficie resbalosa.', f: 'NOM-026-STPS-2008, Apéndice C, C.15' },
+  { de: 46, a: 35, t: 'Sumaste más de 12 horas en un día entre jornada ordinaria y horas extra.', f: 'LFT, art. 68' },
+  { de: 48, a: 13, t: 'Entraste donde decía "Prohibido el paso".', f: 'NOM-026-STPS-2008, Apéndice A, A.3' },
+];
+const ESP = Object.fromEntries([...ESCALERAS.map(e => [e.de, { ...e, tipo: 'esc' }]), ...SERPIENTES.map(e => [e.de, { ...e, tipo: 'ser' }])]);
+let jugadores = [], turno = 0, ocupado = false, t0 = 0, tiros = 0;
+// configuración
+const filas = () => $('#cfgJug').querySelectorAll('input');
+function filaJug(nombre) { if (filas().length >= 4) return; const i = filas().length; $('#cfgJug').insertAdjacentHTML('beforeend', `<label style="display:flex;gap:8px;align-items:center"><span class="f" style="background:${COLORES[i]};width:20px;height:20px"></span><input maxlength="24" placeholder="Nombre del jugador ${i + 1}" value="${nombre || ''}"></label>`); }
+filaJug(Juego.nombre()); filaJug('');
+$('#bMas').onclick = () => filaJug('');
+$('#bJugar').onclick = () => { jugadores = [...filas()].map((inp, i) => ({ nombre: inp.value.trim() || `Jugador ${i + 1}`, pos: 0, color: COLORES[i] })).filter((j, i) => i === 0 || filas()[i].value.trim());
+  $('#config').style.display = 'none'; $('#juego').style.display = 'grid'; t0 = Date.now(); dibujar(); pintar(); };
+// tablero en zigzag: fila de abajo 1-10 de izquierda a derecha
+function celda(n) { const f = Math.floor((n - 1) / 10), k = (n - 1) % 10; return { fila: 4 - f, col: f % 2 === 0 ? k : 9 - k }; }
+function dibujar() {
+  const orden = []; for (let fila = 0; fila < 5; fila++) for (let col = 0; col < 10; col++) { for (let n = 1; n <= META; n++) { const c = celda(n); if (c.fila === fila && c.col === col) orden.push(n); } }
+  $('#tab').insertAdjacentHTML('beforeend', orden.map(n => { const e = ESP[n]; return `<div class="c ${e ? e.tipo : ''} ${n === META ? 'meta' : ''}" id="c${n}"><span>${n}</span>${e ? `<span class="ic">${e.tipo === 'esc' ? '🪜' : '🐍'}</span>` : n === META ? '<span class="ic">🏁</span>' : ''}<div class="fichas"></div></div>`; }).join(''));
+  new ResizeObserver(() => lineas()).observe($('#tab'));
+}
+function lineas() { const svg = $('#lineas'), r = svg.getBoundingClientRect(); svg.setAttribute('viewBox', `0 0 ${r.width} ${r.height}`);
+  const cen = n => { const b = $('#c' + n).getBoundingClientRect(); return [b.left - r.left + b.width / 2, b.top - r.top + b.height / 2]; };
+  svg.innerHTML = [...ESCALERAS.map(e => { const [a, b] = [cen(e.de), cen(e.a)]; return `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#2E7D32" stroke-width="6" stroke-dasharray="4 6" stroke-linecap="round" opacity=".8"/>`; }),
+    ...SERPIENTES.map(e => { const [a, b] = [cen(e.de), cen(e.a)]; const mx = (a[0] + b[0]) / 2 + 30, my = (a[1] + b[1]) / 2; return `<path d="M${a[0]},${a[1]} Q${mx},${my} ${b[0]},${b[1]}" stroke="#C62828" stroke-width="6" fill="none" stroke-linecap="round" opacity=".75"/>`; })].join(''); }
+function pintar() {
+  document.querySelectorAll('.fichas').forEach(f => f.innerHTML = '');
+  jugadores.forEach(j => { if (j.pos > 0) $('#c' + j.pos + ' .fichas').insertAdjacentHTML('beforeend', `<span class="f" style="background:${j.color}" title="${j.nombre}"></span>`); });
+  $('#jugs').innerHTML = jugadores.map((j, i) => `<div class="jug ${i === turno ? 'turno' : ''}"><span class="f" style="background:${j.color};width:18px;height:18px"></span>${j.nombre}<span style="margin-left:auto">casilla ${j.pos}</span></div>`).join('');
+  $('#bTirar').textContent = `Tirar el dado · turno de ${jugadores[turno].nombre}`;
+}
+const espera = ms => new Promise(r => setTimeout(r, ms));
+function preguntar(j, d) {
+  return new Promise(res => { const q = Banco.alAzar(); if (!q) return res(true);
+    const orden = Juego.barajar(q.o.map((o, k) => ({ o, k })));
+    Juego.modal(`<small style="color:#3FA7C6;font-weight:800">${q.tema} · ${j.nombre} sacó ${d}</small><h2>${q.p}</h2>${q.img ? `<img src="${q.img}" style="height:120px;display:block;margin:6px auto">` : ''}
+      <div id="ops">${orden.map(x => `<button class="sec" style="display:block;width:100%;text-align:left;margin:6px 0;padding:11px;font-size:1rem" data-k="${x.k}">${x.o}</button>`).join('')}</div><div id="rq"></div>`, true);
+    document.querySelectorAll('#ops button').forEach(b => b.onclick = () => { if (b.dataset.hecho) return; document.querySelectorAll('#ops button').forEach(x => { x.dataset.hecho = 1; if (+x.dataset.k === q.r) x.style.background = '#DDF3E3'; });
+      const ok = +b.dataset.k === q.r; if (!ok) b.style.background = '#FCE0E0';
+      document.getElementById('rq').innerHTML = `<p><b>${ok ? `✅ ¡Correcto! Avanzas ${d}.` : '❌ Incorrecto: el tiro no cuenta.'}</b> ${q.rf || ''}</p><p class="fuente">Fuente: ${q.f}</p><button class="prim" id="bSeguir">Continuar</button>`;
+      document.getElementById('bSeguir').onclick = () => { Juego.cerrar(); res(ok); }; }); });
+}
+$('#bTirar').onclick = async () => {
+  if (ocupado) return; ocupado = true; $('#bTirar').disabled = true; tiros++;
+  const caras = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅']; for (let i = 0; i < 8; i++) { $('#dado').textContent = caras[Math.floor(Math.random() * 6)]; await espera(70); }
+  const d = 1 + Math.floor(Math.random() * 6); $('#dado').textContent = caras[d - 1] + ' ' + d;
+  const j = jugadores[turno];
+  // Para que el tiro sea válido hay que contestar bien una pregunta del banco; si no, se queda en su lugar
+  const acierto = await preguntar(j, d);
+  j.preg = (j.preg || 0) + 1; if (acierto) j.ok = (j.ok || 0) + 1;
+  if (!acierto) { $('#msj').innerHTML = `<div class="msj mal"><b>❌ Tiro no válido:</b> ${j.nombre} se queda en la casilla ${j.pos}.</div>`;
+    turno = (turno + 1) % jugadores.length; pintar(); ocupado = false; $('#bTirar').disabled = false; return; }
+  const meta = Math.min(META, j.pos + d);
+  while (j.pos < meta) { j.pos++; pintar(); await espera(170); }
+  const e = ESP[j.pos]; $('#msj').innerHTML = '';
+  if (e) { await espera(250); j.pos = e.a; pintar(); $('#msj').innerHTML = `<div class="msj ${e.tipo === 'esc' ? 'bien' : 'mal'}"><b>${e.tipo === 'esc' ? '🪜 ¡Sube a la ' + e.a + '!' : '🐍 Baja a la ' + e.a}</b><br>${e.t}<br><span class="fuente">Fuente: ${e.f}</span></div>`; }
+  if (j.pos >= META) return fin(j);
+  turno = (turno + 1) % jugadores.length; pintar(); ocupado = false; $('#bTirar').disabled = false;
+};
+async function fin(j) { const s = Math.round((Date.now() - t0) / 1000);
+  const ok = await Juego.registrar({ modulo: 'Cafetería: serpientes y escaleras', nombre: j.nombre, caso: `${jugadores.length} jugador(es)`, puntos: 50, porcentaje: 100, errores: 0, segundos: s, resultado: 'Ganó' });
+  Juego.modal(`<h2>🏆 ¡Ganó ${j.nombre}!</h2><p>Llegó a la meta en ${Math.ceil(tiros / jugadores.length)} rondas.</p><p class="fuente">Recuerda: las escaleras son buenas prácticas; las serpientes, actos inseguros que en la vida real causan accidentes.</p>
+   <p class="fuente">${ok ? '✅ Resultado enviado a la persona instructora.' : ''}</p><button class="prim" onclick="location.reload()">Jugar otra vez</button>`); }
+</script>
+</body>
+</html>

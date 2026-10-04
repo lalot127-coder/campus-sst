@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Adivina quién: las NOM</title>
+<script src="../../motor/compartir.js"></script><script src="../../biblioteca/catalogo.js"></script><script src="comun.js"></script>
+<style>
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
+.nom{position:relative;background:#fff;border:3px solid var(--c);border-radius:14px;padding:9px;text-align:left;min-height:118px;transition:transform .3s,opacity .3s;font-size:.86rem;color:#1B2633}
+.nom b{display:block;color:var(--c);font-size:.95rem;margin-bottom:3px}.nom .dep{display:inline-block;margin-top:5px;font-size:.72rem;font-weight:800;color:#fff;background:var(--c);border-radius:999px;padding:1px 8px}
+.nom.abajo{opacity:.28;transform:scale(.94);filter:grayscale(1)}.nom.sel{outline:4px solid #E0A82E}
+.preg{display:flex;flex-wrap:wrap;gap:6px}.preg button{background:#E8F5F9;color:#0E3A6B;border:2px solid transparent;border-radius:10px;padding:8px 10px;font-weight:700;font-size:.9rem;text-align:left}
+.preg button:disabled{opacity:.45}.hist{font-size:.92rem;max-height:150px;overflow:auto}.hist div{padding:3px 0;border-bottom:1px solid #E8F5F9}
+.si{color:#2E7D32;font-weight:800}.no{color:#C62828;font-weight:800}.fila{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+</style>
+</head>
+<body>
+<main>
+  <div class="tarjeta"><h1>🕵️ Adivina quién: las Normas Oficiales Mexicanas</h1>
+    <p class="tenue">Pensé en una NOM. Haz preguntas de sí o no, voltea las que ya no pueden ser y adivina con las menos preguntas posibles. Toca una tarjeta para voltearla; toca <b>🎯 Adivinar</b> y luego la tarjeta que creas que es.</p>
+    <div class="fila"><label><input type="checkbox" id="auto" checked> Modo aprendizaje (voltear automáticamente las que no cumplen)</label><span id="marc" style="margin-left:auto;font-weight:800;color:#0E3A6B"></span></div></div>
+  <div class="tarjeta"><b>Haz una pregunta:</b><div class="preg" id="preg"></div><div class="hist" id="hist"></div>
+    <div class="fila" style="margin-top:8px"><button class="prim" id="bAdivinar">🎯 Adivinar</button><button class="sec" id="bNueva">Nueva partida</button></div></div>
+  <div class="grid" id="grid"></div>
+  <p class="fuente">Datos de cada norma tomados de la Biblioteca del campus (registro de fuentes verificadas, consulta 02-03/10/2026).</p>
+</main>
+<script>
+Juego.iniciar({ titulo: 'Adivina quién: las NOM', icono: '🕵️' });
+const $ = s => document.querySelector(s);
+// Etiquetas de tema por norma (según su título oficial)
+const TEMAS = { nom002: ['incendios'], nom017: ['epp'], nom019: ['organizacion'], nom026: ['senales'], nom030: ['organizacion'], nom035: ['salud_trab'], nom036: ['salud_trab'],
+  nom045: ['hospital'], nom087: ['hospital', 'residuos'], nom025ssa: ['hospital'], nom003: ['senales', 'incendios'] };
+const CARTAS = DOCUMENTOS.filter(d => TEMAS[d.id]).map(d => ({ ...d, anio: +d.clave.match(/(\d{4})$/)[1], temas: TEMAS[d.id], color: ESTANTES.find(e => e.id === d.estante).color }));
+const PREGUNTAS = [
+  { t: '¿La emite la STPS?', f: c => c.estante === 'stps' },
+  { t: '¿Participa la Secretaría de Salud?', f: c => c.estante === 'ssa' },
+  { t: '¿Es de protección civil (SEGOB)?', f: c => c.estante === 'segob' },
+  { t: '¿El año de su clave es anterior a 2010?', f: c => c.anio < 2010 },
+  { t: '¿El año de su clave es 2018 o posterior?', f: c => c.anio >= 2018 },
+  { t: '¿Trata de señales o colores?', f: c => c.temas.includes('senales') },
+  { t: '¿Trata de incendios o emergencias?', f: c => c.temas.includes('incendios') },
+  { t: '¿Trata de factores de riesgo para la salud de quien trabaja (psicosocial o ergonómico)?', f: c => c.temas.includes('salud_trab') },
+  { t: '¿Se aplica en hospitales o servicios de salud?', f: c => c.temas.includes('hospital') },
+  { t: '¿Trata de cómo organizar la seguridad (comisiones o servicios preventivos)?', f: c => c.temas.includes('organizacion') },
+  { t: '¿Trata de equipo de protección personal?', f: c => c.temas.includes('epp') },
+  { t: '¿Trata de residuos?', f: c => c.temas.includes('residuos') },
+];
+let secreta, hechas, fallas, adivinando, t0;
+function nueva() {
+  secreta = CARTAS[Math.floor(Math.random() * CARTAS.length)]; hechas = 0; fallas = 0; adivinando = false; t0 = Date.now(); $('#hist').innerHTML = '';
+  $('#grid').innerHTML = Juego.barajar(CARTAS).map(c => `<button class="nom" data-id="${c.id}" style="--c:${c.color}"><b>${c.clave}</b>${c.titulo}<br><span class="dep">${c.emisor}</span></button>`).join('');
+  document.querySelectorAll('.nom').forEach(b => b.onclick = () => tocarCarta(b));
+  $('#preg').innerHTML = PREGUNTAS.map((p, i) => `<button data-i="${i}">${p.t}</button>`).join(''); document.querySelectorAll('#preg button').forEach(b => b.onclick = () => preguntar(+b.dataset.i, b));
+  marc();
+}
+function marc() { $('#marc').textContent = `Preguntas: ${hechas} · Intentos fallidos: ${fallas}/3`; $('#bAdivinar').textContent = adivinando ? '👉 Toca la tarjeta elegida' : '🎯 Adivinar'; }
+function preguntar(i, b) { const p = PREGUNTAS[i], r = p.f(secreta); hechas++; b.disabled = true;
+  $('#hist').insertAdjacentHTML('afterbegin', `<div>${p.t} <span class="${r ? 'si' : 'no'}">${r ? 'SÍ' : 'NO'}</span></div>`);
+  if ($('#auto').checked) document.querySelectorAll('.nom').forEach(el => { const c = CARTAS.find(x => x.id === el.dataset.id); if (p.f(c) !== r) el.classList.add('abajo'); });
+  marc(); }
+function tocarCarta(el) {
+  if (!adivinando) { el.classList.toggle('abajo'); return; }
+  adivinando = false; if (el.dataset.id === secreta.id) return ganar();
+  fallas++; el.classList.add('abajo'); Juego.toast(`❌ No es ${CARTAS.find(c => c.id === el.dataset.id).clave}.`, 'no'); marc();
+  if (fallas >= 3) perder();
+}
+$('#bAdivinar').onclick = () => { adivinando = !adivinando; marc(); if (adivinando) Juego.toast('Toca la tarjeta de la NOM que crees que es.', 'info'); };
+$('#bNueva').onclick = nueva;
+async function ganar() { const pts = Math.max(10, 100 - hechas * 8 - fallas * 20), s = Math.round((Date.now() - t0) / 1000);
+  const ok = await Juego.registrar({ modulo: 'Cafetería: adivina quién NOM', caso: secreta.clave, puntos: pts, porcentaje: pts, errores: fallas, segundos: s, resultado: 'Adivinó' });
+  Juego.modal(`<h2>🏆 ¡Era la ${secreta.clave}!</h2><p>${secreta.titulo}</p><p><b>${pts} puntos</b> · ${hechas} preguntas · ${fallas} intento(s) fallido(s).</p><p class="fuente">${secreta.publicacion} · ${secreta.uso}</p>
+   <p class="fuente">${ok ? '✅ Resultado enviado a la persona instructora.' : ''}</p><button class="prim" onclick="Juego.cerrar();nueva()">Otra partida</button> <a class="sec" style="text-decoration:none;display:inline-block" href="../biblioteca/index.html">📚 Leerla en la biblioteca</a>`); }
+function perder() { Juego.modal(`<h2>😅 Se acabaron los intentos</h2><p>Era la <b>${secreta.clave}</b>: ${secreta.titulo}.</p><p class="fuente">${secreta.publicacion} · ${secreta.uso}</p><button class="prim" onclick="Juego.cerrar();nueva()">Otra partida</button>`); }
+nueva();
+</script>
+</body>
+</html>
