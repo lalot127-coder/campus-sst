@@ -1,0 +1,1015 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="es" lang="es">
+<head><meta charset="utf-8">
+<title>DOF - Diario Oficial de la Federación</title>
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<link rel="shortcut icon" href="css/imagenes/favicon2.ico" />
+
+<!--meta http-equiv="content-type" content="text/html; charset=UTF-8" /-->
+<meta http-equiv="content-language" content="es" /><!--  <link rel="stylesheet" href="css/estilo_movil.css" type="text/css" media="handheld, all" />  -->
+<style type="text/css" media="print, screen and (min-width: 481px)">
+<!--  /*<![CDATA[*/
+@import url("css/estilo.css");
+/*]]>*/   -->
+</style>
+<!--[if IE 7]><link rel="stylesheet" type="text/css" href="css/estiloIE7.css" /><![endif]-->
+<!--[if IE]><link rel="stylesheet" type="text/css" href="css/estilo.css" /><![endif]-->
+<!-- <link rel="stylesheet" href="css/estilo_sector.css" type="text/css" /> -->
+<link rel="stylesheet" href="css/estilos_nuevos.css" type="text/css" />
+<link rel="stylesheet" href="js/datepicker/css/datepicker.css" type="text/css" />
+<link rel="stylesheet" type="text/css" href="css/jkmegamenu.css" /><script src="js/jquery.js" type="text/javascript"></script>
+			<script src="js/calendar.js" type="text/javascript"></script>
+	
+
+<script type="text/javascript">
+	$(document).ready(function());
+</script>
+	
+<script type="text/javascript" src="js/jkmegamenu.js"></script>
+<script type="text/javascript">
+<!--jkmegamenu.definemenu("anchorid", "menuid", "mouseover|click")-->
+jkmegamenu.definemenu("megaanchor1", "megamenu1", "mouseover");
+jkmegamenu.definemenu("megaanchor2", "megamenu2", "mouseover");
+</script>
+<!--Calendario (datepicker)-->
+<!--<script type="text/javascript" src="js/datepicker/js/jquery.js"></script>-->
+<script type="text/javascript" src="js/datepicker/js/datepicker.js"></script>
+<script type="text/javascript" src="js/datepicker/js/eye.js"></script>
+<script type="text/javascript" src="js/datepicker/js/utils.js"></script>
+<script type="text/javascript" src="js/submenutramite.js"></script>
+<script type="text/javascript" src="js/prototype.js"></script>
+
+<script type="text/javascript">
+var nombre_cookie='algo';
+function getCookie(c_name)
+{
+	var i,x,y,ARRcookies=document.cookie.split(";");
+	for (i=0;i<ARRcookies.length;i++)
+	{
+		x=ARRcookies[i].substr(0,ARRcookies[i].indexOf("="));
+		y=ARRcookies[i].substr(ARRcookies[i].indexOf("=")+1);
+		x=x.replace(/^\s+|\s+$/g,"");
+		if (x==c_name)
+		{
+			return unescape(y);
+		}
+	}
+}
+
+function setCookie( c_name, value, exdays )
+{
+	var exdate=new Date();
+	exdate.setDate(exdate.getDate() + exdays);
+	var c_value=escape(value) + ((exdays==null) ? "" : "; expires="+exdate.toUTCString());
+	document.cookie=c_name + "=" + c_value;
+}
+
+function checkCookie( cookie_name )
+{
+	var cookie = getCookie( cookie_name );
+	
+	if (cookie!=null && cookie!="")
+	{
+		return cookie;
+	}
+	else
+	{
+		setCookie( cookie_name, 'ok', 1 );
+	}
+}
+</script>
+
+<link href="js/facebox/facebox.css" media="screen" rel="stylesheet" type="text/css" />
+<script src="js/facebox/facebox.js" type="text/javascript"></script>
+
+		<p></p>
+<!-- +*00*+ -->	
+	
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-32467343-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-32467343-2');
+  gtag('config', '312679867');  
+</script>
+	
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-122869068-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-122869068-1');
+  
+  </script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-135481568-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-135481568-1');
+  
+</script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-32467343-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-32467343-1');
+  gtag('config', 'G-ZMM3EN33WP');
+  gtag('config', '250873989');
+</script>
+
+
+<p></p>
+ 
+<script>
+  (function() {
+    var cx = '004413727585741999197:t2nrchmbyme';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+        '//www.google.com/cse/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+  })();
+</script>
+<gcse:search></gcse:search>
+
+
+
+
+
+	<script type="text/javascript">
+	//<![CDATA[
+		A_MINUSCULA_ACENTUADA = String.fromCharCode(0x00E1);
+		E_MINUSCULA_ACENTUADA = String.fromCharCode(0x00E9);
+		I_MINUSCULA_ACENTUADA = String.fromCharCode(0x00ED);
+		O_MINUSCULA_ACENTUADA = String.fromCharCode(0x00F3);
+		U_MINUSCULA_ACENTUADA = String.fromCharCode(0x00FA);
+		N_MINUSCULA_CON_NUFLO = String.fromCharCode(0x00F1);
+		A_MAYUSCULA_ACENTUADA = String.fromCharCode(0x00C1);
+		E_MAYUSCULA_ACENTUADA = String.fromCharCode(0x00C9);
+		I_MAYUSCULA_ACENTUADA = String.fromCharCode(0x00CD);
+		O_MAYUSCULA_ACENTUADA = String.fromCharCode(0x00D3);
+		U_MAYUSCULA_ACENTUADA = String.fromCharCode(0x00DA);
+		N_MAYUSCULA_CON_NUFLO = String.fromCharCode(0x00D1);
+		SIGNO_APERTURA_INTERROGACION = String.fromCharCode(0x00BF);
+		SIGNO_MENOR = String.fromCharCode(0x2039);
+		SIGNO_MAYOR = String.fromCharCode(0x203A);
+		
+		function LoginUsuario() {
+			if (document.formLoginUsuario.usuario.value == '') {
+					alert("Por favor ingrese el Usuario.");
+					document.formLoginUsuario.usuario.focus();
+					return;
+			}
+			if (document.formLoginUsuario.clave.value == '') {
+					alert("Por favor ingrese la Clave.");
+					document.formLoginUsuario.clave.focus();
+					return;
+			}
+			document.formLoginUsuario.submit();
+		}
+		
+		function CerrarSesion() {
+			document.formLoginUsuario.AccionLogin.value="CERRAR_SESION";
+			document.formLoginUsuario.submit();
+		}
+		
+		function CambiarPerfil() {
+			document.formLoginUsuario.AccionLogin.value="CAMBIAR_PERFIL";
+			document.formLoginUsuario.submit();
+		}
+		
+		// Retrieve the value of the cookie with the specified name.
+		function GetCookie(sName) {
+		  // cookies are separated by semicolons
+		  var aCookie = document.cookie.split("; ");
+		  for (var i=0; i < aCookie.length; i++)
+		  {
+			// a name/value pair (a crumb) is separated by an equal sign
+			var aCrumb = aCookie[i].split("=");
+			if (sName == aCrumb[0]) 
+			  return unescape(aCrumb[1]);
+		  }
+
+		  // a cookie with the requested name does not exist
+		  return null;
+		}
+
+
+		function historyAdd() {
+			var historyStack = GetCookie("historyStack");
+			historyStack = ((historyStack == null)||(historyStack == "undefined")) ?"":historyStack+"*";
+			document.cookie = "historyStack=" + historyStack + self.location.href.replace("=","|") + "; ";
+		}
+
+		function historyBack() {
+			var historyStack = GetCookie("historyStack");
+			var aLocations = historyStack.split("*");
+
+			
+			if(aLocations.length > 1)
+			{
+				aLocations.pop(); //saca la pagina actual
+				
+
+				var anew = aLocations.pop(); //saca la pagina a cargar, que tiene su propio historyAdd()			
+				document.cookie = "historyStack=" + aLocations.join("*") + "; ";
+				self.location.href = anew.replace("|","=");
+			}
+		}
+
+		function busquedaSimple(strBusqueda) {	
+			if(strBusqueda.length < 2) {
+				alert("Debe ingresar al menos 2 caracteres para realizar la b" + U_MINUSCULA_ACENTUADA + "squeda");
+				return;
+			}
+			var oForm=document.createElement("form");
+			var oBusqueda=document.createElement("input");
+			var oVieneDe=document.createElement("input");
+
+			document.body.appendChild(oForm);
+
+			oForm.name="formBusqueda";
+			oForm.method="GET";
+			oForm.action="http://dof.gob.mx/busqueda_detalle.php";
+
+			oBusqueda.type="hidden";
+			oBusqueda.name="textobusqueda";
+			oBusqueda.value=strBusqueda;
+
+			oVieneDe.type="hidden";
+			oVieneDe.name="vienede";
+			oVieneDe.value="";
+
+			oForm.appendChild(oBusqueda);
+			oForm.appendChild(oVieneDe);
+
+			oForm.submit();
+
+		}
+
+		function busquedaSimple2(strBusqueda2) {
+			if(strBusqueda2.length < 2)  
+			   {
+				alert("Debe ingresar al menos 2 caracteres para realizar la b˙squeda");
+				return;
+			}
+			var oForm=document.createElement("form");
+			var oBusqueda=document.createElement("input");
+			var oVieneDe=document.createElement("input");
+
+			document.body.appendChild(oForm);
+
+			oForm.id="formBusqueda2";
+			oForm.method="POST";
+			oForm.action="{php}echo $DOMINIO_FE;{/php}/busqueda_detalle.php?textobusqueda2="+strBusqueda2+"&amp;vienede2=";
+
+			oForm.submit();
+		}
+
+		function isEnter() {
+			if(event.keyCode==13)
+				LoginUsuario();
+		}
+		function isEnterFind() {
+			if(event.keyCode==13)
+			{
+				busquedaSimple(document.getElementById('textobusqueda').value);
+			}
+		}
+		function isEnterFind2() {
+			if(event.keyCode==13)
+			{
+				busquedaSimple2(document.getElementById('textobusqueda2').value);
+			}
+		}
+		historyAdd();
+
+		function getWindowWidth() {
+		  var windowWidth = 0;
+		  if (typeof(window.innerWidth) == 'number') {
+		    windowWidth=window.innerWidth;
+                    windowWidth = windowWidth -21;
+		  }
+		  else {
+		    if (document.documentElement && document.documentElement.clientWidth) {
+		      windowWidth=document.documentElement.clientWidth  ;
+		    }
+		    else {
+		      if (document.body && document.body.clientWidth) {
+			windowWidth=document.body.clientWidth;
+		      }
+		    }
+		  }
+		  return windowWidth;
+		}
+
+                function rdm()
+                {
+				/*
+                    //alert("Tú resolución es de: " + screen.width + " x " + screen.height +"");
+                    var id=document.getElementById("TabbedPanelsTabGroup2");
+                
+
+                    alert(screen.width+' --- '+getWindowWidth());
+                    var w = screen.width;//getWindowWidth();
+                    var w2 = getWindowWidth();
+                    var dif = 0;
+                    
+                    if( w2 <= 800 )
+                    	dif = 545;
+                    
+                    //alert(w); 
+                    switch(w){
+                         case 800:
+                           dif = 545; 
+                         break;
+                         case 1024:
+                           dif = 702; 
+                         break;  
+                         case 1280:         
+                           dif = 710;
+                         break; 
+                         case 1366:         
+                           dif = 577; 
+                         break; 
+                         case 1440:         
+                           dif = 577; 
+                         break; 
+                         case 1600:         
+                           dif = 577; 
+                         break; 
+                         case 1920:         
+                           dif = 577; 
+                         break;  
+                    }
+                   
+                    //alert("Tú div es de: " + curr_width );
+                    //id2=document.getElementById("wrapper");
+                    //alert("tamaño wrapper " + id2.style.width);
+                    
+                    nvo_width = screen.width - dif;
+                    id.style.width=nvo_width + "px";
+                    //nvo_width = screen.width - 665;
+                    //id2.style.width=nvo_width + "px";                    
+					*/
+                }
+
+//]]>
+</script>
+<noscript>Su navagedor no soporta JavaScript!</noscript>
+
+<div  id="cuerpo_principal">
+
+<table width="100%"  border="0" align="center" cellpadding="0" cellspacing="0">
+
+	<tr>
+	   <td valign="top" colspan="3">
+	      <div id="encabezado">
+		 <div id="barra_herramientas">
+			<div id="login">
+			
+						
+				<form  name="formLoginUsuario" method="post" action="https://dof.gob.mx/index.php" style="margin: 0pt; padding: 0pt;">
+					<input type="hidden" name="AccionLogin" value="LOGIN" />
+					<p>
+					<label for="usuario">Usuario</label>
+					<input type="text" value="Usuario" id="usuario" name="usuario" onblur="if(this.value=='') this.value='Usuario';" onfocus="if(this.value=='Usuario') this.value='';" size="25" maxlength="20" />
+					<label for="clave">Clave</label>
+					<input type="password" value="Clave" id="clave" name="clave" onblur="if(this.value=='') this.value='Clave';" onfocus="if(this.value=='Clave') this.value='';" size="25" maxlength="20" />
+					<label for="entrar">Entrar</label>
+					<input type="submit" value="Ingresar" id="entrar" name="entrar" onclick="LoginUsuario();" />
+					</p>
+					<p class="olvido">
+					
+						<a href="olvido_usuario.php">&iquest;Olvid&oacute; su usuario?</a>
+					</p>
+				</form>
+				
+							
+			</div>
+			<div id="herramientas">
+				<a href="index.php">Inicio</a> | <!-- <a target="_blank" href="http://portaltransparencia.gob.mx/pot/directorio/begin.do?method=begin&amp;_idDependencia=00004">Directorio</a>  | --><a href="contactenos.php">Contacto</a> | <a href="mapa.php" name="mapadesitio">Mapa del Sitio</a> | <a href="ayuda.php">Ayuda</a>
+			</div>
+		</div>
+		<div id="firma_busqueda">
+			<div id="firma">
+				<a id="inicio" href="index.php">.</a>
+			</div>
+			<div id="buscar">
+				<!--<div id="dominio">
+					<strong> www.dof.gob.mx &nbsp;</strong>
+				</div>
+				-->
+				<div id="rss_caja">
+					<a href="sumario.xml">
+						<img src="images/head_4i.gif" alt="RSS" />
+					</a>
+				</div>
+				
+				<div style="float: right;">
+				<form method="post" action="busqueda_detalle.php">
+					<label for="textobusqueda">Busqueda</label>
+					<input name="textobusqueda" id="textobusqueda" class="form" value="Buscar..." type="text" onblur="if(this.value=='') this.value='Buscar...';" onfocus="if(this.value=='Buscar...') this.value='';" onkeypress="if(event.keyCode==13)busquedaSimple(document.getElementById('textobusqueda').value);" />
+					<input type="hidden" name="vienede" value="header" />
+					<input type="submit" name="s" value="s" style="display:none;" />
+					<div style="float: right;">
+						<!-- input type="image" alt="Buscar" src="css/imagenes/botonir.gif" onclick="busquedaSimple(document.getElementById('textobusqueda').value);" style="margin-top:2px;*margin-top:1px;" / -->
+						<input type='submit' style='background-image(css/imagenes/botonir.gif);margin-top:0px;*margin-top:1px; height: 24px;' value='' />
+					</div>
+				</form>
+				</div>
+			</div>
+		</div>
+          
+		<!-- ************************************************* menu **************************************** -->
+		<div class="menu_principal">
+			<div id="menu_items">
+				<!--Mega Menu Anchor-->
+				<a href="http://dof.gob.mx/index.php" class="regresar_top">
+					<img src="imagesnew/btn_back.png" style="border: 0 none;" alt="Regresar" />
+				</a>
+				<a href="index.php"><span class="letra_menu">Ejemplar de hoy</span></a>
+				<a href="tramites1.php?info=completa" id="megaanchor1">Tr&aacute;mites</a>
+				<a href="#" id="megaanchor2">Servicios</a>
+				<a href="http://www.ordenjuridico.gob.mx/leyes.php">Leyes y Reglamentos</a>
+				<a href="faqs.php">Preguntas Frecuentes</a>
+				<a href="#" onclick="javascript:window.open('http://dof.gob.mx/ayuda_contextual.php?seccionId=35','Ayuda','scrollbars=yes,width=700,height=700,resizable=yes');" class="ayuda_contextual">
+					<img src="images/help.png" border="0" title="Ayuda" alt="ayuda" />
+				</a>
+			</div>
+			<a href="http://twitter.com/#!/DOF_segob" class="twitter" target="_blank">
+				<img src="images/twitter.png" border="0" title="twitter" alt="twitter" class="twitter"/>
+			</a>
+			<!--Mega Drop Down Menu HTML. Retain given CSS classes-->
+			<div id="megamenu1" class="megamenu">
+
+				<div class="column">
+					<span></span>
+					<ul>
+						<li><a href="/tramites1.php?info=completa">Publicaci&oacute;n de documentos</a></li>
+					<!--	<li><a href="/distribuidores.php?info=completa">Distribuci&oacute;n de ejemplares</a></li>  -->
+						<li><a href="/ejemplaresDisponibles.php?info=completa">Adquisici&oacute;n de ejemplares</a></li>
+					</ul>
+				</div>
+			</div>
+			<div id="megamenu2" class="megamenu">
+
+				<div class="column">
+					<span></span>
+					<ul style="list-style: square url('imagesnew/bullet_left_menu.png');">
+						<li><a href="/cotizador.php">Cotizador de publicaciones</a></li>
+					<!--	<li><a href="/distribuidores.php">Distribuidores autorizados</a></li>  -->
+						<li><a href="/ejemplaresDisponibles.php?inicio=si">Consulta de existencias de ejemplares</a></li>
+						
+						<li><a href="/login_entrega_publicaciones.php">Solicitud de publicaci&oacute;n de documentos en forma electr&oacute;nica</a></li>
+
+					</ul>
+				</div>
+			</div>
+		</div>
+		 <!-- ************************************************* fin menu **************************************** -->
+	  </div>
+	 </td>
+	</tr>
+	        
+	<tr  id="trcontent">
+		<td valign="top" id="tdcontent">
+			<table width="100%" border="0" cellspacing="0" cellpadding="0">
+					<td valign="top">
+<script language="javascript">
+	function Enviar(cod_nota) {
+		window.open("favoritos_agregar.php?cod_nota="+cod_nota,"", 
+					"height=250,width=400,scrollbars=no,toolbar=no,status=no,menubar=no,location=no,resizable=no")
+
+	}
+	</script>
+
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+	<tr>
+		<td valign="top">
+		<tr><td valign='top'><table cellpadding='0' cellspacing='0' border='0' width='95%' align='center'> 
+<tr> 
+<td>&nbsp;</td>
+</tr> 
+<tr>
+<td class='txt' style='padding-left:20px;padding-top:4px; padding-bottom:4px;' height='24'><b>DOF: 23/08/2022</b> </td></tr>
+<tr> 
+<td style='padding:10px;font-size:12px'><div id='DivDetalleNota' align='justify' style='overflow:hidden; padding-left:10px; width:695px; position: relative;'>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"> <HTML> <head>   <title>DECRETO por el que se Reforman, Adicionan y Derogan Diversas Disposiciones del Reglamento General de Inspecci&oacute;n del Trabajo y Aplicaci&oacute;n de Sanciones</title>                            <style type='text/css'> .ANOTACION {text-indent:0.0pt;text-align:center;font-size:9.0pt;margin-left:0.0pt;margin-bottom:5.05pt;font-family:serif,Times,Times Roman,Times-Roman;margin-top:5.05pt;font-weight:bold;} .Fechas {margin-right:14.4pt;text-indent:0.0pt;text-align:justify;font-size:9.0pt;border-bottom: 0.75pt solid rgb(0,0,0);margin-left:14.4pt;margin-bottom:0.0pt;font-family:serif,Times,Times Roman,Times-Roman;padding-bottom:0.05pt;} .Normal {text-indent:0.0pt;font-size:12.0pt;margin-left:0.0pt;font-family:serif,Times,Times Roman,Times-Roman;} .Texto {text-indent:14.4pt;text-align:justify;font-size:9.0pt;margin-left:0.0pt;margin-bottom:5.05pt;font-family:Tahoma,Arial Unicode MS,Verdana,system, , ,Arial Black,sans-serif,Helvetica,dialog;} .Titulo_2 {padding-top:0.05pt;text-indent:0.0pt;text-align:justify;font-size:9.0pt;margin-left:0.0pt;margin-bottom:5.05pt;font-family:Tahoma,Arial Unicode MS,Verdana,system, , ,Arial Black,sans-serif,Helvetica,dialog;border-top: 0.75pt solid rgb(0,0,0);} .Titulo_1 {text-indent:0.0pt;text-align:justify;font-size:9.0pt;border-bottom: 1.5pt solid rgb(0,0,0);margin-left:0.0pt;margin-bottom:0.0pt;font-family:serif,Times,Times Roman,Times-Roman;margin-top:6.0pt;font-weight:bold;padding-bottom:0.05pt;} </style> </head> <BODY> <div style= '' > <h1 style='border-bottom: 1.5pt solid rgb(0,0,0);margin-bottom:0.0pt;margin-left:0.0pt;margin-top:6.0pt;text-indent:0.0pt;' class='Titulo_1'> <span style='font-family:Times;'>DECRETO</span><span style='font-family:Times;'> </span><span style='font-family:Times;'>por el que se Reforman, Adicionan y Derogan Diversas Disposiciones del Reglamento General de</span><span style='font-family:Times;'> </span><span style='font-family:Times;'>Inspecci&oacute;n del Trabajo y Aplicaci&oacute;n de Sanciones.</span></h1> <h2 style='border-top: 0.75pt solid rgb(0,0,0);margin-bottom:5.05pt;margin-left:0.0pt;text-indent:0.0pt;' class='Titulo_2'> <span style='font-family:Arial;'>Al margen un sello con el Escudo Nacional, que dice: Estados Unidos Mexicanos.- Presidencia de la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Rep&uacute;blica.</span></h2> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ANDR&Eacute;S MANUEL L&Oacute;PEZ OBRADOR</span><span style='font-family:Arial;'>, Presidente de los Estados Unidos Mexicanos, en ejercicio de la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>facultad que me confiere el art&iacute;culo 89, fracci&oacute;n I, de la Constituci&oacute;n Pol&iacute;tica de los Estados Unidos</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Mexicanos, y con fundamento en los art&iacute;culos 40 de la Ley Org&aacute;nica de la Administraci&oacute;n P&uacute;blica Federal y</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>540, 541, 542, 543, 550, 992, 1008 y 1009 de la Ley Federal del Trabajo, he tenido a bien expedir el siguiente</span></div> <div style='font-size:8.0pt;margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-size:8.0pt;font-family:Arial;font-weight:bold;'>DECRETO POR EL QUE SE REFORMAN, ADICIONAN Y DEROGAN DIVERSAS DISPOSICIONES DEL</span><span style='font-size:8.0pt;font-family:Arial;font-weight:bold;'> </span><span style='font-size:8.0pt;font-family:Arial;font-weight:bold;'>REGLAMENTO GENERAL DE INSPECCI&Oacute;N DEL TRABAJO Y APLICACI&Oacute;N DE SANCIONES</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO &Uacute;NICO.-</span><span style='font-family:Arial;'> Se </span><span style='font-family:Arial;font-weight:bold;'>REFORMAN</span><span style='font-family:Arial;'> los art&iacute;culos 2, p&aacute;rrafo primero y sus fracciones I, III, IV, VI, VII y</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>VIII; 3, p&aacute;rrafo primero; 6, p&aacute;rrafo primero, fracciones I, II, III y IV; 8, p&aacute;rrafo primero y sus fracciones IV, V, VI</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>y XIII; 11, p&aacute;rrafo primero, fracciones VI y VII; 14; 18; 22; 23; 27, fracciones I, II, p&aacute;rrafo segundo, y III; 28,</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>fracciones VII, VIII y IX; 29, p&aacute;rrafo cuarto; 30, p&aacute;rrafos primero, segundo y tercero; 31; 32; 36; 38, p&aacute;rrafo</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>primero; 40, p&aacute;rrafo primero, fracci&oacute;n II, p&aacute;rrafo segundo, y p&aacute;rrafo segundo; 41, p&aacute;rrafo primero; 42; 43,</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>p&aacute;rrafos primero y tercero; 51; 59, p&aacute;rrafo primero, fracci&oacute;n IX; 60, p&aacute;rrafo primero, y 63, as&iacute; como las</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>denominaciones de las secciones Cuarta y Quinta del Cap&iacute;tulo Segundo del T&iacute;tulo Segundo, y la del T&iacute;tulo</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Tercero; se </span><span style='font-family:Arial;font-weight:bold;'>ADICIONAN</span><span style='font-family:Arial;'> los art&iacute;culos 6, p&aacute;rrafo primero, la fracci&oacute;n VI Bis; 8, las fracciones IV Bis, VI Bis y</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>VIII Bis; 11, p&aacute;rrafo primero, la fracci&oacute;n VIII; 27, p&aacute;rrafo primero, fracci&oacute;n II, el p&aacute;rrafo segundo, y un p&aacute;rrafo</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>segundo; 28, las fracciones X y XI, y el p&aacute;rrafo segundo, y 46, los p&aacute;rrafos tercero y cuarto, y se </span><span style='font-family:Arial;font-weight:bold;'>DEROGA</span><span style='font-family:Arial;'> el</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>art&iacute;culo 11, p&aacute;rrafo primero, la fracci&oacute;n III, del Reglamento General de Inspecci&oacute;n del Trabajo y Aplicaci&oacute;n de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Sanciones, para quedar como sigue:</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 2.</span><span style='font-family:Arial;'> Para efectos del presente Reglamento, se entender&aacute; por:</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>I.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Autoridad del Trabajo: Las dependencias o unidades administrativas federales, estatales o de la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Ciudad de M&eacute;xico, que cuentan con facultades para vigilar el cumplimiento de la legislaci&oacute;n</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>laboral y aplicar las sanciones en los casos que procedan;</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>II.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>III.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Inspecci&oacute;n: Acto de la Autoridad del Trabajo competente, mediante el cual se realiza la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>promoci&oacute;n y la vigilancia del cumplimiento a la legislaci&oacute;n laboral, o bien se asiste y asesora a</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>los trabajadores y patrones en el cumplimiento de la misma. Su desahogo se realiza de manera</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>presencial en el Centro de Trabajo, a trav&eacute;s de las personas servidoras p&uacute;blicas facultadas y</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>autorizadas para ello, o bien mediante el uso de tecnolog&iacute;as de la informaci&oacute;n</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>y</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>comunicaciones, o con requerimientos documentales y an&aacute;logos;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>IV.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Inspector del Trabajo: La persona servidora p&uacute;blica autorizada por la Autoridad del Trabajo para</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>practicar visitas en los Centros de Trabajo;</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>V.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>VI.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Mecanismos Alternos a la Inspecci&oacute;n: Los esquemas que las Autoridades del Trabajo ponen a</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>disposici&oacute;n de los patrones para que informen o acrediten el cumplimiento de las disposiciones</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>laborales, siendo los siguientes:</span></div> <div style='margin-bottom:5.05pt;margin-left:79.2pt;text-indent:-21.6pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>a)</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Los programas de cumplimiento voluntario que establezca la Secretar&iacute;a;</span></div> <div style='margin-bottom:5.05pt;margin-left:79.2pt;text-indent:-21.6pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>b)</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Los procedimientos alternativos para el cumplimiento de las disposiciones laborales,</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>incluidos los emitidos por los organismos de evaluaci&oacute;n de la conformidad debidamente</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>acreditados y aprobados, conforme a la Ley de Infraestructura de la Calidad, y</span></div> <div style='margin-bottom:5.05pt;margin-left:79.2pt;text-indent:-21.6pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>c)</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Las acciones de concertaci&oacute;n y colaboraci&oacute;n que la Secretar&iacute;a determine a trav&eacute;s de la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>celebraci&oacute;n de convenios;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>VII.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Normas Oficiales Mexicanas: Las relacionadas con la materia de Seguridad y Salud en el</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Trabajo expedidas por la Secretar&iacute;a u otras dependencias y entidades de la Administraci&oacute;n</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>P&uacute;blica Federal, conforme a lo dispuesto en la Ley de Infraestructura de la Calidad y dem&aacute;s</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>disposiciones jur&iacute;dicas aplicables;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>VIII.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Peligro o Riesgo Inminente: Aquel que tiene una alta probabilidad de materializarse en un futuro</span><span style='font-family:Arial;'> </span></div>  <div style='margin-bottom:5.05pt;margin-left:57.6pt;page-break-before:avoid;text-indent:0.0pt;' class='Texto'> <span style='font-family:Arial;'>inmediato y supone un da&ntilde;o para la Seguridad y Salud en el Trabajo o la p&eacute;rdida de la vida de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>los trabajadores, o provocar da&ntilde;os graves al Centro de Trabajo, que se genera por la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>correlaci&oacute;n directa de alta peligrosidad de un agente f&iacute;sico, qu&iacute;mico, biol&oacute;gico o condici&oacute;n f&iacute;sica,</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>por exposici&oacute;n con los trabajadores, o de una emergencia o contingencia sanitaria;</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>IX.</span><span style='font-family:Arial;'> a </span><span style='font-family:Arial;font-weight:bold;'>XI.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 3.</span><span style='font-family:Arial;'> La Secretar&iacute;a y los gobiernos de las entidades federativas podr&aacute;n celebrar convenios para</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>establecer la coordinaci&oacute;n, auxilio y unificaci&oacute;n de criterios, programas, sistemas y procedimientos de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Inspecci&oacute;n y aplicaci&oacute;n de sanciones que permitan la adecuada vigilancia y cumplimiento de los preceptos</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>jur&iacute;dicos en materia de trabajo.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 6.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>I.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Las comunicaciones por virtud de las cuales se concedan plazos a los patrones para que</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>adopten las medidas de seguridad de aplicaci&oacute;n inmediata necesarias para prevenir o corregir</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>la situaci&oacute;n de Peligro o Riesgo Inminente procedentes, respecto de violaciones a la legislaci&oacute;n</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>laboral en materia de Seguridad y Salud en el Trabajo;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>II.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Las notificaciones a los presuntos infractores, a efecto de que comparezcan al procedimiento</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>administrativo para la aplicaci&oacute;n de sanciones;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>III.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Los acuerdos dictados dentro de los procedimientos administrativos tanto de Inspecci&oacute;n como</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>para la aplicaci&oacute;n de sanciones;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>IV.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>El acuerdo en el que se dicte la terminaci&oacute;n del procedimiento administrativo de Inspecci&oacute;n;</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>V.</span><span style='font-family:Arial;'> a </span><span style='font-family:Arial;font-weight:bold;'>VI.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>VI Bis.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Los acuerdos dictados respecto a la determinaci&oacute;n del registro al padr&oacute;n a que se refiere el</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>art&iacute;culo 15, p&aacute;rrafo quinto, de la Ley, as&iacute; como los relativos a la negativa o cancelaci&oacute;n de dicho</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>registro;</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>VII.</span><span style='font-family:Arial;'> a </span><span style='font-family:Arial;font-weight:bold;'>VIII.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 8.</span><span style='font-family:Arial;'> Los Inspectores del Trabajo, adem&aacute;s de las obligaciones previstas en la Ley, tienen</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>las</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>siguientes:</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>I.</span><span style='font-family:Arial;'> a </span><span style='font-family:Arial;font-weight:bold;'>III.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>IV.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Levantar las actas en las que se asienten los hechos o circunstancias que hayan ocurrido</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>durante la pr&aacute;ctica de las Inspecciones, as&iacute; como el resultado de dichas Inspecciones;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>IV Bis.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Instrumentar y notificar por instructivo los requerimientos administrativos se&ntilde;alados en la orden</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>de Inspecci&oacute;n, cuando el patr&oacute;n o su representante no permita la Inspecci&oacute;n y vigilancia por</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>parte de las Autoridades del Trabajo, de conformidad con el art&iacute;culo 1004-A de la Ley;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>V.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Turnar a sus superiores inmediatos en un plazo de tres d&iacute;as h&aacute;biles, contado a partir del d&iacute;a</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>h&aacute;bil siguiente a la fecha en que se concluy&oacute; la Inspecci&oacute;n, las actas que hubieren levantado y</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>la documentaci&oacute;n correspondiente, salvo los casos de excepci&oacute;n previstos en el presente</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Reglamento, o que por casos fortuitos o de fuerza mayor resulte imposible atender dicho plazo;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>VI.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Realizar las diligencias de notificaci&oacute;n relacionadas con los procedimientos de Inspecci&oacute;n y</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>para la aplicaci&oacute;n de sanciones por violaciones a la legislaci&oacute;n laboral;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>VI Bis.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Notificar los acuerdos relacionados con la substanciaci&oacute;n de los procedimientos de Inspecci&oacute;n</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>iniciados con motivo del desahogo de las visitas de Inspecci&oacute;n;</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>VII.</span><span style='font-family:Arial;'> a </span><span style='font-family:Arial;font-weight:bold;'>VIII.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> &nbsp;</div>  <div style='margin-bottom:5.05pt;margin-left:57.6pt;page-break-before:avoid;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>VIII Bis.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Realizar las gestiones necesarias para la actualizaci&oacute;n de los directorios, padrones o sistemas</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>de registro empresarial, que para tales efectos las Autoridades del Trabajo tengan</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>implementados, conforme a lo asentado en las actas de Inspecci&oacute;n o informes;</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>IX.</span><span style='font-family:Arial;'> a </span><span style='font-family:Arial;font-weight:bold;'>XII.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>XIII.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Las dem&aacute;s que establezcan este Reglamento u otros ordenamientos jur&iacute;dicos.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 11.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>I.</span><span style='font-family:Arial;'> a </span><span style='font-family:Arial;font-weight:bold;'>II.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>III.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Derogada.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>IV.</span><span style='font-family:Arial;'> a </span><span style='font-family:Arial;font-weight:bold;'>V.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>VI.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Agencias de colocaci&oacute;n de trabajadores, en t&eacute;rminos de las disposiciones jur&iacute;dicas aplicables;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>VII.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Materias y trabajos especiales que por su especificidad as&iacute; lo requieran, y</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>VIII.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Estrategias y operativos que establezcan las unidades administrativas en materia de Inspecci&oacute;n</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>de la Secretar&iacute;a, encaminados a la vigilancia del cumplimiento de las condiciones generales del</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>trabajo, la capacitaci&oacute;n y adiestramiento y la Seguridad y Salud en el Trabajo, as&iacute; como la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>vigilancia de las disposiciones en materia de subcontrataci&oacute;n.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 14.</span><span style='font-family:Arial;'> El cumplimiento de las Normas Oficiales Mexicanas en los Centros de Trabajo podr&aacute;</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>acreditarse en los t&eacute;rminos que establezca la Ley de Infraestructura de la Calidad, el presente Reglamento, el</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Reglamento Federal de Seguridad y Salud en el Trabajo, as&iacute; como otras leyes o reglamentos aplicables.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>Lo anterior, sin perjuicio de las facultades de las Autoridades del Trabajo para realizar las Inspecciones</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>correspondientes.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 18.</span><span style='font-family:Arial;'> Las Autoridades del Trabajo podr&aacute;n, a solicitud de parte o en ejecuci&oacute;n de los Programas</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>de Inspecci&oacute;n o programas de cumplimiento voluntario o convenios de colaboraci&oacute;n, realizar Inspecciones de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>asesor&iacute;a y asistencia t&eacute;cnica con la finalidad de fomentar entre trabajadores y patrones, entre otros aspectos,</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>el cumplimiento de las disposiciones laborales, el trabajo digno o decente, la inclusi&oacute;n laboral, el impulso a la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>creaci&oacute;n de empleos formales, elevar la capacitaci&oacute;n y la productividad y promover una cultura de la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>prevenci&oacute;n de riesgos de trabajo, para salvaguardar en todo momento los derechos humanos laborales.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-align:center;text-indent:0.0pt;white-space:nowrap;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>SECCI&Oacute;N CUARTA</span><br> </div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-align:center;text-indent:0.0pt;white-space:nowrap;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>DE LA SUPERVISI&Oacute;N Y VERIFICACI&Oacute;N</span><br> </div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 22.</span><span style='font-family:Arial;'> La Autoridad del Trabajo, con base en lo dispuesto en el art&iacute;culo 29 de este Reglamento,</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>podr&aacute; realizar Inspecciones de verificaci&oacute;n o supervisi&oacute;n con la finalidad de:</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>I.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Verificar la informaci&oacute;n proporcionada por los patrones o sus representantes en los programas</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>de cumplimiento voluntario;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>II.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Corroborar la informaci&oacute;n y los hechos asentados por los organismos de evaluaci&oacute;n de la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>conformidad directamente en los Centros de Trabajo, y</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>III.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Corroborar la veracidad de los hechos asentados por los Inspectores del Trabajo en los</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>documentos, informes o actas generadas con motivo de las Inspecciones realizadas.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 23.</span><span style='font-family:Arial;'> En las Inspecciones de verificaci&oacute;n a empresas incorporadas a programas de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>cumplimiento voluntario en las que se detecte que la informaci&oacute;n proporcionada es falsa o que se condujeron</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>con dolo, mala fe o violencia, se dar&aacute; de baja al Centro de Trabajo del programa de cumplimiento voluntario</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>que corresponda y se ordenar&aacute; la pr&aacute;ctica de Inspecciones extraordinarias en el Centro de Trabajo.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>De comprobarse la falsedad de la informaci&oacute;n proporcionada por el patr&oacute;n, se presumir&aacute; como una</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>conducta intencional, y de no acreditar lo contrario, ser&aacute; considerada al determinar el monto de la sanci&oacute;n</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>aplicable, sin perjuicio de la vista que se deba dar al Ministerio P&uacute;blico competente.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>Si en las Inspecciones de supervisi&oacute;n a los Centros de Trabajo que pretendan dar cumplimiento a las</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>disposiciones laborales con informaci&oacute;n emitida por organismos de evaluaci&oacute;n de la conformidad se detecta</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>que la informaci&oacute;n es falsa o distinta con lo observado por el Inspector del Trabajo al momento de la visita, se</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>dar&aacute; vista a la autoridad competente para que inicie el procedimiento establecido en los ordenamientos que</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>regulan el funcionamiento de dichos organismos.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> &nbsp;</div>  <div style='margin-bottom:5.05pt;margin-left:0.0pt;page-break-before:avoid;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>Sin perjuicio de lo anterior, si el Inspector del Trabajo durante la visita de supervisi&oacute;n a los Centros de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Trabajo se&ntilde;alados en el p&aacute;rrafo tercero del presente art&iacute;culo, detecta una situaci&oacute;n de Peligro o Riesgo</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Inminente podr&aacute; determinar las medidas precautorias que estime pertinentes de conformidad con lo</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>establecido en el presente Reglamento, para salvaguardar la vida, la integridad f&iacute;sica o la salud de los</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>trabajadores.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-align:center;text-indent:0.0pt;white-space:nowrap;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>SECCI&Oacute;N QUINTA</span><br> </div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-align:center;text-indent:0.0pt;white-space:nowrap;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>DEL PROCEDIMIENTO ADMINISTRATIVO DE INSPECCI&Oacute;N</span><br> </div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 27.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>I.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Iniciales: Las que se realizan por primera vez a los Centros de Trabajo, o por ampliaci&oacute;n o</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>modificaci&oacute;n de estos.</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>El alcance de las Inspecciones a que se refiere esta fracci&oacute;n deber&aacute; sujetarse a lo establecido</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>en los Lineamientos Operativos de Inspecci&oacute;n Federal del Trabajo;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>II.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>La programaci&oacute;n de estas Inspecciones se har&aacute; por actividad empresarial y rama industrial en</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>forma peri&oacute;dica, estableciendo un sistema aleatorio para determinar anualmente el turno en que</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>deban ser inspeccionados los Centros de Trabajo.</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Para las Inspecciones a que se refiere la presente fracci&oacute;n, la Autoridad del Trabajo deber&aacute;</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>emitir la orden de Inspecci&oacute;n &uacute;nicamente sobre las Normas Oficiales Mexicanas que le resulten</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>aplicables al Centro de Trabajo. Para efectos de determinar dichas Normas Oficiales</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Mexicanas, la Autoridad del Trabajo solo deber&aacute; considerar los antecedentes de las</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Inspecciones que se hayan realizado al Centro de Trabajo y las caracter&iacute;sticas propias</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>de este,</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>y</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>III.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>De comprobaci&oacute;n: Las que se realizan cuando se requiere constatar el cumplimiento de las</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>medidas ordenadas previamente por las Autoridades del Trabajo en materia de Seguridad y</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Salud en el Trabajo. La Autoridad del Trabajo podr&aacute; habilitar el desahogo de este tipo de visitas</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>en d&iacute;as y horas inh&aacute;biles.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>Si con motivo de la actuaci&oacute;n del Inspector del Trabajo se advierte la inobservancia a las disposiciones</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>se&ntilde;aladas en el presente art&iacute;culo y, en particular en los alcances de las &oacute;rdenes de Inspecci&oacute;n o en la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>aplicaci&oacute;n en exceso o incorrecta de las Normas Oficiales Mexicanas aplicables a los Centros de Trabajo, se</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>iniciar&aacute;n las acciones a que se refieren los art&iacute;culos 548 y 549 de la Ley, sin perjuicio de las acciones en</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>materia de responsabilidades administrativas de las personas servidoras p&uacute;blicas.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 28.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>I.</span><span style='font-family:Arial;'> a </span><span style='font-family:Arial;font-weight:bold;'>VI.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>VII.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Se realice la supervisi&oacute;n y verificaci&oacute;n a que se refiere la Secci&oacute;n Cuarta de este Cap&iacute;tulo;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>VIII.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Se verifique que los Centros de Trabajo hayan suspendido sus labores, con motivo de una</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>declaratoria de contingencia sanitaria emitida por la autoridad correspondiente;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>IX.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Se requiera constatar que el escrito de objeciones a la declaraci&oacute;n de los patrones previsto en</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>el art&iacute;culo 121 de la Ley, para efectos de la participaci&oacute;n de los trabajadores en las utilidades de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>las empresas, fue presentado por la mayor&iacute;a de los trabajadores de la empresa;</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>X.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Cuando deriven de una estrategia espec&iacute;fica del Programa de Inspecciones, y</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>XI.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Con la finalidad de corroborar el cumplimiento de medidas que se hayan dictado en las</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>resoluciones derivadas de un procedimiento de Inspecci&oacute;n.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>En las Inspecciones extraordinarias que sean motivadas por los supuestos previstos en las fracciones I, II,</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>III, IV y V del presente art&iacute;culo, la orden de Inspecci&oacute;n tendr&aacute; por objeto verificar el cumplimiento de las</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Normas Oficiales Mexicanas que se presuman incumplidas, as&iacute; como los posibles incumplimientos se&ntilde;alados</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>en las quejas o denuncias, los incumplimientos identificados por la Autoridad del Trabajo como un Peligro o</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Riesgo Inminente, o las causas que originaron el accidente de trabajo.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> &nbsp;</div>  <div style='margin-bottom:5.05pt;margin-left:0.0pt;page-break-before:avoid;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 29.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>Al inicio de las Inspecciones ordinarias o extraordinarias, el Inspector del Trabajo deber&aacute; entregar al patr&oacute;n</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>o a su representante o a la persona con quien se entienda la diligencia, el original de la orden escrita</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>respectiva, con firma aut&oacute;grafa de la persona servidora p&uacute;blica facultada para ello, as&iacute; como una gu&iacute;a que</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>contenga los principales derechos y obligaciones de la persona inspeccionada. Dichas &oacute;rdenes de Inspecci&oacute;n</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>deber&aacute;n precisar el Centro de Trabajo a inspeccionar, su ubicaci&oacute;n, el objeto y alcance de la diligencia, su</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>fundamento legal, as&iacute; como los n&uacute;meros telef&oacute;nicos a los que el patr&oacute;n podr&aacute; comunicarse para constatar los</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>datos de la orden correspondiente, con lo cual, se considerar&aacute; legalmente iniciado el procedimiento</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>administrativo de Inspecci&oacute;n.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 30.</span><span style='font-family:Arial;'> Al momento de llevarse a cabo una Inspecci&oacute;n, el patr&oacute;n, su representante o la persona</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>que atienda la Inspecci&oacute;n, est&aacute;n obligados a permitir el acceso del Inspector del Trabajo y, en su caso, de los</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>expertos en la materia habilitados para tal efecto, al Centro de Trabajo, y a otorgar todo tipo de facilidades,</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>apoyos y auxilios, incluyendo los de car&aacute;cter administrativo, para que la Inspecci&oacute;n se practique, y para el</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>levantamiento del acta respectiva, as&iacute; como proporcionar la informaci&oacute;n y documentaci&oacute;n que les sea</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>requerida por el Inspector del Trabajo y a que obliga la Ley, sus reglamentos, las Normas Oficiales Mexicanas</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>y dem&aacute;s disposiciones jur&iacute;dicas aplicables.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>De toda Inspecci&oacute;n se levantar&aacute; acta circunstanciada, con la intervenci&oacute;n del patr&oacute;n, su representante o la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>persona que atienda la Inspecci&oacute;n, as&iacute; como la de los trabajadores, en presencia de dos testigos propuestos</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>por la parte patronal, o bien, designados por el propio Inspector del Trabajo si el patr&oacute;n se hubiere negado a</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>proponerlos.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>En caso de que el patr&oacute;n, su representante o la persona que atienda la Inspecci&oacute;n se opongan a la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>pr&aacute;ctica de la Inspecci&oacute;n ordenada, el Inspector del Trabajo lo har&aacute; constar en el acta correspondiente.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 31.</span><span style='font-family:Arial;'> Si durante la pr&aacute;ctica de una Inspecci&oacute;n ordinaria se detecta que el Centro de Trabajo</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>emplea treinta o menos trabajadores, que la empresa en su conjunto no tiene m&aacute;s establecimientos o</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>sucursales que el lugar visitado, que su prima de riesgo del trabajo es menor a la clase III a que se refiere la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Ley del Seguro Social, que no se desarrollan actividades de transformaci&oacute;n o de manufactura de materias</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>primas, o que no se empleen sustancias peligrosas, el Inspector del Trabajo deber&aacute; se&ntilde;alar dicha</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>circunstancia en el acta y desahogar la visita en los t&eacute;rminos que establece la Secci&oacute;n Segunda de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>este</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Cap&iacute;tulo.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 32.</span><span style='font-family:Arial;'> El Inspector del Trabajo, atento al objeto de la Inspecci&oacute;n, deber&aacute; solicitar el auxilio de los</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>integrantes de las comisiones existentes en el Centro de Trabajo y del personal de mayor experiencia de este.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Cuando se requiera, podr&aacute; hacerse acompa&ntilde;ar de expertos o peritos en la rama comercial, industrial o de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>servicios que se inspecciona o por personas servidoras p&uacute;blicas federales, estatales o de la Ciudad de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>M&eacute;xico, designadas previamente al efecto por las Autoridades del Trabajo. Dicha designaci&oacute;n deber&aacute; estar</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>contenida en la orden de Inspecci&oacute;n respectiva.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 36.</span><span style='font-family:Arial;'> Con excepci&oacute;n de lo dispuesto en el art&iacute;culo 40 de este Reglamento, en las Inspecciones</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>en materia de Seguridad y Salud, adem&aacute;s del plazo a que se refiere el p&aacute;rrafo tercero del art&iacute;culo 35 de este</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Reglamento, se podr&aacute; otorgar un plazo que ir&aacute; desde la aplicaci&oacute;n inmediata y observancia permanente hasta</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>no mayor de treinta d&iacute;as h&aacute;biles para corregir las deficiencias e incumplimientos que se identifiquen. Para fijar</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>dicho plazo, la Autoridad del Trabajo deber&aacute; considerar la rama industrial, tipo y escala econ&oacute;mica, grado de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>riesgo, n&uacute;mero de trabajadores, el riesgo que representan para los trabajadores y la dificultad para</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>subsanarlas.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>El plazo otorgado podr&aacute; prorrogarse de manera excepcional, siempre y cuando el patr&oacute;n o el</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>representante legal justifiquen fehacientemente que el origen de las irregularidades detectadas corresponde a</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>causas ajenas al Centro de Trabajo. Dicha pr&oacute;rroga en ninguna circunstancia podr&aacute; extenderse a m&aacute;s de los</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>treinta d&iacute;as h&aacute;biles que se establecen en el p&aacute;rrafo primero del presente art&iacute;culo.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>Para las dem&aacute;s materias a que se refiere el art&iacute;culo 10 del presente Reglamento, el patr&oacute;n o el</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>representante legal contar&aacute;n con el plazo de cinco d&iacute;as a que se refiere el p&aacute;rrafo tercero del art&iacute;culo 35 de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>este ordenamiento, sin que medie pr&oacute;rroga alguna, con el objeto de formular observaciones y ofrecer pruebas</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>en relaci&oacute;n con los hechos consignados en el acta de Inspecci&oacute;n correspondiente.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> &nbsp;</div>  <div style='margin-bottom:5.05pt;margin-left:0.0pt;page-break-before:avoid;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 38.</span><span style='font-family:Arial;'> La Autoridad del Trabajo podr&aacute; acordar el cierre del procedimiento administrativo de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Inspecci&oacute;n, y ordenar&aacute; el archivo definitivo de las actas de Inspecci&oacute;n, cuando:</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>I.</span><span style='font-family:Arial;'> a</span><span style='font-family:Arial;font-weight:bold;'> III.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 40.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>I.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>II.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>Los superiores jer&aacute;rquicos de los Inspectores del Trabajo, deber&aacute;n hacer del conocimiento de la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>persona titular de la Autoridad del Trabajo local o de la Oficina de Representaci&oacute;n Federal del</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Trabajo, seg&uacute;n corresponda, las medidas adoptadas;</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>III.</span><span style='font-family:Arial;'> a </span><span style='font-family:Arial;font-weight:bold;'>IV.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>La persona titular de la Direcci&oacute;n General de Inspecci&oacute;n Federal del Trabajo podr&aacute; allegarse de los</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>elementos que estime convenientes para determinar, dentro de las veinticuatro horas siguientes a la recepci&oacute;n</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>de la consulta, la procedencia o no de autorizar la restricci&oacute;n de acceso, limitaci&oacute;n de operaciones o de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>ambas, lo que deber&aacute; hacerse del conocimiento del Inspector del Trabajo, as&iacute; como de la persona titular de la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Autoridad del Trabajo local o de la Oficina de Representaci&oacute;n Federal del Trabajo, que corresponda.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 41.</span><span style='font-family:Arial;'> Cuando se haya decretado la restricci&oacute;n de acceso o limitaci&oacute;n de operaciones, el</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Inspector del Trabajo deber&aacute; realizar un informe detallado por escrito bajo su m&aacute;s estricta responsabilidad</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>dentro de las veinticuatro horas siguientes a dicha determinaci&oacute;n, y este informe se entregar&aacute; al patr&oacute;n, as&iacute;</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>como a la unidad administrativa de la Secretar&iacute;a que corresponda a la circunscripci&oacute;n territorial en donde se</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>ubique el Centro de Trabajo. Los superiores jer&aacute;rquicos de los Inspectores del Trabajo adscritos a los estados</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>enviar&aacute;n dicho informe a la Secretar&iacute;a.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 42.</span><span style='font-family:Arial;'> Las Oficinas de Representaci&oacute;n Federal del Trabajo o la Direcci&oacute;n General de Inspecci&oacute;n</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Federal del Trabajo en ejercicio de la facultad de atracci&oacute;n, llevar&aacute; a cabo el an&aacute;lisis del informe presentado</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>por los Inspectores del Trabajo, dentro de las veinticuatro horas siguientes a su recepci&oacute;n o, en su caso, de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>las pruebas o manifestaciones que ofrezcan los particulares.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 43.</span><span style='font-family:Arial;'> La Oficina de Representaci&oacute;n Federal del Trabajo, previa consulta y opini&oacute;n de la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Direcci&oacute;n General de Inspecci&oacute;n Federal del Trabajo, una vez concluido el an&aacute;lisis del informe y, en su caso,</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>de las pruebas o manifestaciones presentadas, dentro del t&eacute;rmino de setenta y dos horas computadas a partir</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>del cierre del acta, determinar&aacute; si se levanta la restricci&oacute;n de acceso o la limitaci&oacute;n de operaciones en las</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>&aacute;reas de riesgo detectadas o, decreta la ampliaci&oacute;n de estas acciones, hasta en tanto se cumplan con las</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>medidas de seguridad ordenadas por el Inspector del Trabajo para la correcta operaci&oacute;n del Centro de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Trabajo, lo cual no exceder&aacute; el t&eacute;rmino establecido en el art&iacute;culo 36 de este Reglamento.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>En contra de la resoluci&oacute;n que determine mantener o levantar la restricci&oacute;n de acceso o limitaci&oacute;n de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>operaciones emitida por la Oficina de Representaci&oacute;n Federal del Trabajo, se podr&aacute; interponer el recurso de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>revisi&oacute;n previsto por la Ley Federal de Procedimiento Administrativo, que ser&aacute; resuelto por la persona titular</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>de la Direcci&oacute;n General de Inspecci&oacute;n Federal del Trabajo. En caso de que la resoluci&oacute;n hubiese sido emitida</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>por este &uacute;ltimo, en ejercicio de su facultad de atracci&oacute;n, el recurso de revisi&oacute;n ser&aacute; resuelto por su superior</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>jer&aacute;rquico.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 46.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>Los Centros de Trabajo que est&eacute;n inscritos y cumplan con los requisitos de los programas de cumplimiento</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>voluntario de Inspecci&oacute;n que la Secretar&iacute;a determine, no ser&aacute;n objeto de visitas ordinarias de Inspecci&oacute;n.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>Los lineamientos de cada programa de cumplimiento voluntario se&ntilde;alar&aacute;n los plazos para la realizaci&oacute;n de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>visitas de asesor&iacute;a y asistencia t&eacute;cnica, y para el cumplimiento de las disposiciones laborales.</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-align:center;text-indent:0.0pt;white-space:nowrap;' class='Texto'> &nbsp;</div>  <div style='margin-bottom:3.6pt;margin-left:0.0pt;page-break-before:avoid;text-align:center;text-indent:0.0pt;white-space:nowrap;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>T&Iacute;TULO TERCERO</span><br> </div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-align:center;text-indent:0.0pt;white-space:nowrap;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>DEL CIERRE DEL PROCEDIMIENTO ADMINISTRATIVO DE INSPECCI&Oacute;N Y DEL INICIO DEL</span><br> <span style='font-family:Arial;font-weight:bold;'>PROCEDIMIENTO ADMINISTRATIVO PARA LA APLICACI&Oacute;N DE SANCIONES</span><br> </div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 51.</span><span style='font-family:Arial;'> Si derivado de la sustanciaci&oacute;n del procedimiento administrativo de Inspecci&oacute;n y como</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>resultado de la valoraci&oacute;n de las actas, expedientes o documentaci&oacute;n ofrecida por cualquier autoridad, o del</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>acta de Inspecci&oacute;n y de las pruebas presentadas por el patr&oacute;n o su representante no se desvirt&uacute;a el</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>incumplimiento de las disposiciones laborales, el &aacute;rea de Inspecci&oacute;n emitir&aacute; un acuerdo de cierre de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>instrucci&oacute;n del procedimiento administrativo de Inspecci&oacute;n, en el cual se establecer&aacute; de manera expresa la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>solicitud al &aacute;rea competente de las Autoridades del Trabajo, se inicie el procedimiento administrativo</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>sancionador.</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>Dicho acuerdo deber&aacute; ser notificado de manera personal al patr&oacute;n o representante legal, para los efectos</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>legales a que haya lugar.</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>Cuando no se haya permitido la Inspecci&oacute;n a la Autoridad del Trabajo, de acuerdo con lo establecido en el</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>art&iacute;culo 1004-A de la Ley, emitir&aacute; el acuerdo de cierre de instrucci&oacute;n a que se refiere el p&aacute;rrafo primero de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>este art&iacute;culo, por los incumplimientos a la normatividad laboral y por la negativa al desahogo de la Inspecci&oacute;n.</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>Para los casos en los que como resultado de la valoraci&oacute;n de las actas, expedientes o documentaci&oacute;n</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>ofrecida por cualquier autoridad, o del acta de Inspecci&oacute;n y de las pruebas presentadas por el patr&oacute;n o su</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>representante acredita, durante los plazos establecidos en los art&iacute;culos 35 o 36, p&aacute;rrafo primero, del presente</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>ordenamiento, haber dado cumplimiento a la normatividad y a los requerimientos administrativos solicitados</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>por la Autoridad del Trabajo, se emitir&aacute; el acuerdo de archivo correspondiente.</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 59.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>I. </span><span style='font-family:Arial;'>a </span><span style='font-family:Arial;font-weight:bold;'>VIII.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:3.6pt;margin-left:57.6pt;text-indent:-43.2pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>IX.</span><span style='font-family:Arial;font-size:10pt;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style='font-family:Arial;'>En su caso, las medidas correspondientes de Seguridad y Salud en el Trabajo que los Centros</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>de Trabajo deber&aacute;n implementar para salvaguardar la vida, la integridad f&iacute;sica o la salud de los</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>trabajadores. Lo anterior, sin perjuicio de la imposici&oacute;n de sanciones a que se refiere el</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>presente Cap&iacute;tulo;</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>X.</span><span style='font-family:Arial;'> a </span><span style='font-family:Arial;font-weight:bold;'>XI.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 60.</span><span style='font-family:Arial;'> Para la cuantificaci&oacute;n de las sanciones, las Autoridades del Trabajo, en el &aacute;mbito de sus</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>respectivas jurisdicciones, se sujetar&aacute;n a las disposiciones de la ley que regule el procedimiento administrativo</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>aplicable y, cuando resulte procedente, a las del Reglamento Federal de Seguridad y Salud en el Trabajo, a la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Ley de Infraestructura de la Calidad, o bien, a las disposiciones de los Mecanismos Alternos a la Inspecci&oacute;n, y</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>considerar&aacute;n lo siguiente:</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>I.</span><span style='font-family:Arial;'> a </span><span style='font-family:Arial;font-weight:bold;'>V.</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>...</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>ART&Iacute;CULO 63.</span><span style='font-family:Arial;'> La imposici&oacute;n de sanciones no libera a las personas infractoras del cumplimiento de los</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>actos u omisiones que las motivaron.</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>Asimismo, con la finalidad de salvaguardar la vida, la integridad f&iacute;sica o la salud de los trabajadores, las</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Autoridades del Trabajo en el &aacute;mbito de sus respectivas jurisdicciones en un plazo que no exceda de sesenta</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>d&iacute;as h&aacute;biles contado a partir de la fecha en que se haya notificado la sanci&oacute;n, deber&aacute; acudir al Centro de</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Trabajo a corroborar que se hayan implementado las medidas de seguridad dictadas.</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>En caso de persistir el incumplimiento por parte del Centro de Trabajo se considerar&aacute; reincidente en</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>t&eacute;rminos del art&iacute;culo 61, fracci&oacute;n V, del presente Reglamento.</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;margin-top:0.0pt;text-indent:0.0pt;white-space:nowrap;' class='ANOTACION'> <span style='font-family:Times;'>TRANSITORIOS</span><br> </div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>PRIMERO.</span><span style='font-family:Arial;'> El presente Decreto entrar&aacute; en vigor al d&iacute;a siguiente de su publicaci&oacute;n en el Diario Oficial de la</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>Federaci&oacute;n.</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>SEGUNDO.</span><span style='font-family:Arial;'> Los procedimientos administrativos de Inspecci&oacute;n y de aplicaci&oacute;n de sanciones que se</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>encuentren en tr&aacute;mite a la fecha de entrada en vigor del presente Decreto, ser&aacute;n resueltos conforme a las</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>disposiciones vigentes al momento de su inicio.</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;font-weight:bold;'>TERCERO.</span><span style='font-family:Arial;'> La entrada en vigor del presente Decreto, no implicar&aacute; erogaciones adicionales, por lo que las</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>unidades administrativas competentes de la Secretar&iacute;a del Trabajo y Previsi&oacute;n Social deber&aacute;n ajustarse a su</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>presupuesto autorizado para el ejercicio fiscal correspondiente, y no incrementar su presupuesto</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;'>regularizable.</span></div> <div style='margin-bottom:3.6pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> <span style='font-family:Arial;'>Dado en la Residencia del Poder Ejecutivo Federal, en la Ciudad de M&eacute;xico a</span><span style='font-family:Arial;'> 17 de agosto de 2022.-</span><span style='font-family:Arial;'> </span><span style='font-family:Arial;font-weight:bold;'>Andr&eacute;s Manuel L&oacute;pez Obrador</span><span style='font-family:Arial;'>.- R&uacute;brica.- </span><span style='font-family:Arial;'>La Secretaria del Trabajo y Previsi&oacute;n Social</span><span style='font-family:Arial;'>, </span><span style='font-family:Arial;font-weight:bold;'>Luisa Mar&iacute;a Alcalde</span><span style='font-family:Arial;font-weight:bold;'> </span><span style='font-family:Arial;font-weight:bold;'>Luj&aacute;n</span><span style='font-family:Arial;'>.- R&uacute;brica.</span></div> <div style='margin-bottom:5.05pt;margin-left:0.0pt;text-indent:14.4pt;' class='Texto'> &nbsp;</div>  <div style='margin-bottom:5.05pt;margin-left:0.0pt;page-break-before:avoid;text-indent:14.4pt;' class='Texto'> &nbsp;</div> </div>  </BODY> </HTML><br /><table cellpading='0' cellspacing='0' border='0' width='100%' align='center'>
+
+										<tr>
+
+											<td style='border:1px solid #333333;padding:4px; font-size: 11px;' class='txt'>
+											En el documento que usted est&aacute; visualizando puede haber texto, caracteres u objetos que no se muestren correctamente debido a la conversi&oacute;n a formato HTML, por lo que le recomendamos tomar siempre como referencia la imagen digitalizada del DOF o el archivo PDF de la edici&oacute;n.<br>
+										El contenido, forma y alcance de los documentos publicados, son estricta responsabilidad de su emisor.
+										</td>
+
+										</tr>
+
+										</table></div></td> 
+</tr> 
+<tr><td>&nbsp;</td></tr><tr>
+<td align='center' style='padding-top:10px'>
+<a href='javascript:void(window.open("/nota_detalle.php?codigo=5662150&fecha=23/08/2022&print=true"))'><img src='/imagesnew/btn_imprimir.png' border='0'></a><br><br></td>
+</tr>
+</table>
+		</td>
+		<td>
+		
+		</td>
+	</tr>
+</table>
+
+					</td>
+					<td  width="130"  valign="top">
+						<table style="margin-top: 20px;" width="100%" border="0" cellspacing="0" cellpadding="0" id="table_menu_right">
+							<tr>
+								<td bgcolor="#FFFFFF" class="enlaces" align="left" style="padding:0px">
+								   
+							      							      
+																		
+									<table cellspacing="0" cellpadding="0" border="0" style="background-image: url(css/imagenes/fnd-recuadro.jpg); margin-bottom: 20px;" width="232">
+										<tr>
+											<td style="padding-left: 54px; padding-top: 8px; padding-bottom: 4px; background-repeat: no-repeat; background-image: url(css/imagenes/pestana.png);">
+												<span class="tituloBloque4">CONSULTA</span> <span class="span_tituloBloque">POR FECHA </span>
+											</td>
+										</tr>
+										<tr>
+											<td align="center" height="103">
+									<div id="main-calendar">
+
+										
+											<script language="JavaScript" type="text/javascript" src="/logical/calendar.js"></script>
+											<noscript></noscript>
+										
+
+										<form name="when" style="display:inline" action="" method="post">
+											<table width="100%" border="0" cellpadding="0" cellspacing="0">
+												<tr>
+													<td colspan="7" class="combos">
+														<table cellpadding="0" cellspacing="0" border="0" width="100%" style="border: 0px none;">
+															<tr class="header_calendar">
+																<td class="cal_nav"></td>
+																<td>
+																
+																	<script language="JavaScript1.2" type="text/javascript">
+																		if (ie4||ns6) {
+																			CalCboMeses();
+																		}
+																	</script>
+																	<noscript></noscript>
+																
+																</td>
+																<td>
+																
+																	<script language="JavaScript1.2" type="text/javascript">
+																		if (ie4||ns6) {
+																			CalCboAnios();
+																		}
+																	</script>
+																	<noscript></noscript>
+																
+																</td>
+																<td class="cal_nav"></td>
+															</tr>
+														</table>
+													</td>
+												</tr>
+												<tr>
+													<td colspan="7">
+														<table cellpadding="0" cellspacing="0" border="0" width="95%" style="margin: 0 auto;border: 0px none;">
+															<tr>
+																<td class="header"><span>Do</span></td>
+																<td class="header"><span>Lu</span></td>
+																<td class="header"><span>Ma</span></td>
+																<td class="header"><span>Mi</span></td>
+																<td class="header"><span>Ju</span></td>
+																<td class="header"><span>Vi</span></td>
+																<td class="header"><span>S&aacute;</span></td>
+															</tr>
+														</table>
+													</td>
+												</tr>
+												<tr>
+													<td colspan="7">
+														<div id="Calendar"></div>
+													</td>
+												</tr> 
+											</table>
+											<input type="submit" name="s" value="s" style="display:none;" />
+										</form>
+
+										
+											<script type="text/javascript">
+										
+										
+												Defaults(2022, 08, 23, "01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,04,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,05,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,08,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,19,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,23,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,24,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,25,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,26,27,27,27,27,27,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,");										
+											</script>
+											<noscript></noscript> 
+										
+
+
+									</div>
+											</td>
+										</tr>
+									</table>
+									
+									<div class="chat_boton">
+										
+									</div>
+									
+								<table cellspacing="0" cellpadding="0" border="0" style="border: 0px none;"> 
+							        <tr>
+							        <td style="padding-left:0px; padding-bottom:15px;" align="center" ><table style="border:solid 1px #CCCCCC; background-image: url(css/imagenes/fnd-recuadro.jpg); height: 170px;" width="232" border="0" cellpadding="0" cellspacing="0">
+
+
+								
+
+								   <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px;" width="22" ><a href="#" ><img src="css/imagenes/dof_crearusuario.png" alt="crear usuario" width="29" height="26" border="0" /></a></td>
+							            <td width="210" align="left" style="border-bottom:#B2B2B2 dotted 1px;" ><a style="color: #127d40;  text-decoration: none;" href="admin_usuarios.php" >Crear Usuario</a></td>
+							          </tr>
+
+								
+
+								   <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px;" ><a href="#" ><img src="css/imagenes/busqueda_avz.png" alt="busqueda avanzada" width="29" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px;" ><a style="color: #127d40;  text-decoration: none;" href="busqueda_avanzada.php?pb=S&amp;cod_orga=TODOS">B&uacute;squeda Avanzada</a></td>
+							          </tr>
+
+								
+
+<!--								   <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px;" ><a href="#" ><img src="css/imagenes/novedades.png" alt="novedades" width="26" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px;" ><a style="color: #127d40;  text-decoration: none;" href="novedades.php" >Novedades</a></td>
+									 
+									
+-->							          </tr>
+
+								
+
+							          <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px;" ><a href="#" ><img src="css/imagenes/dof_topnotas.png" alt="top notas" width="29" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px;" ><a style="color: #127d40;  text-decoration: none;  text-decoration: none;" href="index.php?vertopnotas=1" >Top Notas</a></td>
+							          </tr>
+
+								
+								 
+							          <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px;" ><a href="#" ><img src="css/imagenes/NOM1.png" alt="tramites" width="29" height="25" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px;" ><a style="color: #127d40;  text-decoration: none;  text-decoration: none;" href="normasOficiales.php" >Normas Oficiales</a></td>
+							          </tr>
+																
+								<!--
+							          <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px;" ><a href="#" ><img src="css/imagenes/suscripcion.png" alt="suscripcion" width="26" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px;" ><a style="color: #127d40;  text-decoration: none;  text-decoration: none;" href="info_suscripcion.php" >Suscripci&oacute;n</a></td>
+							          </tr>
+								-->
+								
+
+							          <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px;" ><a href="#" ><img src="css/imagenes/quejas.png" alt="quejas y sugerencias" width="29" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px;" ><a style="color: #127d40;  text-decoration: none;  text-decoration: none;" href="quejas.php" >Quejas y Sugerencias</a></td>
+							          </tr>
+
+								
+
+							          <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px;" ><a href="#" ><img src="css/imagenes/dof_obtenercopia.png" alt="copia" width="29" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px; " ><a style="color: #127d40;  text-decoration: none;  text-decoration: none;" href="copias_cert.php" >Obtener Copia del DOF</a></td>
+							          </tr>
+
+								<!--
+							          <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a href="#" ><img src="css/imagenes/publicaciones_relevantes.png" alt="Publicaciones relevantes" width="29" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a style="color: #127d40;  text-decoration: none;  text-decoration: none;" href="publicacionesRelevantes.php" >Publicaciones Relevantes</a></td>
+							          </tr> 
+								-->
+
+							          <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a href="#" ><img src="css/imagenes/dof_verificarcopia.png" alt="versif. copia" width="29" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a style="color: #127d40;  text-decoration: none;  text-decoration: none;" href="copias_verif.php" >Verificar Copia del DOF</a></td>
+							          </tr>
+
+								
+
+								   <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a href="#" ><img src="css/imagenes/dof_enlaces.png" alt="enlaces relevantes" width="29" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a style="color: #127d40;  text-decoration: none;  text-decoration: none;" href="enlaces_dependencias.php" >Enlaces Relevantes</a></td>
+							          </tr>
+   
+								 
+
+								   <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a href="#" ><img src="css/imagenes/contactenos.png" alt="Contacto" width="29" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a style="color: #127d40;  text-decoration: none;  text-decoration: none;" href="contactenos.php" >Cont&aacute;ctenos</a></td>
+							          </tr>
+  
+								
+<!--
+								   <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a href="#" ><img src="css/imagenes/dof_flitrorss.png" alt="filtros rss" width="29" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a style="color: #127d40;  text-decoration: none;  text-decoration: none;" href="filtroRss.php" >Filtros RSS</a></td>
+							          </tr>
+-->
+								
+
+								   <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a href="#" ><img src="css/imagenes/dof_historia.png" alt="historia" width="29" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a style="color: #127d40;  text-decoration: none;  text-decoration: none;" href="historia.php" >Historia del Diario Oficial</a></td>
+							          </tr>
+
+								
+<!--
+								   <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a href="#" ><img src="css/imagenes/dof_estadisticas.png" alt="estadisticas" width="29" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a style="color: #127d40;  text-decoration: none;  text-decoration: none;" href="http://diariooficial.gob.mx/estadisticas.php" >Estad&iacute;sticas</a></td>
+							          </tr>
+-->						 	  
+								   <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a href="#" ><img src="imagesnew/iconoVacantes.png" alt="estadisticas" width="29" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a style="color: #127d40;  text-decoration: none;  text-decoration: none;" href="vacantes.php" >Vacantes en Gobierno</a></td>
+							          </tr>
+							
+									  <tr>
+							            <td style="padding-left:10px; padding-right:10px; border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a href="#" ><img src="imagesnew/iconoETM.png" alt="estadisticas" width="29" height="26" border="0" /></a></td>
+							            <td align="left" style="border-bottom:#B2B2B2 dotted 1px; background-color: #DCDCDC;" ><a style="color: #127d40;  text-decoration: none;  text-decoration: none;" href="extrabmigmex.php" >Ex-trabajadores Migratorios</a></td>
+							          </tr>
+ 
+
+							        </table></td>
+							      </tr>
+							      </table>
+								 
+									<table style="margin-top: 20px; background-image: url(css/imagenes/fnd-recuadro.jpg);" cellspacing="0" cellpadding="0" border="0" width="232">
+	<tr>
+		<td style="padding-left: 54px; padding-top: 8px; padding-bottom: 4px; background-repeat: no-repeat; background-image: url(css/imagenes/pestana.png);">
+			<span class="tituloBloque4">INDICADORES </span>
+		</td>
+	</tr>
+	<tr>
+		<td height="103" style="padding: 10px;">
+		<table cellspacing="0" cellpadding="0" border="0" style="border:0px none;">
+			<tr>
+				<td class="tituloBloque5" colspan="2">Tipo de Cambio y Tasas al 03/10/2026</td>
+			</tr>
+			<tr>
+				<td height="5" colspan="2"></td>
+			</tr>
+			<tr>
+				<td>
+					
+					<p style="display:block;float:left;width:45%; font-size: 10pt;"><span class="tituloBloque4">UDIS</span> <br /> 8.839901</p></td>
+			</tr>
+			<!-- 
+			<tr>
+				<td height="10"></td>
+			</tr>
+			-->
+			<tr>
+				<td style="padding-bottom:10px">
+					<a href="indicadores.php" class="enlaces" style="float: right;">Ver m&aacute;s</a>
+				</td>
+			</tr>
+			<!-- 
+			<tr>
+				<td><a href="https://diariooficial.gob.mx/indicadores.xml" target="_blank"><img src="images/head_4i.gif" border="0" ></a></td>
+			</tr>
+			<tr>
+				<td height="15"></td>
+			</tr>
+			 -->
+		</table>
+		</td>
+	</tr>
+</table>									
+									<table cellspacing="0" cellpadding="0" border="0" width="232" style="border-bottom: 1px solid rgb(204, 204, 204); border-left: 1px solid rgb(204, 204, 204); border-right: 1px solid rgb(204, 204, 204); margin-top: 20px; background-image: url(css/imagenes/fnd-recuadro.jpg);">
+										<tr>
+											<td style="padding-left: 54px;  padding-top: 8px; padding-bottom: 4px; background-repeat: no-repeat; background-image: url(css/imagenes/pestana.png);">
+												<span class="tituloBloque4">ENCUESTAS</span>
+											</td>
+										</tr>
+
+												<tr>
+		<td valign="top" height="103" style="padding: 10px;">
+			<p>&#191;Le gust&oacute; la nueva imagen de la p&aacute;gina web del Diario Oficial de la Federaci&oacute;n?</p>
+			<form action="/encuestas_votar.php" method="get" name="frmEncuesta">
+				<input type="hidden" name="AccionEncuesta" value="G" />
+				<input type="hidden" name="cod_encuesta" value="182" />
+				<p>
+								<input name="opcionEncuesta" type="radio" value="238" id="oe238" checked="checked" />
+					<label for="oe238">No</label>
+								<input name="opcionEncuesta" type="radio" value="239" id="oe239" checked="checked" />
+					<label for="oe239">S&iacute;</label>
+							</p>
+				<p> &nbsp;
+				</p>
+				<div align="right">
+					
+					<input type="submit" value="Votar" name="Submit" />
+					
+				</div>
+			</form>
+		</td>
+	</tr>
+
+											<!-- 
+										<tr>
+											<td><img src="imagesnew/bullet.gif" alt="." /><a href="javascript:document.frmEncuesta.submit()" class="enlaces">Votar</a></td>
+										</tr>
+										
+										<tr>
+											<td height="15"></td>
+										</tr>
+										 -->
+                                    </table>
+                                    <!-- 
+									<table style="margin-top: 20px;" cellspacing="0" cellpadding="0" border="0" background="css/imagenes/fnd-recuadro.jpg" width="232" style="border-bottom: 1px solid rgb(204, 204, 204); border-left: 1px solid rgb(204, 204, 204); border-right: 1px solid rgb(204, 204, 204);">
+										<tr>
+											<td colspan="3" background="css/imagenes/pestana.png" style="padding-left: 54px; padding-top: 8px; padding-bottom: 4px; background-repeat: no-repeat;">
+												<span class="tituloBloque4">NORMAS OFICIALES</span>
+											</td>
+										</tr>
+										<tr>
+											<td height="5"></td>
+										</tr>
+										
+	<tr>
+		<td width="10"></td>
+		<td height="15" width="109">
+			<a href="http://www.dof.gob.mx/normasOficiales.php?codp=9580&view=si" class="enlaces">
+				NOM-EM-008-ASEA-<br>2026<br>			</a>
+		</td>
+		<td width="10"></td>
+	</tr>
+	<tr>
+		<td colspan="3"><img src="imagesnew/line.gif"></td>
+	</tr>
+	<tr>
+		<td width="10"></td>
+		<td height="15" width="109">
+			<a href="http://www.dof.gob.mx/normasOficiales.php?codp=9579&view=si" class="enlaces">
+				PROY-NOM-027-SSA<br>-2026<br>			</a>
+		</td>
+		<td width="10"></td>
+	</tr>
+	<tr>
+		<td colspan="3"><img src="imagesnew/line.gif"></td>
+	</tr>
+										<tr>
+											<td height="15"></td>
+										</tr>
+										<tr>
+											<td width="10"></td>
+											<td style="padding: 10px;">
+												<p>
+													<img src="imagesnew/bullet.gif" alt="." />
+													<a href="normasOficiales.php" class="enlaces">Ver m&aacute;s</a>
+												</p>
+											</td>
+											<td width="10"></td>
+										</tr>
+									</table>
+									 -->
+
+								</td>
+							</tr>
+							<tr>
+								<td height="15"></td>
+							</tr>
+							<tr>
+								<td>
+																
+									<a href="http://dof.gob.mx/red-boa.php" target="_blank" style="display: block;float: left;" class="footer_menu_right">
+										<img src="banners/0.821786001312920061.gif" width="100%" border="0" alt="0.821786001312920061.gif" />
+									</a>
+																
+									<a href="https://www.gob.mx/" target="_blank" style="display: block;float: left;" class="footer_menu_right">
+										<img src="banners/0.475545001508857915.jpg" width="100%" border="0" alt="0.475545001508857915.jpg" />
+									</a>
+								
+								</td>
+							</tr>
+						</table>
+					</td>﻿					<td></td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<div id="pie">
+		<div><a href="red-boa.php"> <img src="../css/imagenes/redboa_logo.jpg" style="margin-top: 35px; float: left; text-align: left; width: 100px;"> </a></div>
+		
+		<div style = "float: left; margin: 150 auto; width: 750px;">
+			<a style="color: #0768A9;" href="https://goo.gl/maps/grL3boxiDMjLhmLS6" target="_blank">Diario Oficial de la Federaci&oacute;n</a>
+			<br />
+			<br />
+			<p class="topFooter">R&iacute;o Amazonas No. 62, <acronym title="Colonia">Col.</acronym> Cuauht&eacute;moc, 
+				<acronym title="Código Postal">C.P.</acronym> 06500,
+				Ciudad de M&eacute;xico<br />Tel. (55) 5093-3200, donde podr&aacute; acceder a nuestro men&uacute; de servicios 
+				<!--<br />Correo electr&oacute;nico: <a href="mailto:dof@segob.gob.mx">dof@segob.gob.mx</a>-->
+
+				<br />Direcci&oacute;n electr&oacute;nica: <a href="https://dof.gob.mx">dof.gob.mx</a>
+				<br /><br />
+	    	</p>
+
+
+	    </div>
+	    <!--div><a href="repomex.php"> <img src="../css/imagenes/repomex_logo.jpg" style="width: 100px; margin-bottom:50px;"> </a></div-->
+	    <div><img src="../css/imagenes/repomex_logo.jpg" style="width: 100px; margin-bottom:50px;"></div>
+		<div id="clear"></div>
+			<span style="color:#fff"> 111</span>
+				<p>
+			<a href="#" onclick="window.open('/aviso_legal.html','','width=400,height=420')">AVISO LEGAL</a> | ALGUNOS DERECHOS RESERVADOS &copy; 2026   
+				</p>
+		<div id="pie_b">
+			&nbsp;
+		</div>
+		
+		<div id="pie_d">
+				&nbsp;
+		</div>
+		
+	 </div> 
+
+	 
+</div>
+
+
+<script type="text/javascript">
+/*
+	function reajustar()
+	{		
+		var divContent = document.getElementById("DivDetalleNota")
+		
+		if(window.screen.width == 800)
+		{
+			divContent.style.width='450px'
+		}else{
+			if(window.screen.width == 1024)
+			{
+				divContent.style.width='630px'
+			}else{
+				if(window.screen.width == 1152)
+				{
+					divContent.style.width='790px'
+				}else{
+				   	if(window.screen.width == 1280)
+				    {
+				    	divContent.style.width='900px'
+  				    }else{
+						if(window.screen.width == 1440)
+					    {
+				    			divContent.style.width='1012px'
+	  				    }else{
+							if(window.screen.width == 1680)
+						    {
+				    				divContent.style.width='1180px'
+	  				  	    }else{
+
+								if(window.screen.width == 1920)
+								    {
+				    					divContent.style.width='1348px'
+			  				       }else{
+								       if(window.screen.width == 2048)
+								    	{
+				    						divContent.style.width='1437px'
+				  				       }else{
+								     		  if(window.screen.width == 2560)
+								    		 {
+				    							divContent.style.width='1796px'
+				  				   		 }else{
+  
+					         					divContent.style.width='750px';}
+
+				
+			}
+		}
+	}
+	
+	if(navigator.userAgent.indexOf("Firefox") <= 0)
+		setInterval("reajustar()",1000);
+		*/
+</script>
+
+</body>
+</html>
+
