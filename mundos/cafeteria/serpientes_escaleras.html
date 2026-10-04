@@ -23,7 +23,8 @@
 <main>
   <div class="tarjeta" id="config"><h1>🎲 Serpientes y escaleras de la seguridad</h1>
     <p class="tenue">Las <b>escaleras</b> son buenas prácticas que te hacen subir; las <b>serpientes</b> son actos inseguros que te regresan. Cada una dice en qué norma se apoya. Juegan de 1 a 4 personas en el mismo dispositivo, por turnos. <b>Para que tu tiro valga, contesta bien la pregunta</b>; si fallas, te quedas en tu lugar.</p>
-    <div class="cfg" id="cfgJug"></div><button class="sec" id="bMas">➕ Agregar jugador</button> <button class="prim" id="bJugar">¡A jugar!</button></div>
+    <div class="cfg" id="cfgJug"></div><button class="sec" id="bMas">➕ Agregar jugador</button> <button class="sec" id="bTemas">📚 Elegir cursos</button> <button class="prim" id="bJugar">¡A jugar!</button>
+    <p class="tenue" id="temasTxt" style="margin:6px 0 0"></p></div>
   <div class="juego" id="juego" style="display:none">
     <div><div id="tab"><svg id="lineas"></svg></div></div>
     <div class="tarjeta lado"><div id="jugs"></div><div id="dado">🎲</div><button class="prim" id="bTirar" style="width:100%">Tirar el dado</button><div id="msj"></div></div>
@@ -34,6 +35,8 @@
 Juego.iniciar({ titulo: 'Serpientes y escaleras', icono: '🎲' });
 const $ = s => document.querySelector(s);
 const META = 50, COLORES = ['#C62828', '#154F90', '#2E7D32', '#E0A82E'];
+function txtTemas() { const a = Banco.activos(); $('#temasTxt').textContent = 'Preguntas de: ' + (a.length === Banco.temas().length ? 'todos los temas' : a.map(t => t.tema).join(' · ')); }
+$('#bTemas').onclick = () => Banco.selector(txtTemas); txtTemas();
 const ESCALERAS = [
   { de: 3, a: 18, t: 'Usaste el equipo de protección personal asignado y lo revisaste antes de usarlo.', f: 'NOM-017-STPS-2024, 5.9 y capítulo 6' },
   { de: 8, a: 28, t: 'Participaste en el simulacro de evacuación.', f: 'NOM-002-STPS-2010, 5.7' },

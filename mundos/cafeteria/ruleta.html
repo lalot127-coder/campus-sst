@@ -17,7 +17,8 @@
 <body>
 <main>
   <div class="tarjeta"><h1>🎡 Ruleta de preguntas</h1><p class="tenue">Gira la ruleta: cae en un tema y responde. 10 rondas. Puedes jugar solo o en dos equipos que se turnan. Banco unificado: preguntas de juego de todos los cursos, de las señales y de la biblioteca, cada una con su fuente.</p>
-    <label><input type="radio" name="modo" value="1" checked> Individual</label> &nbsp; <label><input type="radio" name="modo" value="2"> Dos equipos</label></div>
+    <label><input type="radio" name="modo" value="1" checked> Individual</label> &nbsp; <label><input type="radio" name="modo" value="2"> Dos equipos</label>
+    <p style="margin:8px 0 0"><button class="sec" id="bTemas">📚 Elegir cursos</button> <span class="tenue" id="temasTxt"></span></p></div>
   <div class="juego">
     <div class="tarjeta"><div class="rueda"><div class="flecha"></div><canvas id="cv" width="720" height="720"></canvas></div><br><button class="prim" id="bGirar" style="width:100%">🎡 Girar</button><div class="marc" id="marc" style="margin-top:10px"></div></div>
     <div class="tarjeta" id="preg"><p class="tenue">Gira la ruleta para comenzar.</p></div>
@@ -26,7 +27,9 @@
 <script>
 Juego.iniciar({ titulo: 'Ruleta de preguntas', icono: '🎡' });
 const $ = s => document.querySelector(s);
-const TEMAS = Banco.temas();
+let TEMAS = Banco.activos();
+function txtTemas() { $('#temasTxt').textContent = TEMAS.length === Banco.temas().length ? 'Todos los temas' : TEMAS.map(t => t.tema).join(' · '); }
+$('#bTemas').onclick = () => { if (ronda || girando) return Juego.toast('Los temas se cambian antes de empezar o en una nueva partida.', 'info'); Banco.selector(a => { TEMAS = a; ang = 0; rueda(); txtTemas(); }); };
 const COL = ['#154F90', '#2E7D32', '#B8662E', '#6A3FA0', '#C62828', '#0D6EB8', '#37474F', '#00897B'];
 const RONDAS = 10; let ang = 0, girando = false, ronda = 0, equipos = [{ n: 'Puntos', p: 0 }], turno = 0, t0 = Date.now(), aciertos = 0;
 const g = $('#cv').getContext('2d');
@@ -58,7 +61,7 @@ async function fin() { $('#bGirar').disabled = true; const s = Math.round((Date.
   const gan = equipos.length > 1 ? (equipos[0].p === equipos[1].p ? 'Empate' : `Gana ${equipos[0].p > equipos[1].p ? equipos[0].n : equipos[1].n}`) : `${aciertos}/${RONDAS} correctas (${pct}%)`;
   Juego.modal(`<h2>🏆 ${gan}</h2><p>${equipos.map(e => `${e.n}: <b>${e.p}</b>`).join(' · ')}</p><p class="fuente">${ok ? '✅ Resultado enviado a la persona instructora.' : ''}</p><button class="prim" onclick="location.reload()">Jugar otra vez</button>`); }
 if (!TEMAS.length) $('#preg').innerHTML = '<p>No se encontró el banco de preguntas (recursos/banco_trivia.js). Ejecuta: python 05_herramientas/banco_simulador.py</p>';
-rueda(); marc();
+rueda(); marc(); txtTemas();
 </script>
 </body>
 </html>
