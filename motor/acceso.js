@@ -65,7 +65,7 @@ const fecha = d => d ? d.toLocaleString('es-MX', { timeZone: 'America/Mexico_Cit
 function textoEstado() {
   if (estado.modo === 'propietario') return '🔓 Modo propietario (esta computadora): todo abierto';
   if (estado.modo === 'aula') return '🔓 Modo aula (servidor de aula): todo abierto';
-  return estado.valido ? `🔑 Acceso${estado.nombre ? ' · ' + estado.nombre : ''} · vence ${fecha(estado.vence)} (hora del centro de México)` : `🔒 ${estado.motivo}`;
+  return estado.valido ? `🔑 Acceso${estado.nombre ? ' · ' + estado.nombre : ''} · ${estado.vence && estado.vence.getFullYear() >= 2099 ? 'permanente' : 'vence ' + fecha(estado.vence) + ' (hora del centro de México)'}` : `🔒 ${estado.motivo}`;
 }
 function whatsapp(texto) { return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(texto)}`; }
 let qrLib = null;
