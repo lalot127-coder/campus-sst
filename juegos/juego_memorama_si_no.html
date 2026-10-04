@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1D1B2E"><title>Memorama: sí se hace / no se hace · Primeros auxilios</title>
+<style>
+:root{--navy:#1D1B2E;--rojo:#B01824;--teal:#0F7A8C;--ambar:#E8A33D;--rosa:#FBECEC;--hielo:#F3F4F7;--texto:#1F2433;--tenue:#5B6270;--bien:#2E7D32;--mal:#C62828}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:var(--hielo);color:var(--texto);-webkit-tap-highlight-color:transparent}
+header{background:var(--navy);color:#fff;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:1.2rem}header .meta{color:#F6C9CE;font-size:.88rem}
+.marcador{margin-left:auto;display:flex;gap:8px;font-weight:700;flex-wrap:wrap}.marcador span{background:var(--rojo);padding:5px 11px;border-radius:999px;font-size:.92rem}
+.volver{background:#fff;color:var(--navy);border:0;border-radius:10px;padding:6px 10px;font-weight:700;cursor:pointer}
+main{max-width:980px;margin:0 auto;padding:14px}
+.card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 2px 10px rgba(29,27,46,.1);margin-bottom:12px}
+.etq{display:inline-block;background:var(--rosa);color:var(--rojo);font-weight:800;border-radius:999px;padding:3px 12px;font-size:.85rem}
+.opciones{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px}
+.op{background:var(--hielo);border:2px solid transparent;border-radius:14px;padding:13px;font-size:1.03rem;cursor:pointer;text-align:left;color:var(--texto);display:flex;gap:10px;align-items:center;min-height:62px;font-family:inherit}
+.op:hover{border-color:var(--ambar)}.op .i{font-size:1.7rem}
+.op.ok{background:#E8F5E9;border-color:var(--bien)}.op.no{background:#FDECEA;border-color:var(--mal)}.op.sel{border-color:var(--teal);background:#E2F2F4}
+.retro{margin-top:12px;border-radius:14px;padding:13px;font-size:1.02rem}.retro.ok{background:#E8F5E9}.retro.no{background:#FDECEA}
+.retro small,.fuente{display:block;color:var(--tenue);font-style:italic;margin-top:6px;font-size:.85rem}
+button.prim{background:var(--rojo);color:#fff;border:0;border-radius:12px;padding:12px 20px;font-size:1.05rem;font-weight:700;cursor:pointer;font-family:inherit}
+button.sec{background:#fff;color:var(--navy);border:2px solid var(--navy);border-radius:12px;padding:10px 18px;font-size:1rem;cursor:pointer;font-family:inherit}
+button:disabled{opacity:.45;cursor:default}
+.modal{position:fixed;inset:0;background:rgba(29,27,46,.75);display:none;align-items:center;justify-content:center;padding:14px;z-index:9}
+.tarjeta{background:#fff;border-radius:18px;max-width:680px;width:100%;padding:22px;max-height:92vh;overflow:auto}
+.tarjeta h2{color:var(--navy);margin-top:0}
+input[type=text]{font-size:1.05rem;padding:10px;border-radius:10px;border:1px solid #c9ccd6;width:100%;margin:6px 0 12px;font-family:inherit}
+table{width:100%;border-collapse:collapse;font-size:.95rem}td,th{padding:6px;border-bottom:1px solid var(--hielo);text-align:left;vertical-align:top}
+.pie{font-size:.78rem;color:var(--tenue);margin-top:14px}
+.big{font-size:2.6rem;font-weight:800;color:var(--rojo);text-align:center}
+.fila{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tablero{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:560px){.tablero{grid-template-columns:repeat(3,1fr)}}
+.carta{aspect-ratio:3/4;border:0;border-radius:14px;background:var(--rojo);color:#fff;font-size:1rem;cursor:pointer;padding:6px;font-family:inherit;display:flex;align-items:center;justify-content:center;text-align:center;transition:transform .25s}
+.carta .cara{display:none}.carta .dorso{font-size:2.4rem;opacity:.6}
+.carta.abierta,.carta.hecha{background:#fff;color:var(--texto);box-shadow:inset 0 0 0 3px var(--teal);transform:rotateY(0)}
+.carta.abierta .cara,.carta.hecha .cara{display:block}.carta.abierta .dorso,.carta.hecha .dorso{display:none}
+.carta.hecha{box-shadow:inset 0 0 0 3px var(--bien);background:#E8F5E9}.carta.s .cara{font-weight:800}
+</style></head><body>
+<header><button class="volver" onclick="history.length>1?history.back():location.href='manual.html'">‹ Volver</button>
+<div><h1>🧩 Memorama: sí se hace / no se hace</h1><div class="meta">Encuentra cada situación con lo que SÍ se hace</div></div><div class="marcador" id="marc"></div></header>
+<main><div id="app"></div><p class="pie">Fuentes: AHA 2025 (Partes 6 y 7); Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025; Cruz Roja Americana (botiquín). Casos ficticios con fines didácticos. Curso de Primeros auxilios básicos · Ing. Carlos Eduardo Roa Sánchez.</p></main>
+<div class="modal" id="inicio" style="display:flex"><div class="tarjeta"><h2>🧩 Memorama: sí se hace / no se hace</h2><p>Voltea dos cartas: une la <b>situación</b> con <b>lo que sí se hace</b>. Al formar la pareja verás también el mito que NO se hace.</p>
+<input type="text" id="nombre" placeholder="Nombre completo" autocomplete="off">
+<button class="prim" id="empezar">Empezar</button> <button class="sec" id="verGrupo">Resultados del grupo</button></div></div>
+<div class="modal" id="final"><div class="tarjeta" id="finalCont"></div></div>
+<script>
+const CLAVE='memorama_si_no', TITULO='Memorama: sí se hace / no se hace';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let JUGADOR='';
+function leer(){try{return JSON.parse(localStorage.getItem('pa_'+CLAVE)||'[]')}catch(e){return[]}}
+async function registrar(fila){if(!location.protocol.startsWith('http')||location.hostname.endsWith('github.io'))return false;
+ try{const r=await fetch('/api/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo:'juego',fila})});return r.ok}catch(e){return false}}
+function marc(items){$('#marc').innerHTML=items.map(t=>`<span>${t}</span>`).join('')}
+async function terminar(pts,max,repaso,extra){
+ const pct=max?Math.round(pts/max*100):0, reg={juego:TITULO,nombre:JUGADOR,fecha:new Date().toLocaleString('es-MX'),puntos:pts,maximo:max,porcentaje:pct,...(extra||{})};
+ try{const a=leer();a.push(reg);localStorage.setItem('pa_'+CLAVE,JSON.stringify(a))}catch(e){}
+ const ok=await registrar(reg);
+ $('#finalCont').innerHTML=`<h2>${pct>=80?'🏆 ¡Excelente!':pct>=60?'👏 ¡Muy bien!':'💪 ¡Sigue practicando!'}</h2>
+ <div class="big">${pts} / ${max}</div><p style="text-align:center"><b>${esc(JUGADOR)}</b> · ${pct}%${extra&&extra.tiempo?' · '+extra.tiempo:''}</p>
+ ${repaso&&repaso.length?'<h3>Para repasar</h3><ul>'+repaso.map(e=>'<li>'+e+'</li>').join('')+'</ul>':'<p>Sin errores. 👏</p>'}
+ <p class="fuente">${ok?'Registrado en la computadora de la persona instructora.':'Guardado en este dispositivo.'}</p>
+ <button class="prim" onclick="location.reload()">Jugar otra vez</button> <button class="sec" onclick="grupo()">Resultados del grupo</button>`;
+ $('#final').style.display='flex'}
+function grupo(){const a=leer();
+ $('#finalCont').innerHTML=`<h2>Resultados del grupo (${a.length})</h2><table><tr><th>Nombre</th><th>Puntos</th><th>%</th><th>Fecha</th></tr>
+ ${a.map(r=>`<tr><td>${esc(r.nombre)}</td><td>${r.puntos}/${r.maximo}</td><td>${r.porcentaje}%</td><td>${esc(r.fecha)}</td></tr>`).join('')||'<tr><td colspan=4>Sin registros</td></tr>'}</table><br>
+ <button class="prim" onclick="csv()">Descargar CSV</button> <button class="sec" onclick="location.reload()">Cerrar</button>
+ <button class="sec" onclick="if(confirm('¿Borrar los resultados de este dispositivo?')){localStorage.removeItem('pa_'+CLAVE);grupo()}">Borrar</button>`;
+ $('#inicio').style.display='none';$('#final').style.display='flex'}
+function csv(){const a=leer();const t='Juego,Nombre,Fecha,Puntos,Maximo,Porcentaje\n'+a.map(r=>[r.juego,r.nombre,r.fecha,r.puntos,r.maximo,r.porcentaje].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+ const b=new Blob(['﻿'+t],{type:'text/csv'});const l=document.createElement('a');l.href=URL.createObjectURL(b);l.download='resultados_'+CLAVE+'.csv';l.click()}
+const barajar=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+$('#verGrupo').onclick=grupo;
+$('#empezar').onclick=()=>{JUGADOR=$('#nombre').value.trim()||'Participante';$('#inicio').style.display='none';iniciar()};
+const DATOS={"parejas": [["🔥 Quemadura", "Agua corriente limpia", "Pasta de dientes o hielo directo", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025, p. 288"], ["🩸 Sangrado fuerte", "Presión directa firme", "Hielo o \"puntos de presión\"", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025, p. 256"], ["🤕 Convulsión", "Despejar y poner de lado", "Meter algo en la boca o sujetarla", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"], ["👃 Nariz que sangra", "Cabeza ligeramente adelante y apretar", "Cabeza hacia atrás", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"], ["🩹 Raspón sucio", "Lavar con agua de la llave", "Alcohol o agua oxigenada", "IFRC 2025, p. 275"], ["😮‍💨 Bebé atragantado", "Golpes en la espalda + compresiones en el pecho", "Compresiones abdominales", "AHA/AAP 2025, Parte 6 (SVB pediátrico)"], ["💔 No responde, solo jadea", "911 y RCP sin buscar pulso", "Esperar a que respire", "AHA 2025, Parte 7 (SVB adulto)"], ["🍬 Hipoglucemia", "Darle azúcar si está despierta y puede tragar", "Darle algo por la boca si no puede tragar", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"]]};
+
+let cartas=[],abiertas=[],pares=0,mov=0,t0=0,h=null,bloq=false;
+function iniciar(){cartas=barajar(DATOS.parejas.flatMap((p,k)=>[{k,t:p[0],tipo:'s'},{k,t:p[1],tipo:'a'}]));t0=Date.now();h=setInterval(rel,1000);pinta()}
+function rel(){const s=Math.floor((Date.now()-t0)/1000);marc([`⏱ ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`,`🔁 ${mov}`,`✅ ${pares}/${DATOS.parejas.length}`])}
+function pinta(){rel();$('#app').innerHTML=`<div class="tablero">${cartas.map((c,i)=>`<button class="carta ${c.ok?'hecha':''} ${c.ab?'abierta':''} ${c.tipo}" data-i="${i}"><span class="dorso">✚</span><span class="cara">${esc(c.t)}</span></button>`).join('')}</div><div id="retro"></div>`;
+ $$('.carta').forEach(b=>b.onclick=()=>voltear(+b.dataset.i))}
+function voltear(i){const c=cartas[i];if(bloq||c.ok||c.ab)return;c.ab=true;abiertas.push(i);
+ if(abiertas.length===2){mov++;const [a,b]=abiertas.map(x=>cartas[x]);
+  if(a.k===b.k&&a.tipo!==b.tipo){a.ok=b.ok=true;pares++;const p=DATOS.parejas[a.k];abiertas=[];pinta();
+   $('#retro').innerHTML=`<div class="retro ok">✅ <b>${esc(p[0])}</b>: SÍ se hace → ${esc(p[1])}.<br>❌ NO se hace → ${esc(p[2])}.<small>Fuente: ${esc(p[3])}</small></div>`;
+   if(pares===DATOS.parejas.length){clearInterval(h);const s=Math.floor((Date.now()-t0)/1000);const pts=Math.max(20,100-Math.max(0,mov-DATOS.parejas.length)*4);
+    setTimeout(()=>terminar(pts,100,[],{tiempo:`${mov} movimientos · ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}),1800)}}
+  else{bloq=true;pinta();setTimeout(()=>{a.ab=b.ab=false;abiertas=[];bloq=false;pinta()},1100)}}else pinta()}
+
+</script></body></html>

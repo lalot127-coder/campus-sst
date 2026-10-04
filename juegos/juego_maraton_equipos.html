@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1D1B2E"><title>Maratón por equipos · Primeros auxilios</title>
+<style>
+:root{--navy:#1D1B2E;--rojo:#B01824;--teal:#0F7A8C;--ambar:#E8A33D;--rosa:#FBECEC;--hielo:#F3F4F7;--texto:#1F2433;--tenue:#5B6270;--bien:#2E7D32;--mal:#C62828}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:var(--hielo);color:var(--texto);-webkit-tap-highlight-color:transparent}
+header{background:var(--navy);color:#fff;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:1.2rem}header .meta{color:#F6C9CE;font-size:.88rem}
+.marcador{margin-left:auto;display:flex;gap:8px;font-weight:700;flex-wrap:wrap}.marcador span{background:var(--rojo);padding:5px 11px;border-radius:999px;font-size:.92rem}
+.volver{background:#fff;color:var(--navy);border:0;border-radius:10px;padding:6px 10px;font-weight:700;cursor:pointer}
+main{max-width:980px;margin:0 auto;padding:14px}
+.card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 2px 10px rgba(29,27,46,.1);margin-bottom:12px}
+.etq{display:inline-block;background:var(--rosa);color:var(--rojo);font-weight:800;border-radius:999px;padding:3px 12px;font-size:.85rem}
+.opciones{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px}
+.op{background:var(--hielo);border:2px solid transparent;border-radius:14px;padding:13px;font-size:1.03rem;cursor:pointer;text-align:left;color:var(--texto);display:flex;gap:10px;align-items:center;min-height:62px;font-family:inherit}
+.op:hover{border-color:var(--ambar)}.op .i{font-size:1.7rem}
+.op.ok{background:#E8F5E9;border-color:var(--bien)}.op.no{background:#FDECEA;border-color:var(--mal)}.op.sel{border-color:var(--teal);background:#E2F2F4}
+.retro{margin-top:12px;border-radius:14px;padding:13px;font-size:1.02rem}.retro.ok{background:#E8F5E9}.retro.no{background:#FDECEA}
+.retro small,.fuente{display:block;color:var(--tenue);font-style:italic;margin-top:6px;font-size:.85rem}
+button.prim{background:var(--rojo);color:#fff;border:0;border-radius:12px;padding:12px 20px;font-size:1.05rem;font-weight:700;cursor:pointer;font-family:inherit}
+button.sec{background:#fff;color:var(--navy);border:2px solid var(--navy);border-radius:12px;padding:10px 18px;font-size:1rem;cursor:pointer;font-family:inherit}
+button:disabled{opacity:.45;cursor:default}
+.modal{position:fixed;inset:0;background:rgba(29,27,46,.75);display:none;align-items:center;justify-content:center;padding:14px;z-index:9}
+.tarjeta{background:#fff;border-radius:18px;max-width:680px;width:100%;padding:22px;max-height:92vh;overflow:auto}
+.tarjeta h2{color:var(--navy);margin-top:0}
+input[type=text]{font-size:1.05rem;padding:10px;border-radius:10px;border:1px solid #c9ccd6;width:100%;margin:6px 0 12px;font-family:inherit}
+table{width:100%;border-collapse:collapse;font-size:.95rem}td,th{padding:6px;border-bottom:1px solid var(--hielo);text-align:left;vertical-align:top}
+.pie{font-size:.78rem;color:var(--tenue);margin-top:14px}
+.big{font-size:2.6rem;font-weight:800;color:var(--rojo);text-align:center}
+.fila{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.equipos{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px}
+.eq{background:#fff;border:3px solid;border-radius:14px;padding:8px 12px;display:flex;justify-content:space-between;font-size:1.1rem}.eq span{font-weight:800;font-size:1.4rem}
+.eq.turno{background:var(--rosa);transform:scale(1.04)}#rul{max-width:100%;height:auto}
+.crono{font-size:2rem;font-weight:800;color:var(--rojo)}.podio{font-size:1.4rem;margin:6px}
+</style></head><body>
+<header><button class="volver" onclick="history.length>1?history.back():location.href='manual.html'">‹ Volver</button>
+<div><h1>🏁 Maratón por equipos</h1><div class="meta">Ruleta de temas · para proyectar</div></div><div class="marcador" id="marc"></div></header>
+<main><div id="app"></div><p class="pie">Fuentes: AHA 2025 (Partes 6 y 7); Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025; Cruz Roja Americana (botiquín). Casos ficticios con fines didácticos. Curso de Primeros auxilios básicos · Ing. Carlos Eduardo Roa Sánchez.</p></main>
+<div class="modal" id="inicio" style="display:flex"><div class="tarjeta"><h2>🏁 Maratón por equipos</h2><p>Para jugar en grupo con el proyector: 2 a 6 equipos, 3 rondas. Giren la ruleta, respondan en 20 segundos y sumen 10 puntos por acierto.</p>
+<input type="text" id="nombre" placeholder="Nombre del grupo o sede" autocomplete="off">
+<button class="prim" id="empezar">Empezar</button> <button class="sec" id="verGrupo">Resultados del grupo</button></div></div>
+<div class="modal" id="final"><div class="tarjeta" id="finalCont"></div></div>
+<script>
+const CLAVE='maraton', TITULO='Maratón por equipos';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let JUGADOR='';
+function leer(){try{return JSON.parse(localStorage.getItem('pa_'+CLAVE)||'[]')}catch(e){return[]}}
+async function registrar(fila){if(!location.protocol.startsWith('http')||location.hostname.endsWith('github.io'))return false;
+ try{const r=await fetch('/api/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo:'juego',fila})});return r.ok}catch(e){return false}}
+function marc(items){$('#marc').innerHTML=items.map(t=>`<span>${t}</span>`).join('')}
+async function terminar(pts,max,repaso,extra){
+ const pct=max?Math.round(pts/max*100):0, reg={juego:TITULO,nombre:JUGADOR,fecha:new Date().toLocaleString('es-MX'),puntos:pts,maximo:max,porcentaje:pct,...(extra||{})};
+ try{const a=leer();a.push(reg);localStorage.setItem('pa_'+CLAVE,JSON.stringify(a))}catch(e){}
+ const ok=await registrar(reg);
+ $('#finalCont').innerHTML=`<h2>${pct>=80?'🏆 ¡Excelente!':pct>=60?'👏 ¡Muy bien!':'💪 ¡Sigue practicando!'}</h2>
+ <div class="big">${pts} / ${max}</div><p style="text-align:center"><b>${esc(JUGADOR)}</b> · ${pct}%${extra&&extra.tiempo?' · '+extra.tiempo:''}</p>
+ ${repaso&&repaso.length?'<h3>Para repasar</h3><ul>'+repaso.map(e=>'<li>'+e+'</li>').join('')+'</ul>':'<p>Sin errores. 👏</p>'}
+ <p class="fuente">${ok?'Registrado en la computadora de la persona instructora.':'Guardado en este dispositivo.'}</p>
+ <button class="prim" onclick="location.reload()">Jugar otra vez</button> <button class="sec" onclick="grupo()">Resultados del grupo</button>`;
+ $('#final').style.display='flex'}
+function grupo(){const a=leer();
+ $('#finalCont').innerHTML=`<h2>Resultados del grupo (${a.length})</h2><table><tr><th>Nombre</th><th>Puntos</th><th>%</th><th>Fecha</th></tr>
+ ${a.map(r=>`<tr><td>${esc(r.nombre)}</td><td>${r.puntos}/${r.maximo}</td><td>${r.porcentaje}%</td><td>${esc(r.fecha)}</td></tr>`).join('')||'<tr><td colspan=4>Sin registros</td></tr>'}</table><br>
+ <button class="prim" onclick="csv()">Descargar CSV</button> <button class="sec" onclick="location.reload()">Cerrar</button>
+ <button class="sec" onclick="if(confirm('¿Borrar los resultados de este dispositivo?')){localStorage.removeItem('pa_'+CLAVE);grupo()}">Borrar</button>`;
+ $('#inicio').style.display='none';$('#final').style.display='flex'}
+function csv(){const a=leer();const t='Juego,Nombre,Fecha,Puntos,Maximo,Porcentaje\n'+a.map(r=>[r.juego,r.nombre,r.fecha,r.puntos,r.maximo,r.porcentaje].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+ const b=new Blob(['﻿'+t],{type:'text/csv'});const l=document.createElement('a');l.href=URL.createObjectURL(b);l.download='resultados_'+CLAVE+'.csv';l.click()}
+const barajar=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+$('#verGrupo').onclick=grupo;
+$('#empezar').onclick=()=>{JUGADOR=$('#nombre').value.trim()||'Participante';$('#inicio').style.display='none';iniciar()};
+const DATOS={"preg": [{"p": "Llegas a una emergencia. ¿Qué haces primero?", "o": ["Verificar que la escena sea segura", "Mover a la persona", "Tomar video", "Darle agua"], "r": 0, "f": "IFRC 2025, p. 114", "fb": "Tu seguridad primero.", "m": "M1"}, {"p": "¿Cuánto tiempo máximo usas para revisar si respira normalmente?", "o": ["10 segundos", "1 minuto", "30 segundos", "5 minutos"], "r": 0, "f": "IFRC 2025, p. 153", "fb": "", "m": "M1"}, {"p": "La llamada al 911 desde un celular sin saldo…", "o": ["Es gratuita", "No se puede", "Cuesta $5", "Requiere internet"], "r": 0, "f": "IFT, Lineamientos de Colaboración (mod. DOF 07/02/2025)", "fb": "", "m": "M1"}, {"p": "¿Cuántos eslabones tiene la cadena de supervivencia 2025?", "o": ["4", "5", "6", "7"], "r": 2, "f": "AHA 2025, Parte 1 (resumen ejecutivo)", "fb": "Una sola cadena de 6 eslabones para todos.", "m": "M2"}, {"p": "Ritmo de compresiones en adulto, niño y lactante:", "o": ["100 a 120 por minuto", "60 por minuto", "80 por minuto", "150 por minuto"], "r": 0, "f": "AHA 2025, Parte 7 (SVB adulto); AHA/AAP 2025, Parte 6 (SVB pediátrico)", "fb": "", "m": "M2"}, {"p": "Relación compresiones:ventilaciones en un niño con DOS rescatadores:", "o": ["15:2", "30:2", "5:1", "30:1"], "r": 0, "f": "AHA/AAP 2025, Parte 6 (SVB pediátrico)", "fb": "", "m": "M2"}, {"p": "¿Qué técnica de RCP en lactante se ELIMINÓ en 2025?", "o": ["Dos dedos sobre el esternón", "Dos pulgares rodeando el tórax", "Talón de una mano", "Ninguna"], "r": 0, "f": "AHA/AAP 2025, Parte 6 (SVB pediátrico)", "fb": "No lograba la profundidad necesaria.", "m": "M2"}, {"p": "Si no sabes o no quieres dar ventilaciones a un adulto:", "o": ["Haz solo compresiones sin parar", "No hagas nada", "Solo ventila", "Espera al DEA sin comprimir"], "r": 0, "f": "AHA 2025, Parte 7 (SVB adulto)", "fb": "", "m": "M2"}, {"p": "Después de que el DEA da una descarga:", "o": ["Reanuda la RCP de inmediato por 2 minutos", "Busca el pulso 1 minuto", "Retira los parches", "Espera sin tocar"], "r": 0, "f": "AHA 2025, Parte 7 (SVB adulto) (algoritmo para legos)", "fb": "", "m": "M2"}, {"p": "Profundidad de compresión en un niño:", "o": ["Aproximadamente 5 cm (1/3 del pecho)", "1 cm", "8 cm", "2 cm"], "r": 0, "f": "AHA/AAP 2025, Parte 6 (SVB pediátrico)", "fb": "", "m": "M2"}, {"p": "Adulto atragantado que tose con fuerza:", "o": ["Dejarlo toser y vigilar", "Golpes en la espalda de inmediato", "Darle agua", "Compresiones abdominales"], "r": 0, "f": "AHA 2025, Parte 7 (SVB adulto)", "fb": "", "m": "M3"}, {"p": "Niño de 6 años atragantado que no puede hablar:", "o": ["5 golpes en la espalda + 5 compresiones abdominales", "Solo compresiones en el pecho", "Darle pan", "Barrido con el dedo"], "r": 0, "f": "AHA/AAP 2025, Parte 6 (SVB pediátrico)", "fb": "", "m": "M3"}, {"p": "Lactante atragantado: después de 5 golpes en la espalda vienen…", "o": ["5 compresiones en el pecho", "5 compresiones abdominales", "Agua", "Sacudirlo"], "r": 0, "f": "AHA/AAP 2025, Parte 6 (SVB pediátrico)", "fb": "", "m": "M3"}, {"p": "¿Se debe meter el dedo a ciegas para sacar el objeto?", "o": ["Nunca; solo se saca lo que se ve", "Siempre", "Solo en niños", "Solo en adultos"], "r": 0, "f": "AHA 2025, Parte 7 (SVB adulto); AHA/AAP 2025, Parte 6 (SVB pediátrico)", "fb": "", "m": "M3"}, {"p": "Persona que no responde, respira normal y no tiene lesiones:", "o": ["Posición de recuperación (de lado) y vigilar", "RCP", "Sentarla", "Darle café"], "r": 0, "f": "IFRC 2025, pp. 152-153", "fb": "", "m": "M3"}, {"p": "Primera acción ante una hemorragia grave:", "o": ["Presión directa firme", "Hielo", "Punto de presión", "Alcohol"], "r": 0, "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024", "fb": "", "m": "M4"}, {"p": "Un torniquete improvisado debe medir de ancho al menos…", "o": ["5 cm", "1 cm", "Un cordón delgado", "2 mm"], "r": 0, "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024", "fb": "", "m": "M4"}, {"p": "Sangrado de nariz: ¿cómo colocas la cabeza?", "o": ["Ligeramente hacia adelante y aprieta 10-15 min", "Hacia atrás", "Acostado boca arriba", "Entre las piernas"], "r": 0, "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024", "fb": "", "m": "M4"}, {"p": "Químico en el ojo: enjuaga con agua abundante durante…", "o": ["15 minutos", "10 segundos", "1 minuto", "No se enjuaga"], "r": 0, "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024", "fb": "", "m": "M4"}, {"p": "Raspón con tierra: ¿con qué lo limpias?", "o": ["Agua corriente de la llave", "Alcohol", "Agua oxigenada", "No se limpia"], "r": 0, "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025, p. 275", "fb": "", "m": "M4"}, {"p": "¿Qué significa la T de FAST en un EVC?", "o": ["Tiempo: llama ya al 911", "Temperatura", "Tos", "Té caliente"], "r": 0, "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024", "fb": "", "m": "M5"}, {"p": "Convulsión: ¿cuándo llamas al 911?", "o": ["Si dura más de 5 minutos o es la primera vez", "Nunca", "Solo si es de noche", "Al día siguiente"], "r": 0, "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024", "fb": "", "m": "M5"}, {"p": "Reacción alérgica grave con autoinyector disponible:", "o": ["Adrenalina con su autoinyector + 911", "Solo agua", "Esperar", "Antiácido"], "r": 0, "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024", "fb": "", "m": "M5"}, {"p": "Persona que se siente desmayar:", "o": ["Que se siente o acueste y cruce y tense las piernas", "Que corra", "Darle alcohol a oler", "Echarle agua fría"], "r": 0, "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025, p. 401", "fb": "", "m": "M5"}, {"p": "¿Qué artículo SÍ va en el botiquín familiar de la Cruz Roja Americana?", "o": ["Barrera para ventilar con válvula", "Termómetro de mercurio", "Alcohol para tomar", "Tijeras de cocina"], "r": 0, "f": "Cruz Roja Americana, botiquín familiar", "fb": "", "m": "M6"}, {"p": "Con más de 100 trabajadores, la LFT obliga a tener…", "o": ["Una enfermería", "Un helipuerto", "Nada adicional", "Un hospital"], "r": 0, "f": "LFT art. 504 fr. II", "fb": "", "m": "M6"}], "mods": [["M1", "🦺 Escena y 911"], ["M2", "💓 RCP y DEA"], ["M3", "😮‍💨 Atragantamiento"], ["M4", "🩸 Lesiones"], ["M5", "🚑 Urgencias"], ["M6", "🧰 Botiquín"]]};
+
+let eq=[],turno=0,ronda=0,usadas=new Set(),girando=false,ang=0;const RONDAS=3;
+const MODS=DATOS.mods, COL=['#B01824','#0F7A8C','#E8A33D','#1D1B2E','#7A3F14','#2E7D32'];
+function iniciar(){$('#app').innerHTML=`<div class="card"><h2>Equipos</h2><p>Escribe de 2 a 6 nombres de equipo (deja vacíos los que no uses).</p>
+ ${[1,2,3,4,5,6].map(i=>`<input type="text" class="neq" placeholder="Equipo ${i}" value="${i<=4?'Equipo '+i:''}">`).join('')}<button class="prim" id="listo">¡A jugar!</button></div>`;
+ $('#listo').onclick=()=>{eq=$$('.neq').map(x=>x.value.trim()).filter(Boolean).slice(0,6).map(n=>({n,p:0}));if(eq.length<2)return alert('Se necesitan al menos 2 equipos.');pinta()}}
+function tabla(){return `<div class="equipos">${eq.map((e,i)=>`<div class="eq ${i===turno?'turno':''}" style="border-color:${COL[i]}"><b>${esc(e.n)}</b><span>${e.p}</span></div>`).join('')}</div>`}
+function pinta(){marc([`Ronda ${ronda+1}/${RONDAS}`,`Turno: ${esc(eq[turno].n)}`]);
+ $('#app').innerHTML=tabla()+`<div class="card" style="text-align:center"><canvas id="rul" width="360" height="360"></canvas><br><button class="prim" id="girar">🎡 Girar la ruleta</button><div id="preg"></div></div>`;
+ dib();$('#girar').onclick=girar}
+function dib(){const cv=$('#rul'),g=cv.getContext('2d'),n=MODS.length,r=170;g.clearRect(0,0,360,360);
+ MODS.forEach((m,i)=>{g.beginPath();g.moveTo(180,180);g.arc(180,180,r,ang+i*2*Math.PI/n,ang+(i+1)*2*Math.PI/n);g.fillStyle=COL[i%COL.length];g.fill();
+  g.save();g.translate(180,180);g.rotate(ang+(i+.5)*2*Math.PI/n);g.fillStyle='#fff';g.font='bold 15px Calibri';g.textAlign='right';g.fillText(m[1],r-12,5);g.restore()});
+ g.beginPath();g.moveTo(180,4);g.lineTo(168,-0);g.lineTo(192,0);g.fill();g.fillStyle='#fff';g.beginPath();g.arc(180,180,26,0,7);g.fill();g.fillStyle='#1D1B2E';g.font='bold 22px Calibri';g.textAlign='center';g.fillText('✚',180,188);
+ g.fillStyle='#1D1B2E';g.beginPath();g.moveTo(170,2);g.lineTo(190,2);g.lineTo(180,24);g.fill()}
+function girar(){if(girando)return;girando=true;$('#girar').disabled=true;const a0=ang,tot=12+Math.random()*2*Math.PI,t0=performance.now(),D=3500;
+ const h=setInterval(()=>{const t=Math.min(1,(performance.now()-t0)/D);ang=a0+tot*(1-Math.pow(1-t,3));dib();if(t>=1){clearInterval(h);girando=false;elegirMod()}},30)}
+function elegirMod(){const n=MODS.length,a=((-Math.PI/2-ang)%(2*Math.PI)+4*Math.PI)%(2*Math.PI),idx=Math.floor(a/(2*Math.PI/n));const m=MODS[idx][0];
+ let lista=DATOS.preg.filter((q,i)=>q.m===m&&!usadas.has(i));if(!lista.length)lista=DATOS.preg.filter((q,i)=>!usadas.has(i));
+ const q=lista[Math.floor(Math.random()*lista.length)];usadas.add(DATOS.preg.indexOf(q));preguntar(q,MODS[idx][1])}
+function preguntar(q,tema){let s=20;const ops=barajar(q.o.map((o,k)=>({o,ok:k===q.r})));
+ $('#preg').innerHTML=`<h3><span class="etq">${esc(tema)}</span> ${esc(q.p)}</h3><div class="crono" id="cr">20</div><div class="opciones">${ops.map((o,k)=>`<button class="op" data-k="${k}">${'ABCD'[k]}) ${esc(o.o)}</button>`).join('')}</div><div id="retro"></div>`;
+ const h=setInterval(()=>{s--;const c=$('#cr');if(c)c.textContent=s;if(s<=0){clearInterval(h);resp(-1)}},1000);
+ const resp=k=>{clearInterval(h);$$('#preg .op').forEach((b,j)=>{b.disabled=true;if(ops[j].ok)b.classList.add('ok');else if(j===k)b.classList.add('no')});const ok=k>=0&&ops[k].ok;if(ok)eq[turno].p+=10;
+  $('#retro').innerHTML=`<div class="retro ${ok?'ok':'no'}">${ok?'✅ ¡+10 para '+esc(eq[turno].n)+'!':'❌ '+(k<0?'Se acabó el tiempo.':'No es correcta.')} ${q.fb?esc(q.fb):''}<small>Fuente: ${esc(q.f)}</small></div><button class="prim" id="sig">Siguiente equipo ➜</button>`;
+  $('#sig').onclick=()=>{turno++;if(turno>=eq.length){turno=0;ronda++}if(ronda>=RONDAS)return podio();pinta()}};
+ $$('#preg .op').forEach(b=>b.onclick=()=>resp(+b.dataset.k))}
+function podio(){const o=[...eq].sort((a,b)=>b.p-a.p);JUGADOR=o.map(e=>e.n+' '+e.p).join(' | ');
+ $('#app').innerHTML=`<div class="card" style="text-align:center"><h2>🏁 ¡Fin del maratón!</h2>${o.map((e,i)=>`<div class="podio">${['🥇','🥈','🥉'][i]||'🎖️'} <b>${esc(e.n)}</b> · ${e.p} pts</div>`).join('')}<br><button class="prim" id="g">Guardar resultado</button></div>`;
+ $('#g').onclick=()=>terminar(o[0].p,RONDAS*10,[],{})}
+
+</script></body></html>
