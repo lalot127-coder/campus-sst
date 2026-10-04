@@ -27,14 +27,38 @@ function temas() {
   const b = deBiblioteca(); if (b.length) cache.push({ tema: 'Biblioteca normativa', preguntas: b });
   return cache;
 }
+// Selección de cursos/temas (se recuerda en este dispositivo). Sin selección = todos.
+const KSEL = 'banco_temas_elegidos';
+function elegidos() { try { return JSON.parse(localStorage.getItem(KSEL) || 'null'); } catch (e) { return null; } }
+function activos() { const e = elegidos(), ts = temas(); if (!e || !e.length) return ts; const f = ts.filter(t => e.includes(t.tema)); return f.length ? f : ts; }
+// Ventana para elegir: Banco.selector(alTerminar) → llama alTerminar(activos) al guardar.
+function selector(alTerminar) {
+  const ts = temas(), e = elegidos(), marcado = t => !e || !e.length || e.includes(t.tema);
+  let m = document.getElementById('bancoSel');
+  if (!m) { m = document.createElement('div'); m.id = 'bancoSel'; document.body.appendChild(m); }
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(14,58,107,.75);display:flex;align-items:center;justify-content:center;z-index:60;padding:12px';
+  m.innerHTML = `<div style="background:#fff;border-radius:18px;padding:18px;max-width:520px;width:100%;max-height:90vh;overflow:auto;font-family:Calibri,'Segoe UI',sans-serif">
+   <h2 style="color:#0E3A6B;margin-top:0">📚 ¿De qué cursos quieres las preguntas?</h2>
+   <p style="color:#5B6B7C;margin-top:0">Marca uno o varios. Se guarda en este dispositivo.</p>
+   ${ts.map((t, i) => `<label style="display:flex;gap:10px;align-items:center;padding:9px 10px;margin:5px 0;background:#E8F5F9;border-radius:11px;font-size:1.02rem;cursor:pointer"><input type="checkbox" data-i="${i}" ${marcado(t) ? 'checked' : ''} style="width:20px;height:20px"> <span style="flex:1">${t.tema}</span><small style="color:#5B6B7C">${t.preguntas.length} preguntas</small></label>`).join('')}
+   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button id="bsTodos" style="border:0;border-radius:11px;padding:9px 12px;background:#E8F5F9;color:#0E3A6B;font-weight:700;cursor:pointer">Todos</button><button id="bsNing" style="border:0;border-radius:11px;padding:9px 12px;background:#E8F5F9;color:#0E3A6B;font-weight:700;cursor:pointer">Ninguno</button>
+   <button id="bsOk" style="margin-left:auto;border:0;border-radius:12px;padding:10px 18px;background:#154F90;color:#fff;font-weight:800;cursor:pointer">Usar estos temas</button></div></div>`;
+  const cajas = () => [...m.querySelectorAll('input[type=checkbox]')];
+  m.querySelector('#bsTodos').onclick = () => cajas().forEach(c => c.checked = true);
+  m.querySelector('#bsNing').onclick = () => cajas().forEach(c => c.checked = false);
+  m.querySelector('#bsOk').onclick = () => { const sel = cajas().filter(c => c.checked).map(c => ts[+c.dataset.i].tema);
+    if (!sel.length) return alert('Elige al menos un tema.');
+    try { localStorage.setItem(KSEL, JSON.stringify(sel.length === ts.length ? [] : sel)); } catch (e) { }
+    m.style.display = 'none'; alTerminar && alTerminar(activos()); };
+}
 const pendientes = {};
 function alAzar(tema) {
-  const ts = temas(); if (!ts.length) return null;
-  const t = tema ? ts.find(x => x.tema === tema) || ts[0] : ts[Math.floor(Math.random() * ts.length)];
+  const ts = activos(); if (!ts.length) return null;
+  const t = tema ? temas().find(x => x.tema === tema) || ts[0] : ts[Math.floor(Math.random() * ts.length)];
   if (!pendientes[t.tema] || !pendientes[t.tema].length) pendientes[t.tema] = barajar(t.preguntas);
   const q = { ...pendientes[t.tema].pop(), tema: t.tema };
   if (q.imgId && window.Senales) q.img = Senales.dataURL(q.imgId, 220);
   return q;
 }
-window.Banco = { temas, alAzar, barajar, total: () => temas().reduce((s, t) => s + t.preguntas.length, 0) };
+window.Banco = { temas, activos, elegidos, selector, alAzar, barajar, total: () => activos().reduce((s, t) => s + t.preguntas.length, 0) };
 })();
