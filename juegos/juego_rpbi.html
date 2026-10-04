@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clasifica el RPBI</title>
+<style>
+  :root{--navy:#0B2545;--azul:#13457A;--medio:#1F6FB2;--cielo:#5FA8D3;--hielo:#EAF2FA;--texto:#1B2633;--tenue:#5B6B7C;
+        --rojo:#C62828;--amarillo:#F2C200;--verde:#2E7D32;--gris:#6B7785;--bien:#2E7D32;--mal:#C62828}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:var(--hielo);color:var(--texto);
+       -webkit-tap-highlight-color:transparent;user-select:none}
+  header{background:var(--navy);color:#fff;padding:14px 18px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+  header h1{margin:0;font-size:1.35rem}
+  header .meta{font-size:.95rem;color:var(--cielo)}
+  .marcador{margin-left:auto;display:flex;gap:14px;font-weight:700}
+  .marcador span{background:var(--azul);padding:6px 12px;border-radius:999px}
+  main{max-width:1100px;margin:0 auto;padding:16px}
+  .instr{background:#fff;border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:1.05rem}
+  .zona{display:grid;grid-template-columns:1fr;gap:16px}
+  @media(min-width:820px){.zona{grid-template-columns:1fr 1.2fr}}
+  .residuos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start}
+  .item{background:#fff;border:2px solid transparent;border-radius:14px;padding:12px;text-align:center;cursor:pointer;
+        font-size:1rem;min-height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+        box-shadow:0 1px 3px rgba(11,37,69,.12);transition:transform .1s}
+  .item .ico{font-size:2rem}
+  .item.sel{border-color:var(--medio);transform:scale(1.04);background:#F3F8FD}
+  .item.hecho{opacity:.35;pointer-events:none}
+  .contenedores{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+  .cont{border-radius:16px;padding:14px 10px;color:#fff;text-align:center;cursor:pointer;min-height:120px;display:flex;
+        flex-direction:column;justify-content:center;gap:4px;font-weight:700;border:3px solid transparent}
+  .cont small{font-weight:400;opacity:.95}
+  .cont.listo{border-color:#fff;box-shadow:0 0 0 3px var(--medio)}
+  .rojo{background:var(--rojo)} .amarillo{background:var(--amarillo);color:var(--navy)} .gris{background:var(--gris)}
+  .fb{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);max-width:min(680px,92vw);padding:14px 18px;border-radius:14px;
+      color:#fff;font-size:1.05rem;box-shadow:0 6px 20px rgba(0,0,0,.25);display:none;z-index:5}
+  .fb.ok{background:var(--bien)} .fb.no{background:var(--mal)} .fb small{display:block;opacity:.9;margin-top:4px;font-style:italic}
+  .modal{position:fixed;inset:0;background:rgba(11,37,69,.72);display:none;align-items:center;justify-content:center;padding:16px;z-index:9}
+  .tarjeta{background:#fff;border-radius:18px;max-width:640px;width:100%;padding:22px;max-height:90vh;overflow:auto}
+  .tarjeta h2{margin:.2rem 0 .6rem;color:var(--navy)}
+  button.prim{background:var(--medio);color:#fff;border:0;border-radius:12px;padding:12px 20px;font-size:1.05rem;font-weight:700;cursor:pointer}
+  button.sec{background:var(--hielo);color:var(--navy);border:0;border-radius:12px;padding:12px 20px;font-size:1.05rem;cursor:pointer}
+  input{font-size:1.05rem;padding:10px;border-radius:10px;border:1px solid var(--cielo);width:100%;margin:6px 0 14px}
+  table{width:100%;border-collapse:collapse;font-size:.95rem} td,th{padding:6px;border-bottom:1px solid var(--hielo);text-align:left}
+  .pie{font-size:.8rem;color:var(--tenue);margin-top:18px}
+</style>
+</head>
+<body>
+<header>
+  <h1>♻️ Clasifica el RPBI</h1>
+  <div class="meta">NOM-087-SEMARNAT-SSA1-2002 · Formación de camilleros · Hospital de Especialidades Santé</div>
+  <div class="marcador"><span id="pts">0 pts</span><span id="tiempo">0:00</span><span id="avance">0/9</span></div>
+</header>
+<main>
+  <div class="instr">1) Toca un <b>residuo</b>. 2) Toca el <b>envase</b> donde debe ir. Recuerda: bolsas y recipientes se llenan máximo al <b>80%</b>.</div>
+  <div class="zona">
+    <section class="residuos" id="residuos" aria-label="Residuos"></section>
+    <section class="contenedores" id="contenedores" aria-label="Envases"></section>
+  </div>
+  <p class="pie">Clasificación conforme a NOM-087-SEMARNAT-SSA1-2002, numerales 4 y 6.2 (DOF 17/02/2003), verificada el 02/10/2026. Casos con fines didácticos.</p>
+</main>
+<div class="fb" id="fb"></div>
+
+<div class="modal" id="inicio" style="display:flex">
+  <div class="tarjeta">
+    <h2>Antes de empezar</h2>
+    <p>Escribe tu nombre para registrar tu resultado en esta tablet.</p>
+    <input id="nombre" placeholder="Nombre completo" autocomplete="off">
+    <button class="prim" id="empezar">Empezar</button>
+    <button class="sec" id="verGrupo">Resultados del grupo</button>
+  </div>
+</div>
+<div class="modal" id="final"><div class="tarjeta" id="finalCont"></div></div>
+
+<script>
+const CONT = [
+  {id:'pc', nombre:'Recipiente rígido ROJO', sub:'Punzocortantes (polipropileno)', cls:'rojo'},
+  {id:'br', nombre:'Bolsa ROJA', sub:'Polietileno', cls:'rojo'},
+  {id:'hr', nombre:'Recipiente hermético ROJO', sub:'Líquidos', cls:'rojo'},
+  {id:'ba', nombre:'Bolsa AMARILLA', sub:'Patológicos sólidos', cls:'amarillo'},
+  {id:'ha', nombre:'Recipiente hermético AMARILLO', sub:'Patológicos líquidos', cls:'amarillo'},
+  {id:'mu', nombre:'Basura común', sub:'No es RPBI', cls:'gris'},
+];
+const RES = [
+  {ico:'💉', n:'Aguja hipodérmica usada', ok:'pc', f:'Objeto punzocortante → recipiente rígido rojo (NOM-087, 4 y 6.2).'},
+  {ico:'🔪', n:'Hoja de bisturí usada', ok:'pc', f:'Objeto punzocortante → recipiente rígido rojo (NOM-087, 4 y 6.2).'},
+  {ico:'🩹', n:'Gasa saturada de sangre', ok:'br', f:'Residuo no anatómico sólido → bolsa roja (NOM-087, 4 y 6.2).'},
+  {ico:'🧫', n:'Caja de cultivo de laboratorio', ok:'br', f:'Cultivos y cepas → bolsa roja (NOM-087, 4 y 6.2).'},
+  {ico:'🩸', n:'Sangre líquida desechada', ok:'hr', f:'Sangre en estado líquido → recipiente hermético rojo (NOM-087, 6.2).'},
+  {ico:'🫀', n:'Pieza de tejido extirpado', ok:'ba', f:'Residuo patológico sólido → bolsa amarilla (NOM-087, 4 y 6.2).'},
+  {ico:'🧪', n:'Muestra patológica líquida', ok:'ha', f:'Residuo patológico líquido → recipiente hermético amarillo (NOM-087, 6.2).'},
+  {ico:'📄', n:'Envoltura de papel de una jeringa nueva (sin contacto con el paciente)', ok:'mu', f:'No contiene agentes biológico-infecciosos: no cumple la definición de RPBI (NOM-087, 3 y 4).'},
+  {ico:'🥤', n:'Vaso desechable del comedor', ok:'mu', f:'No es residuo de la atención médica: no es RPBI (NOM-087, 3 y 4).'},
+];
+const $ = s => document.querySelector(s);
+let sel=null, pts=0, hechos=0, errores=[], t0=0, timer=null, nombre='';
+const mezcla = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+
+function pintar(){
+  const r=$('#residuos'); r.innerHTML='';
+  mezcla(RES).forEach((it)=>{
+    const d=document.createElement('button'); d.className='item'; d.innerHTML=`<span class="ico">${it.ico}</span>${it.n}`;
+    d.onclick=()=>{document.querySelectorAll('.item').forEach(x=>x.classList.remove('sel')); d.classList.add('sel'); sel={it,el:d};
+      document.querySelectorAll('.cont').forEach(c=>c.classList.add('listo'));
+      if(innerWidth<820) $('#contenedores').scrollIntoView({behavior:'smooth',block:'center'});};
+    r.appendChild(d);
+  });
+  const c=$('#contenedores'); c.innerHTML='';
+  CONT.forEach(k=>{const d=document.createElement('button'); d.className='cont '+k.cls; d.innerHTML=`${k.nombre}<small>${k.sub}</small>`;
+    d.onclick=()=>soltar(k); c.appendChild(d);});
+}
+function aviso(ok,txt,fuente){const f=$('#fb'); f.className='fb '+(ok?'ok':'no'); f.innerHTML=`${ok?'✅ ¡Correcto!':'❌ Revisa:'} ${txt}<small>${fuente}</small>`;
+  f.style.display='block'; clearTimeout(f._t); f._t=setTimeout(()=>f.style.display='none', ok?2200:4200);}
+function soltar(k){
+  if(!sel) return;
+  const {it,el}=sel;
+  document.querySelectorAll('.cont').forEach(c=>c.classList.remove('listo'));
+  if(k.id===it.ok){pts+=10; hechos++; el.classList.add('hecho'); aviso(true, it.n+' → '+k.nombre+'.', it.f);}
+  else{pts-=5; errores.push(`${it.n}: lo pusiste en "${k.nombre}". ${it.f}`); aviso(false, `${it.n} no va en "${k.nombre}".`, it.f);}
+  el.classList.remove('sel'); sel=null; marcador();
+  if(innerWidth<820) $('#residuos').scrollIntoView({behavior:'smooth',block:'start'});
+  if(hechos===RES.length) terminar();
+}
+function marcador(){ $('#pts').textContent=Math.max(0,pts)+' pts'; $('#avance').textContent=`${hechos}/${RES.length}`; }
+function reloj(){const s=Math.floor((Date.now()-t0)/1000); $('#tiempo').textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; return s;}
+function guardar(reg){try{const k='rpbi_resultados'; const a=JSON.parse(localStorage.getItem(k)||'[]'); a.push(reg); localStorage.setItem(k,JSON.stringify(a));}catch(e){}}
+function leer(){try{return JSON.parse(localStorage.getItem('rpbi_resultados')||'[]')}catch(e){return []}}
+function terminar(){
+  clearInterval(timer); const s=reloj(); const max=RES.length*10; pts=Math.max(0,pts); const pct=Math.round(pts/max*100);
+  const reg={nombre, fecha:new Date().toLocaleString('es-MX'), puntos:pts, porcentaje:pct, segundos:s, errores:errores.length};
+  guardar(reg);
+  $('#finalCont').innerHTML=`<h2>${pct>=80?'🏆 ¡Excelente!':'💪 ¡Sigue practicando!'}</h2>
+   <p><b>${nombre}</b>: ${pts} de ${max} puntos (${pct}%) en ${Math.floor(s/60)} min ${s%60} s.</p>
+   ${errores.length?'<h3>Para repasar</h3><ul>'+errores.map(e=>'<li>'+e+'</li>').join('')+'</ul>':'<p>Sin errores. 👏</p>'}
+   <p>Recuerda: llena bolsas y recipientes máximo al 80% y no vuelvas a abrir una bolsa cerrada (NOM-087, 6.2.1 y 6.2.2).</p>
+   <button class="prim" onclick="location.reload()">Siguiente participante</button>
+   <button class="sec" onclick="grupo()">Resultados del grupo</button>`;
+  $('#final').style.display='flex';
+}
+function grupo(){
+  const a=leer();
+  const filas=a.map(r=>`<tr><td>${r.nombre}</td><td>${r.puntos}</td><td>${r.porcentaje}%</td><td>${r.segundos}s</td><td>${r.errores}</td></tr>`).join('');
+  $('#finalCont').innerHTML=`<h2>Resultados del grupo (${a.length})</h2>
+   <table><tr><th>Nombre</th><th>Pts</th><th>%</th><th>Tiempo</th><th>Errores</th></tr>${filas||'<tr><td colspan=5>Sin registros</td></tr>'}</table><br>
+   <button class="prim" onclick="csv()">Descargar CSV</button> <button class="sec" onclick="location.reload()">Cerrar</button>
+   <button class="sec" onclick="if(confirm('¿Borrar todos los resultados de esta tablet?')){localStorage.removeItem('rpbi_resultados');grupo()}">Borrar</button>`;
+  $('#inicio').style.display='none'; $('#final').style.display='flex';
+}
+function csv(){
+  const a=leer(); const t='Nombre,Fecha,Puntos,Porcentaje,Segundos,Errores\n'+a.map(r=>[r.nombre,r.fecha,r.puntos,r.porcentaje,r.segundos,r.errores].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const b=new Blob(['﻿'+t],{type:'text/csv'}); const l=document.createElement('a'); l.href=URL.createObjectURL(b); l.download='resultados_rpbi.csv'; l.click();
+}
+$('#empezar').onclick=()=>{nombre=$('#nombre').value.trim()||'Participante'; $('#inicio').style.display='none'; t0=Date.now(); timer=setInterval(reloj,1000);};
+$('#verGrupo').onclick=grupo;
+pintar(); marcador();
+</script>
+</body>
+</html>

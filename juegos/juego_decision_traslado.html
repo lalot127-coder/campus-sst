@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿Camilla, silla o tabla?</title>
+<style>
+  :root{--navy:#0B2545;--azul:#13457A;--medio:#1F6FB2;--cielo:#5FA8D3;--hielo:#EAF2FA;--texto:#1B2633;--tenue:#5B6B7C;
+        --bien:#2E7D32;--mal:#C62828;--alerta:#E08E0B}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:var(--hielo);color:var(--texto);-webkit-tap-highlight-color:transparent}
+  header{background:var(--navy);color:#fff;padding:14px 18px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+  header h1{margin:0;font-size:1.35rem} header .meta{color:var(--cielo);font-size:.95rem}
+  .marcador{margin-left:auto;display:flex;gap:12px;font-weight:700} .marcador span{background:var(--azul);padding:6px 12px;border-radius:999px}
+  main{max-width:900px;margin:0 auto;padding:16px}
+  .caso{background:#fff;border-radius:18px;padding:20px;box-shadow:0 2px 8px rgba(11,37,69,.1)}
+  .etq{display:inline-block;background:var(--hielo);color:var(--azul);font-weight:700;border-radius:999px;padding:4px 12px;font-size:.9rem}
+  .etq.evac{background:#FDECEA;color:var(--mal)}
+  .paciente{display:flex;gap:16px;align-items:flex-start;margin:14px 0}
+  .avatar{font-size:3.2rem;line-height:1}
+  .orden{background:#F3F8FD;border-left:0;border-radius:12px;padding:10px 14px;margin:10px 0;font-size:1.02rem}
+  .orden b{color:var(--navy)}
+  .opciones{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px}
+  .op{background:var(--hielo);border:2px solid transparent;border-radius:14px;padding:14px;font-size:1.05rem;cursor:pointer;text-align:left;
+      display:flex;gap:10px;align-items:center;min-height:72px;color:var(--texto)}
+  .op .i{font-size:1.9rem} .op:hover{border-color:var(--cielo)}
+  .op.ok{background:#E8F5E9;border-color:var(--bien)} .op.no{background:#FDECEA;border-color:var(--mal)}
+  .retro{margin-top:14px;border-radius:14px;padding:14px;display:none;font-size:1.02rem}
+  .retro.ok{background:#E8F5E9} .retro.no{background:#FDECEA}
+  .retro small{display:block;color:var(--tenue);font-style:italic;margin-top:6px}
+  .nav{display:flex;justify-content:flex-end;margin-top:14px}
+  button.prim{background:var(--medio);color:#fff;border:0;border-radius:12px;padding:12px 20px;font-size:1.05rem;font-weight:700;cursor:pointer}
+  button.sec{background:var(--hielo);color:var(--navy);border:0;border-radius:12px;padding:12px 20px;font-size:1.05rem;cursor:pointer}
+  .modal{position:fixed;inset:0;background:rgba(11,37,69,.72);display:none;align-items:center;justify-content:center;padding:16px;z-index:9}
+  .tarjeta{background:#fff;border-radius:18px;max-width:660px;width:100%;padding:22px;max-height:90vh;overflow:auto}
+  .tarjeta h2{color:var(--navy);margin-top:0}
+  input{font-size:1.05rem;padding:10px;border-radius:10px;border:1px solid var(--cielo);width:100%;margin:6px 0 14px}
+  table{width:100%;border-collapse:collapse;font-size:.95rem} td,th{padding:6px;border-bottom:1px solid var(--hielo);text-align:left}
+  .regla{background:var(--navy);color:#fff;border-radius:14px;padding:12px 16px;margin-bottom:14px}
+  .pie{font-size:.8rem;color:var(--tenue);margin-top:16px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🛏️ ¿Camilla, silla o tabla?</h1>
+  <div class="meta">Decisiones de traslado y evacuación · Formación de camilleros</div>
+  <div class="marcador"><span id="pts">0 pts</span><span id="avance">1/9</span></div>
+</header>
+<main>
+  <div class="regla">📌 Regla de oro: el equipo para trasladar (silla, camilla, tabla rígida y/u oxígeno) se define <b>de acuerdo con la indicación médica</b>. Tu trabajo: verificar que coincida con el estado del paciente y <b>avisar si no coincide</b>.</div>
+  <div id="app"></div>
+  <p class="pie">Fuentes: Procedimiento para Camillería HGO Jalisco DOM-P149-HM1_001 (act. 14); Acciones Esenciales para la Seguridad del Paciente 2023 (AE 1A y 6B); IMSS CVOED, Movilización de pacientes; NOM-036-1-STPS-2018. Casos ficticios con fines didácticos.</p>
+</main>
+
+<div class="modal" id="inicio" style="display:flex">
+  <div class="tarjeta">
+    <h2>¿Qué harías tú?</h2>
+    <p>Lee cada caso y elige la mejor acción. Hay casos de traslado ordinario y de evacuación por emergencia.</p>
+    <input id="nombre" placeholder="Nombre completo" autocomplete="off">
+    <button class="prim" id="empezar">Empezar</button> <button class="sec" id="verGrupo">Resultados del grupo</button>
+  </div>
+</div>
+<div class="modal" id="final"><div class="tarjeta" id="finalCont"></div></div>
+
+<script>
+const F_IND='Procedimiento para Camillería, HGO Jalisco DOM-P149-HM1_001, act. 14: el equipo (silla, camilla, tabla rígida y/u oxígeno) se indica de acuerdo con las indicaciones médicas.';
+const CASOS=[
+ {tipo:'Traslado', av:'🧓', pac:'Don Ramiro, 70 años, consciente y orientado; puede sentarse sin ayuda.',
+  orden:'Rayos X de tórax · Equipo indicado: <b>silla de ruedas</b>',
+  ops:[['♿','Silla de ruedas, con frenos y descansapiés revisados',1],['🛏️','Camilla',0],['🪵','Tabla rígida',0],['✋','No moverlo y avisar',0]],
+  ok:'La indicación coincide con su estado. Antes de moverlo verifica frenos, descansabrazos y descansapiés.',
+  f:F_IND+' AESP 2023, AE 6B (p. 49).'},
+ {tipo:'Traslado', av:'🛌', pac:'Paciente recién operado, debe permanecer acostado; tiene venoclisis.',
+  orden:'Recuperación → piso · Equipo indicado: <b>camilla</b>',
+  ops:[['♿','Silla de ruedas',0],['🛏️','Camilla con barandales elevados y frenos funcionales',1],['🚶','Que camine acompañado',0],['🪵','Tabla rígida',0]],
+  ok:'Camilla, con barandales elevados durante todo el traslado y frenos funcionales.',
+  f:F_IND+' AESP 2023, AE 6B (pp. 48-49).'},
+ {tipo:'Traslado', av:'🚑', pac:'Paciente de urgencias tras una caída de altura; el médico indicó inmovilización.',
+  orden:'Urgencias → Tomografía · Equipo indicado: <b>tabla rígida</b>',
+  ops:[['🪵','Tabla rígida, en equipo y según indicación',1],['♿','Silla de ruedas para ir más rápido',0],['🛏️','Camilla sin tabla, es más cómoda',0],['🙋','Que el familiar lo ayude a sentarse',0]],
+  ok:'Se usa el equipo indicado por el médico. El camillero no cambia la indicación por comodidad o rapidez.',
+  f:F_IND},
+ {tipo:'Traslado', av:'😴', pac:'Paciente somnoliento que no se sostiene sentado; se va de lado.',
+  orden:'Ultrasonido · Equipo indicado: <b>silla de ruedas</b>',
+  ops:[['♿','Sentarlo en la silla y sujetarlo con la mano',0],['🛏️','Cambiar por camilla sin decir nada',0],['✋','Detenerse y avisar a enfermería/médico: la indicación no coincide con su estado',1],['🚶','Que camine despacio',0]],
+  ok:'Correcto: la indicación no coincide con el estado del paciente y hay riesgo de caída. Avisa para que se ajuste la indicación; no decidas solo.',
+  f:F_IND+' AESP 2023, AE 6 (prevención de caídas).'},
+ {tipo:'Traslado', av:'❓', pac:'Paciente inconsciente que ingresó sin documentos ni acompañante.',
+  orden:'Urgencias → Rayos X · Equipo indicado: <b>camilla</b>',
+  ops:[['🏃','Trasladarlo ya; se identifica después',0],['🏷️','Verificar su identificación con el procedimiento de paciente desconocido antes de moverlo',1],['🛏️','Identificarlo por el número de cama',0],['🩺','Identificarlo por su diagnóstico',0]],
+  ok:'Un paciente desconocido se identifica con el procedimiento del establecimiento (p. ej., la palabra "desconocido", género, edad aparente, seña particular, fecha y hora de ingreso). Nunca por cama ni diagnóstico.',
+  f:'AESP 2023, AE 1A (pp. 23-24).'},
+ {tipo:'Traslado', av:'🏋️', pac:'Paciente de 90 kg que debe pasar de la cama a la camilla.',
+  orden:'Equipo indicado: <b>camilla</b>',
+  ops:[['💪','Lo paso yo solo, tengo fuerza',0],['👥','En equipo coordinado ("a la cuenta de tres") con sábana de transferencia o equipo de ayuda',1],['🤝','Que el paciente se impulse solo',0],['🛏️','Jalarlo de los brazos',0]],
+  ok:'90 kg supera por mucho cualquier límite individual de manejo manual (máx. 25 kg). Se trabaja en equipo y con equipo auxiliar.',
+  f:'NOM-036-1-STPS-2018, 8.3 b) 2) y 3). Nota: la norma regula cargas; se usa como referencia de capacidad humana.'},
+ {tipo:'Evacuación', av:'🫁', pac:'Incendio en el piso. Paciente de terapia intensiva conectado a ventilador.',
+  orden:'Orden del jefe de servicio: <b>evacuar</b>',
+  ops:[['🛏️','En camilla, con 2 a 3 rescatadores como mínimo y cuidando conexiones',1],['🧍','Levantamiento en hombros',0],['🧹','Arrastre directo',0],['♿','Silla de ruedas',0]],
+  ok:'Pacientes en decúbito o dependientes de soporte vital se evacúan en camilla, con 2 a 3 rescatadores como mínimo.',
+  f:'IMSS CVOED, Movilización de pacientes (técnicas de traslado en evacuación).'},
+ {tipo:'Evacuación', av:'💨', pac:'Hay humo en el pasillo; paciente que no puede valerse por sí mismo, sin soporte vital; no hay camilla disponible.',
+  orden:'Orden del jefe de servicio: <b>evacuar por pasillo amplio</b>',
+  ops:[['🧹','Arrastre (en colchón o sábana) aprovechando el aire cerca del piso',1],['🧍','Que camine erguido',0],['⏳','Esperar a que llegue una camilla',0],['🛗','Usar el elevador',0]],
+  ok:'Con humo, el arrastre aprovecha la capa de aire más próxima al suelo; en colchón, el paciente va sujeto.',
+  f:'IMSS CVOED, Movilización de pacientes (técnicas por arrastre).'},
+ {tipo:'Evacuación', av:'🚶', pac:'Paciente que se moviliza por sí mismo, en un piso que debe evacuarse.',
+  orden:'Orden del jefe de servicio: <b>evacuar</b>',
+  ops:[['🚶','Evacuarlo por su propio pie, guiado por la brigada y la ruta establecida',1],['🛏️','Buscar camilla primero',0],['🪵','Tabla rígida',0],['🧹','Arrastre',0]],
+  ok:'Identificar previamente a quienes se movilizan por sí mismos, a quienes necesitan ayuda y a los graves permite priorizar el orden de evacuación y que sea más fluida.',
+  f:'IMSS CVOED, Movilización de pacientes (clasificación de pacientes). Técnica final: la decide el jefe del servicio.'},
+];
+const $=s=>document.querySelector(s);
+let i=0, pts=0, nombre='', errores=[], resp=false;
+function pinta(){
+  const c=CASOS[i]; resp=false;
+  $('#avance').textContent=`${i+1}/${CASOS.length}`;
+  $('#app').innerHTML=`<div class="caso">
+    <span class="etq ${c.tipo==='Evacuación'?'evac':''}">${c.tipo==='Evacuación'?'🚨 ':''}${c.tipo}</span>
+    <div class="paciente"><div class="avatar">${c.av}</div><div><b>Paciente:</b> ${c.pac}</div></div>
+    <div class="orden">📋 ${c.orden}</div>
+    <div class="opciones">${c.ops.map((o,k)=>`<button class="op" data-k="${k}"><span class="i">${o[0]}</span><span>${o[1]}</span></button>`).join('')}</div>
+    <div class="retro" id="retro"></div>
+    <div class="nav"><button class="prim" id="sig" style="display:none">${i<CASOS.length-1?'Siguiente caso ➜':'Ver resultado'}</button></div></div>`;
+  document.querySelectorAll('.op').forEach(b=>b.onclick=()=>elegir(+b.dataset.k,b));
+  $('#sig').onclick=()=>{ if(i<CASOS.length-1){i++;pinta();} else terminar(); };
+}
+function elegir(k,b){
+  if(resp) return; resp=true; const c=CASOS[i]; const bien=c.ops[k][2]===1;
+  document.querySelectorAll('.op').forEach((x,j)=>{ if(c.ops[j][2]) x.classList.add('ok'); });
+  if(!bien){ b.classList.add('no'); errores.push(`Caso ${i+1}: elegiste "${c.ops[k][1]}". ${c.ok}`); } else pts+=10;
+  const r=$('#retro'); r.className='retro '+(bien?'ok':'no'); r.style.display='block';
+  r.innerHTML=`${bien?'✅ <b>¡Bien decidido!</b>':'❌ <b>No es la mejor opción.</b>'} ${c.ok}<small>Fuente: ${c.f}</small>`;
+  $('#pts').textContent=pts+' pts'; $('#sig').style.display='inline-block';
+  r.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function leer(){try{return JSON.parse(localStorage.getItem('decision_resultados')||'[]')}catch(e){return []}}
+function terminar(){
+  const max=CASOS.length*10, pct=Math.round(pts/max*100);
+  try{const a=leer(); a.push({nombre,fecha:new Date().toLocaleString('es-MX'),puntos:pts,porcentaje:pct,errores:errores.length}); localStorage.setItem('decision_resultados',JSON.stringify(a));}catch(e){}
+  $('#finalCont').innerHTML=`<h2>${pct>=80?'🏆 ¡Excelente criterio!':'💪 ¡Sigue practicando!'}</h2>
+    <p><b>${nombre}</b>: ${pts} de ${max} puntos (${pct}%).</p>
+    ${errores.length?'<h3>Para repasar</h3><ul>'+errores.map(e=>'<li>'+e+'</li>').join('')+'</ul>':'<p>Sin errores. 👏</p>'}
+    <button class="prim" onclick="location.reload()">Siguiente participante</button> <button class="sec" onclick="grupo()">Resultados del grupo</button>`;
+  $('#final').style.display='flex';
+}
+function grupo(){
+  const a=leer();
+  $('#finalCont').innerHTML=`<h2>Resultados del grupo (${a.length})</h2><table><tr><th>Nombre</th><th>Pts</th><th>%</th><th>Errores</th></tr>
+   ${a.map(r=>`<tr><td>${r.nombre}</td><td>${r.puntos}</td><td>${r.porcentaje}%</td><td>${r.errores}</td></tr>`).join('')||'<tr><td colspan=4>Sin registros</td></tr>'}</table><br>
+   <button class="prim" onclick="csv()">Descargar CSV</button> <button class="sec" onclick="location.reload()">Cerrar</button>
+   <button class="sec" onclick="if(confirm('¿Borrar resultados de esta tablet?')){localStorage.removeItem('decision_resultados');grupo()}">Borrar</button>`;
+  $('#inicio').style.display='none'; $('#final').style.display='flex';
+}
+function csv(){const a=leer(); const t='Nombre,Fecha,Puntos,Porcentaje,Errores\n'+a.map(r=>[r.nombre,r.fecha,r.puntos,r.porcentaje,r.errores].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const b=new Blob(['﻿'+t],{type:'text/csv'}); const l=document.createElement('a'); l.href=URL.createObjectURL(b); l.download='resultados_decision_traslado.csv'; l.click();}
+$('#empezar').onclick=()=>{nombre=$('#nombre').value.trim()||'Participante'; $('#inicio').style.display='none'; pinta();};
+$('#verGrupo').onclick=grupo;
+</script>
+</body>
+</html>
