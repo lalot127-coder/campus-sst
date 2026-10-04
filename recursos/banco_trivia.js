@@ -186,6 +186,323 @@ window.BANCO_TRIVIA = [
 ]
 },
 {
+"tema": "Primeros auxilios",
+"preguntas": [
+{
+"p": "Llegas a una emergencia. ¿Qué haces primero?",
+"o": [
+"Verificar que la escena sea segura",
+"Mover a la persona",
+"Tomar video",
+"Darle agua"
+],
+"r": 0,
+"f": "IFRC 2025, p. 114",
+"rf": ""
+},
+{
+"p": "¿Cuánto tiempo máximo usas para revisar si respira normalmente?",
+"o": [
+"10 segundos",
+"1 minuto",
+"30 segundos",
+"5 minutos"
+],
+"r": 0,
+"f": "IFRC 2025, p. 153",
+"rf": ""
+},
+{
+"p": "La llamada al 911 desde un celular sin saldo…",
+"o": [
+"Es gratuita",
+"No se puede",
+"Cuesta $5",
+"Requiere internet"
+],
+"r": 0,
+"f": "IFT, Lineamientos de Colaboración (mod. DOF 07/02/2025)",
+"rf": ""
+},
+{
+"p": "¿Cuántos eslabones tiene la cadena de supervivencia 2025?",
+"o": [
+"4",
+"5",
+"6",
+"7"
+],
+"r": 2,
+"f": "AHA 2025, Parte 1 (resumen ejecutivo)",
+"rf": ""
+},
+{
+"p": "Ritmo de compresiones en adulto, niño y lactante:",
+"o": [
+"100 a 120 por minuto",
+"60 por minuto",
+"80 por minuto",
+"150 por minuto"
+],
+"r": 0,
+"f": "AHA 2025, Parte 7 (SVB adulto); AHA/AAP 2025, Parte 6 (SVB pediátrico)",
+"rf": ""
+},
+{
+"p": "Relación compresiones:ventilaciones en un niño con DOS rescatadores:",
+"o": [
+"15:2",
+"30:2",
+"5:1",
+"30:1"
+],
+"r": 0,
+"f": "AHA/AAP 2025, Parte 6 (SVB pediátrico)",
+"rf": ""
+},
+{
+"p": "¿Qué técnica de RCP en lactante se ELIMINÓ en 2025?",
+"o": [
+"Dos dedos sobre el esternón",
+"Dos pulgares rodeando el tórax",
+"Talón de una mano",
+"Ninguna"
+],
+"r": 0,
+"f": "AHA/AAP 2025, Parte 6 (SVB pediátrico)",
+"rf": ""
+},
+{
+"p": "Si no sabes o no quieres dar ventilaciones a un adulto:",
+"o": [
+"Haz solo compresiones sin parar",
+"No hagas nada",
+"Solo ventila",
+"Espera al DEA sin comprimir"
+],
+"r": 0,
+"f": "AHA 2025, Parte 7 (SVB adulto)",
+"rf": ""
+},
+{
+"p": "Después de que el DEA da una descarga:",
+"o": [
+"Reanuda la RCP de inmediato por 2 minutos",
+"Busca el pulso 1 minuto",
+"Retira los parches",
+"Espera sin tocar"
+],
+"r": 0,
+"f": "AHA 2025, Parte 7 (SVB adulto) (algoritmo para legos)",
+"rf": ""
+},
+{
+"p": "Profundidad de compresión en un niño:",
+"o": [
+"Aproximadamente 5 cm (1/3 del pecho)",
+"1 cm",
+"8 cm",
+"2 cm"
+],
+"r": 0,
+"f": "AHA/AAP 2025, Parte 6 (SVB pediátrico)",
+"rf": ""
+},
+{
+"p": "Adulto atragantado que tose con fuerza:",
+"o": [
+"Dejarlo toser y vigilar",
+"Golpes en la espalda de inmediato",
+"Darle agua",
+"Compresiones abdominales"
+],
+"r": 0,
+"f": "AHA 2025, Parte 7 (SVB adulto)",
+"rf": ""
+},
+{
+"p": "Niño de 6 años atragantado que no puede hablar:",
+"o": [
+"5 golpes en la espalda + 5 compresiones abdominales",
+"Solo compresiones en el pecho",
+"Darle pan",
+"Barrido con el dedo"
+],
+"r": 0,
+"f": "AHA/AAP 2025, Parte 6 (SVB pediátrico)",
+"rf": ""
+},
+{
+"p": "Lactante atragantado: después de 5 golpes en la espalda vienen…",
+"o": [
+"5 compresiones en el pecho",
+"5 compresiones abdominales",
+"Agua",
+"Sacudirlo"
+],
+"r": 0,
+"f": "AHA/AAP 2025, Parte 6 (SVB pediátrico)",
+"rf": ""
+},
+{
+"p": "¿Se debe meter el dedo a ciegas para sacar el objeto?",
+"o": [
+"Nunca; solo se saca lo que se ve",
+"Siempre",
+"Solo en niños",
+"Solo en adultos"
+],
+"r": 0,
+"f": "AHA 2025, Parte 7 (SVB adulto); AHA/AAP 2025, Parte 6 (SVB pediátrico)",
+"rf": ""
+},
+{
+"p": "Persona que no responde, respira normal y no tiene lesiones:",
+"o": [
+"Posición de recuperación (de lado) y vigilar",
+"RCP",
+"Sentarla",
+"Darle café"
+],
+"r": 0,
+"f": "IFRC 2025, pp. 152-153",
+"rf": ""
+},
+{
+"p": "Primera acción ante una hemorragia grave:",
+"o": [
+"Presión directa firme",
+"Hielo",
+"Punto de presión",
+"Alcohol"
+],
+"r": 0,
+"f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024",
+"rf": ""
+},
+{
+"p": "Un torniquete improvisado debe medir de ancho al menos…",
+"o": [
+"5 cm",
+"1 cm",
+"Un cordón delgado",
+"2 mm"
+],
+"r": 0,
+"f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024",
+"rf": ""
+},
+{
+"p": "Sangrado de nariz: ¿cómo colocas la cabeza?",
+"o": [
+"Ligeramente hacia adelante y aprieta 10-15 min",
+"Hacia atrás",
+"Acostado boca arriba",
+"Entre las piernas"
+],
+"r": 0,
+"f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024",
+"rf": ""
+},
+{
+"p": "Químico en el ojo: enjuaga con agua abundante durante…",
+"o": [
+"15 minutos",
+"10 segundos",
+"1 minuto",
+"No se enjuaga"
+],
+"r": 0,
+"f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024",
+"rf": ""
+},
+{
+"p": "Raspón con tierra: ¿con qué lo limpias?",
+"o": [
+"Agua corriente de la llave",
+"Alcohol",
+"Agua oxigenada",
+"No se limpia"
+],
+"r": 0,
+"f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025, p. 275",
+"rf": ""
+},
+{
+"p": "¿Qué significa la T de FAST en un EVC?",
+"o": [
+"Tiempo: llama ya al 911",
+"Temperatura",
+"Tos",
+"Té caliente"
+],
+"r": 0,
+"f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024",
+"rf": ""
+},
+{
+"p": "Convulsión: ¿cuándo llamas al 911?",
+"o": [
+"Si dura más de 5 minutos o es la primera vez",
+"Nunca",
+"Solo si es de noche",
+"Al día siguiente"
+],
+"r": 0,
+"f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024",
+"rf": ""
+},
+{
+"p": "Reacción alérgica grave con autoinyector disponible:",
+"o": [
+"Adrenalina con su autoinyector + 911",
+"Solo agua",
+"Esperar",
+"Antiácido"
+],
+"r": 0,
+"f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024",
+"rf": ""
+},
+{
+"p": "Persona que se siente desmayar:",
+"o": [
+"Que se siente o acueste y cruce y tense las piernas",
+"Que corra",
+"Darle alcohol a oler",
+"Echarle agua fría"
+],
+"r": 0,
+"f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025, p. 401",
+"rf": ""
+},
+{
+"p": "¿Qué artículo SÍ va en el botiquín familiar de la Cruz Roja Americana?",
+"o": [
+"Barrera para ventilar con válvula",
+"Termómetro de mercurio",
+"Alcohol para tomar",
+"Tijeras de cocina"
+],
+"r": 0,
+"f": "Cruz Roja Americana, botiquín familiar",
+"rf": ""
+},
+{
+"p": "Con más de 100 trabajadores, la LFT obliga a tener…",
+"o": [
+"Una enfermería",
+"Un helipuerto",
+"Nada adicional",
+"Un hospital"
+],
+"r": 0,
+"f": "LFT art. 504 fr. II",
+"rf": ""
+}
+]
+},
+{
 "tema": "Camilleros y RPBI",
 "preguntas": [
 {
