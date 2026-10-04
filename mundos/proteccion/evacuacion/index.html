@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Evacuación al punto de reunión</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/senales.js"></script>
+<script src="../../../motor/avatar.js"></script>
+<script src="../../../motor/motor.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+// Fuentes verificadas (registro_fuentes.md, 03/10/2026): NOM-002-STPS-2010 4.2 (alarma audible/visible, estroboscópica),
+// 6.8 (no bloquear rutas ni señalamientos), 8.1 b), c), e) (rutas, alertamiento, evacuación considerando personas con
+// discapacidad), Guía de Referencia II.4 c), h), i), j), k) (brigada de evacuación); NOM-003-SEGOB-2011 5.1 (ruta de
+// evacuación, salida de emergencia, punto de reunión); NOM-026-STPS-2008 A.3 (prohibido el paso).
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Evacuación al punto de reunión', icono: '🏃', clave: 'pc_evacuacion',
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xD7E4EC,
+  vistas: [[[0, 11, 9], [0, 0, 0]], [[-5, 3, 3], [-2, 1, -1]], [[3, 3.2, 3.5], [5, 1, -1]], [[7, 4, 9], [7, 0, 4]]] });
+const { scene, caja, cil, tocable, letrero, M } = W;
+const F2 = 'NOM-002-STPS-2010', F3 = 'NOM-003-SEGOB-2011';
+// ------------------------------------------------------------------ planta de oficinas [FICTICIA]
+const piso = new THREE.Mesh(new THREE.PlaneGeometry(16, 10), M(0xC9CED4)); piso.rotation.x = -Math.PI / 2; piso.position.set(0, 0, -1); scene.add(piso);
+const exterior = new THREE.Mesh(new THREE.PlaneGeometry(10, 8), M(0x9CC48E)); exterior.rotation.x = -Math.PI / 2; exterior.position.set(9, -0.01, 6); scene.add(exterior);
+const muro = (w, d, x, z) => caja(w, 2.6, d, 0xEEF1F4, x, 1.3, z);
+muro(16, 0.15, 0, -6); muro(0.15, 10, -8, -1); muro(11, 0.15, -2.5, 4); muro(0.15, 4.5, 8, -3.75); muro(0.15, 3.2, 8, 2.4);   // hueco de salida en x=8, z≈0
+muro(1.6, 0.15, -7.2, -1.6); muro(4.2, 0.15, -2.1, -1.6); muro(5, 0.15, 3.5, -1.6);   // puerta de la oficina entre x = -6.4 y -4.2   // pasillo z entre -1.6 y 1.6 (pared sur del pasillo = muro z=4 abierto)
+for (let x = -7; x <= -1; x += 2) { caja(1.2, 0.75, 0.7, 0x8D6E63, x, 0.38, -3.5); cil(0.25, 0.45, 0x37474F, x, 0.23, -2.7); }   // escritorios
+const sen = (id, w, x, y, z, ry) => { const cv = Senales.canvas(id, 256); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w * cv.height / cv.width), new THREE.MeshBasicMaterial({ map: t, transparent: true })); m.position.set(x, y, z); m.rotation.y = ry; scene.add(m); return m; };
+const sRuta = sen('ruta', 0.9, -2, 2.0, -1.5, 0);              // en el pasillo, apunta al este (salida)
+const pRestringida = caja(0.15, 2.1, 1.1, 0x8D6E63, -7.9, 1.05, 0); const sNo = sen('no_paso', 0.55, -7.8, 1.6, 0, Math.PI / 2);
+const cajas = new THREE.Group(); scene.add(cajas); [[1.5, 0.4], [1.9, -0.3], [1.3, -0.7], [1.7, 0.9]].forEach(([x, z]) => caja(0.6, 0.6, 0.6, 0xB98D5A, x, 0.3, z, cajas));
+const sAlt = sen('ruta', 0.8, 0.3, 2.0, 3.9, Math.PI);           // ruta alterna (por la sala sur)
+caja(1.2, 2.2, 0.15, 0x2E7D32, 8, 1.1, 0); const sSalida = sen('salida', 1.1, 7.85, 2.5, 0, -Math.PI / 2);
+const reunion = new THREE.Mesh(new THREE.CircleGeometry(1.4, 40), M(0x00995C)); reunion.rotation.x = -Math.PI / 2; reunion.position.set(10, 0.02, 6); scene.add(reunion);
+sen('reunion', 0.9, 10, 1.9, 4.5, 0); cil(0.04, 1.5, 0x5B6B7C, 10, 0.75, 4.45);
+const luz = new THREE.PointLight(0xffffff, 0, 30); luz.position.set(0, 2.4, 0); scene.add(luz);   // alarma visible estroboscópica (4.2)
+// personas [FICTICIAS]
+function persona(color, x, z, silla) { const g = new THREE.Group(); g.position.set(x, 0, z); scene.add(g); const c = W.capsula(0.2, silla ? 0.35 : 0.6, color); c.position.y = silla ? 0.75 : 0.85; g.add(c);
+  W.esfera(0.15, 0xC68E62, 0, silla ? 1.22 : 1.42, 0, g); if (silla) { [-0.28, 0.28].forEach(dx => { const r = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.03, 8, 20), M(0x37474F)); r.position.set(dx, 0.3, 0); r.rotation.y = Math.PI / 2; g.add(r); }); caja(0.5, 0.06, 0.45, 0x37474F, 0, 0.5, 0, g); }
+  return { g, c }; }
+const brig = persona(0xF57C00, 0.4, 2.6); const chaleco = letrero('BRIGADA', 0.5, 0.14, '#F57C00'); chaleco.position.set(0, 1.85, 0); brig.g.add(chaleco);
+const ana = persona(0x6A1FA0, -4.5, 1.0, true); const nAna = letrero('Ana · usa silla de ruedas', 1.3, 0.16, '#6A1FA0'); nAna.position.set(0, 1.75, 0); ana.g.add(nAna);
+// avatar del participante
+let perfil = {}; try { perfil = JSON.parse(localStorage.getItem('campus_perfil') || '{}'); } catch (e) { }
+const av = Avatar.construir(THREE, perfil); const yo = av.grupo; yo.position.set(-5, 0, -2.6); scene.add(yo);
+let ruta = [], fase = 0, alLlegar = null;
+const caminar = (pts, cb) => { ruta = pts.map(p => new THREE.Vector3(p[0], 0, p[1])); alLlegar = cb; };
+let tPrev = 0, alarmaOn = false;
+W.cuadro.push(t => { const dt = Math.min(0.05, t - tPrev || 0.016); tPrev = t; luz.intensity = alarmaOn && Math.sin(t * 14) > 0.6 ? 25 : 0;
+  if (ruta.length) { const d = ruta[0].clone().sub(yo.position); const L = d.length(); if (L < 0.05) { ruta.shift(); if (!ruta.length && alLlegar) { const c = alLlegar; alLlegar = null; c(); } }
+    else { d.normalize(); yo.position.addScaledVector(d, Math.min(L, 2.6 * dt)); yo.rotation.y = Math.atan2(d.x, d.z); fase += dt * 10; av.animar(fase, true); } } else av.animar(0, false); });
+// alarma sonora (pitidos) con Web Audio
+let audio = null; function sirena(on) { alarmaOn = on; try { if (on && !audio) { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.value = 880; g.gain.value = 0;
+  o.connect(g); g.connect(ctx.destination); o.start(); audio = { ctx, o, g, i: setInterval(() => { g.gain.setTargetAtTime(g.gain.value > 0 ? 0 : 0.04, ctx.currentTime, 0.01); }, 500) }; }
+  if (!on && audio) { clearInterval(audio.i); audio.o.stop(); audio.ctx.close(); audio = null; } } catch (e) { } }
+
+function elegir(titulo, ops, fuente, ok) {
+  W.$('mCont').innerHTML = `<h2>${titulo}</h2><div id="ops"></div><p class="ficticio">[FICTICIO – ejercicio didáctico]</p>`;
+  [...ops].sort(() => Math.random() - .5).forEach(o => { const b = document.createElement('button'); b.className = 'op'; b.textContent = o.t;
+    b.onclick = () => { W.$('modal').style.display = 'none'; if (o.ok) { W.bien(o.fb || 'Correcto.', fuente); ok && ok(); } else { W.mal(o.fb, fuente, !!o.critico); setTimeout(() => elegir(titulo, ops, fuente, ok), 900); } };
+    W.$('ops').appendChild(b); });
+  W.$('modal').style.display = 'flex'; if (location.search.includes('qa')) window.__ops = ops;
+}
+[sRuta, sNo, sAlt, sSalida, reunion, pRestringida].forEach((o, i) => tocable(o, ['ruta', 'no_paso', 'alterna', 'salida', 'reunion', 'no_paso'][i], 0.9));
+const pasos = () => [
+  { titulo: '¡Suena la alarma!', texto: 'Alarma audible y luz estroboscópica: emergencia de incendio en el piso.', fuente: `${F2}, 4.2 y 8.1 c)`,
+    iniciar() { sirena(true); W.irVista(1); elegir('Suena la alarma de incendio. ¿Qué haces?', [
+      { t: 'Suspendo lo que hago y sigo el procedimiento de evacuación y las indicaciones de la brigada', ok: true, fb: 'Correcto: la brigada da la señal de evacuación y conduce a las personas.' },
+      { t: 'Termino el correo que estaba escribiendo', fb: 'Cada segundo cuenta: deja lo que haces.' },
+      { t: 'Regreso a mi lugar por mis cosas', fb: 'No regreses por pertenencias.' }], `${F2}, 8.1 e) y Guía de Referencia II, II.4 c) y h)`, () => W.siguiente()); } },
+  { titulo: 'Elige por dónde salir', texto: 'Toca la señal que te indica la <b>ruta de evacuación</b>.', fuente: `${F3}, 5.1 · NOM-026-STPS-2008, A.3`,
+    iniciar() { W.irVista(1); W.resaltar([]); },
+    tocar(o) { const t = o.userData.tipo; if (t === 'ruta') { W.bien('La señal verde con flecha indica la ruta de evacuación.', `${F3}, 5.1`); caminar([[-5, -0.2], [0.5, -0.2]], () => W.siguiente()); }
+      else if (t === 'no_paso') W.mal('Esa puerta dice "Prohibido el paso": no es salida.', 'NOM-026-STPS-2008, Apéndice A, A.3'); } },
+  { titulo: 'La ruta está obstruida', texto: 'Hay cajas bloqueando el pasillo hacia la salida.', fuente: `${F2}, Guía de Referencia II, II.4 i) y 6.8`,
+    iniciar() { W.irVista(0); elegir('El pasillo está bloqueado con cajas. La brigadista te señala otra ruta. ¿Qué haces?', [
+      { t: 'Sigo la ruta alterna que indica la brigada', ok: true, fb: 'Correcto. Y recuerda: las rutas nunca deben bloquearse.' },
+      { t: 'Me pongo a mover las cajas en plena emergencia', fb: 'Pierdes tiempo y puedes lesionarte: usa la ruta alterna.' },
+      { t: 'Me quedo a esperar a que alguien las quite', critico: true, fb: 'Quedarte en el área en emergencia te pone en riesgo.' }], `${F2}, Guía de Referencia II, II.4 i); 6.8 no bloquear rutas`, () => caminar([[0.3, 2.8], [5, 2.8], [6.8, 0.2]], () => W.siguiente())); } },
+  { titulo: 'Una compañera necesita apoyo', texto: 'Ana usa silla de ruedas y está en el pasillo.', fuente: `${F2}, 8.1 e)`,
+    iniciar() { W.irVista(0); elegir('Ana usa silla de ruedas y no puede usar la ruta con cajas. ¿Qué haces?', [
+      { t: 'Aviso a la brigada para que la acompañe por la ruta accesible, como prevé el plan de emergencia', ok: true, fb: 'Correcto: la evacuación debe considerar a las personas con discapacidad.' },
+      { t: 'La dejo: la brigada la verá después', critico: true, fb: 'Nadie debe quedarse atrás: avisa a la brigada de inmediato.' },
+      { t: 'Intento cargarla yo sola con todo y silla', fb: 'Sin entrenamiento puedes lastimarla o lastimarte: apóyate en la brigada.' }], `${F2}, 8.1 e) evacuación considerando a personas con discapacidad`, () => {
+        caminar([[7.2, 0.2]], () => W.siguiente()); ana.g.position.set(5.5, 0, 2.6); brig.g.position.set(6, 0, 2.2); }); } },
+  { titulo: 'Sal por la salida de emergencia', texto: 'Toca la <b>señal de salida de emergencia</b>.', fuente: `${F3}, 5.1`,
+    iniciar() { W.irVista(2); W.resaltar([]); },
+    tocar(o) { if (o.userData.tipo !== 'salida') return; W.bien('Salida de emergencia: verde, con silueta que avanza hacia la salida.', `${F3}, 5.1`); caminar([[9, 0.2], [9.5, 4.2]], () => W.siguiente()); } },
+  { titulo: 'Llega al punto de reunión', texto: 'Toca el <b>punto de reunión</b> (círculo verde).', fuente: `${F3}, 5.1`,
+    iniciar() { W.irVista(3); },
+    tocar(o) { if (o.userData.tipo !== 'reunion') return; W.bien('Punto de reunión: cuatro flechas dirigidas a un punto.', `${F3}, 5.1`); sirena(false); caminar([[10, 6]], () => { ana.g.position.set(9.2, 0, 6.6); brig.g.position.set(11, 0, 6.2); W.siguiente(); }); } },
+  { titulo: 'Censo', texto: 'Ya estás a salvo.', fuente: `${F2}, Guía de Referencia II, II.4 j)`,
+    iniciar() { elegir('Llegaste al punto de reunión. ¿Qué sigue?', [
+      { t: 'Me reporto con la brigada para el censo y permanezco en el punto de reunión', ok: true, fb: 'Correcto: la brigada hace el censo para saber si falta alguien.' },
+      { t: 'Me voy a mi casa', critico: true, fb: 'Si te vas sin reportarte, la brigada podría arriesgarse buscándote.' },
+      { t: 'Regreso por mi celular', critico: true, fb: 'No regreses al edificio.' }], `${F2}, Guía de Referencia II, II.4 j)`, () => W.siguiente()); } },
+  { titulo: 'Regreso', texto: 'Última decisión.', fuente: `${F2}, Guía de Referencia II, II.4 k)`,
+    iniciar() { elegir('¿Cuándo se regresa al edificio?', [
+      { t: 'Solo cuando la brigada o el coordinador indican que ya no existe peligro', ok: true, fb: 'Correcto.' },
+      { t: 'Cuando deje de sonar la alarma', fb: 'El regreso lo coordina la brigada cuando ya no hay peligro.' },
+      { t: 'Cuando la mayoría decida volver', fb: 'El regreso lo coordina la brigada cuando ya no hay peligro.' }], `${F2}, Guía de Referencia II, II.4 k)`, () => W.siguiente()); } },
+];
+W.inicio([{ id: 'oficina', txt: '🏢 <b>Oficina:</b> incendio en el piso, ruta obstruida y una compañera en silla de ruedas' }], () => { yo.position.set(-5, 0, -2.6); ana.g.position.set(-4.5, 0, 1.0); brig.g.position.set(0.4, 0, 2.6); return pasos(); },
+  'Basado en la NOM-002-STPS-2010 (8.1 y Guía de Referencia II), la NOM-003-SEGOB-2011 (5.1) y la NOM-026-STPS-2008. Escenario y personas ficticios.');
+if (location.search.includes('qa')) window.__qa = { tocar: W.tocar, estado: W.qa, obj: { sRuta, sNo, sAlt, sSalida, reunion }, yo };
+</script>
+</body>
+</html>
