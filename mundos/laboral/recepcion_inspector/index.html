@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Recepción del inspector STPS</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Fuentes verificadas (02_fuentes_verificadas/registro_fuentes.md, consulta 03/10/2026)
+const F = {
+  orden: 'RGITAS art. 29',
+  verif: 'RGITAS art. 16; portal conocetuinspector.stps.gob.mx',
+  acceso: 'RGITAS art. 30 (reforma DOF 23/08/2022); LFT art. 1004-A',
+  falso: 'RGITAS art. 28 fr. V; CPF art. 247 fr. I',
+  cohecho: 'CPF art. 222 fr. II; LFT art. 547 fr. IV',
+  extra: 'RGITAS arts. 28 y 29',
+  aviso: 'Buena práctica (protocolo interno); RGITAS art. 29',
+};
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Recepción del inspector', icono: '🛎️', clave: 'laboral_recepcion_inspector',
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xE6EDF3,
+  vistas: [[[0.2, 3.2, 5.6], [0, 1.0, 0]], [[3.6, 2.4, 2.2], [0.6, 1.0, -0.6]], [[-3.4, 2.6, 2.4], [-1.6, 1, -1.4]]] });
+const { caja, cil, letrero, scene, tocable, M } = W;
+const { persona, decidir, ficha } = window.Laboral;
+
+// ------------------------------------------------------------------ recepción de la empresa
+const piso = new THREE.Mesh(new THREE.PlaneGeometry(12, 10), M(0xD9DEE3)); piso.rotation.x = -Math.PI / 2; scene.add(piso);
+caja(12, 3.2, 0.12, 0xF4F6F8, 0, 1.6, -3.4); caja(0.12, 3.2, 10, 0xF4F6F8, -6, 1.6, 0); caja(0.12, 3.2, 10, 0xF4F6F8, 6, 1.6, 0);
+const rot = letrero('RECEPCIÓN · TEXTILES DEL ALTIPLANO', 3.4, 0.36, '#1F4E79'); rot.position.set(0, 2.7, -3.33); scene.add(rot);
+// puerta de entrada (frente)
+caja(1.4, 2.3, 0.08, 0x9C7A5B, 3.6, 1.15, 3.2).rotation.y = 0; const sEnt = letrero('ENTRADA', 0.9, 0.2, '#37474F'); sEnt.position.set(3.6, 2.5, 3.15); sEnt.rotation.y = Math.PI; scene.add(sEnt);
+// mostrador
+caja(2.6, 1.05, 0.7, 0x2E75B6, 0, 0.52, 0.2); caja(2.7, 0.06, 0.8, 0xFFFFFF, 0, 1.07, 0.2);
+// computadora (portal) y teléfono
+const monitor = caja(0.55, 0.36, 0.04, 0x263238, -0.6, 1.36, 0.05); caja(0.06, 0.16, 0.06, 0x455A64, -0.6, 1.15, 0.05);
+const pantalla = letrero('conocetuinspector', 0.5, 0.3, '#E3F2FD', '#1F4E79'); pantalla.position.set(-0.6, 1.36, 0.08); scene.add(pantalla);
+tocable(monitor, 'portal', 0.6);
+const telefono = caja(0.22, 0.07, 0.16, 0x37474F, 0.25, 1.13, 0.1); tocable(telefono, 'telefono', 0.4);
+// bitácora de visitas
+const bitacora = caja(0.32, 0.03, 0.24, 0xB7791F, 0.8, 1.11, 0.25); tocable(bitacora, 'bitacora', 0.4);
+const sBit = letrero('BITÁCORA', 0.42, 0.1, '#B7791F'); sBit.position.set(0.8, 1.3, 0.32); scene.add(sBit);
+// recepcionista (tú) detrás del mostrador
+persona(W, { x: 0, z: -0.55, ropa: 0xB7791F, etiqueta: 'TÚ · RECEPCIÓN' });
+// inspector frente al mostrador con credencial y orden
+const insp = persona(W, { x: 0.3, z: 1.4, ry: Math.PI, ropa: 0x37474F, gafete: true, etiqueta: 'VISITANTE' });
+const credencial = caja(0.14, 0.09, 0.01, 0xFFFFFF, 0.3, 1.0, 0.25, insp.g); credencial.material.color.set(0xFFF3E0); tocable(credencial, 'credencial', 0.35);
+const orden = caja(0.24, 0.32, 0.03, 0xFFFFFF, -0.32, 0.95, 0.18, insp.g); tocable(orden, 'orden', 0.4);
+// oficina de dirección (máxima autoridad presente) y almacén
+caja(0.1, 2.4, 1.4, 0xC5CAE9, -5.9, 1.2, -1.4);
+const sDir = letrero('DIRECCIÓN / RESPONSABLE SST', 1.9, 0.22, '#1F4E79'); sDir.position.set(-5.85, 2.6, -1.4); sDir.rotation.y = Math.PI / 2; scene.add(sDir);
+const gerente = persona(W, { x: -4.6, z: -1.4, ry: Math.PI / 2, ropa: 0x1F4E79, etiqueta: 'GERENTE', tipo: 'gerente' });
+caja(1.2, 0.75, 0.6, 0x8D6E63, -4.6, 0.38, -2.4);
+const almacen = persona(W, { x: 4.6, z: -1.8, ry: -Math.PI / 2, ropa: 0x7CB342, etiqueta: 'COMPAÑERO DE ALMACÉN', tipo: 'almacen' });
+caja(1.4, 1.6, 0.6, 0xA1887F, 5.2, 0.8, -2.6);
+// sala de juntas
+const mesa = caja(1.6, 0.06, 0.9, 0x8D6E63, -3.4, 0.76, 1.8); cil(0.05, 0.74, 0x5D4037, -3.4, 0.37, 1.8); tocable(mesa, 'sala', 0.9);
+const sSala = letrero('SALA DE JUNTAS', 1.1, 0.2, '#2E75B6'); sSala.position.set(-3.4, 1.5, 1.8); scene.add(sSala);
+for (const [x, z] of [[-4.0, 1.3], [-2.8, 1.3], [-4.0, 2.3], [-2.8, 2.3]]) caja(0.4, 0.45, 0.4, 0x546E7A, x, 0.23, z);
+
+// ------------------------------------------------------------------ documentos (FICTICIOS)
+const DATOS = {
+  ord: { insp: 'Lic. Ana María Pérez Ruiz', cred: 'IFT-2026-0417', orden: 'OI-ORD-1093/2026', tipo: 'Ordinaria periódica', coincide: true },
+  ext: { insp: 'Ing. Jorge Luis Méndez Soto', cred: 'IFT-2026-0388', orden: 'OI-EXT-2210/2026', tipo: 'Extraordinaria (queja)', coincide: true },
+  fal: { insp: 'Sr. "Roberto Inspector"', cred: 'STPS-0001', orden: 'sin número', tipo: 'No indicado', coincide: false },
+};
+let D = DATOS.ord, caso = 'ord';
+const docCred = () => `<h3>🪪 Credencial</h3><div class="foto">👤</div><b>${D.insp}</b><br>Inspector(a) Federal del Trabajo<br>No. ${D.cred}<br>Vigencia: 31/12/2026
+  <div class="ley">${caso === 'fal' ? '<i>Sin leyenda.</i>' : '“Esta credencial no autoriza a su portador a realizar Inspección alguna, sin la orden correspondiente”.'}</div><p class="ficticio">[FICTICIO – ejercicio didáctico]</p>`;
+const docOrden = () => caso === 'fal'
+  ? `<h3>📄 "Orden"</h3><p>Fotocopia sin firma autógrafa. No indica objeto, alcance, fundamento ni teléfonos para verificarla.</p><p class="ficticio">[FICTICIO]</p>`
+  : `<h3>📄 Orden de inspección ${D.orden}</h3><table><tr><td>Tipo</td><td>${D.tipo}</td></tr><tr><td>Centro de trabajo</td><td>Textiles del Altiplano, S.A. de C.V.</td></tr>
+     <tr><td>Ubicación</td><td>Panotla, Tlaxcala</td></tr><tr><td>Objeto y alcance</td><td>${caso === 'ext' ? 'Queja: equipo de protección personal (NOM-017-STPS-2024)' : 'Condiciones generales, capacitación y SST según NOM aplicables'}</td></tr>
+     <tr><td>Fundamento</td><td>LFT arts. 541 y 542; RGITAS</td></tr><tr><td>Teléfonos para constatar</td><td>(incluidos)</td></tr><tr><td>Firma</td><td>Autógrafa ✍️ (original)</td></tr></table>
+     <p>Se acompaña de la <b>guía de derechos y obligaciones</b> del inspeccionado.</p><p class="ficticio">[FICTICIO – ejercicio didáctico]</p>`;
+
+// ------------------------------------------------------------------ pasos
+const intro = (txt) => ({ titulo: 'Inicio', texto: 'Lee la situación.', sinPuntos: true,
+  iniciar() { W.aviso(txt + '<p class="ficticio">[FICTICIO – ejercicio didáctico]</p>', () => W.siguiente(), 'Comenzar'); } });
+
+const pasoPrimero = () => ({ titulo: '¿Qué haces primero?', texto: 'La persona dice ser inspector(a) de la STPS.', fuente: F.orden,
+  iniciar() { decidir(W, 'Llega una persona: "Soy inspector(a) de la STPS". ¿Qué haces primero?', [
+    { t: 'Saludo y le pido su credencial vigente y la orden de inspección original', ok: true, fb: 'Así inicia toda inspección: credencial + orden original + guía.', f: F.orden },
+    { t: 'Le digo que regrese otro día porque el gerente no está', ok: false, crit: true, fb: 'Quien atiende también está obligado a permitir el acceso; negarlo cuesta 250 a 5,000 UMA.', f: F.acceso },
+    { t: 'Lo dejo pasar directo a la planta sin preguntar nada', ok: false, fb: 'Primero verifica: es tu derecho y te protege de falsos inspectores.', f: F.verif },
+  ], () => W.siguiente()); } });
+
+const pasoCredencial = () => ({ titulo: 'Revisa la credencial', texto: 'Toca la <b>credencial</b> que muestra el visitante.', fuente: F.orden,
+  iniciar() { W.resaltar([credencial]); },
+  tocar(o) { if (o.userData.tipo !== 'credencial' || this._h) return; this._h = true; W.resaltar([]);
+    ficha(W, docCred(), () => decidir(W, '¿Qué debe tener la credencial?', [
+      { t: 'Vigencia, fotografía y la leyenda de que no autoriza a inspeccionar sin la orden', ok: true, fb: caso === 'fal' ? 'Correcto… y esta no la tiene: ¡alerta!' : 'Correcto: esta credencial la tiene.', f: F.orden },
+      { t: 'Solo el logotipo de la STPS', ok: false, fb: 'Debe ser vigente, con fotografía y con la leyenda del art. 29.', f: F.orden },
+      { t: 'Un sello de notario', ok: false, fb: 'No: lo que exige el reglamento es vigencia, fotografía y la leyenda.', f: F.orden },
+    ], () => W.siguiente())); } });
+
+const pasoOrden = () => ({ titulo: 'Revisa la orden', texto: 'Toca la <b>orden de inspección</b> (carpeta blanca).', fuente: F.orden,
+  iniciar() { W.resaltar([orden]); },
+  tocar(o) { if (o.userData.tipo !== 'orden' || this._h) return; this._h = true; W.resaltar([]);
+    ficha(W, docOrden(), () => W.pregunta('¿Qué datos debe precisar la orden? (elige todos los que apliquen)', [
+      'Original con firma autógrafa', 'Centro de trabajo, ubicación, objeto y alcance', 'Fundamento legal',
+      'Teléfonos para constatar la orden', 'El monto de la multa a pagar', 'Una cuota por la visita'],
+      [0, 1, 2, 3], F.orden, () => W.siguiente(), true, 'Original con firma, centro, objeto, alcance, fundamento y teléfonos.')); } });
+
+const pasoPortal = () => ({ titulo: 'Corrobora en el portal', texto: 'Toca la <b>computadora</b> para consultar conocetuinspector.stps.gob.mx ("Conoce a tu inspector" y "Valida la Orden de Inspección").', fuente: F.verif,
+  iniciar() { W.resaltar([monitor]); },
+  tocar(o) { if (o.userData.tipo !== 'portal' || this._h) return; this._h = true; W.resaltar([]); W.bien('Corroborar al inspector y la orden es tu derecho.', F.verif);
+    setTimeout(() => ficha(W, `<h3>🖥️ conocetuinspector.stps.gob.mx</h3><p>Credencial ${D.cred}: ${D.coincide ? '<span class="ok">✔ Coincide con el padrón</span>' : '<span class="no">✖ No se encontró</span>'}</p>
+      <p>Orden ${D.orden}: ${D.coincide ? '<span class="ok">✔ Válida para este centro de trabajo</span>' : '<span class="no">✖ No coincide</span>'}</p><p class="ficticio">Simulación del resultado. [FICTICIO]</p>`,
+      () => W.siguiente()), 1600); } });
+
+const pasoAcceso = () => ({ titulo: 'Decide', texto: 'Ya tienes el resultado de la verificación.', fuente: D.coincide ? F.acceso : F.verif,
+  iniciar() { if (D.coincide) decidir(W, 'Los datos coinciden. ¿Qué haces?', [
+      { t: 'Permito el acceso, aviso al responsable y le ofrezco un lugar para trabajar', ok: true, fb: 'Verificar no es negarse: ahora colabora.', f: F.acceso },
+      { t: 'No lo dejo pasar hasta que llegue nuestro abogado mañana', ok: false, crit: true, fb: 'Es negar la inspección: presunción de no contar con lo no exhibido + 250 a 5,000 UMA.', f: F.acceso },
+      { t: 'Le pido que espere afuera sin decir a nadie', ok: false, fb: 'Avisa de inmediato al responsable y da facilidades.', f: F.acceso },
+    ], () => W.siguiente(), caso === 'ext' ? 'No trajo citatorio: es una inspección extraordinaria por queja, y es válida.' : 'Ayer llegó el citatorio con la lista de documentos.');
+    else decidir(W, 'La credencial y la orden NO coinciden. ¿Qué haces?', [
+      { t: 'La inspección no puede realizarse: no entrego nada, aviso al responsable y presento queja', ok: true, fb: 'Si la información no coincide, la inspección no puede realizarse y puedes quejarte.', f: F.verif },
+      { t: 'Lo dejo pasar de todos modos', ok: false, crit: true, fb: 'Con datos que no coinciden no hay inspección: podría ser una extorsión.', f: F.verif },
+      { t: 'Le doy copias de las nóminas para que se vaya rápido', ok: false, crit: true, fb: 'Nunca entregues información a quien no acreditó ser inspector.', f: F.verif },
+    ], () => W.siguiente()); } });
+
+const pasoAvisar = () => ({ titulo: 'Avisa a quien corresponde', texto: 'Toca a la persona a la que debes <b>avisar de inmediato</b>.', fuente: F.aviso,
+  iniciar() { W.resaltar([gerente.torso, almacen.torso]); },
+  tocar(o) { const t = o.userData.tipo;
+    if (t === 'almacen') { W.mal('Avisa al responsable designado o a la máxima autoridad presente: quien tiene la información y la facultad de atender.', F.aviso); return; }
+    if (t === 'gerente' && !this._h) { this._h = true; W.resaltar([]); W.bien('Aviso inmediato al responsable / máxima autoridad presente.', F.aviso); W.siguiente(); } } });
+
+const pasoCuantos = () => ({ titulo: 'Una pregunta incómoda', texto: 'El inspector pregunta algo que no sabes con exactitud.', fuente: F.falso,
+  iniciar() { decidir(W, 'Mientras llega el gerente, el inspector pregunta: "¿Cuántas personas trabajan aquí?". No sabes el número exacto.', [
+    { t: '"Somos como 100, más o menos"', ok: false, crit: true, fb: 'No inventes. Dar información falsa detona extraordinarias y faltar a la verdad ante una autoridad es delito (4 a 8 años).', f: F.falso },
+    { t: '"No tengo el dato exacto; el responsable se lo proporciona con documentos"', ok: true, fb: 'Di solo lo que te consta.', f: F.falso },
+    { t: '"Somos 40" (aunque sabes que son más) para que sea más rápido', ok: false, crit: true, fb: 'Mentir agrava todo: falsedad y presunción de intencionalidad.', f: 'RGITAS arts. 28 fr. V y 61 fr. I; CPF art. 247 fr. I' },
+  ], () => W.siguiente()); } });
+
+const pasoSala = () => ({ titulo: 'Da facilidades', texto: 'Ofrécele un lugar para trabajar: toca la <b>sala de juntas</b>.', fuente: F.acceso,
+  iniciar() { W.resaltar([mesa]); },
+  tocar(o) { if (o.userData.tipo !== 'sala' || this._h) return; this._h = true; W.resaltar([]); W.bien('Dar facilidades (espacio, equipo, información requerida) es una obligación.', F.acceso); W.siguiente(); } });
+
+const pasoBitacora = () => ({ titulo: 'Registra la visita', texto: 'Toca la <b>bitácora</b> para anotar hora de llegada, nombre y número de credencial.', fuente: 'Buena práctica',
+  iniciar() { W.resaltar([bitacora]); },
+  tocar(o) { if (o.userData.tipo !== 'bitacora' || this._h) return; this._h = true; W.resaltar([]); W.bien('Registro hecho: te servirá para el acta y para tus 5 días.', 'Buena práctica; RGITAS art. 35'); W.siguiente(); } });
+
+const pasoArreglo = () => ({ titulo: 'Te proponen un "arreglo"', texto: 'El falso inspector insiste.', fuente: F.cohecho,
+  iniciar() { decidir(W, 'El visitante dice: "Por $5,000 me olvido de todo y no levanto nada". ¿Qué haces?', [
+    { t: 'Pago para evitar problemas', ok: false, crit: true, fb: 'Nunca. Es fraude o cohecho. Los servicios de la STPS son gratuitos.', f: F.cohecho },
+    { t: 'No ofrezco ni entrego nada; documento los hechos y denuncio', ok: true, fb: 'Los servicios de la STPS son gratuitos: si te piden dinero, es fraude.', f: F.cohecho },
+    { t: 'Negocio una cantidad menor', ok: false, crit: true, fb: 'Dar o prometer cualquier beneficio a un servidor público es cohecho.', f: F.cohecho },
+  ], () => W.siguiente()); } });
+
+const pasoFinal = (q, ops, ok, f, retro) => ({ titulo: 'Pregunta final', texto: 'Una última decisión.', fuente: f,
+  iniciar() { W.pregunta(q, ops, [ok], f, () => W.siguiente(), false, retro); } });
+
+const CASOS = {
+  ord: () => [intro('<h2>📅 Caso 1: inspección ordinaria</h2><p>Ayer llegó un <b>citatorio</b> con el listado de documentos (al menos 24 h antes). Hoy, a las 10:00, llega una persona a recepción. Tú eres quien atiende.</p>'),
+    pasoPrimero(), pasoCredencial(), pasoOrden(), pasoPortal(), pasoAcceso(), pasoAvisar(), pasoCuantos(), pasoSala(), pasoBitacora(),
+    pasoFinal('Si te hubieras negado a corroborar la orden, ¿se impide la inspección?', ['Sí, se cancela', 'No: el inspector lo asienta en el acta y continúa', 'Se pospone una semana'], 1, 'RGITAS art. 16', 'Negarse a corroborar no impide la visita.')],
+  ext: () => [intro('<h2>📣 Caso 2: extraordinaria por queja</h2><p>Sin citatorio, un martes a las 7:30, llega una persona. Una trabajadora presentó una queja en el SIQAL por falta de equipo de protección personal. Tú atiendes recepción.</p>'),
+    pasoPrimero(), pasoCredencial(), pasoOrden(), pasoPortal(), pasoAcceso(), pasoAvisar(), pasoCuantos(), pasoSala(), pasoBitacora(),
+    pasoFinal('¿Una inspección extraordinaria necesita citatorio previo?', ['Sí, de 24 horas', 'No: puede practicarse en cualquier tiempo, sin citatorio', 'Solo si es en horas hábiles'], 1, F.extra, 'Las extraordinarias llegan sin citatorio, incluso en días y horas inhábiles.')],
+  fal: () => [intro('<h2>🕵️ Caso 3: ¿inspector o extorsionador?</h2><p>Llega una persona que dice ser de la STPS, con prisa: "Vengo a clausurar si no arreglamos ahorita". Tú atiendes recepción.</p>'),
+    pasoPrimero(), pasoCredencial(), pasoOrden(), pasoPortal(), pasoAcceso(), pasoArreglo(), pasoAvisar(),
+    pasoFinal('Los servicios del inspector federal del trabajo son…', ['Con costo según el tamaño de la empresa', 'Totalmente gratuitos', 'Con pago en efectivo en la visita'], 1, 'Portal conocetuinspector.stps.gob.mx; LFT art. 547 fr. IV', 'Todos los servicios de la STPS son gratuitos.')],
+};
+
+W.inicio([{ id: 'ord', txt: '📅 <b>Caso 1:</b> Ordinaria con citatorio' }, { id: 'ext', txt: '📣 <b>Caso 2:</b> Extraordinaria por queja (sin aviso)' },
+  { id: 'fal', txt: '🕵️ <b>Caso 3:</b> ¿Inspector falso? Verifica y decide' }],
+  id => { caso = id; D = DATOS[id]; return CASOS[id](); },
+  'Basado en: RGITAS (DOF 17/06/2014, reforma 23/08/2022) arts. 16, 28, 29 y 30; LFT arts. 547 y 1004-A; CPF arts. 222 y 247; portal conocetuinspector.stps.gob.mx. Empresa, personas y documentos ficticios. "Avisar a la máxima autoridad presente" es buena práctica, no obligación legal.');
+
+if (location.search.includes('qa')) window.__qa = { credencial, orden, monitor, gerente: gerente.torso, almacen: almacen.torso, mesa, bitacora, tocar: W.tocar, estado: W.qa };
+</script>
+</body>
+</html>
