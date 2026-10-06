@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Normativa del análisis de riesgo</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Fuentes verificadas (02_fuentes_verificadas/registro_fuentes.md, consulta 05/10/2026)
+const RF = 'RFSST (DOF 13/11/2014)';
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Normativa del análisis de riesgo', icono: '📜',
+  clave: 'industria_riesgo_normativa', criterio: { pct: 80, sinCriticos: true }, fondo: 0xE9EEF2,
+  vistas: [[[0, 1.7, 2.4], [0, 1.1, -3]], [[-1.5, 1.7, 0.6], [-3.5, 1.1, -2]], [[1.5, 1.7, 0.6], [3.5, 1.1, -2]]] });
+const { caja, scene, letrero } = W;
+const { sala, prop, persona, situacion, encuentra, tocaYDecide, decide, intro, PALETA } = window.Riesgo;
+
+// ------------------------------------------------------------------ Metalmecánica del Centro [FICTICIO]: archivo de SST
+const { piso, entorno, z0 } = sala(W, { rotulo: 'METALMECÁNICA DEL CENTRO · ARCHIVO DE SEGURIDAD Y SALUD' });
+W.activarXR({ inicio: [0, 0.6], piso, entorno });
+// Archiveros con carpetas (cada carpeta es un tocable)
+const CARPETAS = [
+  { tipo: 'rfsst', txt: 'RFSST', col: '#14213D', x: -3.6, y: 1.55 },
+  { tipo: 'n004', txt: 'NOM-004 Maquinaria', col: '#1F6F8B', x: -2.4, y: 1.55 },
+  { tipo: 'n027', txt: 'NOM-027 Soldadura', col: '#1F6F8B', x: -1.2, y: 1.55 },
+  { tipo: 'n033', txt: 'NOM-033 Esp. confinados', col: '#1F6F8B', x: 0, y: 1.55 },
+  { tipo: 'n029', txt: 'NOM-029 Eléctrico', col: '#1F6F8B', x: 1.2, y: 1.55 },
+  { tipo: 'n005', txt: 'NOM-005 Sust. químicas', col: '#1F6F8B', x: 2.4, y: 1.55 },
+  { tipo: 'uniformes', txt: 'Catálogo de uniformes', col: '#8D6E63', x: -3.0, y: 0.75 },
+  { tipo: 'vacaciones', txt: 'Calendario de vacaciones', col: '#8D6E63', x: -0.6, y: 0.75 },
+  { tipo: 'menu', txt: 'Menú del comedor', col: '#8D6E63', x: 1.8, y: 0.75 },
+];
+caja(8.4, 2.2, 0.5, 0x90A4AE, -0.6, 1.1, z0 + 0.4);   // estantería
+const S = {};
+CARPETAS.forEach(c => { caja(0.9, 0.6, 0.12, new THREE.Color(c.col).getHex(), c.x, c.y, z0 + 0.72);
+  const l = letrero(c.txt, 0.9, 0.18, c.col); l.position.set(c.x, c.y + 0.42, z0 + 0.8); scene.add(l);
+  S[c.tipo] = situacion(W, { x: c.x, z: z0 + 1.2, y: c.y, tipo: c.tipo, icono: '📁' }); });
+// La planta, a la vista por la ventana: prensa, soldadura, cisterna, tablero y tambos
+prop(W, 'prensa', -3.5, -1.0, 0.4); prop(W, 'soldadura', -3.4, 0.6, 0.8); prop(W, 'tanque', 3.6, -1.2); prop(W, 'tablero', 4.6, 0.2, -1.57); prop(W, 'tambo', 3.4, 0.7);
+persona(W, { x: 0.6, z: -1.3, ry: Math.PI, ropa: 0x37474F, casco: null });
+const insp = letrero('🧑‍💼 Inspector(a) STPS', 1.6, 0.22, PALETA.noche); insp.position.set(0.6, 2.0, -1.3); scene.add(insp);
+
+const N = (t, n, fb, f) => ({ tipo: t, nombre: n, fb, f, obj: S[t] });
+const BUENAS = [
+  N('n004', 'NOM-004: estudio de riesgo potencial de la maquinaria', 'La planta tiene prensas.', `${RF} art. 20 fr. I; NOM-004-STPS-1999, 5.2`),
+  N('n027', 'NOM-027: análisis de riesgos potenciales de soldadura y corte', 'Hay un área de soldadura.', `${RF} art. 30 fr. I; NOM-027-STPS-2008, 5.2 y cap. 7`),
+  N('n033', 'NOM-033: análisis de riesgos del espacio confinado', 'Limpian la cisterna.', `${RF} art. 25 fr. I; NOM-033-STPS-2015, 5.2`),
+  N('n029', 'NOM-029: determinación de riesgos potenciales eléctricos', 'Dan mantenimiento al tablero.', `${RF} art. 31 fr. II; NOM-029-STPS-2011, 7.2`),
+  N('n005', 'NOM-005: estudio de riesgo potencial de sustancias', 'Almacenan solventes en tambos.', `${RF} art. 22 fr. I; NOM-005-STPS-1998, 5.2`),
+];
+const MALAS = [
+  { tipo: 'uniformes', nombre: 'Catálogo de uniformes', fb: 'No es un análisis de riesgos.', obj: S.uniformes },
+  { tipo: 'vacaciones', nombre: 'Calendario de vacaciones', fb: 'Es un tema laboral, no un análisis de riesgos.', obj: S.vacaciones },
+  { tipo: 'menu', nombre: 'Menú del comedor', fb: 'No forma parte del diagnóstico de SST.', obj: S.menu },
+];
+
+const CASOS = {
+  sup: () => [
+    intro(W, '<h2>📜 La inspección pide el diagnóstico</h2><p>Llegó una inspección de la STPS a Metalmecánica del Centro y pide el <b>Diagnóstico de Seguridad y Salud en el Trabajo con sus análisis de riesgos</b>. Tú eres responsable de los servicios preventivos de SST. Busca en el archivo lo que la ley exige.</p>',
+      'Metalmecánica del Centro · 85 personas trabajadoras · prensas, soldadura, cisterna, tablero eléctrico y solventes.'),
+    tocaYDecide(W, 'El fundamento', 'Toca la carpeta del <b>RFSST</b>.', S.rfsst.marco, 'rfsst', '¿Qué artículo del RFSST obliga a contar con el diagnóstico y los análisis de riesgos?', [
+      { t: 'Art. 7 fr. I: diagnóstico con los estudios y análisis de riesgos que piden el Reglamento y las Normas', ok: true, fb: 'Es el eje: los análisis forman parte del diagnóstico.', f: `${RF} art. 7 fr. I` },
+      { t: 'Ninguno: el análisis de riesgos es voluntario', ok: false, crit: true, fb: 'Es obligatorio para el patrón.', f: `${RF} art. 7 fr. I` },
+      { t: 'Solo la Ley del IMSS', ok: false, fb: 'La obligación está en el RFSST y las NOM de la STPS.', f: `${RF} art. 7` },
+    ], `${RF} art. 7 fr. I`),
+    encuentra(W, { titulo: 'Los análisis que aplican', texto: 'Toca las <b>carpetas de los análisis obligatorios</b> según lo que hay en la planta (mira la escena). Cuidado con las que no son de SST.',
+      fuente: `${RF} arts. 20, 22, 25, 30 y 31`, buenas: BUENAS, malas: MALAS }),
+    decide(W, 'El diagnóstico', '¿Qué debe identificar como mínimo el diagnóstico de SST?', [
+      { t: 'Condiciones peligrosas o inseguras, agentes físicos, químicos y biológicos, peligros circundantes y requisitos normativos', ok: true, fb: 'Son los 4 incisos del numeral 6.1.', f: 'NOM-030-STPS-2009, 6.1' },
+      { t: 'Solo el número de accidentes del año', ok: false, fb: 'Los accidentes ayudan, pero el diagnóstico identifica condiciones, agentes, peligros y requisitos.', f: 'NOM-030-STPS-2009, 6.1' },
+      { t: 'Solo la lista de extintores', ok: false, fb: 'Es mucho más amplio.', f: 'NOM-030-STPS-2009, 6.1' },
+    ], 'NOM-030-STPS-2009, 6.1'),
+    decide(W, 'Del diagnóstico al programa', 'Con el diagnóstico listo, ¿qué sigue?', [
+      { t: 'Integrar el programa de SST: acción por cada aspecto, fechas y responsable', ok: true, fb: 'El programa se elabora con base en el diagnóstico.', f: `${RF} art. 7 fr. II; NOM-030-STPS-2009, 7.1` },
+      { t: 'Archivarlo y esperar la siguiente inspección', ok: false, fb: 'El diagnóstico sirve para definir acciones preventivas y correctivas.', f: 'NOM-030-STPS-2009, 7.1' },
+    ], 'NOM-030-STPS-2009, 7.1'),
+    decide(W, 'Firmas del análisis', 'El análisis de riesgos de la cisterna (espacio confinado) ya está hecho. ¿Qué le falta para cumplir?', [
+      { t: 'Estar disponible para los trabajadores y aprobado y firmado por el patrón (o su representante) y el responsable de los servicios preventivos', ok: true, fb: 'Así lo pide la norma.', f: 'NOM-033-STPS-2015, 7.8' },
+      { t: 'Nada, basta con tenerlo en la computadora', ok: false, fb: 'Debe estar disponible y firmado.', f: 'NOM-033-STPS-2015, 7.8' },
+    ], 'NOM-033-STPS-2015, 7.8'),
+  ],
+  pc: () => [
+    intro(W, '<h2>🚨 Protección civil y medio ambiente</h2><p>Además de la STPS, la Unidad de Protección Civil revisará el Programa Interno, y el área ambiental pregunta si la planta necesita un estudio de riesgo ante SEMARNAT. Demuestra que conoces cada marco.</p>',
+      'Metalmecánica del Centro · 85 personas trabajadoras.'),
+    tocaYDecide(W, 'El fundamento', 'Toca la carpeta del <b>RFSST</b>.', S.rfsst.marco, 'rfsst', 'Para la STPS, ¿dónde se integran los análisis de riesgos?', [
+      { t: 'En el Diagnóstico de SST', ok: true, fb: 'Los estudios y análisis de riesgos forman parte del diagnóstico.', f: `${RF} art. 7 fr. I y art. 48` },
+      { t: 'En el reglamento interior de trabajo, solamente', ok: false, fb: 'Se integran al diagnóstico de SST.', f: `${RF} art. 48` },
+    ], `${RF} art. 48`),
+    decide(W, 'Concepto de protección civil', 'Según la Ley General de Protección Civil, el riesgo es…', [
+      { t: 'Daños o pérdidas probables sobre un agente afectable, por la interacción entre su vulnerabilidad y un agente perturbador', ok: true, fb: 'Definición del art. 2 fr. XLIX.', f: 'LGPC art. 2 fr. XLIX' },
+      { t: 'Solo los incendios', ok: false, fb: 'Incluye fenómenos geológicos, hidrometeorológicos, químico-tecnológicos, sanitario-ecológicos y socio-organizativos.', f: 'LGPC art. 2 fr. XXIII-XXVII' },
+    ], 'LGPC art. 2'),
+    decide(W, 'El Programa Interno', '¿Qué debe contener el Programa Interno de Protección Civil respecto de los riesgos?', [
+      { t: 'La identificación de riesgos y su evaluación, con medidas de prevención y control y de autoprotección', ok: true, fb: 'Y en el plan de contingencias, una evaluación inicial de riesgo de cada puesto.', f: 'Reglamento LGPC arts. 75 y 76' },
+      { t: 'Solo el directorio telefónico', ok: false, fb: 'El directorio es solo una parte del subprograma de prevención.', f: 'Reglamento LGPC art. 76' },
+    ], 'Reglamento LGPC arts. 75-76'),
+    decide(W, 'Fenómenos', 'Un sismo que puede tirar los anaqueles del almacén es un fenómeno…', [
+      { t: 'Geológico', ok: true, fb: 'Sismos, erupciones, tsunamis, deslaves y hundimientos.', f: 'LGPC art. 2 fr. XXIII' },
+      { t: 'Socio-organizativo', ok: false, fb: 'Ese se refiere a concentraciones masivas, sabotaje, accidentes de transporte, etc.', f: 'LGPC art. 2 fr. XXVII' },
+      { t: 'Sanitario-ecológico', ok: false, fb: 'Ese se refiere a epidemias, plagas y contaminación.', f: 'LGPC art. 2 fr. XXVI' },
+    ], 'LGPC art. 2 fr. XXIII'),
+    decide(W, 'Medio ambiente', '¿Cuándo se presenta un estudio de riesgo ambiental ante SEMARNAT?', [
+      { t: 'Cuando se realizan actividades altamente riesgosas en los términos del reglamento de la LGEEPA', ok: true, fb: 'Junto con el programa para la prevención de accidentes.', f: 'LGEEPA art. 147' },
+      { t: 'Siempre, para cualquier oficina', ok: false, fb: 'Solo aplica a actividades altamente riesgosas.', f: 'LGEEPA arts. 146-147' },
+    ], 'LGEEPA art. 147'),
+    decide(W, 'La matriz', 'La matriz de frecuencia y severidad de la NOM-031-STPS-2011, ¿es obligatoria para esta planta metalmecánica?', [
+      { t: 'Es obligatoria en construcción; aquí se puede usar como método de referencia validado en una NOM', ok: true, fb: 'Aclararlo evita confusiones en una inspección.', f: 'NOM-031-STPS-2011, 2 y 8.3; criterio del curso' },
+      { t: 'Sí, todas las empresas deben usarla por ley', ok: false, fb: 'Su campo de aplicación son las obras de construcción.', f: 'NOM-031-STPS-2011, 2' },
+    ], 'NOM-031-STPS-2011, 8.3'),
+  ],
+};
+
+W.inicio([{ id: 'sup', txt: '🦺 <b>Caso 1:</b> Inspección STPS — el diagnóstico y sus análisis' }, { id: 'pc', txt: '🚨 <b>Caso 2:</b> Protección civil y medio ambiente' }],
+  id => CASOS[id](),
+  'Basado en: RFSST (DOF 13/11/2014) arts. 7, 20, 22, 25, 30, 31 y 48; NOM-030-STPS-2009 6.1 y 7.1; NOM-004, 005, 027, 029, 033 y 031 de la STPS; LGPC art. 2; Reglamento LGPC arts. 75-76; LGEEPA art. 147. Empresa ficticia. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { S: Object.fromEntries(Object.entries(S).map(([k, v]) => [k, v.marco])), tocar: W.tocar, estado: W.qa };
+</script>
+</body>
+</html>
