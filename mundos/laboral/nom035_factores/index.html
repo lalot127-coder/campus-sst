@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Detecta los factores de riesgo psicosocial (NOM-035)</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../comun.js"></script>
+<script src="../nom035_comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Fuentes verificadas (02_fuentes_verificadas/registro_fuentes.md, consulta 05/10/2026)
+const N = 'NOM-035-STPS-2018';
+const LV = 'Línea de la Vida, CONASAMA (gob.mx, 23/10/2025)';
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Detecta los factores de riesgo psicosocial', icono: '🧭',
+  clave: 'laboral_nom035_factores', criterio: { pct: 80, sinCriticos: true }, fondo: 0xE6EEEC,
+  vistas: [[[0, 1.7, 2.2], [0, 1.0, -2.6]], [[-1.2, 1.7, 0.8], [-3.2, 1.0, -1.0]], [[1.2, 1.7, 0.8], [3.2, 1.0, -1.0]]] });
+const { caja, cil, scene } = W;
+const { persona } = window.Laboral;
+const { sala, escritorio, globo, situacion, encuentra, decide, tocaYDecide, con, PALETA } = window.Nom035;
+
+// ------------------------------------------------------------------ Distribuidora del Valle [FICTICIO]
+const { piso, entorno } = sala(W, { rotulo: 'DISTRIBUIDORA DEL VALLE · OFICINAS Y ALMACÉN' });
+W.activarXR({ inicio: [0, 0.6], piso, entorno });
+
+// a) Ambiente: máquina ruidosa
+caja(0.9, 1.0, 0.7, 0x78909C, -3.4, 0.5, -2.4); cil(0.12, 0.3, 0x455A64, -3.4, 1.15, -2.4);
+globo(W, '🔊 ¡BRRRRR!', -3.4, 1.55, -2.0, '#FFF3CD', '#7A5C00');
+// b) Cargas: escritorio con montañas de papeles
+escritorio(W, -1.9, -3.7); for (let i = 0; i < 5; i++) caja(0.3, 0.1 + i * 0.06, 0.22, 0xFFFFFF, -2.3 + i * 0.18, 0.8 + i * 0.03, -3.6);
+persona(W, { x: -1.9, z: -3.1, ry: Math.PI, ropa: 0x6D4C41 });
+// c) Falta de control
+escritorio(W, 0, -4.6); persona(W, { x: 0, z: -4.0, ry: Math.PI, ropa: 0x00796B });
+globo(W, '"Así se hace y punto. Tú no opines."', 0, 2.62, -4.6, '#FFFFFF', '#16323F', 2.0);
+// d) Jornadas: reloj y trabajador nocturno
+escritorio(W, 1.9, -3.7); persona(W, { x: 1.9, z: -3.1, ry: Math.PI, ropa: 0x5E35B1 });
+globo(W, '🕚 23:00 · tercer turno seguido', 1.9, 2.6, -5.9, '#16323F', '#FFFFFF', 1.9);
+// e) Trabajo-familia: celular con mensaje del jefe
+caja(0.8, 0.7, 0.6, 0xA1887F, 3.4, 0.35, -2.4); caja(0.1, 0.02, 0.18, 0x111111, 3.4, 0.72, -2.4);
+globo(W, '📱 Jefe 23:47: "¿Ya quedó? Contesta"', 3.4, 1.05, -2.1, '#FFFFFF', '#16323F', 1.9);
+// f) Liderazgo negativo
+persona(W, { x: 3.4, z: -0.3, ry: -Math.PI / 2, ropa: 0x37474F }); persona(W, { x: 2.6, z: -0.3, ry: Math.PI / 2, ropa: 0x0288D1 });
+globo(W, '"¡Porque lo digo yo!"', 3.3, 2.05, -0.3, '#FDECEA', '#B03A2E', 1.4);
+// g) Violencia: burlas
+persona(W, { x: -3.6, z: -0.2, ry: Math.PI / 2, ropa: 0x8D6E63 }); persona(W, { x: -2.8, z: 0.3, ry: -Math.PI / 2, ropa: 0xC0CA33 });
+persona(W, { x: -2.8, z: -0.7, ry: -Math.PI / 2, ropa: 0xF57C00 }); globo(W, '"Jajaja, ahí va El Lento"', -2.9, 2.05, -0.2, '#FDECEA', '#B03A2E', 1.6);
+// Lo que NO es riesgo (medidas del entorno favorable)
+caja(0.5, 0.9, 0.4, 0xD7CCC8, -1.0, 0.45, -2.3); globo(W, '☕ PAUSA 10:30', -1.0, 1.05, -2.1, '#E3EFE6', '#16323F', 1.0);
+caja(0.9, 0.6, 0.04, 0xFFFFFF, 1.0, 1.4, -5.92); globo(W, '🏅 Reconocimiento del mes', 1.0, 1.85, -5.9, '#E3EFE6', '#16323F', 1.5);
+caja(0.35, 0.45, 0.25, 0x1F5F6B, -4.2, 1.1, -4.5); globo(W, '📮 Buzón confidencial', -4.0, 1.55, -4.4, '#E3EFE6', '#16323F', 1.2);
+caja(0.7, 0.5, 0.04, 0xFFFFFF, 4.2, 1.4, -4.6); globo(W, '🎓 Calendario de capacitación', 4.0, 1.85, -4.5, '#E3EFE6', '#16323F', 1.7);
+
+const S = {
+  ambiente: situacion(W, { x: -3.4, z: -1.6, y: 1.05, tipo: 'ambiente', icono: '🔊', etiqueta: 'a) Ambiente de trabajo' }),
+  cargas: situacion(W, { x: -1.9, z: -3.0, y: 1.95, tipo: 'cargas', icono: '📚', etiqueta: 'b) Cargas de trabajo' }),
+  control: situacion(W, { x: 0, z: -3.9, y: 1.85, tipo: 'control', icono: '🚫', etiqueta: 'c) Falta de control' }),
+  jornadas: situacion(W, { x: 1.9, z: -3.0, y: 1.95, tipo: 'jornadas', icono: '🌙', etiqueta: 'd) Jornadas y turnos' }),
+  familia: situacion(W, { x: 3.4, z: -1.6, y: 1.05, tipo: 'familia', icono: '📱', etiqueta: 'e) Trabajo-familia' }),
+  liderazgo: situacion(W, { x: 3.0, z: 0.3, y: 1.55, tipo: 'liderazgo', icono: '😠', etiqueta: 'f) Liderazgo negativo' }),
+  violencia: situacion(W, { x: -3.0, z: 0.4, y: 1.55, tipo: 'violencia', icono: '🛑', etiqueta: 'g) Violencia laboral', color: PALETA.rojo }),
+  pausa: situacion(W, { x: -1.0, z: -1.9, y: 1.4, tipo: 'pausa', icono: '☕' }),
+  reconoce: situacion(W, { x: 1.0, z: -5.4, y: 2.3, tipo: 'reconoce', icono: '🏅' }),
+  buzon: situacion(W, { x: -3.9, z: -3.9, y: 2.0, tipo: 'buzon', icono: '📮' }),
+  capacita: situacion(W, { x: 3.9, z: -4.0, y: 2.3, tipo: 'capacita', icono: '🎓' }),
+};
+const BUENAS = [
+  { tipo: 'ambiente', nombre: 'Ambiente de trabajo', fb: 'Ruido que obliga a un esfuerzo extra de adaptación.', f: `${N}, 7.2 a)` },
+  { tipo: 'cargas', nombre: 'Cargas de trabajo', fb: 'Exigencias que exceden la capacidad.', f: `${N}, 7.2 b)` },
+  { tipo: 'control', nombre: 'Falta de control', fb: 'No poder influir ni decidir sobre el propio trabajo.', f: `${N}, 7.2 c)` },
+  { tipo: 'jornadas', nombre: 'Jornadas y rotación de turnos', fb: 'Turnos que exceden la LFT, sin descansos.', f: `${N}, 7.2 d)` },
+  { tipo: 'familia', nombre: 'Interferencia trabajo-familia', fb: 'Atender el trabajo en el tiempo personal.', f: `${N}, 7.2 e)` },
+  { tipo: 'liderazgo', nombre: 'Liderazgo negativo', fb: 'Actitud agresiva o impositiva y funciones poco claras.', f: `${N}, 7.2 f) 1)` },
+  { tipo: 'violencia', nombre: 'Violencia laboral', fb: 'Burlas continuas: malos tratos.', f: `${N}, 7.2 g) 3)` },
+].map(b => ({ ...b, obj: S[b.tipo] }));
+const MALAS = [
+  { tipo: 'pausa', nombre: 'Pausa programada', fb: 'Es una medida para evitar ritmos acelerados.', f: `${N}, 8.2 b) 2)` },
+  { tipo: 'reconoce', nombre: 'Reconocimiento', fb: 'Reconocer el desempeño es parte del entorno favorable.', f: `${N}, 8.2 f)` },
+  { tipo: 'buzon', nombre: 'Buzón confidencial', fb: 'Es una medida de prevención obligatoria.', f: `${N}, 8.1 b)` },
+  { tipo: 'capacita', nombre: 'Capacitación', fb: 'La formación es parte del entorno favorable.', f: `${N}, 7.3 b)` },
+].map(m => ({ ...m, obj: S[m.tipo] }));
+
+const intro = html => ({ titulo: 'Inicio', texto: 'Lee la situación.', sinPuntos: true,
+  iniciar() { W.aviso(html + '<p class="ficticio">[FICTICIO – ejercicio didáctico] Distribuidora del Valle · 42 personas trabajadoras.</p>', () => W.siguiente(), 'Comenzar'); } });
+const busca = () => encuentra(W, { titulo: 'Encuentra los 7 factores', texto: 'Recorre la oficina y toca las <b>7 situaciones de riesgo psicosocial</b>. Cuidado: hay 4 que NO son riesgo.',
+  fuente: `${N}, 7.2`, buenas: BUENAS, malas: MALAS });
+
+const CASOS = {
+  tra: () => con(W, [intro('<h2>👷 Rol: trabajador(a)</h2><p>Es tu primer día en la oficina de Distribuidora del Valle. Algo no se siente bien. Observa con atención: tu bienestar psicológico también es seguridad.</p>'),
+    busca(),
+    decide('Se burlan de un compañero', 'Todos los días le dicen "El Lento" a un compañero y se ríen de él.', [
+      { t: 'Informo por el mecanismo de quejas de la empresa o a la comisión de seguridad e higiene', ok: true, fb: 'Informar y denunciar es tu obligación y protege a todos.', f: `${N}, 6.4` },
+      { t: 'Me uno a la burla para encajar', ok: false, crit: true, fb: 'Debes abstenerte de actos de violencia laboral.', f: `${N}, 6.2` },
+      { t: 'No es mi asunto', ok: false, fb: 'Los malos tratos continuos son violencia laboral; informar ayuda a detenerlos.', f: `${N}, 6.4 y 7.2 g)` },
+    ], `${N}, 6.2 y 6.4`),
+    decide('El cuestionario', 'Recursos Humanos aplica el cuestionario para identificar los factores de riesgo psicosocial.', [
+      { t: 'Lo contesto completo y con sinceridad, pensando en los dos últimos meses', ok: true, fb: 'Participar es tu obligación; la información es confidencial y sirve para mejorar.', f: `${N}, 6.3; Guía II.2` },
+      { t: 'No lo contesto: no sirve de nada', ok: false, fb: 'Participar en la identificación es una obligación de los trabajadores.', f: `${N}, 6.3` },
+      { t: 'Contesto lo que mi jefe me diga', ok: false, fb: 'Nadie debe dirigir tus respuestas: tu opinión es lo más importante.', f: `${N}, Guía II.2` },
+    ], `${N}, 6.3`),
+    tocaYDecide('El buzón', 'Toca el <b>buzón</b> de la pared.', S.buzon.marco, 'buzon', '¿Cómo debe ser el mecanismo para quejas y denuncias?', [
+      { t: 'Seguro y confidencial', ok: true, fb: 'Así lo exige la norma: nadie debe temer represalias.', f: `${N}, 8.1 b)` },
+      { t: 'Público, para que todos vean quién se queja', ok: false, fb: 'Debe ser seguro y confidencial.', f: `${N}, 8.1 b)` },
+    ], `${N}, 8.1 b)`),
+    decide('Tu bienestar', 'Llevas semanas durmiendo mal por la carga de trabajo y te sientes muy ansioso.', [
+      { t: 'Lo hablo, acudo a mi servicio médico o al IMSS y, si lo necesito, llamo a la Línea de la Vida 800 911 2000', ok: true, fb: 'Pedir apoyo es válido; la Línea de la Vida es gratuita, 24 h.', f: `${LV}; ${N}, 5.6` },
+      { t: 'Aguanto callado: así es el trabajo', ok: false, fb: 'Los factores de riesgo pueden provocar trastornos de ansiedad y del sueño: atiéndete.', f: `${N}, 4.7` },
+    ], LV)]),
+  jef: () => con(W, [intro('<h2>🧑‍💼 Rol: gerente</h2><p>Eres el nuevo gerente de Distribuidora del Valle. En tres meses renunciaron cinco personas. Recorre la oficina: ¿qué está dañando el bienestar de tu equipo?</p>'),
+    busca(),
+    decide('El liderazgo', 'Un supervisor grita "¡porque lo digo yo!" y nadie sabe qué le toca.', [
+      { t: 'Capacitar y sensibilizar a supervisores y fomentar comunicación directa y frecuente', ok: true, fb: 'Es parte de las acciones sobre liderazgo y comunicación.', f: `${N}, 8.2 a) 5) y h) 1)` },
+      { t: 'Dejarlo: así se motiva a la gente', ok: false, fb: 'La actitud agresiva o impositiva es liderazgo negativo.', f: `${N}, 7.2 f) 1)` },
+    ], `${N}, 8.2 a)`),
+    decide('Las cargas', 'Ventas atiende el doble de pedidos con la mitad del personal.', [
+      { t: 'Revisar y distribuir la carga de forma equitativa y planear pausas', ok: true, fb: 'Así lo piden las acciones sobre cargas de trabajo.', f: `${N}, 8.2 b) 1) y 2)` },
+      { t: 'Exigir que se queden más tarde', ok: false, fb: 'Aumenta jornadas e interferencia trabajo-familia.', f: `${N}, 7.2 d) y e)` },
+    ], `${N}, 8.2 b)`),
+    decide('Los mensajes de medianoche', 'Un jefe exige contestar mensajes a las 23:47.', [
+      { t: 'Fijar lineamientos que eviten jornadas mayores a la LFT y acordar horarios con el equipo', ok: true, fb: 'Equilibrio trabajo-familia.', f: `${N}, 8.2 e) 1) y 2)` },
+      { t: 'Es normal: el celular es de la empresa', ok: false, fb: 'Laborar fuera del horario de forma constante es interferencia trabajo-familia.', f: `${N}, 7.2 e)` },
+    ], `${N}, 8.2 e)`),
+    decide('Las burlas', 'Te informan que ridiculizan a un trabajador todos los días.', [
+      { t: 'Aplicar el procedimiento de actuación y seguimiento, con responsable capacitado, e informar cómo denunciar', ok: true, fb: 'Prevención de la violencia laboral.', f: `${N}, 8.2 g)` },
+      { t: 'Son bromas, no intervengo', ok: false, crit: true, fb: 'El patrón debe atender los actos de violencia laboral.', f: `${N}, 5.4` },
+    ], `${N}, 8.2 g)`),
+    tocaYDecide('El buzón', 'Toca el <b>buzón</b> de la pared.', S.buzon.marco, 'buzon', 'Ya existe el buzón. ¿Qué te falta?', [
+      { t: 'Difundir a los trabajadores cómo presentar quejas y denunciar', ok: true, fb: 'Difundir los mecanismos es obligación del patrón.', f: `${N}, 5.7 d)` },
+      { t: 'Nada: si existe, ya cumplí', ok: false, fb: 'Hay que difundirlo y darle seguimiento.', f: `${N}, 5.7 d) y 8.2 g) 3)` },
+      { t: 'Revisar las quejas en público', ok: false, crit: true, fb: 'El mecanismo debe ser seguro y confidencial.', f: `${N}, 8.1 b)` },
+    ], `${N}, 5.7 d)`)]),
+};
+
+W.inicio([{ id: 'tra', txt: '👷 <b>Rol 1:</b> Trabajador(a) — reconoce y actúa' }, { id: 'jef', txt: '🧑‍💼 <b>Rol 2:</b> Gerente — reconoce y previene' }],
+  id => CASOS[id](),
+  'Basado en: NOM-035-STPS-2018 (DOF 23/10/2018) numerales 4.7, 5.4, 5.6, 5.7, 6.2-6.4, 7.2, 8.1 y 8.2; Línea de la Vida (CONASAMA). Empresa y personas ficticias. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { S: Object.fromEntries(Object.entries(S).map(([k, v]) => [k, v.marco])), tocar: W.tocar, estado: W.qa, xr: () => W.xr };
+</script>
+</body>
+</html>
