@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Galería de modelos 3D · Campus SST</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:#E8F5F9;color:#1B2633}
+#barra{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:7px 10px;background:#0E3A6B;color:#fff}
+#barra b{margin-right:auto}#barra select,#barra a,#barra button{font:inherit;border:0;border-radius:10px;padding:7px 10px;font-weight:700;background:#E8F5F9;color:#0E3A6B;text-decoration:none;cursor:pointer}
+#info{position:fixed;left:10px;bottom:10px;z-index:5;background:rgba(255,255,255,.95);border-radius:12px;padding:8px 12px;max-width:min(560px,calc(100vw - 20px));font-size:.9rem}
+.etq{position:fixed;transform:translate(-50%,-100%);background:rgba(14,58,107,.9);color:#fff;border-radius:8px;padding:2px 7px;font-size:.78rem;white-space:nowrap;pointer-events:none;z-index:4}
+canvas{display:block;touch-action:none}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="barra"><b>🧊 Galería de modelos 3D</b><select id="sel"></select><a href="creditos.html">📜 Créditos</a><a href="../../index.html?plaza">🏠 Campus</a></div>
+<div id="info">Cargando…</div><div id="etqs"></div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Kit3D } from '../../motor/kit3d.js';
+import { Props } from '../../motor/props.js';
+const KITS = ['primeros-auxilios', 'extintores-fuego', 'alturas', 'espacios-confinados', 'seguridad-electrica', 'loto', 'puertas', 'campus', 'mina-abierta', 'mina-subterranea', 'construccion', 'aserradero', 'ferrocarril', 'agricola', 'propios'];
+const PROPS = Props(THREE);
+const r = new THREE.WebGLRenderer({ antialias: true }); r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.setSize(innerWidth, innerHeight); document.body.prepend(r.domElement);
+const s = new THREE.Scene(); s.background = new THREE.Color(0xDDEFF6);
+s.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 1.4)); const d = new THREE.DirectionalLight(0xffffff, 1.4); d.position.set(5, 10, 7); s.add(d);
+const cam = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.05, 500); const ctl = new OrbitControls(cam, r.domElement); ctl.enableDamping = true;
+const piso = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: 0xC9D6DE })); piso.rotation.x = -Math.PI / 2; s.add(piso);
+s.add(new THREE.GridHelper(200, 200, 0x9fb3c0, 0xb7c7d1));
+const kit = new Kit3D(THREE, '../../'); let grupo = null; const etqs = [];
+const sel = document.getElementById('sel'); KITS.forEach(k => sel.add(new Option(k, k)));
+const P = new URLSearchParams(location.search); sel.value = P.get('kit') || KITS[0];
+async function ver(k) {
+  if (grupo) s.remove(grupo); etqs.forEach(e => e.el.remove()); etqs.length = 0; grupo = new THREE.Group(); s.add(grupo);
+  document.getElementById('info').textContent = 'Cargando ' + k + '…'; const t0 = performance.now();
+  const propio = k === 'propios'; const piezas = propio ? Object.fromEntries(PROPS.LISTA.map(p => [p.clave, p])) : await kit.cargar(k); const claves = Object.keys(piezas); let x = 0, fila = 0, z = 0, maxZ = 0; const ancho = 26;
+  for (const c of claves) { const g = propio ? piezas[c].fn() : await kit.pieza(k, c); const b = new THREE.Box3().setFromObject(g), sz = b.getSize(new THREE.Vector3());
+    if (x + sz.x > ancho) { x = 0; z += maxZ + 1.5; maxZ = 0; } g.position.set(x + sz.x / 2, 0, z + sz.z / 2); grupo.add(g); x += sz.x + 1.2; maxZ = Math.max(maxZ, sz.z);
+    const el = document.createElement('div'); el.className = 'etq'; el.textContent = `${c} · ${sz.y.toFixed(2)} m`; document.getElementById('etqs').appendChild(el); etqs.push({ el, p: new THREE.Vector3(g.position.x, sz.y + 0.15, g.position.z) }); }
+  const b = new THREE.Box3().setFromObject(grupo), c = b.getCenter(new THREE.Vector3()), R = b.getSize(new THREE.Vector3()).length();
+  ctl.target.copy(c); cam.position.set(c.x, R * 0.55, c.z + R * 0.8);
+  document.getElementById('info').innerHTML = `<b>${k}</b>: ${claves.length} piezas · descargado y listo en ${Math.round(performance.now() - t0)} ms · archivo <code>${propio ? 'motor/props.js (creación propia)' : 'assets/' + k + '/' + k + '.glb'}</code>. Arrastra para girar.`;
+}
+sel.onchange = () => { history.replaceState(null, '', '?kit=' + sel.value); ver(sel.value); }; ver(sel.value);
+addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); r.setSize(innerWidth, innerHeight); });
+const v = new THREE.Vector3();
+r.setAnimationLoop(() => { ctl.update(); r.render(s, cam);
+  etqs.forEach(e => { v.copy(e.p).project(cam); e.el.style.display = v.z < 1 ? 'block' : 'none'; e.el.style.left = (v.x + 1) / 2 * innerWidth + 'px'; e.el.style.top = (1 - v.y) / 2 * innerHeight + 'px'; }); });
+window.__kit = kit;
+</script>
+</body>
+</html>

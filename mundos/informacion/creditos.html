@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Créditos 3D · Campus SST</title>
+<style>
+:root{--navy:#0E3A6B;--azul:#154F90;--cielo:#8CCDE0;--hielo:#E8F5F9;--texto:#1B2633;--tenue:#5B6B7C;--fondo:#F4F7FA;--tarjeta:#fff;--borde:#D5E3EC}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--texto:#E6EEF4;--tenue:#A9BBC9;--fondo:#0F1A26;--tarjeta:#16253A;--borde:#28405C;--hielo:#1C3048}}
+:root[data-theme="dark"]{--texto:#E6EEF4;--tenue:#A9BBC9;--fondo:#0F1A26;--tarjeta:#16253A;--borde:#28405C;--hielo:#1C3048}
+*{box-sizing:border-box}body{margin:0;font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:var(--fondo);color:var(--texto);line-height:1.45}
+header{position:sticky;top:0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 16px;background:var(--navy);color:#fff;z-index:2}
+header img{height:38px;border-radius:7px;background:#fff;padding:2px}header b{font-size:1.05rem}header .der{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+header a{background:var(--hielo);color:var(--navy);text-decoration:none;font-weight:800;border-radius:10px;padding:7px 10px;font-size:.92rem}
+main{max-width:1000px;margin:0 auto;padding:16px}
+h1{margin:.2rem 0 .3rem;color:var(--cielo)}@media (prefers-color-scheme:light){h1{color:var(--navy)}}:root[data-theme="light"] h1{color:var(--navy)}
+h2{margin:1.4rem 0 .5rem;font-size:1.2rem}
+.nota{background:var(--tarjeta);border:1px solid var(--borde);border-radius:12px;padding:10px 14px;color:var(--tenue)}
+.tabla{overflow-x:auto;border:1px solid var(--borde);border-radius:12px;background:var(--tarjeta)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.95rem}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--borde);vertical-align:top}
+th{background:var(--hielo);font-weight:800}tr:last-child td{border-bottom:0}a{color:#3FA7C6;word-break:break-word}
+ul{padding-left:1.2rem}li{margin:.25rem 0}
+</style>
+</head>
+<body>
+<header><img src="../../recursos/logo_CERS.jpeg" alt="CERS"><b>📜 Créditos de recursos 3D</b>
+<div class="der"><a href="galeria.html">🧊 Ver modelos</a><a href="index.html">ℹ️ Información</a><a href="../../index.html?plaza">🏠 Campus</a></div></header>
+<main>
+<h1>Créditos de modelos y texturas</h1>
+<p class="nota" id="act">Cargando…</p>
+<h2>Licencia Creative Commons Atribución (CC BY 3.0) — crédito obligatorio</h2>
+<div class="tabla"><table><thead><tr><th>Título</th><th>Autor</th><th>Licencia</th><th>Enlace</th><th>Se usa en</th><th>Cambios</th></tr></thead><tbody id="ccby"></tbody></table></div>
+<h2>Dominio público (CC0 1.0) — no exigen crédito; se agradece</h2>
+<ul id="cc0"></ul>
+<h2>Creación propia</h2>
+<p id="propios"></p>
+<p class="nota">Todos los recursos se revisaron para que no contengan logotipos, marcas ni textos de empresas. Las texturas que traían letreros se limpiaron (licencia CC0). Inventario completo: <a href="../../assets/INVENTARIO_ASSETS.csv">INVENTARIO_ASSETS.csv</a> · <a href="../../assets/CREDITOS.md">CREDITOS.md</a></p>
+</main>
+<script>
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+fetch('../../assets/creditos.json', { cache: 'no-cache' }).then(r => r.json()).then(d => {
+  document.getElementById('act').textContent = `Actualizado: ${d.actualizado}. Este campus usa modelos 3D y texturas con licencias abiertas. Gracias a sus autores.`;
+  document.getElementById('ccby').innerHTML = d.cc_by.map(c => `<tr><td>${esc(c.titulo)}</td><td>${esc(c.autor)}</td><td><a href="${esc(c.licencia_url)}" target="_blank" rel="noopener">${esc(c.licencia)}</a></td><td><a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url)}</a></td><td>${esc(c.uso.join(', '))}</td><td>${esc(c.cambios)}</td></tr>`).join('');
+  document.getElementById('cc0').innerHTML = d.cc0.map(c => `<li><b>${esc(c.autor)}</b> — ${c.enlaces.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a>`).join(', ')}</li>`).join('');
+  document.getElementById('propios').textContent = d.propios;
+}).catch(() => { document.getElementById('act').textContent = 'No se pudo leer creditos.json (ábrelo desde el servidor o el sitio publicado).'; });
+</script>
+</body>
+</html>
