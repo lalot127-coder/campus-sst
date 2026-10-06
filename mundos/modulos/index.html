@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Sala de módulo · Campus SST</title>
+<style>
+:root{--navy:#0E3A6B;--azul:#154F90;--cian:#3FA7C6;--cielo:#8CCDE0;--hielo:#E8F5F9;--texto:#1B2633;--tenue:#5B6B7C}
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:#DCE9F0;color:var(--texto);-webkit-user-select:none;user-select:none}
+canvas{display:block;touch-action:none}
+#barra{position:fixed;top:0;left:0;right:0;display:flex;gap:8px;align-items:center;padding:7px 10px;background:rgba(14,58,107,.95);color:#fff;z-index:6}
+#barra img{height:36px;border-radius:7px;background:#fff;padding:2px}#barra b{font-size:1rem;line-height:1.1}#barra small{display:block;color:var(--cielo);font-size:.76rem}
+#barra .der{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+button{font-family:inherit;cursor:pointer}.sec{background:var(--hielo);color:var(--navy);border:0;border-radius:11px;padding:7px 10px;font-size:.92rem;font-weight:700;white-space:nowrap}.sec.rojo{background:#C62828;color:#fff}
+#ayuda{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:5;background:rgba(255,255,255,.96);border-radius:14px;padding:9px 14px;box-shadow:0 4px 14px rgba(0,0,0,.15);color:var(--navy);font-weight:700;text-align:center;width:min(560px,calc(100vw - 24px))}
+#ayuda small{display:block;color:var(--tenue);font-weight:500}
+.etq{position:fixed;left:0;top:0;transform:translate(-50%,-100%);z-index:4;background:#fff;color:var(--navy);border:2px solid var(--azul);border-radius:10px;padding:3px 8px;font-weight:800;font-size:.82rem;white-space:nowrap;cursor:pointer;box-shadow:0 3px 10px rgba(14,58,107,.25)}
+.modal{position:fixed;inset:0;background:rgba(14,58,107,.72);display:none;align-items:center;justify-content:center;z-index:20;padding:14px}
+.caja{background:#fff;border-radius:18px;padding:18px;max-width:560px;width:100%;max-height:92vh;overflow:auto;-webkit-user-select:text;user-select:text}
+.caja h2{margin:.1rem 0 .4rem;color:var(--navy)}.caja .fuente{font-size:.86rem;color:var(--tenue);font-style:italic}.prim{background:var(--azul);color:#fff;border:0;border-radius:12px;padding:11px 18px;font-size:1.02rem;font-weight:800}
+#carga{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#DCE9F0;z-index:9;color:var(--navy);font-weight:800;font-size:1.1rem}
+@media (max-width:760px){.txt,#barra small{display:none}#barra img{height:30px}}
+</style>
+<script src="../../motor/avatar.js"></script>
+<script src="../../motor/senales.js"></script>
+<script src="../../motor/compartir.js"></script>
+<script src="../../motor/acceso.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="barra"><img src="../../recursos/logo_CERS.jpeg" alt="CERS"><div><b id="tit">Sala de módulo</b><small id="sub">Campus de Simulación SST</small></div>
+<div class="der" id="der"><button class="sec" id="bAtras" title="Regresar al edificio">⬅<span class="txt"> Atrás</span></button><button class="sec" id="bInicio" title="Inicio del campus">🏠<span class="txt"> Inicio</span></button>
+<button class="sec" id="bComp">🔗<span class="txt"> Compartir</span></button><button class="sec rojo" id="bSalir">✖<span class="txt"> Salir</span></button></div></div>
+<div id="ayuda">Toca un equipo para ver su ficha · toca una silla para sentarte · toca el piso para caminar<small>Computadora: W A S D o flechas · arrastra para girar la vista</small></div>
+<div id="etqs"></div><div class="modal" id="modal"><div class="caja" id="mCont"></div></div><div id="carga">Preparando la sala…</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Kit3D } from '../../motor/kit3d.js';
+import { Props } from '../../motor/props.js';
+import { Navegacion } from '../../motor/navegacion.js';
+import { letreroTextura } from '../../motor/letreros.js';
+import { crearXR } from '../../motor/xr_campus.js';
+import { MODULOS } from '../../motor/modulos.js';
+const $ = s => document.querySelector(s);
+const P = new URLSearchParams(location.search), ID = P.get('m') || 'primeros-auxilios', MOD = MODULOS[ID] || MODULOS['primeros-auxilios'], QA = P.has('qa');
+const CAMPUS = '../../index.html', alCampus = q => { location.href = CAMPUS + q; };
+document.title = `${MOD.titulo} · Sala de módulo · Campus SST`; $('#tit').textContent = MOD.titulo; $('#sub').textContent = MOD.nom;
+$('#bAtras').onclick = () => alCampus('?mundo=' + MOD.area); $('#bInicio').onclick = () => alCampus('?plaza'); $('#bSalir').onclick = () => alCampus('?salir');
+$('#bComp').onclick = () => Compartir.abrir(Compartir.url('index.html?m=' + ID), `${MOD.titulo} · Sala de módulo · Campus SST`);
+Acceso.proteger(`${MOD.titulo}`, CAMPUS + '?mundo=' + MOD.area, `${MOD.area}/${ID}`);
+const T0 = performance.now();
+
+// ---------------------------------------------------------------- escena
+const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(innerWidth, innerHeight); document.body.prepend(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xDCE9F0);
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, .05, 200); const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.enablePan = false; controls.maxPolarAngle = Math.PI * .47; controls.minDistance = 2.5; controls.maxDistance = 14;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9AAAB5, 1.3)); const sol = new THREE.DirectionalLight(0xffffff, 1.1); sol.position.set(4, 10, 6); scene.add(sol);
+const kit = new Kit3D(THREE, '../../'), PR = Props(THREE);
+const W = 17, D = 15, H = 3.6, col = { rojo: 0xD3122A, amarillo: 0xF2C230, verde: 0x00995C, azul: 0x0D6EB8 }[MOD.color] || 0x154F90;
+const tocables = [], pisos = [], etqs = [];
+const nav = new Navegacion({ x0: -W / 2 - 1, z0: -D / 2 - 1, x1: W / 2 + 1, z1: D / 2 + 3, celda: .25, costoBase: 1.4 });
+const M = (c, x) => new THREE.MeshStandardMaterial({ color: c, roughness: .85, ...x });
+const caja = (w, h, d, c, x, y, z, p = scene, mx) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(c, mx)); m.position.set(x, y, z); p.add(m); return m; };
+const tx = (n, r) => { const t = new THREE.TextureLoader().load(`../../assets/texturas/${n}.webp`); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(r[0], r[1]); return t; };
+const piso = new THREE.Mesh(new THREE.PlaneGeometry(W, D + 2), M(0xEEF1F3, { map: tx(MOD.piso, [W / 3, (D + 2) / 3]) })); piso.rotation.x = -Math.PI / 2; piso.position.z = 1; piso.userData.piso = true; scene.add(piso); pisos.push(piso);
+// muros: fondo, laterales y un murete bajo al frente (la cámara mira desde el frente sin que una pared tape)
+const muro = (w, x, z, ry, h = H) => { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g); caja(w, h, .2, 0xF4F7FA, 0, h / 2, 0, g); caja(w, .25, .24, col, 0, .125, 0, g); caja(w, .12, .22, col, 0, Math.max(.4, h - .3), 0, g);
+  nav.bloquearRect(x, z, ry ? .6 : w, ry ? w : .6); return g; };
+muro(W, 0, -D / 2, 0); muro(D + 2, -W / 2, 1, Math.PI / 2); muro(D + 2, W / 2, 1, Math.PI / 2); muro((W - 3) / 2, -(W + 3) / 4, D / 2 + 2, 0, 1.0); muro((W - 3) / 2, (W + 3) / 4, D / 2 + 2, 0, 1.0);
+const salida = caja(2.6, 2.4, .08, 0x2E7D32, 0, 1.2, D / 2 + 2, scene, { transparent: true, opacity: .35 }); salida.userData = { tipo: 'salir' }; tocables.push(salida);
+// franjas de circulación y señales NOM-026 (tocables)
+[-1.4, 1.4].forEach(x => { const f = new THREE.Mesh(new THREE.PlaneGeometry(.1, D + 1), new THREE.MeshBasicMaterial({ color: 0xFFD100 })); f.rotation.x = -Math.PI / 2; f.position.set(x, .011, 1); scene.add(f); });
+nav.camino(0, 1, 2.6, D + 2, 0, .5);
+const letreros = [];
+function senal(id, w, x, y, z, ry) { const cv = Senales.canvas(id, 256), t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w * cv.height / cv.width), new THREE.MeshBasicMaterial({ map: t, transparent: true }));
+  m.position.set(x, y, z); m.rotation.y = ry; scene.add(m); const fr = new THREE.Vector3(0, 0, 1.5).applyAxisAngle(new THREE.Vector3(0, 1, 0), ry); m.userData = { tipo: 'senal', id, i: letreros.length };
+  letreros.push({ pos: new THREE.Vector3(x, 0, z).add(fr), mira: m.position.clone() }); tocables.push(m); }
+const SEN = { 'primeros-auxilios': ['primeros', 'salida', 'guantes'], 'extintores-fuego': ['extintor', 'hidrante', 'inflamable', 'no_agua'], alturas: ['caida', 'arnes', 'casco'],
+  'espacios-confinados': ['prec_general', 'respiratoria', 'no_paso'], 'seguridad-electrica': ['electrico', 'guantes', 'cara'], loto: ['electrico', 'guantes', 'prec_general'] }[ID] || ['salida'];
+SEN.forEach((id, k) => senal(id, .7, -W / 2 + .12, 2.3, -3 + k * 2.2, Math.PI / 2));
+senal('salida', 1, 0, 2.95, D / 2 + 1.94, Math.PI); senal('extintor', .55, 2.2, 1.9, D / 2 + 1.94, Math.PI);
+const logo = new THREE.TextureLoader().load('../../recursos/logo_CERS.jpeg'); logo.colorSpace = THREE.SRGBColorSpace;
+const lg = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.2), new THREE.MeshBasicMaterial({ map: logo })); lg.position.set(W / 2 - .12, 2.4, -5.5); lg.rotation.y = -Math.PI / 2; scene.add(lg);
+// pantalla del fondo con título, norma e introducción
+{ const cv = document.createElement('canvas'); cv.width = 1280; cv.height = 620; const g = cv.getContext('2d'); g.fillStyle = '#0E3A6B'; g.fillRect(0, 0, 1280, 620); g.fillStyle = '#' + col.toString(16).padStart(6, '0'); g.fillRect(0, 0, 1280, 26);
+  g.fillStyle = '#fff'; g.font = '900 66px Arial'; g.fillText(MOD.titulo, 50, 120); g.fillStyle = '#8CCDE0'; g.font = '700 38px Arial'; g.fillText(MOD.nom, 50, 180); g.fillStyle = '#fff'; g.font = '34px Arial';
+  let y = 260, l = ''; for (const p of MOD.intro.split(' ')) { if (g.measureText(l + p).width > 1170) { g.fillText(l, 50, y); y += 46; l = ''; } l += p + ' '; } g.fillText(l, 50, y);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; const pa = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 3), new THREE.MeshBasicMaterial({ map: t })); pa.position.set(0, 2.05, -D / 2 + .13); scene.add(pa);
+  pa.userData = { tipo: 'intro' }; tocables.push(pa); caja(6.5, .1, .3, 0x37474F, 0, .52, -D / 2 + .3); }
+// sillas frente a la pantalla (para sentarse)
+const sillas = [];
+for (let k = 0; k < 4; k++) { const x = -2.7 + k * 1.8, z = -1.2; const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = Math.PI; scene.add(g);
+  const a = caja(.48, .06, .46, col, 0, .46, 0, g), r = caja(.48, .5, .06, col, 0, .72, -.21, g); [[-.2, -.18], [.2, -.18], [-.2, .18], [.2, .18]].forEach(([p, q]) => caja(.04, .46, .04, 0x37474F, p, .23, q, g));
+  [a, r].forEach(m => { m.userData = { tipo: 'silla', i: k }; tocables.push(m); }); sillas.push({ pos: g.position.clone(), ry: Math.PI, asiento: .46, frente: new THREE.Vector3(x, 0, z + .75) }); nav.bloquearCirculo(x, z, .32);
+  kit.pieza('campus', 'silla_escolar').then(o => { a.visible = r.visible = false; g.children.forEach(c => c.visible = false); o.rotation.y = Math.PI; g.add(o); o.traverse(q => { if (q.isMesh) { q.userData = { tipo: 'silla', i: k }; tocables.push(q); } }); }).catch(() => { }); }
+
+// ---------------------------------------------------------------- equipos en exhibición
+const lugares = [[-5.5, -5.3, 0], [-2.2, -5.0, 0], [2.2, -5.0, 0], [5.5, -5.3, 0], [-7.0, -1.0, Math.PI / 2], [-7.0, 2.6, Math.PI / 2], [7.0, -1.0, -Math.PI / 2], [7.0, 2.6, -Math.PI / 2], [-6.6, 5.6, Math.PI * .75], [6.6, 5.6, -Math.PI * .75]];
+const fuegos = []; const fichas = [];
+function placa(texto) { const cv = document.createElement('canvas'); cv.width = 512; cv.height = 96; const g = cv.getContext('2d'); g.fillStyle = '#0E3A6B'; g.fillRect(0, 0, 512, 96); g.fillStyle = '#fff'; g.font = '900 38px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  let fs = 38; while (g.measureText(texto).width > 490 && fs > 18) { fs -= 2; g.font = `900 ${fs}px Arial`; } g.fillText(texto, 256, 50); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; }
+async function colocar(p, k) {
+  const [x, z, ry] = lugares[k % lugares.length]; const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g);
+  let o = p.k === 'props' ? PR.POR_CLAVE(p.c).fn() : await kit.pieza(p.k, p.c);
+  const b = new THREE.Box3().setFromObject(o), s = b.getSize(new THREE.Vector3()), grande = s.y > 1.4 || Math.max(s.x, s.z) > 1.6;
+  const alto = grande ? 0 : .8; if (!grande) { caja(1.1, alto, 1.0, 0xE3E9EE, 0, alto / 2, 0, g); }
+  if (p.s) o.scale.multiplyScalar(p.s); else if (!grande && Math.max(s.x, s.y, s.z) < .35) o.scale.multiplyScalar(.35 / Math.max(s.x, s.y, s.z));
+  const b2 = new THREE.Box3().setFromObject(o); const lim = grande ? 2.6 : .95, m = Math.max(b2.max.x - b2.min.x, b2.max.z - b2.min.z); if (m > lim) o.scale.multiplyScalar(lim / m);
+  o.position.y = alto; g.add(o);
+  const pl = new THREE.Mesh(new THREE.PlaneGeometry(1.0, .19), new THREE.MeshBasicMaterial({ map: placa(p.n) })); pl.position.set(0, grande ? .25 : alto - .18, grande ? 1.35 : .51); g.add(pl);
+  if (grande) caja(1.0, .5, .05, 0x37474F, 0, .25, 1.32, g);
+  const h = new THREE.Box3().setFromObject(g); const hit = new THREE.Mesh(new THREE.BoxGeometry(h.max.x - h.min.x + .2, h.max.y + .2, h.max.z - h.min.z + .2), new THREE.MeshBasicMaterial({ visible: false }));
+  hit.position.copy(h.getCenter(new THREE.Vector3())); scene.add(hit); hit.userData = { tipo: 'pieza', i: k }; tocables.push(hit);
+  const fr = new THREE.Vector3(0, 0, grande ? 2.2 : 1.4).applyAxisAngle(new THREE.Vector3(0, 1, 0), ry).add(g.position);
+  fichas[k] = { ...p, frente: fr, centro: hit.position.clone() }; nav.bloquearRect(h.getCenter(new THREE.Vector3()).x, h.getCenter(new THREE.Vector3()).z, h.max.x - h.min.x + .3, h.max.z - h.min.z + .3);
+  const el = document.createElement('div'); el.className = 'etq'; el.textContent = p.n; el.onclick = () => irA(k); $('#etqs').appendChild(el); etqs.push({ el, p: new THREE.Vector3(x, h.max.y + .35, z) });
+  if (p.fuego) fuegos.push(...fuego(g, alto + .15));
+}
+function fuego(padre, y) { const sp = [], L = new THREE.TextureLoader(); const tf = L.load('../../assets/texturas/particulas/flame_02.webp'), ts = L.load('../../assets/texturas/particulas/smoke_04.webp');
+  for (let i = 0; i < 9; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: i < 6 ? tf : ts, color: i < 6 ? 0xFF8A2A : 0x777777, transparent: true, depthWrite: false, blending: i < 6 ? THREE.AdditiveBlending : THREE.NormalBlending, opacity: .8 }));
+    s.userData = { f: Math.random(), humo: i >= 6, y }; padre.add(s); sp.push(s); } const luz = new THREE.PointLight(0xFF7A1A, 3, 6); luz.position.y = y + .5; padre.add(luz); return sp; }
+
+// ---------------------------------------------------------------- avatar, navegación y cámara
+let perfil = Avatar.cargar(); const av = Avatar.construir(THREE, perfil); const yo = av.grupo; yo.position.set(0, 0, D / 2 + .5); yo.rotation.y = Math.PI; scene.add(yo);
+let ruta = [], alLlegar = null, pose, fase = 0, sentadoEn = -1; const teclas = new Set();
+const marca = new THREE.Mesh(new THREE.RingGeometry(.3, .42, 32), new THREE.MeshBasicMaterial({ color: 0x3FA7C6 })); marca.rotation.x = -Math.PI / 2; marca.visible = false; scene.add(marca);
+function levantar() { if (pose === 'sentado' && sentadoEn >= 0) yo.position.copy(sillas[sentadoEn].frente); sentadoEn = -1; pose = undefined; yo.position.y = 0; }
+function caminar(dest, cb) { levantar(); ruta = nav.ruta(yo.position, dest); alLlegar = cb || null; if (!ruta.length && cb) cb(); marca.position.set(dest.x, .02, dest.z); marca.visible = !!ruta.length; $('#ayuda').style.display = 'none'; }
+function irA(k) { const f = fichas[k]; if (!f) return; caminar(f.frente, () => { yo.lookAt(f.centro.x, 0, f.centro.z); pose = 'mirando'; ficha(f); }); }
+function ficha(f) { modal(`<h2>${f.n}</h2><p>${f.d}</p><p class="fuente">${MOD.titulo} · ${MOD.nom}. Modelo 3D: ver Créditos.</p>`, f.n, f.d); }
+function modal(html, t, txt) { if (xr.activo()) return xr.panel(t || MOD.titulo, txt || html); $('#mCont').innerHTML = html + '<br><button class="prim" id="mC">Cerrar</button>'; $('#modal').style.display = 'flex'; $('#mC').onclick = () => $('#modal').style.display = 'none'; }
+$('#modal').onclick = e => { if (e.target.id === 'modal') $('#modal').style.display = 'none'; };
+function sentar(i) { const s = sillas[i]; caminar(s.frente, () => { yo.position.set(s.pos.x, Avatar.ALTO_SENTADO(s.asiento), s.pos.z); yo.rotation.y = s.ry + Math.PI; pose = 'sentado'; sentadoEn = i; }); }
+function tocar(u, punto) {
+  if (u.tipo === 'pieza') return irA(u.i); if (u.tipo === 'silla') return sentar(u.i); if (u.tipo === 'intro') return modal(`<h2>${MOD.titulo}</h2><p>${MOD.intro}</p><p class="fuente">${MOD.nom}</p>`, MOD.titulo, MOD.intro);
+  if (u.tipo === 'senal') { const L = letreros[u.i]; return caminar(L.pos, () => { yo.lookAt(L.mira.x, 0, L.mira.z); pose = 'mirando'; const s = Senales.POR_ID[u.id]; modal(`<h2>${s.nombre}</h2><img src="${Senales.dataURL(u.id, 256)}" style="width:150px;display:block;margin:auto"><p>${s.significado}</p><p class="fuente">${s.norma}</p>`, s.nombre, s.significado + ' (' + s.norma + ')'); }); }
+  if (u.tipo === 'salir') return caminar(new THREE.Vector3(0, 0, D / 2 + 1.2), () => alCampus('?mundo=' + MOD.area));
+  if (u.piso && punto) caminar(punto);
+}
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let abajo = null;
+renderer.domElement.addEventListener('pointerdown', e => abajo = [e.clientX, e.clientY]);
+renderer.domElement.addEventListener('pointerup', e => { if (!abajo || Math.hypot(e.clientX - abajo[0], e.clientY - abajo[1]) > 10) return;
+  ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ptr, camera); const h = ray.intersectObjects([...tocables, ...pisos], false)[0]; if (h) tocar(h.object.userData, h.point); });
+addEventListener('keydown', e => teclas.add(e.key.toLowerCase())); addEventListener('keyup', e => teclas.delete(e.key.toLowerCase()));
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+const xr = crearXR({ THREE, renderer, camera, controls, contenedor: $('#der'), escena: () => scene, objetivos: () => [...tocables, ...pisos], yo: () => yo,
+  alTocar: h => tocar(h.object.userData, h.point), alTeletransportar: p => { if (nav.libre(p.x, p.z)) { xr.colocar(p); pose = undefined; } } });
+camera.position.set(0, 5.2, D / 2 + 6.3); controls.target.set(0, 1, D / 2 - .5);
+
+// ---------------------------------------------------------------- carga diferida de los modelos del módulo
+Promise.all(MOD.piezas.map((p, k) => colocar(p, k).catch(e => console.warn('pieza', p.c, e)))).then(() => { $('#carga').remove(); window.__tiempo = Math.round(performance.now() - T0); console.log(`Sala ${ID}: lista en ${window.__tiempo} ms (kit ${kit.tiempos[MOD.kit] ?? '-'} ms)`); });
+setTimeout(() => { const c = $('#carga'); if (c) c.textContent = 'Cargando modelos 3D…'; }, 1500);
+
+const reloj = new THREE.Clock(), v = new THREE.Vector3(), prev = new THREE.Vector3();
+renderer.setAnimationLoop(() => { const dt = Math.min(.05, reloj.getDelta()), t = reloj.elapsedTime; prev.copy(yo.position);
+  if (teclas.size && !xr.activo()) { const f = new THREE.Vector3(); camera.getWorldDirection(f); f.y = 0; f.normalize(); const r = new THREE.Vector3(-f.z, 0, f.x), d = new THREE.Vector3();
+    if (teclas.has('w') || teclas.has('arrowup')) d.add(f); if (teclas.has('s') || teclas.has('arrowdown')) d.sub(f); if (teclas.has('d') || teclas.has('arrowright')) d.add(r); if (teclas.has('a') || teclas.has('arrowleft')) d.sub(r);
+    if (d.lengthSq()) { ruta = []; levantar(); d.normalize(); const n = yo.position.clone().addScaledVector(d, 3.5 * dt); if (nav.libre(n.x, n.z)) yo.position.copy(n); yo.rotation.y = Math.atan2(d.x, d.z); } }
+  if (ruta.length) { const m = ruta[0], dx = m.x - yo.position.x, dz = m.z - yo.position.z, L = Math.hypot(dx, dz);
+    if (L < .08) { ruta.shift(); if (!ruta.length) { marca.visible = false; const cb = alLlegar; alLlegar = null; cb && cb(); } } else { const s = Math.min(L, 3.6 * dt); yo.position.x += dx / L * s; yo.position.z += dz / L * s; yo.rotation.y = Math.atan2(dx, dz); } }
+  const andando = yo.position.distanceToSquared(prev) > 1e-6; fase += andando ? dt * 10 : 0; av.animar(fase, andando, pose);
+  if (!xr.activo()) { const dl = yo.position.clone().sub(prev); dl.y = 0; camera.position.add(dl); controls.target.add(dl); controls.target.y = 1; controls.update(); } else xr.actualizar();
+  fuegos.forEach(s => { const u = (s.userData.f + t * (s.userData.humo ? .25 : .9)) % 1; s.position.set(Math.sin(u * 9 + s.userData.f * 6) * .12, s.userData.y + u * (s.userData.humo ? 2.2 : .9), 0);
+    const k = s.userData.humo ? .5 + u * 1.2 : .7 * (1 - u) + .2; s.scale.set(k, k, 1); s.material.opacity = s.userData.humo ? .35 * (1 - u) : .9 * (1 - u); });
+  marca.rotation.z += dt * 2; renderer.render(scene, camera);
+  etqs.forEach(e => { v.copy(e.p).project(camera); const vis = v.z < 1 && Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05 && !xr.activo(); e.el.style.display = vis ? 'block' : 'none'; if (vis) { e.el.style.left = (v.x + 1) / 2 * innerWidth + 'px'; e.el.style.top = (1 - v.y) / 2 * innerHeight + 'px'; } }); });
+if (QA) window.__qa = { MOD, fichas, sillas, irA, sentar, tocar, yo: () => yo, kit, estado: () => ({ pose, pos: yo.position.toArray().map(n => +n.toFixed(2)), tiempo: window.__tiempo }) };
+</script>
+</body>
+</html>
