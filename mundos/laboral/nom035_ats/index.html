@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Acontecimiento traumático severo (NOM-035)</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../comun.js"></script>
+<script src="../nom035_comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Fuentes verificadas (02_fuentes_verificadas/registro_fuentes.md, consulta 05/10/2026)
+const N = 'NOM-035-STPS-2018';
+const LV = 'Línea de la Vida, CONASAMA (gob.mx, 23/10/2025)';
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Acontecimiento traumático severo', icono: '🚨',
+  clave: 'laboral_nom035_ats', criterio: { pct: 80, sinCriticos: true }, fondo: 0xE6EEEC,
+  vistas: [[[0, 1.7, 2.2], [0, 1.0, -2.4]], [[-1.4, 1.7, 0.6], [-3.0, 1.0, -1.4]], [[1.4, 1.7, 0.6], [3.0, 1.0, -1.8]]] });
+const { caja, scene, tocable, letrero } = W;
+const { persona, ficha } = window.Laboral;
+const { sala, globo, situacion, encuentra, decide, tocaYDecide, tocaYPregunta, con, PALETA } = window.Nom035;
+
+// ------------------------------------------------------------------ Sucursal Plaza Norte [FICTICIO], dos días después de un asalto
+const { piso, entorno } = sala(W, { rotulo: 'SUCURSAL PLAZA NORTE · CAJAS', piso: 0xCFD8DC });
+W.activarXR({ inicio: [0, 0.6], piso, entorno });
+caja(3.2, 1.05, 0.6, 0x8D6E63, 0, 0.53, -2.6); caja(3.2, 0.05, 0.7, 0xEFEBE9, 0, 1.08, -2.6);           // mostrador
+caja(0.4, 0.25, 0.35, 0x263238, -0.6, 1.23, -2.6); caja(0.4, 0.25, 0.35, 0x263238, 0.8, 1.23, -2.6);   // cajas registradoras
+const cristal = caja(3.2, 0.9, 0.02, 0xBFE0EA, 0, 1.6, -2.9); Object.assign(cristal.material, { transparent: true, opacity: 0.3 });   // cristal
+globo(W, '⚠️ Hace 2 días: asalto con violencia', 0, 2.55, -3.0, '#FDECEA', '#B03A2E', 2.4);
+const cajera = persona(W, { x: 0.2, z: -3.5, ry: 0, ropa: 0xAD1457, tipo: 'cajera' });
+globo(W, 'Cajera · lo sufrió', 0.2, 2.05, -3.5, PALETA.petroleo, '#fff', 1.2);
+const testigo = persona(W, { x: -2.6, z: -1.2, ry: Math.PI / 3, ropa: 0x00796B, tipo: 'testigo' });
+globo(W, 'Compañero · lo presenció', -2.6, 2.05, -1.2, PALETA.petroleo, '#fff', 1.5);
+const tarde = persona(W, { x: 2.8, z: -0.6, ry: -Math.PI / 3, ropa: 0x6D4C41, tipo: 'tarde' });
+globo(W, 'Proveedor · llegó hoy', 2.8, 2.05, -0.6, '#90A4AE', '#fff', 1.4);
+// escritorio con el formato de aviso y la Guía I
+caja(1.2, 0.05, 0.7, 0xB89B7A, 3.0, 0.75, -2.6); caja(0.05, 0.75, 0.6, 0x6D5A45, 2.45, 0.37, -2.6); caja(0.05, 0.75, 0.6, 0x6D5A45, 3.55, 0.37, -2.6);
+const formato = caja(0.3, 0.02, 0.4, 0xFFFFFF, 2.8, 0.79, -2.6); tocable(formato, 'formato', 0.5);
+const guia = caja(0.3, 0.02, 0.4, 0xFFF8E1, 3.25, 0.79, -2.6); tocable(guia, 'guia', 0.5);
+globo(W, '📝 Aviso por escrito', 2.8, 1.15, -2.4, '#FFFFFF', '#16323F', 1.1); globo(W, '📋 Guía I', 3.35, 1.4, -2.4, '#FFF8E1', '#16323F', 0.7);
+// cartel de la Línea de la Vida
+const cartel = caja(1.0, 0.7, 0.04, 0xE3EFE6, -3.2, 1.6, -5.9); tocable(cartel, 'linea', 0.8);
+const tc = letrero('Línea de la Vida 800 911 2000', 1.0, 0.18, PALETA.salvia); tc.position.set(-3.2, 1.6, -5.87); scene.add(tc);
+const sitCartel = situacion(W, { x: -3.2, z: -5.6, y: 2.25, tipo: 'linea', icono: '☎️' });
+
+const intro = html => ({ titulo: 'Inicio', texto: 'Lee la situación.', sinPuntos: true,
+  iniciar() { W.aviso(html + '<p class="ficticio">[FICTICIO – ejercicio didáctico] Sucursal Plaza Norte · 60 personas trabajadoras.</p>', () => W.siguiente(), 'Comenzar'); } });
+const esATS = () => decide('¿Qué fue?', 'Hace dos días entraron a la sucursal y asaltaron con violencia a la cajera, frente a un compañero.', [
+  { t: 'Un acontecimiento traumático severo', ok: true, fb: 'Asaltos con violencia son un ejemplo: pueden generar estrés postraumático a quien lo sufre o lo presencia.', f: `${N}, 4.1` },
+  { t: 'Un mal día que se olvida solo', ok: false, fb: 'Representa un peligro real para la integridad: es un acontecimiento traumático severo.', f: `${N}, 4.1` },
+  { t: 'Una carga de trabajo', ok: false, fb: 'No: es un acontecimiento traumático severo.', f: `${N}, 4.1` },
+], `${N}, 4.1`);
+const FICHA_TRA = `<h3>📋 Tus respuestas a la Guía I (ejemplo) [FICTICIO]</h3><table>
+  <tr><td><b>I. Acontecimiento</b></td><td>¿Asaltos? <span class="no">SÍ</span></td></tr>
+  <tr><td><b>II. Recuerdos persistentes</b></td><td>¿Recuerdos recurrentes que provocan malestar? <span class="no">SÍ</span> · ¿Sueños recurrentes? NO</td></tr>
+  <tr><td><b>III. Evitación</b></td><td>1 "Sí" de 7</td></tr><tr><td><b>IV. Afectación</b></td><td>¿Dificultad para dormir? <span class="no">SÍ</span> · demás: NO</td></tr></table>
+  <p class="ley">La Guía I es un ejemplo no obligatorio para identificar a quien requiere valoración clínica.</p>`;
+const FICHA_JEF = `<h3>📋 Guía I de la cajera (ejemplo) [FICTICIO]</h3><table>
+  <tr><td><b>I. Acontecimiento</b></td><td>¿Asaltos? <span class="no">SÍ</span> · ¿Amenazas? <span class="no">SÍ</span></td></tr>
+  <tr><td><b>II. Recuerdos persistentes</b></td><td>0 "Sí" de 2</td></tr>
+  <tr><td><b>III. Evitación</b></td><td>3 "Sí" de 7 (evita lugares, alejada de los demás, difícil expresar sentimientos)</td></tr>
+  <tr><td><b>IV. Afectación</b></td><td>1 "Sí" de 5</td></tr></table>`;
+
+// Toca la Guía I, muestra las respuestas y luego pregunta
+const guiaYDecide = (titulo, texto, html, pregunta, ops) => ({ titulo, texto, fuente: `${N}, Guía de referencia I`, _W: W,
+  iniciar() { W.resaltar([guia]); },
+  tocar(o) { if (o.userData.tipo !== 'guia' || this._h) return; this._h = true; W.resaltar([]);
+    ficha(W, html, () => window.Laboral.decidir(W, pregunta, ops, () => W.siguiente()), 'Ver pregunta'); } });
+
+const CASOS = {
+  tra: () => con(W, [intro('<h2>👷 Rol: compañero(a) que lo presenció</h2><p>Hace dos días presenciaste un asalto con violencia a tu compañera cajera. Desde entonces no duermes bien y te sobresaltas con cualquier ruido. ¿Qué te toca hacer para cuidar tu bienestar?</p>'),
+    esATS(),
+    tocaYPregunta('Tu aviso por escrito', 'Toca el <b>formato de aviso</b> sobre el escritorio.', formato, 'formato',
+      '¿Qué datos debe tener tu escrito? (elige los 5)', ['Fecha de elaboración', 'Tu nombre', 'Nombres de los trabajadores involucrados',
+        'Fecha en que ocurrió', 'Descripción del acontecimiento', 'Tu CURP y tu salario', 'Una foto del asaltante'], [0, 1, 2, 3, 4],
+      `${N}, 6.5`, true, 'Contenido mínimo del escrito: fecha, tu nombre, involucrados, fecha de ocurrencia y descripción.'),
+    decide('¿A quién se lo entregas?', 'Ya tienes tu escrito.', [
+      { t: 'Al patrón directamente, a los servicios preventivos de SST o a la comisión de seguridad e higiene', ok: true, fb: 'Esas son las vías que señala la norma.', f: `${N}, 6.5` },
+      { t: 'A nadie: es algo personal', ok: false, fb: 'Informarlo por escrito es una obligación y abre la puerta a tu atención.', f: `${N}, 6.5` },
+      { t: 'Lo publico en redes sociales', ok: false, fb: 'Se entrega por los canales del centro de trabajo.', f: `${N}, 6.5` },
+    ], `${N}, 6.5`),
+    guiaYDecide('El cuestionario', 'Toca la <b>Guía I</b>: la empresa te pidió contestarla.', FICHA_TRA, '¿Requieres valoración clínica?', [
+      { t: 'Sí: un "Sí" en la sección II (recuerdos persistentes) es suficiente', ok: true, fb: 'Basta 1 "Sí" en la sección II; también 3 en la III o 2 en la IV.', f: `${N}, Guía I` },
+      { t: 'No: se necesitan 3 "Sí" en todas las secciones', ok: false, fb: 'Con 1 "Sí" en la sección II ya se requiere atención clínica.', f: `${N}, Guía I` },
+    ]),
+    decide('¿Quién te atiende?', 'La empresa revisa tu cuestionario.', [
+      { t: 'La empresa me canaliza a la institución de seguridad social o privada, o al médico', ok: true, fb: 'El patrón identifica y canaliza; la atención clínica la da un profesional.', f: `${N}, 5.5 y 8.5` },
+      { t: 'Mi jefe me da terapia en su oficina', ok: false, fb: 'La intervención clínica la hace invariablemente un médico, psicólogo o psiquiatra.', f: `${N}, 8.5` },
+    ], `${N}, 5.5`),
+    tocaYDecide('Si una noche no puedes más', 'Toca el <b>cartel</b> de la pared.', sitCartel.marco, 'linea', 'Una noche te sientes muy mal y quieres hablar con alguien. ¿Qué haces?', [
+      { t: 'Llamo a la Línea de la Vida 800 911 2000: gratuita, 24 horas', ok: true, fb: 'Orientación profesional en salud mental, todos los días del año. En una emergencia: 911.', f: LV },
+      { t: 'Me aguanto solo hasta que se pase', ok: false, fb: 'Pedir apoyo es válido; hay ayuda gratuita las 24 horas.', f: LV },
+    ], LV)]),
+  jef: () => con(W, [intro('<h2>🧑‍💼 Rol: gerente de la sucursal</h2><p>Hace dos días asaltaron con violencia a la cajera frente a un compañero. Hoy todos están en sus puestos. ¿Qué le toca a la empresa?</p>'),
+    esATS(),
+    encuentra(W, { titulo: '¿A quién identificas?', texto: 'Toca a las <b>personas que debes identificar</b> como sujetas al acontecimiento.', fuente: `${N}, 4.1 y 5.5`,
+      buenas: [{ tipo: 'cajera', nombre: 'La cajera', fb: 'Lo sufrió.', f: `${N}, 4.1` }, { tipo: 'testigo', nombre: 'El compañero', fb: 'Lo presenció: también puede generar estrés postraumático.', f: `${N}, 4.1` }],
+      malas: [{ tipo: 'tarde', nombre: 'Proveedor', msg: 'El proveedor llegó hoy: no lo sufrió ni lo presenció.', f: `${N}, 4.1` }] }),
+    guiaYDecide('La Guía I', 'Toca la <b>Guía I</b> que contestó la cajera.', FICHA_JEF, '¿La cajera requiere valoración clínica?', [
+      { t: 'Sí: tiene 3 "Sí" en la sección III (evitación)', ok: true, fb: '3 o más "Sí" en la sección III requieren atención clínica.', f: `${N}, Guía I` },
+      { t: 'No: la sección II salió en cero', ok: false, fb: 'Cualquiera de los criterios basta: 1 en II, 3 en III o 2 en IV.', f: `${N}, Guía I` },
+    ]),
+    decide('Canalizar', '¿Qué haces con el resultado?', [
+      { t: 'Canalizarla a la institución de seguridad social o privada, o al médico de la empresa', ok: true, fb: 'Es la obligación del numeral 5.5.', f: `${N}, 5.5` },
+      { t: 'Darle yo mismo terapia en mi oficina', ok: false, crit: true, fb: 'Las intervenciones clínicas solo las hace un médico, psicólogo o psiquiatra.', f: `${N}, 8.5` },
+      { t: 'Decirle que ya pasó y que siga trabajando', ok: false, crit: true, fb: 'Hay que identificar y canalizar a quien vivió un ATS.', f: `${N}, 5.5` },
+    ], `${N}, 5.5`),
+    decide('Apoyo al equipo', 'El equipo está nervioso después del asalto.', [
+      { t: 'Convocar una reunión extraordinaria de seguimiento al apoyo social', ok: true, fb: 'La norma prevé reuniones extraordinarias si ocurren eventos que ponen en riesgo la salud.', f: `${N}, 8.2 d) 2)` },
+      { t: 'Prohibir que se hable del tema', ok: false, fb: 'El apoyo social y la comunicación son medidas de prevención.', f: `${N}, 8.2 d) y h)` },
+    ], `${N}, 8.2 d)`),
+    decide('Registros', 'La sucursal tiene 60 trabajadores.', [
+      { t: 'Registrar los nombres de los trabajadores evaluados con exposición comprobada', ok: true, fb: 'Es parte de los registros (centros con más de 15 trabajadores).', f: `${N}, 5.8 c)` },
+      { t: 'No registrar nada para evitar problemas', ok: false, fb: 'Llevar registros es obligatorio para centros de más de 15.', f: `${N}, 5.8` },
+    ], `${N}, 5.8 c)`)]),
+};
+
+W.inicio([{ id: 'tra', txt: '👷 <b>Rol 1:</b> Compañero(a) que lo presenció' }, { id: 'jef', txt: '🧑‍💼 <b>Rol 2:</b> Gerente de la sucursal' }],
+  id => CASOS[id](),
+  'Basado en: NOM-035-STPS-2018 (DOF 23/10/2018) numerales 4.1, 5.5, 5.8, 6.5, 8.2 d) y 8.5 y Guía de referencia I; Línea de la Vida (CONASAMA). Personas y hechos ficticios. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { S: { cajera: cajera.torso, testigo: testigo.torso, tarde: tarde.torso, formato, guia, linea: sitCartel.marco },
+  tocar: W.tocar, estado: W.qa, xr: () => W.xr };
+</script>
+</body>
+</html>
