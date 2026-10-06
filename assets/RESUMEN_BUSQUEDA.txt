@@ -1,0 +1,69 @@
+RESUMEN DE LA BÚSQUEDA DE RECURSOS 3D — Campus de Simulación SST · CERS
+Fecha: 05/10/2026 · Rama del repositorio: assets-modulos (sin publicar)
+
+1. TOTALES
+   Fuente                    Revisados / descargados              Usados en el campus           Licencia
+   Kenney (15 paquetes)      ~1,400 modelos en 15 paquetes          85 modelos + 10 sprites       CC0 1.0 (License.txt de cada paquete)
+   Poly Pizza                638 modelos con licencia revisada; 61 bajados 51 modelos                    33 CC0 1.0 + 18 CC-BY 3.0 (verificada en la página de cada modelo)
+   Poly Haven                26 revisados; 17 bajados               10 modelos (3 limpiados)      CC0 1.0
+   ambientCG                 7 consultados; 6 bajados               6 texturas                    CC0 1.0 (texto en la página de cada textura)
+   Creación propia (código)  —                                       23 objetos (motor/props.js)   Propia (CERS)
+   Total publicado: 14 kits .glb (~3.1 MB en total, máx. 457 KB por kit) + texturas 0.4 MB.
+   Ningún archivo pasa de 2 MB; ningún módulo pasa de 15 MB. Originales en assets/_originales/ (no se publica).
+
+2. RECHAZADOS Y MOTIVO
+   Poly Haven korean_fire_extinguisher_01 ... etiqueta de fabricante y textos en coreano
+   Poly Haven propane_tank .................. logotipo en el cilindro
+   Poly Haven power_box_01 .................. etiquetas de marca en los interruptores
+   Poly Haven metal_toolbox ................. emblema metálico tipo marca
+   Poly Haven garden_gloves_01 .............. etiqueta de marca en el guante
+   Poly Haven rollershutter_door ............ grafiti con texto
+   Poly Haven WetFloorSign_01 ............... texto en inglés; no se necesitaba (la señal se dibuja con NOM-026)
+   Poly Pizza fGlFPYb8CCg "Cot" ............. es una cuna, no una camilla
+   Poly Pizza 17aBNzIsVg "Crane" (cg_world) . solo es un gancho con cable (2 MB)
+   Poly Pizza j59k7ctnZM "Tank" ............. tanque tipo buceo/jetpack, no industrial
+   Poly Pizza fjvk6xVJ3u3 "Minecart" ........ etiqueta en el costado no verificable y 667 KB
+   Poly Pizza AYQd5RQ8w4 / fETtk2OoFZe ...... "scaffolding": son armaduras, no andamios (el andamio se hizo propio)
+   Poly Pizza Yg2bQZO6Hj "Worker" y personas de Kenney Mini Characters: modelos con esqueleto que se deforman al
+      optimizar → se usan las figuras del avatar propio del campus.
+   Descargados pero no usados (licencia válida): iMNqRzPwwe Chair, C7AvDnDBFD Manhole, rzvuy93JU3 Pipes Panel.
+   Los otros 577 resultados de Poly Pizza no se bajaron: por licencia distinta de CC0/CC-BY, por más de 12,000
+   triángulos o por no corresponder al objeto buscado.
+
+3. LIMPIEZAS (licencia CC0 permite modificar; copia en _originales/polyhaven_limpio/)
+   utility_box_01 y utility_box_02: se retiraron calcomanías "DANGER / KEEP OUT", "WARNING HIGH VOLTAGE" (inglés)
+      y números de serie. En el campus se colocan señales propias NOM-026-STPS-2008.
+   medical_box: se cambió "FIRST AID" por "BOTIQUÍN".
+
+4. PENDIENTES DE DESCARGA MANUAL / CON CUENTA
+   Ninguno. No se usó Sketchfab, Fab ni OpenGameArt: lo necesario se cubrió con fuentes de licencia clara sin crear
+   cuentas. Quaternius se usó a través de Poly Pizza (CC0 verificado modelo por modelo).
+   Objetos sin modelo descargable aceptable → se modelaron con código propio: extintores PQS/CO₂/agua, gabinete,
+   arnés, línea de vida, anclaje, andamio, casco con barbiquejo, tripié de rescate, detector de gases, ventilador
+   con ducto, tapete y guantes dieléctricos, careta, herramienta aislada, candado, pinza multibloqueo, etiqueta y
+   estación LOTO, camilla rígida, collarín, cobija térmica.
+
+5. ADVERTENCIAS DE LICENCIA
+   - 18 recursos son CC-BY 3.0: exigen crédito visible → pantalla mundos/informacion/creditos.html y CREDITOS.md.
+     Si se quita o modifica la pantalla de créditos, deben seguir visibles autor, título, licencia y enlace.
+   - "Poly by Google" y otros autores de Poly Pizza: CC-BY 3.0 (no 4.0); se cumple igual con atribución.
+   - No se usó ningún recurso NC, ND, SA, GPL ni "Standard License".
+   - Logos: CERS en entradas, letreros y salas; AMISI solo en el banner existente y en Información (sin agregar más).
+
+6. NOM VERIFICADAS EN EL DOF (consulta 05/10/2026; detalle en 02_fuentes_verificadas/registro_fuentes.md)
+   NOM-002-STPS-2010 (DOF 09/12/2010) · extintores — la versión 2026 es solo proyecto
+   NOM-030-STPS-2009 (DOF 22/12/2009) · primeros auxilios (no hay NOM exclusiva) — ya estaba verificada
+   NOM-009-STPS-2011 (DOF 06/05/2011) · alturas
+   NOM-033-STPS-2015 (DOF 31/08/2015) · espacios confinados
+   NOM-029-STPS-2011 (DOF 29/12/2011) · seguridad eléctrica
+   NOM-004-STPS-1999 (DOF 31/05/1999) · maquinaria / LOTO — existe PROY-NOM-004-STPS-2020 (solo proyecto)
+   NOM-026-STPS-2008 (DOF 25/11/2008) · señales — ya estaba verificada
+   NOM-023-STPS-2012 (DOF 11/10/2012) · minas subterráneas y a cielo abierto
+   NOM-032-STPS-2008 (DOF 23/12/2008; modif. 20/12/2011) · minas de carbón — existe PROY-NOM-032-STPS-2026 (no se usa)
+   NOM-031-STPS-2011 (DOF 04/05/2011) · construcción
+   NOM-008-STPS-2013 (DOF 31/10/2013) · aprovechamiento forestal / aserradero
+   NOM-016-STPS-2001 (DOF 12/07/2001) · ferrocarriles
+   NOM-006-STPS-2023 (DOF 07/03/2024) · almacenamiento y manejo de materiales con maquinaria
+   NOM-003-STPS-2023 (DOF 25/01/2024) · actividades agrícolas (título literal pendiente de leer)
+   Las demás NOM STPS de las puertas "pendiente" se escriben SOLO con su clave, sin año, porque no se verificó su
+   versión en el DOF en esta sesión (005, 010, 011, 012, 013, 014, 015, 018, 020, 022, 024, 025, 027, 028, 001, 034, 037).
