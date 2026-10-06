@@ -32,6 +32,15 @@ const LISTA = [
   { id: 'resbaloso', nombre: 'Riesgo por superficie resbalosa', tipo: 'Precaución (amarillo)', norma: `${N26}, C.15`, significado: 'Silueta de persona cayendo sobre una superficie resbalosa.' },
   { id: 'electrico', nombre: 'Advertencia de riesgo eléctrico', tipo: 'Precaución (amarillo)', norma: `${N26}, C.7`, significado: 'Flecha quebrada en posición vertical hacia abajo.' },
   { id: 'inflamable', nombre: 'Precaución, materiales inflamables', tipo: 'Precaución (amarillo)', norma: `${N26}, C.4`, significado: 'Imagen de flama sobre triángulo amarillo.' },
+  // agregadas para los módulos de alturas, espacios confinados, seguridad eléctrica, LOTO y extintores (05/10/2026)
+  { id: 'arnes', nombre: 'Uso obligatorio de arnés de seguridad', tipo: 'Obligación (azul)', norma: `${N26}, B.9`, significado: 'Círculo azul con símbolo blanco: silueta humana con arnés y línea de sujeción.' },
+  { id: 'cara', nombre: 'Uso obligatorio de protección de la cara', tipo: 'Obligación (azul)', norma: `${N26}, B.10`, significado: 'Círculo azul con símbolo blanco: cabeza humana con careta.' },
+  { id: 'calzado', nombre: 'Uso obligatorio de calzado de protección', tipo: 'Obligación (azul)', norma: `${N26}, B.5`, significado: 'Círculo azul con símbolo blanco: un par de botas.' },
+  { id: 'respiratoria', nombre: 'Uso obligatorio de protección respiratoria', tipo: 'Obligación (azul)', norma: `${N26}, B.7`, significado: 'Círculo azul con símbolo blanco: cabeza humana con respirador.' },
+  { id: 'caida', nombre: 'Precaución, caída a desnivel', tipo: 'Precaución (amarillo)', norma: `${N26}, C.13`, significado: 'Triángulo amarillo con silueta humana cayendo de un escalón o borde.' },
+  { id: 'obstaculos', nombre: 'Precaución, obstáculos', tipo: 'Precaución (amarillo)', norma: `${N26}, C.12`, significado: 'Triángulo amarillo con silueta humana tropezando con un obstáculo.' },
+  { id: 'montacargas', nombre: 'Precaución, circulación de montacargas', tipo: 'Precaución (amarillo)', norma: `${N26}, C.17`, significado: 'Triángulo amarillo con la silueta de un montacargas.' },
+  { id: 'no_agua', nombre: 'No utilizar agua como agente extinguidor', tipo: 'Prohibición', norma: `${N26}, A.8`, significado: 'Círculo con banda roja y diagonal, fondo blanco: recipiente vertiendo agua sobre una flama.' },
 ];
 const POR_ID = Object.fromEntries(LISTA.map(s => [s.id, s]));
 
@@ -108,6 +117,25 @@ DIB.prec_general = precaucion((g, W) => { g.fillRect(W * 0.46, W * 0.34, W * 0.0
 DIB.resbaloso = precaucion((g, W) => persona(g, W * 0.5, W * 0.6, W / 330, 'resbala', NEGRO));
 DIB.electrico = precaucion((g, W) => { g.beginPath(); g.moveTo(W * 0.56, W * 0.3); g.lineTo(W * 0.42, W * 0.56); g.lineTo(W * 0.52, W * 0.56); g.lineTo(W * 0.44, W * 0.78); g.lineTo(W * 0.62, W * 0.5); g.lineTo(W * 0.52, W * 0.5); g.lineTo(W * 0.6, W * 0.3); g.closePath(); g.fill(); });
 DIB.inflamable = precaucion((g, W) => flama(g, W / 2, W * 0.62, W / 250, NEGRO));
+// --- agregadas 05/10/2026 (representaciones didácticas simplificadas del contenido de imagen de cada apéndice)
+DIB.arnes = obligacion((g, W) => { g.lineCap = 'round'; g.lineWidth = W * 0.045; g.beginPath(); g.arc(W * 0.5, W * 0.26, W * 0.055, 0, 7); g.fill();
+  g.beginPath(); g.moveTo(W * 0.5, W * 0.33); g.lineTo(W * 0.5, W * 0.58); g.moveTo(W * 0.5, W * 0.4); g.lineTo(W * 0.36, W * 0.52); g.moveTo(W * 0.5, W * 0.4); g.lineTo(W * 0.64, W * 0.52);
+  g.moveTo(W * 0.5, W * 0.58); g.lineTo(W * 0.42, W * 0.78); g.moveTo(W * 0.5, W * 0.58); g.lineTo(W * 0.58, W * 0.78); g.stroke();
+  g.lineWidth = W * 0.025; g.beginPath(); g.moveTo(W * 0.43, W * 0.36); g.lineTo(W * 0.57, W * 0.56); g.moveTo(W * 0.57, W * 0.36); g.lineTo(W * 0.43, W * 0.56); g.stroke();   // tirantes cruzados
+  g.beginPath(); g.moveTo(W * 0.5, W * 0.37); g.quadraticCurveTo(W * 0.72, W * 0.2, W * 0.7, W * 0.1); g.stroke(); });   // línea de sujeción hacia el anclaje
+DIB.cara = obligacion((g, W) => { cabeza(g, W); g.fillStyle = AZUL; g.globalAlpha = 0.55; g.beginPath(); g.roundRect(W * 0.3, W * 0.4, W * 0.4, W * 0.34, W * 0.06); g.fill(); g.globalAlpha = 1;
+  g.strokeStyle = BLANCO; g.lineWidth = W * 0.03; g.beginPath(); g.roundRect(W * 0.3, W * 0.4, W * 0.4, W * 0.34, W * 0.06); g.stroke(); g.fillRect(W * 0.28, W * 0.34, W * 0.44, W * 0.06); });
+DIB.calzado = obligacion((g, W) => { [0.34, 0.58].forEach(x => { g.beginPath(); g.moveTo(W * x, W * 0.28); g.lineTo(W * (x + 0.1), W * 0.28); g.lineTo(W * (x + 0.1), W * 0.6);
+  g.lineTo(W * (x + 0.2), W * 0.66); g.lineTo(W * (x + 0.2), W * 0.74); g.lineTo(W * x, W * 0.74); g.closePath(); g.fill(); }); });
+DIB.respiratoria = obligacion((g, W) => { cabeza(g, W); g.fillStyle = AZUL; g.beginPath(); g.ellipse(W * 0.5, W * 0.66, W * 0.12, W * 0.09, 0, 0, 7); g.fill();
+  g.fillStyle = BLANCO; [0.4, 0.6].forEach(x => { g.beginPath(); g.arc(W * x, W * 0.69, W * 0.045, 0, 7); g.fill(); }); g.fillStyle = AZUL; g.fillRect(W * 0.36, W * 0.5, W * 0.28, W * 0.035); });
+DIB.caida = precaucion((g, W) => { g.fillRect(W * 0.28, W * 0.7, W * 0.24, W * 0.05); g.fillRect(W * 0.5, W * 0.7, W * 0.04, W * 0.12); g.fillRect(W * 0.54, W * 0.79, W * 0.2, W * 0.03);
+  persona(g, W * 0.58, W * 0.56, W / 420, 'resbala', NEGRO); });
+DIB.obstaculos = precaucion((g, W) => { g.fillRect(W * 0.56, W * 0.68, W * 0.14, W * 0.12); persona(g, W * 0.46, W * 0.6, W / 380, 'corre', NEGRO); });
+DIB.montacargas = precaucion((g, W) => { g.fillRect(W * 0.34, W * 0.56, W * 0.22, W * 0.16); g.fillRect(W * 0.4, W * 0.44, W * 0.12, W * 0.12); g.fillRect(W * 0.58, W * 0.38, W * 0.03, W * 0.36);
+  g.fillRect(W * 0.58, W * 0.7, W * 0.12, W * 0.025); [0.38, 0.52].forEach(x => { g.beginPath(); g.arc(W * x, W * 0.75, W * 0.045, 0, 7); g.fill(); }); });
+DIB.no_agua = prohibicion((g, W) => { g.fillStyle = NEGRO; g.save(); g.translate(W * 0.4, W * 0.36); g.rotate(0.6); g.beginPath(); g.roundRect(-W * 0.08, -W * 0.06, W * 0.16, W * 0.12, W * 0.02); g.fill(); g.restore();
+  for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(W * (0.48 + i * 0.025), W * (0.46 + i * 0.05), W * 0.016, 0, 7); g.fill(); } flama(g, W * 0.6, W * 0.66, W / 520, NEGRO); });
 
 function canvas(id, px = 256) {
   const s = POR_ID[id]; const k = (s && s.ancho) || 1; const cv = document.createElement('canvas'); cv.width = Math.round(px * k); cv.height = px;

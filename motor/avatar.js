@@ -65,7 +65,10 @@ function construir(THREE, perfil) {
     mk(new THREE.BoxGeometry(0.17, 0.1, 0.28), p.zapatos, 0, -0.62, 0.05, piv); return piv; }
   const bI = brazo(-hombro), bD = brazo(hombro), pI = pierna(-0.13), pD = pierna(0.13);
   mk(new THREE.BoxGeometry(0.46, 0.16, 0.34), cPant, 0, 0.7, 0);   // cadera
-  function animar(fase, andando) { const s = andando ? Math.sin(fase) * 0.6 : 0;
+  // pose: undefined (de pie/caminando) · 'sentado' (piernas al frente; quien llama baja el grupo con ALTO_SENTADO) · 'mirando' (brazos atrás)
+  function animar(fase, andando, pose) { const s = andando ? Math.sin(fase) * 0.6 : 0;
+    if (pose === 'sentado') { pI.rotation.x = pD.rotation.x = -Math.PI / 2; bI.rotation.x = bD.rotation.x = -0.35; torso.position.y = 1.05; return; }
+    if (pose === 'mirando') { pI.rotation.x = pD.rotation.x = 0; bI.rotation.x = bD.rotation.x = 0.25; torso.position.y = 1.05; return; }
     bI.rotation.x = s; bD.rotation.x = -s; pI.rotation.x = -s; pD.rotation.x = s; torso.position.y = 1.05 + (andando ? Math.abs(Math.sin(fase)) * 0.04 : 0); }
   return { grupo: g, animar };
 }
@@ -96,5 +99,7 @@ const CSS = `.lbl{display:block;font-weight:800;color:#0E3A6B;margin:10px 0 4px;
 .sw button.sel{outline:3px solid #154F90;outline-offset:2px}
 .ops{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}.ops button,.chk{background:#E8F5F9;color:#0E3A6B;border:2px solid transparent;border-radius:10px;padding:7px 11px;font-weight:700;cursor:pointer;font-size:.92rem}
 .ops button.sel{border-color:#154F90;background:#D7ECF4}.chk input{transform:scale(1.2);margin-right:4px}`;
-window.Avatar = { OPC, BASE, cargar, guardar, limpiar, construir, editor, CSS };
+// Sentado: la cadera (pivote de piernas a 0.66 m) debe quedar a la altura del asiento → grupo.y = asiento - 0.66 + 0.1
+const ALTO_SENTADO = asiento => asiento - 0.56;
+window.Avatar = { OPC, BASE, cargar, guardar, limpiar, construir, editor, CSS, ALTO_SENTADO };
 })();

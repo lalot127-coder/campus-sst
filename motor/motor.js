@@ -202,8 +202,14 @@ function crearMundo(THREE, OrbitControls, cfg) {
   }
   const qa = () => ({ paso: nPaso, titulo: paso && paso.titulo, pts: S.pts, criticos: S.criticos, errores: S.errores.length });
 
-  return { THREE, scene, camera, controls, renderer, M, caja, cil, esfera, capsula, tocable, letrero, mover, resaltar, irVista, cuadro,
+  const api = { THREE, scene, camera, controls, renderer, M, caja, cil, esfera, capsula, tocable, letrero, mover, resaltar, irVista, cuadro,
     toast, bien, mal, botones, pregunta, aviso, siguiente, inicio, qa, tocar, $, estado: () => S };
+  // Modo inmersivo (WebXR) opcional: cfg.xr = { inicio:[x,z], piso, entorno } (ver motor/xr.js). Se puede llamar
+  // también después con api.activarXR({...}) cuando el piso y el entorno ya existen.
+  api.activarXR = (opc) => { const go = () => { api.xr = MotorXR.activar(api, opc || {}); };
+    if (window.MotorXR) go(); else { const s = document.createElement('script'); s.src = new URL('xr.js', BASE_MOTOR).href; s.onload = go; document.head.appendChild(s); } };
+  if (cfg.xr) api.activarXR(cfg.xr);
+  return api;
 }
 
 window.MotorSim = { crearMundo };
