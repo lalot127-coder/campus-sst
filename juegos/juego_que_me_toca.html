@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16323F"><title>¿Qué me toca según mi tamaño? · NOM-035</title>
+<style>
+:root{--navy:#16323F;--rojo:#1F5F6B;--teal:#4F8A7C;--ambar:#C9A227;--rosa:#E3EFE6;--hielo:#F2F6F4;--texto:#1F2433;--tenue:#5B6270;--bien:#2E7D32;--mal:#C62828}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:var(--hielo);color:var(--texto);-webkit-tap-highlight-color:transparent}
+header{background:var(--navy);color:#fff;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:1.2rem}header .meta{color:#CFE3D4;font-size:.88rem}
+.marcador{margin-left:auto;display:flex;gap:8px;font-weight:700;flex-wrap:wrap}.marcador span{background:var(--rojo);padding:5px 11px;border-radius:999px;font-size:.92rem}
+.volver{background:#fff;color:var(--navy);border:0;border-radius:10px;padding:6px 10px;font-weight:700;cursor:pointer}
+main{max-width:980px;margin:0 auto;padding:14px}
+.card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 2px 10px rgba(29,27,46,.1);margin-bottom:12px}
+.etq{display:inline-block;background:var(--rosa);color:var(--rojo);font-weight:800;border-radius:999px;padding:3px 12px;font-size:.85rem}
+.opciones{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px}
+.op{background:var(--hielo);border:2px solid transparent;border-radius:14px;padding:13px;font-size:1.03rem;cursor:pointer;text-align:left;color:var(--texto);display:flex;gap:10px;align-items:center;min-height:62px;font-family:inherit}
+.op:hover{border-color:var(--ambar)}.op .i{font-size:1.7rem}
+.op.ok{background:#E8F5E9;border-color:var(--bien)}.op.no{background:#FDECEA;border-color:var(--mal)}.op.sel{border-color:var(--teal);background:#E2F2F4}
+.retro{margin-top:12px;border-radius:14px;padding:13px;font-size:1.02rem}.retro.ok{background:#E8F5E9}.retro.no{background:#FDECEA}
+.retro small,.fuente{display:block;color:var(--tenue);font-style:italic;margin-top:6px;font-size:.85rem}
+button.prim{background:var(--rojo);color:#fff;border:0;border-radius:12px;padding:12px 20px;font-size:1.05rem;font-weight:700;cursor:pointer;font-family:inherit}
+button.sec{background:#fff;color:var(--navy);border:2px solid var(--navy);border-radius:12px;padding:10px 18px;font-size:1rem;cursor:pointer;font-family:inherit}
+button:disabled{opacity:.45;cursor:default}
+.modal{position:fixed;inset:0;background:rgba(29,27,46,.75);display:none;align-items:center;justify-content:center;padding:14px;z-index:9}
+.tarjeta{background:#fff;border-radius:18px;max-width:680px;width:100%;padding:22px;max-height:92vh;overflow:auto}
+.tarjeta h2{color:var(--navy);margin-top:0}
+input[type=text]{font-size:1.05rem;padding:10px;border-radius:10px;border:1px solid #c9ccd6;width:100%;margin:6px 0 12px;font-family:inherit}
+table{width:100%;border-collapse:collapse;font-size:.95rem}td,th{padding:6px;border-bottom:1px solid var(--hielo);text-align:left;vertical-align:top}
+.pie{font-size:.78rem;color:var(--tenue);margin-top:14px}
+.big{font-size:2.6rem;font-weight:800;color:var(--rojo);text-align:center}
+.fila{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.av{font-size:3.6rem}.av.tos{animation:tos .5s infinite}@keyframes tos{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.oxi{display:flex;gap:10px;align-items:center;font-weight:700;color:var(--teal)}.barra{flex:1;height:14px;background:#eee;border-radius:8px;overflow:hidden}
+.barra i{display:block;height:100%;background:linear-gradient(90deg,var(--mal),var(--ambar),var(--bien));transition:width .6s}
+</style></head><body>
+<header><button class="volver" onclick="history.length>1?history.back():location.href='manual.html'">‹ Volver</button>
+<div><h1>🏢 ¿Qué me toca según mi tamaño?</h1><div class="meta">Empresas de 12, 40 y 120 personas · NOM-035, 2</div></div><div class="marcador" id="marc"></div></header>
+<main><div id="app"></div><p class="pie">Fuentes: NOM-035-STPS-2018 (DOF 23/10/2018); LFT (últ. reforma DOF 14/05/2026). Casos ficticios con fines didácticos. Cursos NOM-035 · Ing. Carlos Eduardo Roa Sánchez.</p></main>
+<div class="modal" id="inicio" style="display:flex"><div class="tarjeta"><h2>🏢 ¿Qué me toca según mi tamaño?</h2><p>Tres empresas [FICTICIO]. Decide qué obligaciones aplican según el número de trabajadores.</p>
+<input type="text" id="nombre" placeholder="Nombre completo" autocomplete="off">
+<button class="prim" id="empezar">Empezar</button> <button class="sec" id="verGrupo">Resultados del grupo</button></div></div>
+<div class="modal" id="final"><div class="tarjeta" id="finalCont"></div></div>
+<script>
+const CLAVE='que_me_toca', TITULO='¿Qué me toca según mi tamaño?';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let JUGADOR='';
+function leer(){try{return JSON.parse(localStorage.getItem('n35_'+CLAVE)||'[]')}catch(e){return[]}}
+async function registrar(fila){if(!location.protocol.startsWith('http')||location.hostname.endsWith('github.io'))return false;
+ try{const r=await fetch('/api/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo:'juego',fila})});return r.ok}catch(e){return false}}
+function marc(items){$('#marc').innerHTML=items.map(t=>`<span>${t}</span>`).join('')}
+async function terminar(pts,max,repaso,extra){
+ const pct=max?Math.round(pts/max*100):0, reg={juego:TITULO,nombre:JUGADOR,fecha:new Date().toLocaleString('es-MX'),puntos:pts,maximo:max,porcentaje:pct,...(extra||{})};
+ try{const a=leer();a.push(reg);localStorage.setItem('n35_'+CLAVE,JSON.stringify(a))}catch(e){}
+ const ok=await registrar(reg);
+ $('#finalCont').innerHTML=`<h2>${pct>=80?'🏆 ¡Excelente!':pct>=60?'👏 ¡Muy bien!':'💪 ¡Sigue practicando!'}</h2>
+ <div class="big">${pts} / ${max}</div><p style="text-align:center"><b>${esc(JUGADOR)}</b> · ${pct}%${extra&&extra.tiempo?' · '+extra.tiempo:''}</p>
+ ${repaso&&repaso.length?'<h3>Para repasar</h3><ul>'+repaso.map(e=>'<li>'+e+'</li>').join('')+'</ul>':'<p>Sin errores. 👏</p>'}
+ <p class="fuente">${ok?'Registrado en la computadora de la persona instructora.':'Guardado en este dispositivo.'}</p>
+ <button class="prim" onclick="location.reload()">Jugar otra vez</button> <button class="sec" onclick="grupo()">Resultados del grupo</button>`;
+ $('#final').style.display='flex'}
+function grupo(){const a=leer();
+ $('#finalCont').innerHTML=`<h2>Resultados del grupo (${a.length})</h2><table><tr><th>Nombre</th><th>Puntos</th><th>%</th><th>Fecha</th></tr>
+ ${a.map(r=>`<tr><td>${esc(r.nombre)}</td><td>${r.puntos}/${r.maximo}</td><td>${r.porcentaje}%</td><td>${esc(r.fecha)}</td></tr>`).join('')||'<tr><td colspan=4>Sin registros</td></tr>'}</table><br>
+ <button class="prim" onclick="csv()">Descargar CSV</button> <button class="sec" onclick="location.reload()">Cerrar</button>
+ <button class="sec" onclick="if(confirm('¿Borrar los resultados de este dispositivo?')){localStorage.removeItem('n35_'+CLAVE);grupo()}">Borrar</button>`;
+ $('#inicio').style.display='none';$('#final').style.display='flex'}
+function csv(){const a=leer();const t='Juego,Nombre,Fecha,Puntos,Maximo,Porcentaje\n'+a.map(r=>[r.juego,r.nombre,r.fecha,r.puntos,r.maximo,r.porcentaje].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+ const b=new Blob(['﻿'+t],{type:'text/csv'});const l=document.createElement('a');l.href=URL.createObjectURL(b);l.download='resultados_'+CLAVE+'.csv';l.click()}
+const barajar=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+$('#verGrupo').onclick=grupo;
+$('#empezar').onclick=()=>{JUGADOR=$('#nombre').value.trim()||'Participante';$('#inicio').style.display='none';iniciar()};
+const DATOS={"casos": [{"av": "🏪", "t": "Papelería El Lápiz: 12 personas trabajadoras. [FICTICIO]", "pasos": [["¿Aplica la NOM-035?", ["No, es muy pequeña", "Sí: aplica a todos los centros de trabajo", "Solo si hay quejas", "Solo si lo pide el IMSS"], 1, "Rige en todo el país y en todos los centros de trabajo.", "NOM-035-STPS-2018, 2"], ["¿Debe aplicar la Guía II a todos?", ["Sí", "No: con hasta 15 no se exige la identificación con cuestionarios", "Solo al dueño", "Solo la Guía III"], 1, "Hasta 15: política, medidas, identificar y canalizar ATS y difundir información.", "NOM-035-STPS-2018, 2 a)"], ["¿Qué SÍ debe tener?", ["Política de prevención por escrito y difundida", "Dictamen de unidad de verificación", "Informe enviado a la STPS", "Psicólogo de planta"], 0, "La política aplica a todos (5.1). La unidad de verificación es opcional (9.1).", "NOM-035-STPS-2018, 5.1 y 9.1"]]}, {"av": "🏬", "t": "Distribuidora del Valle: 40 personas trabajadoras. [FICTICIO]", "pasos": [["¿Qué identificación le toca?", ["Ninguna", "Factores de riesgo psicosocial a TODOS (Guía II o método validado)", "Solo entorno organizacional", "Una muestra de 5"], 1, "De 16 a 50: identificar y analizar los factores incluyendo a todos los trabajadores.", "NOM-035-STPS-2018, 7.1 a)"], ["Calificación final 52 con la Guía II. ¿Nivel?", ["Bajo", "Medio", "Alto", "Nulo"], 1, "Guía II: 45 a 70 = medio → revisar política y programas mediante un Programa de intervención.", "NOM-035-STPS-2018, Guía II"], ["¿Cada cuánto repite la evaluación?", ["Cada mes", "Al menos cada dos años", "Nunca", "Cada 10 años"], 1, "Al menos cada dos años.", "NOM-035-STPS-2018, 7.9"]]}, {"av": "🏭", "t": "Plásticos del Centro: 120 personas trabajadoras. [FICTICIO]", "pasos": [["¿Qué evalúa además?", ["Nada más", "El entorno organizacional (Guía III o método validado)", "El ruido", "Las ventas"], 1, "Más de 50: factores de riesgo y entorno organizacional.", "NOM-035-STPS-2018, 5.3 y 7.1 b)"], ["¿Puede usar muestra?", ["No, nunca", "Sí, con la Ecuación 1 de la Guía III, al azar", "Sí, solo con los jefes", "Sí, 10 personas"], 1, "Se permite una muestra representativa calculada con la Ecuación 1.", "NOM-035-STPS-2018, Guía III, III.1"], ["En una inspección, ¿a cuántos entrevista la autoridad?", ["1", "3", "4", "15"], 2, "Más de 105: 1 por cada 35 trabajadores (máx. 15) → 120/35 ≈ 4.", "NOM-035-STPS-2018, 10.3 (Tabla 1)"]]}]};
+
+let i=0,p=0,pts=0,max=0,rep=[];
+function iniciar(){i=0;p=0;pts=0;max=DATOS.casos.reduce((s,c)=>s+c.pasos.length,0)*10;pinta()}
+function pinta(){const c=DATOS.casos[i],s=c.pasos[p];marc([`Caso ${i+1}/${DATOS.casos.length}`,`${pts} pts`]);
+ $('#app').innerHTML=`<div class="card"><span class="etq">Caso ${i+1} · decisión ${p+1}/${c.pasos.length}</span>
+ <div class="fila" style="margin:10px 0"><div class="av ">${c.av}</div><div style="flex:1;font-size:1.12rem">${esc(c.t)}</div></div>
+ <div class="oxi"><span>Bienestar</span><div class="barra"><i id="ox" style="width:${100-p*25}%"></i></div></div>
+ <h3>${esc(s[0])}</h3><div class="opciones">${s[1].map((o,k)=>`<button class="op" data-k="${k}">${esc(o)}</button>`).join('')}</div><div id="retro"></div></div>`;
+ $$('.op').forEach(b=>b.onclick=()=>elegir(+b.dataset.k,b))}
+function elegir(k,b){const c=DATOS.casos[i],s=c.pasos[p];if($('#app').dataset.l==='1')return;$('#app').dataset.l='1';const ok=k===s[2];
+ $$('.op').forEach((x,j)=>{if(j===s[2])x.classList.add('ok')});if(!ok){b.classList.add('no');rep.push(`Caso ${i+1}: ${s[0]} → ${s[1][s[2]]}`)}else pts+=10;
+ const ult=p===c.pasos.length-1, fin=ult&&i===DATOS.casos.length-1;
+ $('#retro').innerHTML=`<div class="retro ${ok?'ok':'no'}"><b>${ok?(ult?'✅ ¡Bien resuelto!':'✅ ¡Bien!'):'❌ No es lo indicado.'}</b> ${esc(s[3])}<small>Fuente: ${esc(s[4])}</small></div><div style="text-align:right;margin-top:10px"><button class="prim" id="sig">${fin?'Ver resultado':ult?'Siguiente caso ➜':'Continuar ➜'}</button></div>`;
+ if(ok)$('#ox').style.width=ult?'100%':$('#ox').style.width;else $('#ox').style.width='15%';
+ marc([`Caso ${i+1}/${DATOS.casos.length}`,`${pts} pts`]);
+ $('#sig').onclick=()=>{$('#app').dataset.l='';if(fin)return terminar(pts,max,rep);if(ult){i++;p=0}else p++;pinta();scrollTo(0,0)};
+ $('#retro').scrollIntoView({behavior:'smooth',block:'center'})}
+
+</script></body></html>
