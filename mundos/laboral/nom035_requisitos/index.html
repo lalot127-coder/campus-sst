@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Requisitos y multas NOM-035: la inspección</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../comun.js"></script>
+<script src="../nom035_comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Fuentes verificadas (02_fuentes_verificadas/registro_fuentes.md, consulta 05/10/2026)
+const N = 'NOM-035-STPS-2018';
+const UMA = 'UMA 2026 $117.31 (INEGI, DOF 09/01/2026)';
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Requisitos y multas: la inspección', icono: '⚖️',
+  clave: 'laboral_nom035_requisitos', criterio: { pct: 80, sinCriticos: true }, fondo: 0xE3E9EE,
+  vistas: [[[0, 1.8, 2.2], [0, 0.9, -2.2]], [[-1.0, 1.6, 0.2], [-1.2, 0.85, -2.2]], [[2.0, 1.7, 0.6], [3.0, 1.0, -2.4]]] });
+const { caja, scene } = W;
+const { persona, ficha } = window.Laboral;
+const { sala, globo, situacion, encuentra, decide, con, PALETA } = window.Nom035;
+
+// ------------------------------------------------------------------ Oficina de RH durante una inspección [FICTICIO]
+const { piso, entorno } = sala(W, { rotulo: 'RECURSOS HUMANOS · VISITA DE INSPECCIÓN STPS', piso: 0xCDD5DB });
+W.activarXR({ inicio: [0, 0.6], piso, entorno });
+caja(4.4, 0.05, 1.0, 0x8D6E63, 0, 0.76, -2.3); caja(0.06, 0.74, 0.9, 0x5D4037, -2.1, 0.37, -2.3); caja(0.06, 0.74, 0.9, 0x5D4037, 2.1, 0.37, -2.3);
+const insp = persona(W, { x: 0, z: -3.3, ry: 0, ropa: 0x37474F, gafete: true, etiqueta: 'INSPECTOR(A) STPS' });
+globo(W, '"Muéstreme la documentación de la NOM-035"', 0, 2.2, -3.3, '#FFFFFF', '#16323F', 2.6);
+[[3.4, -3.6], [3.9, -2.8], [3.2, -2.0]].forEach(([x, z], i) => persona(W, { x, z, ry: -Math.PI / 2, ropa: [0x0288D1, 0x00796B, 0xF57C00][i] }));
+globo(W, '👥 Personal para entrevistas', 3.5, 2.05, -2.8, PALETA.salvia, '#fff', 1.6);
+// carpetas sobre la mesa
+const CARP = [['politica', '📜', 'Política'], ['difusion', '📣', 'Difusión'], ['buzon', '📮', 'Quejas'], ['ats', '🚨', 'ATS'],
+  ['resultados', '📊', 'Resultados'], ['entorno', '🌱', 'Entorno'], ['programa', '🗓️', 'Programa'], ['registros', '🗂️', 'Registros'], ['dictamen', '🏷️', 'Dictamen UV']];
+const S = {};
+CARP.forEach(([k, ic, n], i) => { const x = -1.95 + i * 0.49; caja(0.36, 0.05, 0.46, 0xFFE082, x, 0.81, -2.05);
+  S[k] = situacion(W, { x, z: -1.95, y: 1.15, tipo: k, icono: ic, etiqueta: n, color: k === 'dictamen' ? '#90A4AE' : PALETA.petroleo }); S[k].rot.visible = true;
+  S[k].ic.scale.setScalar(0.5); S[k].marco.scale.setScalar(0.5); S[k].rot.scale.setScalar(0.55); S[k].rot.position.y = 1.4; });
+
+const intro = html => ({ titulo: 'Inicio', texto: 'Lee la situación.', sinPuntos: true,
+  iniciar() { W.aviso(html + '<p class="ficticio">[FICTICIO – ejercicio didáctico]. Las multas las fija la autoridad según la LFT; aquí solo se calculan los rangos.</p>', () => W.siguiente(), 'Comenzar'); } });
+const B = (k, nombre, fb, f) => ({ tipo: k, nombre, fb, f, obj: S[k] });
+const Mx = (k, msg, f) => ({ tipo: k, nombre: k, msg, f, obj: S[k] });
+const multa = decide('La multa', 'La empresa no tiene política de prevención de riesgos psicosociales.', [
+  { t: 'De 250 a 5,000 UMA ($29,327.50 a $586,550.00 en 2026), por cada trabajador afectado', ok: true, fb: 'No observar normas de seguridad e higiene: 250 a 5,000 UMA; se impone por cada trabajador afectado.', f: `LFT arts. 992 y 994 fr. V; ${UMA}` },
+  { t: 'Una sola multa de $500', ok: false, fb: 'El rango es de 250 a 5,000 UMA.', f: 'LFT art. 994 fr. V' },
+  { t: 'No hay multas por la NOM-035', ok: false, fb: 'El incumplimiento de normas de seguridad e higiene se sanciona.', f: 'LFT art. 994 fr. V' },
+], 'LFT arts. 992 y 994 fr. V');
+const reinc = decide('Reincidencia', 'Un año después, en otra visita, vuelve a faltar la política.', [
+  { t: 'Se duplica la multa impuesta por la infracción anterior', ok: true, fb: 'Reincidencia: misma infracción dentro de los 2 años siguientes.', f: 'LFT art. 992' },
+  { t: 'Se perdona por ser la segunda vez', ok: false, fb: 'La reincidencia duplica la multa.', f: 'LFT art. 992' },
+], 'LFT art. 992');
+
+const CASOS = {
+  a12: () => con(W, [intro('<h2>🏪 Caso 1: Papelería El Lápiz · 12 trabajadores</h2><p>Llega una inspección de la STPS. Tú atiendes. ¿Qué documentación de la NOM-035 aplica a un centro de <b>hasta 15</b> trabajadores?</p>'),
+    encuentra(W, { titulo: 'Lo que aplica (hasta 15)', texto: 'Toca <b>solo las carpetas que aplican</b> a un centro de 12 trabajadores.', fuente: `${N}, numeral 2 a)`,
+      buenas: [B('politica', 'Política', 'Aplica a todos (5.1).', `${N}, 5.1`), B('difusion', 'Difusión de información', 'Aplica a todos (5.7).', `${N}, 5.7`),
+        B('buzon', 'Mecanismo de quejas', 'Parte de las medidas del 8.1 b).', `${N}, 8.1 b)`), B('ats', 'Identificar y canalizar ATS', 'Aplica a todos (5.5).', `${N}, 5.5`)],
+      malas: [Mx('resultados', 'Resultados de la identificación: solo se exigen desde 16 trabajadores (5.2).', `${N}, 2 a) y 5.2`),
+        Mx('entorno', 'Evaluación del entorno: solo más de 50 (5.3).', `${N}, 5.3`),
+        Mx('programa', 'El programa solo aplica a centros con más de 15, cuando el resultado lo determina.', `${N}, 10.2 (8.3-8.5)`),
+        Mx('registros', 'Los registros del 5.8 solo aplican a centros con más de 15.', `${N}, 10.2 (5.8)`),
+        Mx('dictamen', 'El dictamen de unidad de verificación es OPCIONAL.', `${N}, 9.1`)] }),
+    decide('Entrevistas', 'El inspector quiere entrevistar a trabajadores.', [
+      { t: '1 trabajador', ok: true, fb: 'De 1 a 15 trabajadores: 1 entrevista.', f: `${N}, 10.3 (Tabla 1)` },
+      { t: 'A los 12', ok: false, fb: 'La Tabla 1 fija el número.', f: `${N}, 10.3` },
+      { t: 'Ninguno, no tiene derecho', ok: false, crit: true, fb: 'Las entrevistas son parte de la verificación.', f: `${N}, 10.2 y 10.3` },
+    ], `${N}, 10.3`),
+    multa, reinc,
+    decide('¿Unidad de verificación?', 'Un "asesor" te dice que estás obligado a pagar un dictamen para no ser multado.', [
+      { t: 'Es opcional: el patrón puede contratarla para verificar su cumplimiento', ok: true, fb: 'La unidad de verificación es una opción, no una obligación.', f: `${N}, 9.1` },
+      { t: 'Es obligatoria cada año', ok: false, fb: 'Es opcional; si se contrata, el dictamen vale 2 años.', f: `${N}, 9.1 y 9.4` },
+    ], `${N}, 9.1`)]),
+  b100: () => con(W, [intro('<h2>🏭 Caso 2: Plásticos del Centro · 100 trabajadores</h2><p>Llega una inspección de la STPS. El último resultado de la Guía III fue nivel <b>medio</b>. Tú atiendes.</p>'),
+    encuentra(W, { titulo: 'Lo que aplica (más de 50)', texto: 'Toca <b>las carpetas obligatorias</b> para este centro de 100 trabajadores.', fuente: `${N}, numeral 2 c)`,
+      buenas: [B('politica', 'Política', '5.1', `${N}, 5.1`), B('difusion', 'Difusión', '5.7', `${N}, 5.7`), B('buzon', 'Mecanismo de quejas', '8.1 b)', `${N}, 8.1 b)`),
+        B('ats', 'ATS', '5.5', `${N}, 5.5`), B('resultados', 'Identificación de factores', '5.3 y 7', `${N}, 5.3`), B('entorno', 'Evaluación del entorno', 'Más de 50.', `${N}, 5.3 y 7.3`),
+        B('programa', 'Programa de intervención', 'El nivel medio lo requiere.', `${N}, 8.3, 8.4 y Guía III`), B('registros', 'Registros', '5.8', `${N}, 5.8`)],
+      malas: [Mx('dictamen', 'El dictamen de unidad de verificación es OPCIONAL.', `${N}, 9.1`)] }),
+    decide('La muestra', 'Aplicaron la Guía III con muestra.', [
+      { t: '80 trabajadores elegidos al azar (Ecuación 1)', ok: true, fb: 'Para 100 trabajadores, la Ecuación 1 da 80.', f: `${N}, Guía III, III.1` },
+      { t: '10 trabajadores que eligió el gerente', ok: false, fb: 'La muestra se calcula con la Ecuación 1 y se elige al azar.', f: `${N}, Guía III, III.1` },
+    ], `${N}, Guía III`),
+    decide('Entrevistas', 'El inspector quiere entrevistar a trabajadores.', [
+      { t: '3 trabajadores', ok: true, fb: 'De 51 a 105 trabajadores: 3 entrevistas.', f: `${N}, 10.3 (Tabla 1)` },
+      { t: '15 trabajadores', ok: false, fb: '15 es el máximo para centros muy grandes.', f: `${N}, 10.3` },
+    ], `${N}, 10.3`),
+    decide('¿Desde cuándo?', 'El inspector revisa la fecha de la última evaluación: hace 3 años.', [
+      { t: 'Incumple: debe realizarse al menos cada dos años', ok: true, fb: 'Periodicidad mínima de 2 años.', f: `${N}, 7.9` },
+      { t: 'Cumple: basta hacerla una vez', ok: false, fb: 'Debe repetirse al menos cada dos años.', f: `${N}, 7.9` },
+    ], `${N}, 7.9`),
+    decide('Los resultados', '¿Quién puede consultar el informe de resultados?', [
+      { t: 'Los trabajadores: debe estar disponible para su consulta', ok: true, fb: 'Y se conservan al menos un año.', f: `${N}, 7.8 y 10.4` },
+      { t: 'Solo la dirección; es secreto', ok: false, fb: 'Debe estar disponible para los trabajadores.', f: `${N}, 7.8` },
+    ], `${N}, 7.8`),
+    multa, reinc]),
+};
+
+W.inicio([{ id: 'a12', txt: '🏪 <b>Caso 1:</b> Centro de 12 trabajadores' }, { id: 'b100', txt: '🏭 <b>Caso 2:</b> Centro de 100 trabajadores' }],
+  id => CASOS[id](),
+  'Basado en: NOM-035-STPS-2018 (DOF 23/10/2018) numerales 2, 5, 7.8, 7.9, 8.3-8.5, 9.1, 9.4, 10.2-10.4 y Guía III; LFT arts. 992 y 994 fr. V; UMA 2026. Empresas ficticias. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { S: Object.fromEntries(Object.entries(S).map(([k, v]) => [k, v.marco])), tocar: W.tocar, estado: W.qa, xr: () => W.xr };
+</script>
+</body>
+</html>
