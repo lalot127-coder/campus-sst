@@ -1,6 +1,323 @@
 // Generado por 05_herramientas/banco_simulador.py — NO editar a mano. Solo preguntas de juego (forma J).
 window.BANCO_TRIVIA = [
 {
+"tema": "Analisis de Riesgo 5h",
+"preguntas": [
+{
+"p": "¿Qué artículo del RFSST obliga a contar con el diagnóstico y los análisis de riesgos?",
+"o": [
+"Art. 1",
+"Art. 7 fr. I",
+"Art. 100",
+"Ninguno"
+],
+"r": 1,
+"f": "RFSST (DOF 13/11/2014) art. 7 fr. I",
+"rf": ""
+},
+{
+"p": "\"Riesgo = peligro × …\"",
+"o": [
+"Exposición",
+"Salario",
+"Antigüedad",
+"Turno"
+],
+"r": 0,
+"f": "NOM-030-STPS-2009, 3.12",
+"rf": ""
+},
+{
+"p": "Según la LFT, ¿qué son los riesgos de trabajo?",
+"o": [
+"Solo los accidentes en la calle",
+"Los conflictos sindicales",
+"Las faltas injustificadas",
+"Los accidentes y enfermedades a que están expuestos los trabajadores"
+],
+"r": 3,
+"f": "LFT (últ. ref. DOF 14/05/2026) art. 473",
+"rf": ""
+},
+{
+"p": "Según la LGPC, el riesgo resulta de la interacción entre…",
+"o": [
+"El salario y la jornada",
+"La señalización y el color",
+"La vulnerabilidad y un agente perturbador",
+"El seguro y la póliza"
+],
+"r": 2,
+"f": "Ley General de Protección Civil (últ. ref. DOF 21/12/2023) art. 2 fr. XLIX",
+"rf": ""
+},
+{
+"p": "¿Qué artículo del RFSST exige el estudio de riesgo de la maquinaria?",
+"o": [
+"Art. 43",
+"Art. 20 fr. I",
+"Art. 65",
+"Art. 2"
+],
+"r": 1,
+"f": "RFSST (DOF 13/11/2014) art. 20 fr. I",
+"rf": ""
+},
+{
+"p": "Riesgo que tiene alta probabilidad de materializarse en un futuro inmediato:",
+"o": [
+"Riesgo inminente",
+"Riesgo mínimo",
+"Riesgo aceptable",
+"Riesgo remoto"
+],
+"r": 0,
+"f": "NOM-030-STPS-2009, 3.13",
+"rf": ""
+},
+{
+"p": "Ruido, vibraciones e iluminación son riesgos…",
+"o": [
+"Biológicos",
+"Psicosociales",
+"Mecánicos",
+"Físicos"
+],
+"r": 3,
+"f": "NOM-017-STPS-2024, 5.1 d) 1)",
+"rf": ""
+},
+{
+"p": "Contacto con sangre en una curación es un riesgo…",
+"o": [
+"Mecánico",
+"Ergonómico",
+"Biológico",
+"Físico"
+],
+"r": 2,
+"f": "NOM-017-STPS-2024, 5.1 d) 4)",
+"rf": ""
+},
+{
+"p": "Levantar costales desde el piso con torsión del tronco es un factor de riesgo…",
+"o": [
+"Químico",
+"Ergonómico",
+"Biológico",
+"Astronómico"
+],
+"r": 1,
+"f": "RFSST (DOF 13/11/2014) art. 3 fr. XVI",
+"rf": ""
+},
+{
+"p": "Un sismo es un fenómeno perturbador…",
+"o": [
+"Geológico",
+"Socio-organizativo",
+"Sanitario-ecológico",
+"Químico-tecnológico"
+],
+"r": 0,
+"f": "Ley General de Protección Civil (últ. ref. DOF 21/12/2023) art. 2 fr. XXIII",
+"rf": ""
+},
+{
+"p": "Incendios, explosiones, fugas y derrames son fenómenos…",
+"o": [
+"Geológicos",
+"Astronómicos",
+"Hidrometeorológicos",
+"Químico-tecnológicos"
+],
+"r": 3,
+"f": "Ley General de Protección Civil (últ. ref. DOF 21/12/2023) art. 2 fr. XXV",
+"rf": ""
+},
+{
+"p": "¿Quién realiza los recorridos de verificación para identificar condiciones peligrosas?",
+"o": [
+"El cliente",
+"El proveedor de EPP",
+"La comisión de seguridad e higiene",
+"Nadie"
+],
+"r": 2,
+"f": "NOM-019-STPS-2011, 4.13",
+"rf": ""
+},
+{
+"p": "Matriz NOM-031: frecuencia E y severidad III dan…",
+"o": [
+"Medio",
+"Grave",
+"Bajo",
+"Mínimo"
+],
+"r": 1,
+"f": "NOM-031-STPS-2011, 8.3 Tabla 4",
+"rf": ""
+},
+{
+"p": "Matriz NOM-031: frecuencia A y severidad IV dan…",
+"o": [
+"Bajo",
+"Grave",
+"Elevado",
+"Medio"
+],
+"r": 0,
+"f": "NOM-031-STPS-2011, 8.3 Tabla 4",
+"rf": ""
+},
+{
+"p": "Matriz NOM-031: frecuencia D y severidad II dan…",
+"o": [
+"Mínimo",
+"Grave",
+"Bajo",
+"Medio"
+],
+"r": 3,
+"f": "NOM-031-STPS-2011, 8.3 Tabla 4",
+"rf": ""
+},
+{
+"p": "Severidad \"II Moderada\" en la NOM-031 significa…",
+"o": [
+"Muerte",
+"Sin daños",
+"Incapacidad temporal de más de 3 días",
+"Incapacidad permanente parcial"
+],
+"r": 2,
+"f": "NOM-031-STPS-2011, 8.3 Tabla 3",
+"rf": ""
+},
+{
+"p": "Frecuencia \"B Aislada\" significa…",
+"o": [
+"Que ocurre con regularidad",
+"Que difícilmente ocurre",
+"Que se repite con periodicidad",
+"Que pocas veces ocurre"
+],
+"r": 1,
+"f": "NOM-031-STPS-2011, 8.3 Tabla 2",
+"rf": ""
+},
+{
+"p": "¿Cuántos niveles de jerarquización tiene la matriz NOM-031?",
+"o": [
+"5: grave, elevado, medio, bajo y mínimo",
+"3: alto, medio y bajo",
+"2: sí y no",
+"10"
+],
+"r": 0,
+"f": "NOM-031-STPS-2011, 8.3 c)",
+"rf": ""
+},
+{
+"p": "Cambiar un solvente por otro menos nocivo es…",
+"o": [
+"EPP",
+"Eliminación",
+"Administrativo",
+"Sustitución"
+],
+"r": 3,
+"f": "NOM-010-STPS-2014, 11.3 h)",
+"rf": ""
+},
+{
+"p": "Extracción localizada de humos es un control…",
+"o": [
+"Administrativo",
+"De EPP",
+"De ingeniería",
+"De eliminación"
+],
+"r": 2,
+"f": "NOM-010-STPS-2014, 11.3 f)",
+"rf": ""
+},
+{
+"p": "Un permiso de trabajo y un procedimiento son controles…",
+"o": [
+"De ingeniería",
+"Administrativos",
+"De sustitución",
+"De eliminación"
+],
+"r": 1,
+"f": "NIOSH, Hierarchy of Controls (10/04/2024) — referencia no obligatoria",
+"rf": ""
+},
+{
+"p": "¿Qué NOM fija el análisis de riesgos potenciales en soldadura y corte?",
+"o": [
+"NOM-027-STPS-2008",
+"NOM-025-STPS-2008",
+"NOM-034-STPS-2016",
+"NOM-019-STPS-2011"
+],
+"r": 0,
+"f": "NOM-027-STPS-2008, cap. 7",
+"rf": ""
+},
+{
+"p": "¿Qué NOM clasifica el riesgo de incendio en ordinario o alto?",
+"o": [
+"NOM-009-STPS-2011",
+"NOM-036-1-STPS-2018",
+"NOM-017-STPS-2024",
+"NOM-002-STPS-2010"
+],
+"r": 3,
+"f": "NOM-002-STPS-2010, 5.1 y Apéndice A",
+"rf": ""
+},
+{
+"p": "¿Qué NOM pide técnicas como HAZOP o ¿Qué pasa si? para procesos críticos?",
+"o": [
+"NOM-001-STPS-2008",
+"NOM-026-STPS-2008",
+"NOM-028-STPS-2012",
+"NOM-030-STPS-2009"
+],
+"r": 2,
+"f": "NOM-028-STPS-2012, cap. 7 y Guía II",
+"rf": ""
+},
+{
+"p": "Para manejo manual de cargas, el análisis lo fija…",
+"o": [
+"NOM-027-STPS-2008",
+"NOM-036-1-STPS-2018",
+"NOM-029-STPS-2011",
+"NOM-005-STPS-1998"
+],
+"r": 1,
+"f": "NOM-036-1-STPS-2018, cap. 7",
+"rf": ""
+},
+{
+"p": "En procesos críticos, el análisis de riesgos se actualiza al menos cada…",
+"o": [
+"5 años",
+"20 años",
+"Nunca",
+"6 meses"
+],
+"r": 0,
+"f": "NOM-028-STPS-2012, 7.2 a)",
+"rf": ""
+}
+]
+},
+{
 "tema": "Inspecciones STPS",
 "preguntas": [
 {
@@ -181,6 +498,592 @@ window.BANCO_TRIVIA = [
 ],
 "r": 1,
 "f": "RGITAS art. 23",
+"rf": ""
+}
+]
+},
+{
+"tema": "NOM-035 · Directivos y jefes",
+"preguntas": [
+{
+"p": "¿Qué porcentaje de adultos en edad de trabajar tenía un trastorno mental en 2019?",
+"o": [
+"15%",
+"1%",
+"50%",
+"90%"
+],
+"r": 0,
+"f": "OMS/OIT, comunicado del 28/09/2022 (Directrices sobre salud mental en el trabajo)",
+"rf": ""
+},
+{
+"p": "¿Cuántos días de trabajo se pierden al año por depresión y ansiedad?",
+"o": [
+"12,000 millones",
+"12 mil",
+"1 millón",
+"Ninguno"
+],
+"r": 0,
+"f": "OMS/OIT, comunicado del 28/09/2022 (Directrices sobre salud mental en el trabajo)",
+"rf": ""
+},
+{
+"p": "¿Qué artículo del RFSST trata los factores de riesgo psicosocial?",
+"o": [
+"Art. 43",
+"Art. 1",
+"Art. 100",
+"Art. 7"
+],
+"r": 0,
+"f": "RFSST (DOF 13/11/2014)",
+"rf": ""
+},
+{
+"p": "¿Qué convenio de la OIT sobre violencia y acoso ratificó México?",
+"o": [
+"Convenio 190",
+"Convenio 1",
+"Convenio 500",
+"Ninguno"
+],
+"r": 0,
+"f": "Convenio 190 de la OIT (ratificación depositada por México el 06/07/2022)",
+"rf": ""
+},
+{
+"p": "¿Cuántos factores de riesgo psicosocial enumera el numeral 7.2?",
+"o": [
+"7",
+"3",
+"12",
+"20"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.2",
+"rf": ""
+},
+{
+"p": "Trabajar fuera del horario de forma constante es…",
+"o": [
+"Interferencia trabajo-familia",
+"Apoyo social",
+"Reconocimiento",
+"Pertenencia"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.2 e)",
+"rf": ""
+},
+{
+"p": "¿El acoso sexual está dentro de la definición de acoso psicológico de la NOM?",
+"o": [
+"No; lo regula la LFT",
+"Sí, es lo mismo",
+"No existe en México",
+"Solo en oficinas"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.2 g) 1); LFT art. 3o Bis",
+"rf": ""
+},
+{
+"p": "Un incendio de gran magnitud en la planta es…",
+"o": [
+"Acontecimiento traumático severo",
+"Carga mental",
+"Falta de control",
+"Liderazgo"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 4.1",
+"rf": ""
+},
+{
+"p": "Centro con 8 trabajadores: ¿debe aplicar la Guía II?",
+"o": [
+"No; con hasta 15 no se exige la identificación con cuestionarios",
+"Sí, a todos",
+"Sí, a la mitad",
+"Solo al dueño"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 2 a)",
+"rf": ""
+},
+{
+"p": "¿Cuántos ejes tiene la política de prevención?",
+"o": [
+"3: factores de riesgo, violencia laboral y entorno favorable",
+"1",
+"10",
+"Ninguno"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 5.1",
+"rf": ""
+},
+{
+"p": "¿Qué norma mexicana certificada da por cumplidos algunos incisos de la NOM-035?",
+"o": [
+"NMX-R-025-SCFI-2015",
+"NOM-002-STPS",
+"ISO 9001",
+"NOM-251-SSA1"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 2",
+"rf": ""
+},
+{
+"p": "¿Cuántas preguntas tiene el cuestionario de la Guía II?",
+"o": [
+"46",
+"10",
+"72",
+"100"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, Guía II",
+"rf": ""
+},
+{
+"p": "¿Cuántas preguntas tiene el cuestionario de la Guía III?",
+"o": [
+"72",
+"46",
+"20",
+"150"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, Guía III",
+"rf": ""
+},
+{
+"p": "¿Qué periodo deben considerar los trabajadores al responder?",
+"o": [
+"Los dos últimos meses",
+"Los últimos 10 años",
+"Solo el día de hoy",
+"El próximo año"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, Guías II.2 y III.2",
+"rf": ""
+},
+{
+"p": "Guía I: ¿cuántos \"Sí\" en la sección IV (afectación) requieren valoración clínica?",
+"o": [
+"2 o más",
+"10",
+"Ninguno",
+"Solo 1 en la sección I"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, Guía I",
+"rf": ""
+},
+{
+"p": "¿A qué diagnóstico se integra la identificación de factores?",
+"o": [
+"Al diagnóstico de SST de la NOM-030-STPS-2009",
+"Al de Hacienda",
+"A ninguno",
+"Al de Protección Civil"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.6",
+"rf": ""
+},
+{
+"p": "Las acciones de segundo nivel se enfocan en…",
+"o": [
+"El grupo: información, sensibilización y apoyo social",
+"La terapia individual",
+"Despedir personal",
+"El edificio"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 8.5 b)",
+"rf": ""
+},
+{
+"p": "Reuniones de seguimiento del apoyo social, ¿con qué periodicidad sugiere la NOM?",
+"o": [
+"Semestrales o anuales",
+"Cada hora",
+"Cada 10 años",
+"Nunca"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 8.2 d) 2)",
+"rf": ""
+},
+{
+"p": "¿Cada cuánto se hace la detección de necesidades de capacitación?",
+"o": [
+"Al menos cada dos años",
+"Cada semana",
+"Nunca",
+"Cada 20 años"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 8.2 i) 3)",
+"rf": ""
+},
+{
+"p": "Ante un ATS, el patrón debe…",
+"o": [
+"Identificar y canalizar a la persona para su atención",
+"Darle terapia él mismo",
+"Ignorarlo",
+"Despedirla"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 5.5",
+"rf": ""
+},
+{
+"p": "¿Cuántos trabajadores entrevista la autoridad en un centro de 100?",
+"o": [
+"3",
+"1",
+"15",
+"100"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 10.3 (Tabla 1)",
+"rf": ""
+},
+{
+"p": "Valor diario de la UMA en 2026:",
+"o": [
+"$117.31",
+"$50.00",
+"$278.80",
+"$1,000.00"
+],
+"r": 0,
+"f": "UMA 2026: $117.31 (INEGI, DOF 09/01/2026)",
+"rf": ""
+},
+{
+"p": "Reincidir en la misma infracción dentro de 2 años…",
+"o": [
+"Duplica la multa",
+"La reduce",
+"No cambia",
+"La cancela"
+],
+"r": 0,
+"f": "LFT art. 992",
+"rf": ""
+},
+{
+"p": "¿Cuánto dura el dictamen de una unidad de verificación?",
+"o": [
+"2 años, si no cambian las condiciones",
+"1 mes",
+"Para siempre",
+"10 años"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 9.4",
+"rf": ""
+}
+]
+},
+{
+"tema": "NOM-035 · Trabajadores",
+"preguntas": [
+{
+"p": "La Línea de la Vida funciona…",
+"o": [
+"24 horas, los 365 días, gratis",
+"Solo de lunes a viernes",
+"Con costo",
+"Solo en CDMX"
+],
+"r": 0,
+"f": "Línea de la Vida, CONASAMA (gob.mx, 23/10/2025)",
+"rf": ""
+},
+{
+"p": "¿La NOM-035 aplica en un negocio de 5 personas?",
+"o": [
+"Sí, aplica a todos los centros de trabajo",
+"No",
+"Solo si es fábrica",
+"Solo con sindicato"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 2",
+"rf": ""
+},
+{
+"p": "¿Desde cuándo está en vigor la NOM-035?",
+"o": [
+"Desde el 23/10/2019",
+"Desde 2000",
+"Desde 2026",
+"Aún no"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, transitorio primero",
+"rf": ""
+},
+{
+"p": "Ruido fuerte y miedo a un accidente son factores de…",
+"o": [
+"Ambiente de trabajo",
+"Reconocimiento",
+"Pertenencia",
+"Capacitación"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.2 a)",
+"rf": ""
+},
+{
+"p": "Turnos nocturnos sin pausas ni descanso son un factor de…",
+"o": [
+"Jornadas y rotación de turnos",
+"Apoyo social",
+"Entorno favorable",
+"Comunicación"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.2 d)",
+"rf": ""
+},
+{
+"p": "No poder resolver problemas con tus compañeros por falta de trabajo en equipo es…",
+"o": [
+"Relaciones negativas en el trabajo",
+"Reconocimiento",
+"Capacitación",
+"Pertenencia"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.2 f) 2)",
+"rf": ""
+},
+{
+"p": "Órdenes contradictorias que no puedes cumplir al mismo tiempo son…",
+"o": [
+"Cargas contradictorias o inconsistentes",
+"Apoyo social",
+"Liderazgo positivo",
+"Descanso"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.2 b)",
+"rf": ""
+},
+{
+"p": "¿El acoso sexual se tolera si es \"broma\"?",
+"o": [
+"No; la LFT prohíbe realizarlo y tolerarlo",
+"Sí",
+"Solo los viernes",
+"Depende del jefe"
+],
+"r": 0,
+"f": "LFT art. 133 fr. XII y XIII",
+"rf": ""
+},
+{
+"p": "Una corrección respetuosa de tu jefe es…",
+"o": [
+"Parte normal del trabajo, no violencia",
+"Acoso",
+"Hostigamiento",
+"Malos tratos"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.3",
+"rf": ""
+},
+{
+"p": "¿Dónde denuncias la violencia laboral?",
+"o": [
+"En el mecanismo seguro y confidencial del centro o con la comisión de seguridad e higiene",
+"En el chat del grupo",
+"En ningún lado",
+"Con el cliente"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 6.4 y 8.1 b)",
+"rf": ""
+},
+{
+"p": "La violencia o los malos tratos del patrón permiten al trabajador…",
+"o": [
+"Rescindir la relación sin responsabilidad para el trabajador",
+"Nada",
+"Perder su antigüedad",
+"Pagar una multa"
+],
+"r": 0,
+"f": "LFT art. 51 fr. II",
+"rf": ""
+},
+{
+"p": "¿Cuántas obligaciones de los trabajadores tiene el capítulo 6?",
+"o": [
+"7",
+"2",
+"15",
+"Ninguna"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 6.1 a 6.7",
+"rf": ""
+},
+{
+"p": "¿La empresa debe informarte las posibles alteraciones a la salud por los factores de riesgo?",
+"o": [
+"Sí",
+"No",
+"Solo si las pides por escrito",
+"Solo a los jefes"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 5.7 f)",
+"rf": ""
+},
+{
+"p": "¿Qué documento debe tener tu centro con 3 ejes de prevención?",
+"o": [
+"La política de prevención de riesgos psicosociales",
+"El menú del comedor",
+"El reglamento de estacionamiento",
+"Un contrato de renta"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 5.1",
+"rf": ""
+},
+{
+"p": "¿Cuántos datos mínimos lleva el escrito de un ATS?",
+"o": [
+"5",
+"1",
+"10",
+"Ninguno"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 6.5",
+"rf": ""
+},
+{
+"p": "Tras un ATS, ¿a dónde te canaliza el patrón?",
+"o": [
+"A la institución de seguridad social o privada, o al médico",
+"A ventas",
+"A ningún lado",
+"A la policía siempre"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 5.5",
+"rf": ""
+},
+{
+"p": "Los datos de los cuestionarios se usan…",
+"o": [
+"Solo para mejorar el ambiente de trabajo",
+"Para despedir",
+"Para publicarlos con nombre",
+"Para vender"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, Guías II.2 y III.2",
+"rf": ""
+},
+{
+"p": "¿Puedes consultar los resultados de la evaluación?",
+"o": [
+"Sí, deben estar disponibles",
+"No, son secretos",
+"Solo el dueño",
+"Solo la STPS"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.8",
+"rf": ""
+},
+{
+"p": "¿Cuál es un elemento del entorno organizacional favorable?",
+"o": [
+"Sentido de pertenencia",
+"Gritos",
+"Jornadas sin fin",
+"Aislamiento"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.3 a)",
+"rf": ""
+},
+{
+"p": "Las pausas y la rotación de tareas sirven para…",
+"o": [
+"Evitar ritmos de trabajo acelerados",
+"Perder tiempo",
+"Castigar",
+"Nada"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 8.2 b) 2)",
+"rf": ""
+},
+{
+"p": "Reconocer el desempeño sobresaliente es…",
+"o": [
+"Una medida que la norma pide",
+"Prohibido",
+"Favoritismo siempre",
+"Opcional e inútil"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 8.2 f) 1)",
+"rf": ""
+},
+{
+"p": "¿Puedes señalar tus necesidades de capacitación?",
+"o": [
+"Sí, la norma pide darte la oportunidad",
+"No",
+"Solo con permiso del dueño",
+"Solo una vez en la vida"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 8.2 i) 2)",
+"rf": ""
+},
+{
+"p": "Apoyos para emergencias familiares (comprobables) son parte de…",
+"o": [
+"El equilibrio trabajo-familia",
+"La violencia laboral",
+"Las cargas",
+"Nada"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 8.2 e) 3)",
+"rf": ""
+},
+{
+"p": "La ayuda mutua entre compañeros se llama…",
+"o": [
+"Apoyo social",
+"Carga mental",
+"Hostigamiento",
+"Rotación"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 4.2",
 "rf": ""
 }
 ]
