@@ -76,7 +76,7 @@
       principal: 'agujas', evalua: { f: 'D', s: 'II', pista: 'Se repite con periodicidad cuando no hay recipiente cerca; un pinchazo puede requerir tratamiento e incapacidad de más de 3 días.' },
       control: [{ t: 'Recipiente rígido rojo de polipropileno en el punto de uso', ok: true, fb: 'Control de ingeniería que separa el peligro desde su origen.', f: `${N87}, 6.2` },
         { t: 'Solo guantes gruesos al personal de limpieza', ok: false, fb: 'El EPP es complementario; el problema es dónde se desechan.', f: `${N17}, 5.2` }, NO_CUIDADO] },
-    { id: 'emergencias', titulo: 'Atención de emergencias', modulos: ['hospital/rcp_dea', 'hospital/atragantamiento_hemorragia'],
+    { id: 'emergencias', titulo: 'Atención de emergencias', modulos: ['hospital/rcp_dea', 'hospital/atragantamiento_hemorragia', 'hospital/primeros-auxilios'],
       escena: 'Un compañero se cortó y sangra mucho; otro está en paro y llega el DEA. [FICTICIO]',
       riesgos: [
         { id: 'sangre', prop: 'mesa', icono: '🩸', nombre: 'Atender la hemorragia sin guantes ni barrera', real: true, tipo: 'Biológico', fb: 'Protégete antes de ayudar.', f: 'IFRC 2025, p. 256' },
@@ -90,7 +90,7 @@
   ] },
 
   industria: { nombre: 'Industria', icono: '🏭', color: 0x5B6B7C, zonas: [
-    { id: 'alturas', titulo: 'Trabajos en altura', modulos: ['industria/alturas'],
+    { id: 'alturas', titulo: 'Trabajos en altura', modulos: ['industria/alturas', 'industria/alturas_escalera_plataforma', 'industria/alturas_autorizacion'],
       escena: 'Mantenimiento de la azotea de la nave, a 6 m de altura. [FICTICIO]',
       riesgos: [
         { id: 'borde', prop: 'azotea', icono: '⬇️', nombre: 'Trabajar en el borde de la azotea sin barandal', real: true, tipo: 'Condición de instalaciones', fb: 'Caída de altura (más de 1.80 m).', f: 'NOM-009-STPS-2011, 4 (definición) y 8.4.1 a)' },
@@ -136,6 +136,21 @@
       ],
       principal: 'prensa', evalua: { f: 'C', s: 'III', pista: 'Los atrapamientos ocurren pocas veces, pero pueden causar la pérdida de un dedo.' },
       control: [{ t: 'Guarda fija y mando bimanual', ok: true, fb: 'Control de ingeniería.', f: `NOM-004-STPS-1999, 5.3; ${NIOSH}` }, SOLO_EPP, NO_CUIDADO] },
+  ] },
+
+  construccion: { nombre: 'Obra en construcción', icono: '🏗️', color: 0xE07A1F, zonas: [
+    { id: 'obra_alturas', titulo: 'Trabajos en altura en la obra (curso Trabajo seguro en alturas)', modulos: ['construccion/alturas_inspeccion', 'construccion/alturas_colocacion', 'construccion/alturas_anclaje', 'construccion/alturas_andamio', 'construccion/alturas_rescate', 'construccion/juego_usar_o_retirar', 'construccion/juego_se_puede_trabajar', 'construccion/juego_cifras_nom009', 'construccion/juego_distancia_caida', 'construccion/juego_maraton_equipos'],
+      escena: 'Colado de la losa del nivel 2: la cuadrilla trabaja en el borde de la losa del nivel 1, a 4 m de altura. [FICTICIO]',
+      riesgos: [
+        { id: 'borde', prop: 'azotea', icono: '⬇️', nombre: 'Borde de losa a 4 m sin protección perimetral', real: true, tipo: 'Condición de instalaciones', fb: 'Caída de altura: más de 1.80 m sobre el nivel de referencia.', f: 'NOM-009-STPS-2011, 4.33 y 8.4.1 a)' },
+        { id: 'material', prop: 'cajas', icono: '🧱', nombre: 'Block suelto en la orilla, sobre el paso de trabajadores', real: true, tipo: 'Mecánico', fb: 'Golpe por caída de objetos a quien pasa abajo.', f: 'NOM-009-STPS-2011, 7.12; NOM-031-STPS-2011, 14.1.1 b)' },
+        { id: 'varilla', prop: 'cable', icono: '⚡', nombre: 'Varilla larga manipulada cerca de una línea energizada', real: true, tipo: 'Físico', fb: 'Contacto eléctrico con objetos conductivos largos.', f: 'NOM-009-STPS-2011, 7.9 y 7.10 a)' },
+        { id: 'cinta', prop: 'buzon', icono: '🚧', nombre: 'Área bajo el borde acordonada y señalizada', real: false, fb: 'Es una medida de control.', f: 'NOM-009-STPS-2011, 7.12' },
+        { id: 'arnes', prop: 'extintor', icono: '🦺', nombre: 'Arneses revisados con registro', real: false, fb: 'Es equipo revisado y disponible.', f: 'NOM-009-STPS-2011, 7.3 y 7.15' },
+      ],
+      principal: 'borde', evalua: { f: 'D', s: 'IV', pista: 'Trabajan junto al borde en cada colado; una caída de 4 m puede ser mortal.' },
+      control: [{ t: 'Colocar protección colectiva (barandal o red de seguridad) y, donde no sea posible, sistema personal para interrumpir caídas', ok: true, fb: 'Primero lo colectivo; si no es posible, el sistema personal.', f: 'NOM-009-STPS-2011, 7.1, 8.4.1 a) y 13.1' },
+        SOLO_EPP, NO_CUIDADO] },
   ] },
 
   proteccion: { nombre: 'Protección civil', icono: '🚨', color: 0xE07A1F, zonas: [

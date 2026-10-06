@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Autorización por escrito</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+<script src="../../construccion/comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Autorización por escrito: NOM-009-STPS-2011 5.1, 5.3, 7.2 a)-e); RFSST art. 24 fr. I, XII y XIII, arts. 58 fr. IX y
+// 62 fr. XIII; NOM-009 14.1 (examen médico anual). La norma fija el CONTENIDO, no un formato: el formato es del curso.
+// Fuentes verificadas (02_fuentes_verificadas/registro_fuentes.md, consulta 06/10/2026). Empresa y personas [FICTICIO].
+const { N09, RF, FIC, nave, plataforma, trabajador, marcador } = window.Alturas;
+const { decidir, encuentra, intro } = window.Riesgo;
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Autorización por escrito', icono: '📝',
+  clave: 'industria_alturas_autorizacion', criterio: { pct: 80, sinCriticos: true }, fondo: 0xDDE3E8,
+  vistas: [[[0, 3.4, 4.5], [0, 2.4, -4]], [[-3.5, 2.2, 1.5], [-2, 1.2, -3]], [[3.5, 2.2, 1.5], [2, 1.2, -3]]] });
+const { scene, caja, cil, letrero } = W; W.controls.maxDistance = 16;
+const N = nave(W, { alto: 7, ancho: 14, fondo: 12 });
+W.activarXR({ inicio: [0, 1.8], piso: N.piso, entorno: N.entorno });
+
+// Escena: luminaria a 6 m, tablero eléctrico, aceite, paso peatonal, montacargas, plataforma estacionada, escritorio
+const ZL = N.zf + 3.5;
+caja(0.9, 0.15, 0.3, 0xECEFF1, 0, 6.0, ZL); const lumL = letrero('Luminaria a cambiar (6 m)', 1.6, 0.18, '#B45309'); lumL.position.set(0, 6.35, ZL + 0.2); scene.add(lumL);
+caja(0.7, 1.0, 0.25, 0x9E9E9E, -1.6, 4.9, N.zf + 0.2); caja(0.25, 0.25, 0.01, 0xFFD600, -1.6, 5.1, N.zf + 0.33);   // tablero
+const aceite = new THREE.Mesh(new THREE.CircleGeometry(0.7, 24), W.M(0x3E2723, { transparent: true, opacity: .7, roughness: .05 })); aceite.rotation.x = -Math.PI / 2; aceite.position.set(0.6, 0.006, ZL + 1.2); scene.add(aceite);
+for (let i = 0; i < 6; i++) caja(0.5, 0.004, 0.12, 0xFFFFFF, -3 + i * 1.2, 0.004, ZL + 2.6);   // paso peatonal
+trabajador(W, { x: -1.0, z: ZL + 2.6, ry: Math.PI / 2, arnes: false }); trabajador(W, { x: 1.4, z: ZL + 2.7, ry: -Math.PI / 2, arnes: false, ropa: 0x8D6E63 });
+const mc = new THREE.Group(); mc.position.set(4.2, 0, ZL + 1.8); scene.add(mc); caja(1.0, 1.0, 1.6, 0xF9A825, 0, 0.6, 0, mc); caja(0.1, 2.2, 0.1, 0x37474F, -0.35, 1.1, -0.85, mc); caja(0.1, 2.2, 0.1, 0x37474F, 0.35, 1.1, -0.85, mc); caja(0.8, 0.05, 0.9, 0x37474F, 0, 0.1, -1.3, mc);
+const PL = plataforma(W, { x: -3.8, z: ZL + 0.5 });
+caja(1.3, 0.05, 0.7, 0xB89B7A, 3.8, 0.75, ZL + 4.2); const tabla = caja(0.32, 0.02, 0.42, 0xFFFFFF, 3.8, 0.79, ZL + 4.2);
+const MK = {
+  tablero: marcador(W, { x: -1.6, y: 5.6, z: N.zf + 0.4, tipo: 'tablero', icono: '⚡', etiqueta: 'Tablero energizado junto a la luminaria', escala: 0.7, mira: [0, 3.4, 4.5] }),
+  aceite: marcador(W, { x: 0.6, y: 0.8, z: ZL + 1.2, tipo: 'aceite', icono: '🛢️', etiqueta: 'Aceite en el piso de maniobra', escala: 0.7, mira: [0, 3.4, 4.5] }),
+  peatones: marcador(W, { x: 0.2, y: 2.1, z: ZL + 2.6, tipo: 'peatones', icono: '🚶', etiqueta: 'Paso de personas bajo el área', escala: 0.7, mira: [0, 3.4, 4.5] }),
+  montacargas: marcador(W, { x: 4.2, y: 2.6, z: ZL + 1.8, tipo: 'montacargas', icono: '🚜', etiqueta: 'Montacargas circulando cerca', escala: 0.7, mira: [0, 3.4, 4.5] }),
+};
+const TRAB = [
+  { n: 'Ana López Ruiz', d: 'Técnica electricista, 29 años, capacitada en plataforma de elevación y en el plan de emergencias; examen médico de hace 4 meses.', ok: true },
+  { n: 'Pedro Sánchez Mora', d: 'Ayudante, 17 años; muy hábil y voluntario.', ok: false, fb: 'Prohibido asignar trabajos en altura a personas trabajadoras menores de edad.', f: `${RF} art. 62 fr. XIII` },
+  { n: 'Juan Ortiz Vega', d: 'Operador con experiencia; su último examen médico fue hace 2 años y no está capacitado en este modelo de plataforma.', ok: false, fb: 'Examen médico al menos cada año y capacitación en el modelo a utilizar.', f: `${N09}, 14.1, 16.5 a) y 7.2` },
+];
+const F = {};   // autorización que se va llenando
+
+const pasoAnalisis = encuentra(W, { titulo: 'Analiza las condiciones del área', texto: 'Antes de autorizar, identifica los factores de riesgo del área donde se hará el trabajo.', fuente: `${N09}, 5.1; ${RF} art. 24 fr. I`,
+  buenas: [
+    { tipo: 'tablero', nombre: 'Tablero eléctrico energizado cerca', fb: 'Desenergizar y bloquear o mantener distancias; prohibidos los objetos conductivos.', f: `${N09}, 7.8-7.10; NOM-029-STPS-2011`, obj: MK.tablero },
+    { tipo: 'aceite', nombre: 'Aceite en el piso de maniobra', fb: 'La superficie de rodamiento y de la plataforma debe estar libre de sustancias resbaladizas.', f: `${N09}, 11.4 f) y 11.5 c) 2)`, obj: MK.aceite },
+    { tipo: 'peatones', nombre: 'Personas transitando bajo el área', fb: 'Acordonar y señalizar el área a nivel de piso.', f: `${N09}, 7.12; NOM-026-STPS-2008`, obj: MK.peatones },
+    { tipo: 'montacargas', nombre: 'Montacargas circulando', fb: 'Verificar que no haya personas, equipos u obstáculos en zonas adyacentes; controlar el tráfico.', f: `${N09}, 11.5 d) 2) y l)`, obj: MK.montacargas },
+  ], malas: [], alTerminar: () => W.siguiente() });
+pasoAnalisis.iniciar = () => W.resaltar(Object.values(MK).map(m => m.marco));
+
+const pasoTrabajador = { titulo: 'a) ¿A quién autorizas?', texto: 'Elige a la persona que puede ser autorizada.', fuente: `${N09}, 7.2 a)`, puntos: 10,
+  iniciar() { decidir(W, 'a) Nombre del trabajador autorizado: ¿a quién autorizas?', TRAB.map(t => ({ t: `${t.n} — ${t.d}`, ok: t.ok, crit: t.n.startsWith('Pedro'),
+    fb: t.ok ? 'Capacitada, con examen médico vigente y mayor de edad.' : t.fb, f: t.ok ? `${N09}, 7.2 a) y 14.1` : t.f })), () => { F.a = TRAB[0].n; W.siguiente(); }); } };
+const pasoTipo = { titulo: 'b) Tipo de trabajo y área', texto: 'Describe el trabajo y el lugar.', fuente: `${N09}, 7.2 b)`, puntos: 10,
+  iniciar() { decidir(W, 'b) ¿Cómo describes el tipo de trabajo y el área?', [
+    { t: 'Cambio de luminaria a 6 m con plataforma de elevación de tijera · Nave 2, línea de ensamble', ok: true, fb: 'Específico: trabajo, equipo y lugar.', f: `${N09}, 7.2 b)` },
+    { t: '"Trabajos varios"', ok: false, fb: 'Debe indicar el tipo de trabajo y el área o lugar.', f: `${N09}, 7.2 b)` },
+  ], () => { F.b = 'Cambio de luminaria a 6 m con plataforma de elevación de tijera · Nave 2, línea de ensamble'; W.siguiente(); }); } };
+const MEDIDAS = ['Desenergizar y bloquear el circuito del tablero cercano (o mantener distancias) antes de subir', 'Limpiar el aceite del piso de maniobra',
+  'Acordonar y señalizar el área bajo la plataforma', 'Controlar el tránsito del montacargas y verificar zonas adyacentes', 'Plataforma con revisión de inicio de jornada aprobada',
+  'Arnés anclado al dispositivo de la canastilla y segundo trabajador que asiste', 'Plan de emergencias y rescatista disponibles',
+  'Trabajar más rápido para terminar antes', 'Usar una escalera sobre la canastilla para alcanzar mejor'];
+const pasoMedidas = { titulo: 'c) Medidas de seguridad', texto: 'Según el trabajo y los factores de riesgo que encontraste.', fuente: `${N09}, 7.2 c)`, puntos: 10,
+  iniciar() { W.pregunta('c) Marca TODAS las medidas de seguridad que deben aplicarse (según tu análisis):', MEDIDAS, [0, 1, 2, 3, 4, 5, 6], `${N09}, 7.2 c), 7.9-7.12, 11.3-11.5 y 15.1`,
+    () => { F.c = MEDIDAS.slice(0, 7); W.siguiente(); }, true, 'Las medidas responden a cada factor de riesgo identificado.'); } };
+const pasoFecha = { titulo: 'd) Fecha, hora y duración', texto: 'Completa los datos de tiempo.', fuente: `${N09}, 7.2 d)`, puntos: 10,
+  iniciar() { decidir(W, 'd) ¿Qué datos de tiempo debe llevar?', [
+    { t: 'Fecha y hora de inicio (06/10/2026, 10:00 h) y tiempo estimado de duración (2 h)', ok: true, fb: 'Fecha, hora de inicio y duración estimada.', f: `${N09}, 7.2 d)` },
+    { t: 'Solo "esta semana"', ok: false, fb: 'Se requieren fecha y hora de inicio y duración estimada.', f: `${N09}, 7.2 d)` },
+  ], () => { F.d = '06/10/2026, inicio 10:00 h · duración estimada 2 h [FICTICIO]'; W.siguiente(); }); } };
+const pasoFirma = { titulo: 'e) ¿Quién firma?', texto: 'Última sección.', fuente: `${N09}, 7.2 e) y 5.3`, puntos: 20,
+  iniciar() { decidir(W, 'e) ¿Quién firma la autorización?', [
+    { t: 'El patrón o la persona que él designe para otorgarla', ok: true, fb: 'Nombre y firma del patrón o de la persona designada.', f: `${N09}, 7.2 e)` },
+    { t: 'La propia trabajadora, para ahorrar tiempo', ok: false, crit: true, fb: 'La autorización la da el patrón o quien él designe.', f: `${N09}, 5.3 y 7.2 e)` },
+  ], () => setTimeout(() => decidir(W, '¿En qué momento entregas la autorización firmada?', [
+    { t: 'Cuando compruebo que ya se aplicaron las medidas de seguridad', ok: true, fb: 'Se otorga una vez comprobadas las medidas.', f: `${N09}, 5.3` },
+    { t: 'Antes, para que vayan avanzando mientras se aplican las medidas', ok: false, crit: true, fb: 'Primero se comprueban las medidas.', f: `${N09}, 5.3` },
+  ], () => { F.e = 'Ing. Rosa Méndez Díaz, jefa de mantenimiento (designada por el patrón) [FICTICIO]'; W.siguiente(); }), 600)); } };
+const pasoDocumento = { titulo: 'Autorización lista', texto: 'Revisa el documento.', fuente: `${N09}, 7.2; ${RF} art. 24 fr. XIII`, sinPuntos: true,
+  iniciar() { tabla.material.color.set(0xC8E6C9);
+    W.aviso(`<h2>📝 Autorización por escrito para trabajo en altura</h2><p class="ficticio">Formato del curso · contenido mínimo NOM-009-STPS-2011, 7.2 · ${FIC}</p>
+      <table><tr><th>a) Trabajador autorizado</th><td>${F.a}</td></tr><tr><th>b) Tipo de trabajo y área</th><td>${F.b}</td></tr>
+      <tr><th>c) Medidas de seguridad</th><td>${F.c.map(m => '• ' + m).join('<br>')}</td></tr><tr><th>d) Fecha, hora y duración</th><td>${F.d}</td></tr>
+      <tr><th>e) Nombre y firma de quien autoriza</th><td>${F.e}<br><br>Firma: ______________________</td></tr></table>
+      <p>Se conserva junto con los registros del personal autorizado (RFSST art. 24 fr. XIII).</p><button class="sec" onclick="print()">🖨 Imprimir</button>`, () => W.siguiente(), 'Terminar'); } };
+
+W.inicio([{ id: 'todo', txt: '📝 <b>Autorización completa:</b> análisis del área + 5 datos de la NOM-009 (7.2)' }],
+  () => [intro(W, '<h2>📝 Autoriza el trabajo</h2><p>Eres la persona designada por el patrón para autorizar trabajos en altura en la Nave 2. Hay que <b>cambiar una luminaria a 6 m</b> con la plataforma de elevación.</p><p>La NOM-009 exige autorización por escrito en andamios y plataformas de elevación, <b>una vez comprobadas las medidas</b> (5.3), con al menos 5 datos (7.2): a) nombre del trabajador, b) tipo de trabajo y área, c) medidas de seguridad según el análisis, d) fecha, hora de inicio y duración, e) nombre y firma de quien autoriza.</p><p>Primero analiza el área (5.1).</p>', 'Mantenimiento Industrial del Centro; personas y datos ficticios.'),
+    pasoAnalisis, pasoTrabajador, pasoTipo, pasoMedidas, pasoFecha, pasoFirma, pasoDocumento],
+  'Basado en: NOM-009-STPS-2011 5.1, 5.3, 7.2, 7.8-7.12, 11.3-11.5, 14.1, 15.1 y 16.5; RFSST art. 24 fr. I, XII y XIII, art. 62 fr. XIII. Empresa y personas ficticias. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { MK, tocar: W.tocar, estado: W.qa };
+</script>
+</body>
+</html>

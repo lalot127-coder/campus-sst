@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Andamio tipo torre</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+<script src="../comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Andamio tipo torre o estructura: NOM-009-STPS-2011 9.1 a)-v), 8.4.1 c), 5.3 y 7.2; NOM-031-STPS-2011 14.1.2.
+// Fuentes verificadas (02_fuentes_verificadas/registro_fuentes.md, consulta 06/10/2026). Obra y hallazgos [FICTICIO].
+const { N09, N31, FIC, exterior, obra, andamio, trabajador, marcador } = window.Alturas;
+const { decidir, encuentra, intro, barajar } = window.Riesgo;
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Andamio tipo torre', icono: '🏗️',
+  clave: 'construccion_alturas_andamio', criterio: { pct: 80, sinCriticos: true }, fondo: 0xBFD9EC,
+  vistas: [[[5.4, 5.2, 8.6], [0, 3.5, 0.2]], [[0, 7.6, 3.2], [0, 6.0, 0.2]], [[-3.4, 1.6, 3.2], [0, 0.6, 0.2]]] });
+const { scene } = W; W.controls.maxDistance = 16;
+exterior(W);
+const O = obra(W, { altura: 4, bordeZ: -2.2 });
+O.cinta.visible = false;
+W.activarXR({ inicio: [1.5, 4.5], piso: O.piso, entorno: O.entorno.filter(e => e !== O.piso) });
+
+const POOL = ['rodapie', 'intermedia', 'tablones', 'frenos', 'tarjeta', 'caballete', 'sujecion'];
+const H = {   // hallazgos: qué es, retroalimentación, fuente, posición del marcador (relativa al andamio en (0,0,0.2))
+  rodapie: { si: 'Rodapié de 15 cm en la plataforma', no: 'Falta el rodapié', fb: 'Rodapié de al menos 15 cm al ras de la plataforma.', f: `${N09}, 9.1 f)`, pos: [0.95, 6.45, 0.85] },
+  intermedia: { si: 'Barandal de 90 cm con baranda intermedia', no: 'Falta la baranda intermedia', fb: 'Barandal de al menos 90 cm y baranda intermedia en lados abiertos y extremos, desde 1.8 m.', f: `${N09}, 9.1 e)`, pos: [-0.95, 6.9, 0.85] },
+  tablones: { si: 'Plataforma completa con tablones de 45 cm', no: 'Plataforma incompleta: tablones angostos y huecos', fb: 'Tablones de al menos 45 cm que abarquen todo el espacio; claros de no más de 2.5 cm.', f: `${N09}, 9.1 g) 2)`, pos: [0, 6.55, 1.0] },
+  frenos: { si: 'Ruedas con freno puesto', no: 'Ruedas sin freno', fb: 'Ruedas con mecanismo de bloqueo; se libera solo para reubicar el andamio.', f: `${N09}, 9.1 c) 1)`, pos: [-0.95, 0.45, 0.85] },
+  tarjeta: { si: 'Tarjeta de condición con fecha y nombre', no: 'No hay tarjeta de condición', fb: 'Tarjeta visible en el acceso, con fecha y nombre de quien revisó.', f: `${N09}, 9.1 v)`, pos: [0.35, 1.7, 0.75] },
+  caballete: { si: 'Sin escaleras de caballete como soporte', no: 'Tablón apoyado en una escalera de caballete', fb: 'Prohibido usar escaleras tipo caballete como soporte de tablones que se empleen como andamio.', f: `${N09}, 9.1 p); ${N31}, 14.1.2 c) 3)`, pos: [1.75, 1.9, 0.6] },
+  sujecion: { si: 'Andamio sujeto a la estructura', no: 'Andamio alto sin sujetar a la estructura', fb: 'Base menor 1.2 m × 4 = 4.8 m: a 6 m debe sujetarse a cada 4 m de altura.', f: `${N09}, 9.1 n)-o)`, pos: [0.95, 4.2, -0.6] },
+};
+let AND = null, MK = {}, fallas = new Set();
+function construir(lista) {
+  fallas = new Set(lista); const cfg = {}; POOL.forEach(k => cfg[k] = !fallas.has(k));
+  AND = andamio(W, { x: 0, z: 0.2, niveles: 3, base: 1.2, prof: 1.0, cfg });
+  POOL.forEach(k => { const p = H[k].pos; MK[k] = marcador(W, { x: p[0], y: p[1], z: 0.2 + p[2], tipo: k, icono: fallas.has(k) ? '❓' : '❓', etiqueta: fallas.has(k) ? H[k].no : H[k].si, mira: [5.4, 5.2, 8.6], escala: 0.7 }); });
+  trabajador(W, { x: 2.4, z: 2.4, ry: -2.4, arnes: true });   // supervisor
+}
+
+function pasoHallazgos() {
+  const buenas = [...fallas].map(k => ({ tipo: k, nombre: H[k].no, fb: H[k].fb, f: H[k].f, obj: MK[k] }));
+  const e = encuentra(W, { titulo: 'Inspecciona el andamio', texto: 'Antes de cada uso se revisa el andamio. Toca los marcadores y encuentra los incumplimientos.', fuente: `${N09}, 9.1 j)`, buenas, malas: [] });
+  const ini = e.iniciar, toc = e.tocar;
+  e.iniciar = () => { ini(); W.resaltar(POOL.map(k => MK[k].marco)); };
+  e.tocar = (o) => { const t = o.userData.tipo; if (H[t] && !fallas.has(t)) { MK[t].marco.material.color.set(0x2E7D32); MK[t].rot.visible = true; return W.toast('info', `✔ Cumple: ${H[t].si}.`, H[t].f); } toc.call(e, o); };
+  return e;
+}
+const pasoUso = { titulo: '¿Se puede usar?', texto: 'Decide.', fuente: `${N09}, 9.1 j), 5.3 y 7.2`, puntos: 20,
+  iniciar() { decidir(W, 'Encontraste incumplimientos. El supervisor tiene prisa. ¿Qué haces?', [
+    { t: 'No se usa: se corrigen los daños por personal capacitado y, ya revisado, se autoriza por escrito a quien trabajará en él', ok: true, fb: 'Revisión antes de cada uso y autorización por escrito una vez aplicadas las medidas.', f: `${N09}, 9.1 j), 5.3 y 7.2` },
+    { t: 'Se usa con cuidado y se corrige al final del día', ok: false, crit: true, fb: 'Las condiciones inseguras obligan a evitar o interrumpir la actividad.', f: `${N09}, 5.6 y 9.1 j)` },
+    { t: 'Se usa porque el supervisor lo ordena', ok: false, crit: true, fb: 'El trabajador debe informar las condiciones inseguras; el patrón debe interrumpir.', f: `${N09}, 5.6 y 6.3` },
+  ], () => setTimeout(() => decidir(W, 'Corregido el andamio, la plataforma está a más de 6 m. ¿Se requiere sistema personal para interrumpir caídas?', [
+    { t: 'Sí: en andamios tipo torre es obligatorio a más de 3.5 m', ok: true, fb: 'Además del barandal.', f: `${N09}, 8.4.1 c)` },
+    { t: 'No: con el barandal basta', ok: false, fb: 'La NOM lo exige en andamios tipo torre a más de 3.5 m.', f: `${N09}, 8.4.1 c)` },
+  ], () => W.siguiente()), 600)); } };
+
+const pasoTarjeta = { titulo: 'Llena la tarjeta', texto: 'Elige qué datos debe tener la tarjeta del andamio.', fuente: `${N09}, 9.1 v)`, puntos: 10,
+  iniciar() { W.pregunta('Marca TODO lo que pide la NOM para la tarjeta del andamio (9.1 v):', ['Condición del andamio (p. ej., apto / no usar)', 'Fecha de la revisión', 'Nombre de quien revisó',
+    'En un lugar visible de su acceso y bien adherida', 'Precio del andamio', 'Teléfono del proveedor'], [0, 1, 2, 3], `${N09}, 9.1 v) 1)-3)`, () => {
+    AND.piezas.tarjeta.material.color.set(0x2E7D32); W.siguiente(); }, true, 'La tarjeta indica la condición, está visible y adherida, con fecha y nombre de quien revisó.'); } };
+
+const pasoMover = { titulo: 'Hay que moverlo', texto: 'El andamio es móvil y hay que reubicarlo 3 m.', fuente: `${N09}, 9.1 k), m) y 7.9`, puntos: 10,
+  iniciar() { decidir(W, '¿Cómo se mueve el andamio móvil?', [
+    { t: 'Sin nadie arriba, liberando los frenos solo para moverlo, lejos de líneas eléctricas y con precauciones para mantenerlo estable', ok: true, fb: 'Y se vuelven a poner los frenos.', f: `${N09}, 9.1 c) 1), k) y m)` },
+    { t: 'Con el compañero arriba para no perder tiempo', ok: false, crit: true, fb: 'Prohibido permanecer sobre andamios móviles mientras se reubican.', f: `${N09}, 9.1 k)` },
+  ], () => W.siguiente()); } };
+
+W.inicio([{ id: 'azar', txt: '🎲 <b>Inspección al azar:</b> 3 incumplimientos que cambian en cada partida' }, { id: 'todo', txt: '🔎 <b>Inspección difícil:</b> 5 incumplimientos' }],
+  id => { construir(barajar(POOL).slice(0, id === 'todo' ? 5 : 3));
+    return [intro(W, '<h2>🏗️ Andamio tipo torre</h2><p>La cuadrilla va a reparar la fachada desde un andamio móvil de 3 cuerpos (6 m). Antes de cada uso se revisa (9.1 j). Recuerda las cifras de la NOM-009, 9.1:</p><ul><li>Resiste al menos 4 veces la carga máxima.</li><li>Barandal ≥ 90 cm con baranda intermedia; rodapié ≥ 15 cm.</li><li>Tablones ≥ 45 cm; claros ≤ 2.5 cm.</li><li>Base menor : altura ≤ 1:4; si no, sujetarlo cada 4 m.</li><li>Ruedas con freno; nadie arriba al moverlo; sin caballetes como soporte; tarjeta con fecha y nombre.</li></ul>', 'Constructora del Centro; hallazgos ficticios.'),
+      pasoHallazgos(), pasoUso, pasoTarjeta, pasoMover]; },
+  'Basado en: NOM-009-STPS-2011 5.3, 5.6, 6.3, 7.2, 8.4.1 c) y 9.1 b)-v); NOM-031-STPS-2011 14.1.2. Obra y hallazgos ficticios. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { MK, fallas: () => [...fallas], tocar: W.tocar, estado: W.qa };
+</script>
+</body>
+</html>

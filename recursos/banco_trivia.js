@@ -1,7 +1,7 @@
 // Generado por 05_herramientas/banco_simulador.py — NO editar a mano. Solo preguntas de juego (forma J).
 window.BANCO_TRIVIA = [
 {
-"tema": "Analisis de Riesgo 5h",
+"tema": "Análisis de riesgo",
 "preguntas": [
 {
 "p": "¿Qué artículo del RFSST obliga a contar con el diagnóstico y los análisis de riesgos?",
@@ -1401,6 +1401,371 @@ window.BANCO_TRIVIA = [
 ],
 "r": 0,
 "f": "LFT art. 504 fr. II",
+"rf": ""
+}
+]
+},
+{
+"tema": "Trabajo en alturas",
+"preguntas": [
+{
+"p": "Trabajo en altura según la NOM-009: a más de…",
+"o": [
+"1.20 m",
+"1.80 m",
+"3.5 m",
+"6 m"
+],
+"r": 1,
+"f": "NOM-009-STPS-2011, 4.33",
+"rf": ""
+},
+{
+"p": "¿Qué artículo del RFSST regula los trabajos en altura?",
+"o": [
+"Art. 24",
+"Art. 7",
+"Art. 43",
+"Art. 100"
+],
+"r": 0,
+"f": "RFSST (DOF 13/11/2014) art. 24",
+"rf": ""
+},
+{
+"p": "Asignar trabajos en altura a una mujer en gestación está…",
+"o": [
+"Permitido con arnés",
+"Permitido de noche",
+"Permitido si ella firma",
+"Prohibido"
+],
+"r": 3,
+"f": "RFSST (DOF 13/11/2014) art. 58 fr. IX",
+"rf": ""
+},
+{
+"p": "Miedo a las alturas que el trabajador debe informar:",
+"o": [
+"Claustrofobia",
+"Agorafobia",
+"Acrofobia",
+"Hipotermia"
+],
+"r": 2,
+"f": "NOM-009-STPS-2011, 6.5",
+"rf": ""
+},
+{
+"p": "Distancia mínima a una línea de 400 000 V:",
+"o": [
+"3.10 m",
+"6.60 m",
+"4.90 m",
+"8.60 m"
+],
+"r": 1,
+"f": "NOM-009-STPS-2011, 7.9 Tabla 1",
+"rf": ""
+},
+{
+"p": "¿Dónde está prohibido usar cables metálicos en el sistema?",
+"o": [
+"Donde exista riesgo eléctrico",
+"En interiores",
+"En la mañana",
+"En andamios de madera"
+],
+"r": 0,
+"f": "NOM-009-STPS-2011, 7.8",
+"rf": ""
+},
+{
+"p": "¿Con qué norma se señaliza el área delimitada a nivel de piso?",
+"o": [
+"NOM-035-STPS-2018",
+"NOM-011-STPS-2001",
+"NOM-019-STPS-2011",
+"NOM-026-STPS-2008"
+],
+"r": 3,
+"f": "NOM-009-STPS-2011, 7.12",
+"rf": ""
+},
+{
+"p": "Registros de revisión y mantenimiento: se conservan al menos…",
+"o": [
+"1 mes",
+"1 semana",
+"1 año",
+"10 años"
+],
+"r": 2,
+"f": "NOM-009-STPS-2011, 5.8",
+"rf": ""
+},
+{
+"p": "Con sistema de restricción, distancia mínima al borde:",
+"o": [
+"0.30 m",
+"1.20 m",
+"3.5 m",
+"6 m"
+],
+"r": 1,
+"f": "NOM-009-STPS-2011, 8.2.2",
+"rf": ""
+},
+{
+"p": "En andamio tipo torre, el sistema contra caídas es obligatorio a más de…",
+"o": [
+"3.5 m",
+"1.0 m",
+"10 m",
+"20 m"
+],
+"r": 0,
+"f": "NOM-009-STPS-2011, 8.4.1 c)",
+"rf": ""
+},
+{
+"p": "En escalera de mano, el sistema contra caídas es obligatorio a más de…",
+"o": [
+"0.5 m",
+"12 m",
+"Nunca",
+"3.5 m del nivel de referencia"
+],
+"r": 3,
+"f": "NOM-009-STPS-2011, 8.4.1 e)",
+"rf": ""
+},
+{
+"p": "Doble seguro en un conector significa…",
+"o": [
+"Que tiene dos colores",
+"Que pesa el doble",
+"Que se abre solo con al menos dos acciones deliberadas",
+"Que se usa dos veces"
+],
+"r": 2,
+"f": "NOM-009-STPS-2011, 8.4.3 k)",
+"rf": ""
+},
+{
+"p": "Línea de vida vertical para varios trabajadores cuando no está diseñada para más de uno:",
+"o": [
+"Todos en la misma",
+"Una independiente para cada trabajador",
+"Dos por línea",
+"No se usa"
+],
+"r": 1,
+"f": "NOM-009-STPS-2011, 8.4.5 b)",
+"rf": ""
+},
+{
+"p": "¿Se puede alargar una línea retráctil conectándole otros componentes?",
+"o": [
+"No, está prohibido",
+"Sí, con un nudo",
+"Sí, con alambre",
+"Solo los domingos"
+],
+"r": 0,
+"f": "NOM-009-STPS-2011, 8.4.6 f)",
+"rf": ""
+},
+{
+"p": "La curva que forma una línea de vida horizontal sujeta por sus extremos se llama…",
+"o": [
+"Pendular",
+"Elongación",
+"Despliegue",
+"Catenaria"
+],
+"r": 3,
+"f": "NOM-009-STPS-2011, 8.4.4 d)",
+"rf": ""
+},
+{
+"p": "Un andamio tipo torre debe resistir al menos ___ veces la carga máxima:",
+"o": [
+"1",
+"2",
+"4",
+"10"
+],
+"r": 2,
+"f": "NOM-009-STPS-2011, 9.1 b)",
+"rf": ""
+},
+{
+"p": "Rodapié mínimo del andamio tipo torre:",
+"o": [
+"5 cm",
+"15 cm",
+"30 cm",
+"1 m"
+],
+"r": 1,
+"f": "NOM-009-STPS-2011, 9.1 f)",
+"rf": ""
+},
+{
+"p": "Ancho mínimo de los tablones del andamio:",
+"o": [
+"45 cm",
+"20 cm",
+"30 cm",
+"1 m"
+],
+"r": 0,
+"f": "NOM-009-STPS-2011, 9.1 g) 2)",
+"rf": ""
+},
+{
+"p": "Andamio suspendido: sistemas restrictivos en los cables cada…",
+"o": [
+"1 m",
+"100 m",
+"Nunca",
+"15 m de altura"
+],
+"r": 3,
+"f": "NOM-009-STPS-2011, 10.1 i)",
+"rf": ""
+},
+{
+"p": "Inclinación máxima de la plataforma del andamio suspendido al subir o bajar:",
+"o": [
+"45 grados",
+"60%",
+"20% (11 grados)",
+"Sin límite"
+],
+"r": 2,
+"f": "NOM-009-STPS-2011, 10.2 k)",
+"rf": ""
+},
+{
+"p": "Plataforma de elevación: la revisión visual y prueba funcional se hacen…",
+"o": [
+"Una vez al año",
+"Al inicio de cada jornada",
+"Cuando falla",
+"Nunca"
+],
+"r": 1,
+"f": "NOM-009-STPS-2011, 11.3",
+"rf": ""
+},
+{
+"p": "La escalera defectuosa se retira y se marca con la leyenda…",
+"o": [
+"\"Peligrosa. No utilizar.\"",
+"\"Usar con cuidado\"",
+"\"Nueva\"",
+"\"Prestada\""
+],
+"r": 0,
+"f": "NOM-009-STPS-2011, 12.1",
+"rf": ""
+},
+{
+"p": "Escalera para subir a una azotea: debe sobresalir del apoyo al menos…",
+"o": [
+"10 cm",
+"2 m",
+"Nada",
+"90 cm"
+],
+"r": 3,
+"f": "NOM-009-STPS-2011, 12.2 e)",
+"rf": ""
+},
+{
+"p": "Red de seguridad: a no más de ___ por debajo de la superficie protegida.",
+"o": [
+"1 m",
+"15 m",
+"6 m",
+"30 m"
+],
+"r": 2,
+"f": "NOM-009-STPS-2011, 13.1 a)",
+"rf": ""
+},
+{
+"p": "Señal de intolerancia ortostática en una persona suspendida:",
+"o": [
+"Hambre",
+"Mareo, sudoración y palidez",
+"Risa",
+"Sueño profundo y tranquilo"
+],
+"r": 1,
+"f": "OSHA SHIB 03-24-2004, act. 2011 — referencia no obligatoria",
+"rf": ""
+},
+{
+"p": "La capacitación de la NOM-009 debe incluir teoría y práctica sobre…",
+"o": [
+"Técnicas y uso de equipos de rescate en altura",
+"Contabilidad",
+"Ventas",
+"Manejo de redes sociales"
+],
+"r": 0,
+"f": "NOM-009-STPS-2011, 16.2 k)",
+"rf": ""
+},
+{
+"p": "Vigencia del dictamen de una unidad de verificación de la NOM-009:",
+"o": [
+"6 meses",
+"10 años",
+"Permanente",
+"2 años"
+],
+"r": 3,
+"f": "NOM-009-STPS-2011, 17.4",
+"rf": ""
+},
+{
+"p": "¿Cuántos datos mínimos lleva la autorización por escrito del numeral 7.2?",
+"o": [
+"2",
+"10",
+"5",
+"1"
+],
+"r": 2,
+"f": "NOM-009-STPS-2011, 7.2 a)-e)",
+"rf": ""
+},
+{
+"p": "Antes de subir, ¿quién debe estar listo según el plan de emergencias?",
+"o": [
+"El contador",
+"El equipo y el personal de rescate",
+"El vendedor del equipo",
+"Nadie"
+],
+"r": 1,
+"f": "NOM-009-STPS-2011, 15.1 b) 6) y e); RFSST (DOF 13/11/2014) art. 24 fr. IV",
+"rf": ""
+},
+{
+"p": "Plataforma de elevación: las maniobras se hacen con la asistencia de…",
+"o": [
+"Al menos un segundo trabajador",
+"Nadie",
+"Un cliente",
+"El inspector"
+],
+"r": 0,
+"f": "NOM-009-STPS-2011, 11.5 m)",
 "rf": ""
 }
 ]

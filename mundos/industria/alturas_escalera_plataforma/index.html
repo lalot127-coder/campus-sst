@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Escalera de mano y plataforma de elevación</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+<script src="../../construccion/comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Escaleras de mano (NOM-009-STPS-2011 cap. 12 y 8.4.1 e) y plataformas de elevación (cap. 11 y 8.4.1 d).
+// Fuentes verificadas (02_fuentes_verificadas/registro_fuentes.md, consulta 06/10/2026). Nave, empresa y fallas [FICTICIO].
+const { N09, FIC, nave, escalera, plataforma, trabajador, marcador, V } = window.Alturas;
+const { decidir, encuentra, intro, barajar } = window.Riesgo;
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Escalera de mano y plataforma de elevación', icono: '🪜',
+  clave: 'industria_alturas_escalera_plataforma', criterio: { pct: 80, sinCriticos: true }, fondo: 0xDDE3E8,
+  vistas: [[[4.6, 2.8, 2.2], [-2.0, 2.0, -5.4]], [[3.5, 2.4, -0.6], [3.0, 1.4, -4.5]], [[0, 5.5, 4.5], [0, 2, -4]]] });
+const { scene, caja, letrero } = W; W.controls.maxDistance = 16;
+const N = nave(W, { alto: 7, ancho: 14, fondo: 12 });
+W.activarXR({ inicio: [0, 1.5], piso: N.piso, entorno: N.entorno });
+
+// ---------------------------------------------------------------- mezzanine y escalera (lado izquierdo)
+const LS = 4.1, LT = 5.0, ZM = N.zf + 2.4, XE = -2.2;          // longitud hasta el apoyo, longitud total, borde del mezzanine
+const H_MEZ = +(LS * Math.cos(Math.asin((LS / 4) / LS))).toFixed(2);
+caja(6, 0.25, 2.4, 0xA7A29A, -3.5, H_MEZ - 0.12, N.zf + 1.2); for (const x of [-6.2, -0.8]) caja(0.3, H_MEZ, 0.3, 0x7B8794, x, H_MEZ / 2, ZM - 0.2);
+const rotM = letrero(`MEZZANINE · ${H_MEZ.toFixed(2)} m`, 1.8, 0.22, '#102A43'); rotM.position.set(-3.5, H_MEZ - 0.45, ZM + 0.02); scene.add(rotM);
+const E = escalera(W, { L: LT, x: XE, zMuro: ZM });
+let dx = 0.45;
+function colocar() { const ang = Math.asin(Math.min(0.95, dx / LS)); E.g.position.set(XE, 0, ZM + dx); E.g.children[0].rotation.x = -ang;
+  const h = LS * Math.cos(ang); W.$('pTxt').innerHTML = `Pie de la escalera a <b>${dx.toFixed(2)} m</b> del borde · apoyo a ${h.toFixed(2)} m de altura · relación 1:${(LS / dx).toFixed(1)}`; }
+const piso = new THREE.Group(); scene.add(piso);
+for (let k = 0; k <= 20; k++) { caja(0.02, 0.003, 0.08, 0x111111, XE + 0.45, 0.004, ZM + k * 0.1, piso); if (k % 5 === 0) { const t = letrero(`${(k / 10).toFixed(1)} m`, 0.3, 0.12, '#FFFFFF', '#111'); t.rotation.x = -Math.PI / 2; t.position.set(XE + 0.75, 0.006, ZM + k * 0.1); piso.add(t); } }
+
+// ---------------------------------------------------------------- plataforma de elevación (lado derecho)
+const PL = plataforma(W, { x: 3.0, z: N.zf + 3.2 }); PL.g.rotation.y = Math.PI / 2;
+const lum = caja(0.9, 0.15, 0.3, 0xECEFF1, 3.0, 5.8, N.zf + 3.2); const lumL = letrero('Luminaria a cambiar', 1.3, 0.16, '#B45309'); lumL.position.set(3.0, 6.15, N.zf + 3.4); scene.add(lumL);
+const POOL = ['fuga', 'estab', 'alarma', 'panel'];
+const H = {
+  fuga: { no: 'Escape de aceite hidráulico', si: 'Sin escapes hidráulicos', fb: 'Se verifica al inicio de cada jornada que no haya escapes en circuitos hidráulicos.', f: `${N09}, 11.4 b)`, pos: [3.0, 0.5, N.zf + 4.2] },
+  estab: { no: 'Estabilizador doblado', si: 'Estabilizadores en buen estado', fb: 'Se revisa el estado físico de estabilizadores, ejes y estructura.', f: `${N09}, 11.3 g)`, pos: [2.0, 0.5, N.zf + 4.0] },
+  alarma: { no: 'La alarma de movimiento no suena', si: 'La alarma de movimiento suena', fb: 'Debe existir alarma sonora automática de ascenso, descenso y desplazamiento; se prueba al inicio de la jornada.', f: `${N09}, 11.2 d) y 11.3 e)`, pos: [4.0, 1.2, N.zf + 4.2] },
+  panel: { no: 'El descenso de emergencia no funciona', si: 'Controles de operación y de emergencia funcionan', fb: 'Paneles de piso y canastilla deben permitir bajar en emergencia; se prueban al inicio de la jornada.', f: `${N09}, 11.2 c) y 11.3 a)`, pos: [3.3, 1.9, N.zf + 4.2] },
+  calco: { si: 'Calcomanías íntegras y legibles', f: `${N09}, 11.3 f)`, pos: [3.0, 0.75, N.zf + 4.3] },
+  anclaje: { si: 'Dispositivo de anclaje en la canastilla', f: `${N09}, 11.2 e)`, pos: [2.2, 1.6, N.zf + 3.2] },
+};
+let fallas = new Set(); const MK = {};
+
+// ---------------------------------------------------------------- pasos
+const pasoColocar = { titulo: 'Coloca la escalera (regla 1:4)', texto: '', fuente: `${N09}, 12.2 d)`, puntos: 10,
+  iniciar() { W.irVista(0); colocar(); const mueve = d => () => { dx = Math.max(0.2, Math.min(2.0, +(dx + d).toFixed(2))); colocar(); };
+    W.botones([['◀ 10 cm', mueve(-0.1), 'sec'], ['◀ 1 cm', mueve(-0.01), 'sec peq'], ['1 cm ▶', mueve(0.01), 'sec peq'], ['10 cm ▶', mueve(0.1), 'sec'], ['✔ Listo', () => {
+      const meta = LS / 4; if (Math.abs(dx - meta) <= 0.05) { W.botones([]); W.bien(`Pie a ${dx.toFixed(2)} m = 1/4 de ${LS} m hasta el apoyo.`, `${N09}, 12.2 d) (Figura 10)`); setTimeout(() => W.siguiente(), 900); }
+      else W.mal(dx < meta ? 'Muy parada: puede volcarse hacia atrás. La distancia horizontal debe ser 1/4 de la longitud hasta el apoyo.' : 'Muy acostada: el pie puede deslizarse. La distancia horizontal debe ser 1/4 de la longitud hasta el apoyo.', `${N09}, 12.2 d)`); }]]); } };
+const pasoSobresale = { titulo: '¿Sobresale lo suficiente?', texto: 'Mira la parte superior de la escalera sobre el borde del mezzanine.', fuente: `${N09}, 12.2 e)`, puntos: 20,
+  iniciar() { W.irVista(0); decidir(W, `La escalera mide ${LT} m y se apoya en el borde a ${LS} m de su pie. Para subir al mezzanine, ¿cumple?`, [
+    { t: `Sí: sobresale ${(LT - LS).toFixed(1)} m (90 cm) sobre el punto de apoyo`, ok: true, fb: 'Debe extenderse al menos 90 cm sobre el borde de la superficie a la que se accede.', f: `${N09}, 12.2 e)` },
+    { t: 'No importa cuánto sobresalga', ok: false, fb: 'Al menos 90 cm.', f: `${N09}, 12.2 e)` },
+  ], () => setTimeout(() => decidir(W, `El mezzanine está a ${H_MEZ.toFixed(2)} m. Además de la regla 1:4, ¿qué se requiere al usar esta escalera?`, [
+    { t: 'Sistema personal para interrumpir caídas (a más de 3.5 m), bases antiderrapantes, subir de frente y una persona a la vez', ok: true, fb: 'La segunda persona sosteniéndola con ambas manos es obligatoria a más de 5 m.', f: `${N09}, 8.4.1 e), 12.2 f), 12.3 d) y 12.4 c) y g)` },
+    { t: 'Nada más: es una escalera', ok: false, crit: true, fb: 'A más de 3.5 m del nivel de referencia, el sistema contra caídas es obligatorio en escaleras de mano.', f: `${N09}, 8.4.1 e)` },
+    { t: 'Subir con la caja de herramientas en una mano', ok: false, fb: 'En obra está prohibido transportar cargas al subir o bajar; usa cinturón o bolsa de herramientas.', f: `NOM-031-STPS-2011, 14.1.6 c); ${N09}, 8.3.1 c)` },
+  ], () => W.siguiente()), 600)); } };
+const pasoPeldano = { titulo: 'Si trabajaras sobre la escalera', texto: 'Toca el peldaño MÁS ALTO en el que podrías pararte para trabajar.', fuente: `${N09}, 12.4 e)`, puntos: 10,
+  iniciar() { W.irVista(0); E.peldanos.forEach(p => W.tocable(p, 'pel', 0.18)); W.resaltar(E.peldanos.slice(-6)); },
+  tocar(o) { if (o.userData.tipo !== 'pel' || this._ok) return; const k = o.userData.k, n = E.n, permitido = n - 2;
+    if (k === permitido) { this._ok = true; W.resaltar([]); W.bien('El antepenúltimo peldaño es el más alto permitido.', `${N09}, 12.4 e)`); setTimeout(() => W.siguiente(), 900); }
+    else W.mal(k > permitido ? 'Demasiado alto: prohibido pararse por arriba del antepenúltimo peldaño.' : 'Puedes subir más: el límite es el antepenúltimo peldaño (cuenta desde arriba: último, penúltimo, antepenúltimo).', `${N09}, 12.4 e)`); } };
+
+function pasoRevision() {
+  const buenas = [...fallas].map(k => ({ tipo: k, nombre: H[k].no, fb: H[k].fb, f: H[k].f, obj: MK[k] }));
+  const e = encuentra(W, { titulo: 'Revisión al inicio de la jornada', texto: 'Antes de usar la plataforma, revisa y prueba cada punto. Encuentra las fallas.', fuente: `${N09}, 11.3 y 11.4`, buenas, malas: [] });
+  const ini = e.iniciar, toc = e.tocar;
+  e.iniciar = () => { W.irVista(1); ini(); W.resaltar(Object.values(MK).map(m => m.marco)); };
+  e.tocar = (o) => { const t = o.userData.tipo; if (H[t] && !fallas.has(t)) { MK[t].marco.material.color.set(0x2E7D32); MK[t].rot.visible = true; return W.toast('info', `✔ Revisado: ${H[t].si}.`, H[t].f); } toc.call(e, o); };
+  return e;
+}
+const pasoFalla = { titulo: 'Encontraste fallas', texto: 'Decide.', fuente: `${N09}, 11.5 k)`, puntos: 10,
+  iniciar() { decidir(W, '¿Qué haces con la plataforma?', [
+    { t: 'Retirarla de inmediato del servicio y señalizarla hasta que se haga el mantenimiento', ok: true, fb: 'Y usar otra plataforma que sí pase la revisión.', f: `${N09}, 11.5 k)` },
+    { t: 'Usarla con cuidado porque "solo es un poco de aceite"', ok: false, crit: true, fb: 'Con fallas de funcionamiento se retira y señaliza.', f: `${N09}, 11.5 k) y 11.4` },
+  ], () => { Object.values(H).forEach(h => h.ok = true); PL.p.fuga.visible = false; PL.p.estab.forEach(s => s.rotation.z = 0); W.toast('info', '🔧 Te asignaron otra plataforma que pasó la revisión.', '', 2600); setTimeout(() => W.siguiente(), 1200); }); } };
+const pasoOperar = { titulo: 'Sube a cambiar la luminaria', texto: 'Marca lo que debes hacer antes y durante la elevación.', fuente: `${N09}, 11.5`, puntos: 10,
+  iniciar() { W.pregunta('Marca TODO lo correcto para operar la plataforma:', [
+    'Cerrar el barandal o puerta de acceso antes de operar', 'Anclar mi arnés al dispositivo de anclaje de la canastilla',
+    'Un segundo trabajador asiste y supervisa las maniobras', 'Revisar el lugar: obstáculos, hundimientos y líneas eléctricas',
+    'Pararme en el barandal para alcanzar mejor', 'Poner una escalera de mano dentro de la canastilla', 'Amarrar la canastilla a la armadura del techo'],
+    [0, 1, 2, 3], `${N09}, 11.5 a), b) 3), c), f), h), j) 4), 6), 7) y m)`, async () => { for (let h = 0.6; h <= 4.6; h += 0.25) { PL.elevar(h); await new Promise(r => setTimeout(r, 60)); } W.siguiente(); }, true,
+    'Prohibido: sentarse, pararse o subirse en los barandales; usar escaleras o tablones para ganar altura; sujetar la plataforma o a los ocupantes a estructuras fijas.'); } };
+const pasoViento = { titulo: 'Cambian las condiciones', texto: 'Decide.', fuente: `${N09}, 11.5 i) 2) y 7.13`, puntos: 10,
+  iniciar() { decidir(W, 'Terminas en la nave y te piden cambiar una luminaria exterior; hay viento fuerte sostenido. ¿Qué haces?', [
+    { t: 'No se opera afuera: las condiciones meteorológicas implican detener las actividades según el equipo y el fabricante', ok: true, fb: 'Se reprograma.', f: `${N09}, 11.5 i) 2), 5.6 y 7.13` },
+    { t: 'Subo rápido antes de que empeore', ok: false, crit: true, fb: 'Prohibido con condiciones climáticas de riesgo.', f: `${N09}, 7.13` },
+  ], () => W.siguiente()); } };
+
+W.inicio([{ id: 'todo', txt: '🪜 <b>Completo:</b> escalera + plataforma de elevación' }, { id: 'esc', txt: '🪜 <b>Solo escalera</b>' }, { id: 'pla', txt: '🛗 <b>Solo plataforma</b>' }],
+  id => { fallas = new Set(barajar(POOL).slice(0, 2));
+    Object.entries(H).forEach(([k, h]) => { MK[k] = marcador(W, { x: h.pos[0], y: h.pos[1], z: h.pos[2], tipo: k, icono: '❓', etiqueta: fallas.has(k) ? h.no : h.si, mira: [3.5, 2.4, -0.6], escala: 0.55 }); });
+    if (fallas.has('fuga')) PL.p.fuga.visible = true; if (fallas.has('estab')) PL.p.estab[1].rotation.z = 0.6;
+    const esc = [pasoColocar, pasoSobresale, pasoPeldano], pla = [pasoRevision(), pasoFalla, pasoOperar, pasoViento];
+    return [intro(W, '<h2>🪜 Mantenimiento en la nave</h2><p>Dos tareas: <b>subir al mezzanine</b> con una escalera de mano y <b>cambiar una luminaria a 6 m</b> con una plataforma de elevación de tijera.</p><ul><li>Escalera: pie a 1/4 de la longitud hasta el apoyo; 90 cm sobre el borde; no arriba del antepenúltimo peldaño; sistema contra caídas a más de 3.5 m (NOM-009 caps. 12 y 8.4.1 e).</li><li>Plataforma: revisión visual y prueba funcional al inicio de cada jornada; barandal cerrado; anclaje en la canastilla; segundo trabajador (cap. 11).</li></ul>', 'Mantenimiento Industrial del Centro; fallas ficticias.'),
+      ...(id === 'pla' ? [] : esc), ...(id === 'esc' ? [] : pla)]; },
+  'Basado en: NOM-009-STPS-2011 5.6, 7.13, 8.4.1 d)-e), 11.2-11.5, 12.1-12.4; NOM-031-STPS-2011 14.1.6. Nave y fallas ficticias. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { MK, E, fallas: () => [...fallas], set: v => { dx = v; colocar(); }, tocar: W.tocar, estado: W.qa };
+</script>
+</body>
+</html>

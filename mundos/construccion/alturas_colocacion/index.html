@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Colócate y ajusta el arnés</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+<script src="../comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// La NOM-009-STPS-2011 pide colocar, ajustar y usar el sistema conforme a las instrucciones del fabricante (8.1.1, 8.4.3 a)
+// y 16.2 c) 2)); NO fija una secuencia. La secuencia de este escenario es un INSTRUCTIVO DE FABRICANTE [FICTICIO].
+// Fuentes verificadas (02_fuentes_verificadas/registro_fuentes.md, consulta 06/10/2026).
+const { N09, FIC, exterior, obra, trabajador, marcador } = window.Alturas;
+const { decidir, intro, barajar } = window.Riesgo;
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Colócate y ajusta el arnés', icono: '🧍',
+  clave: 'construccion_alturas_colocacion', criterio: { pct: 80, sinCriticos: true }, fondo: 0xBFD9EC,
+  vistas: [[[0, 1.55, 3.1], [0, 1.15, 0]], [[0, 1.45, -2.3], [0, 1.1, 0]], [[1.9, 1.6, 1.1], [0, 1.0, 0]], [[0, 3.5, 6], [0, 2, -2]]] });
+const { scene } = W;
+exterior(W);
+const O = obra(W, { altura: 4, bordeZ: -3.5 });
+W.activarXR({ inicio: [0, 1.6], piso: O.piso, entorno: O.entorno.filter(e => e !== O.piso) });
+const T = trabajador(W, { x: 0, z: 0, arnes: false });
+const INSTR = `Instructivo del fabricante "Arnés AR-4" ${FIC}`;
+
+// Marcadores alrededor del cuerpo (lado frontal); cada uno es una pieza del arnés
+const PIEZAS = [
+  { id: 'tirantes', icono: '🎽', et: 'Tirantes (hombros)', pos: [-0.8, 1.45, 0.2], parte: 'tirantes' },
+  { id: 'piernas', icono: '🦵', et: 'Perneras', pos: [0.8, 0.55, 0.2], parte: 'piernas' },
+  { id: 'pecho', icono: '➖', et: 'Correa del pecho', pos: [0.8, 1.45, 0.2], parte: 'pecho' },
+  { id: 'ajuste', icono: '🔧', et: 'Ajustar bandas', pos: [-0.8, 0.55, 0.2], parte: 'subpelvica' },
+  { id: 'anillo', icono: '⭕', et: 'Anillo dorsal', pos: [0, 2.05, -0.1], parte: 'anillo' },
+];
+const MK = {}; PIEZAS.forEach(p => { MK[p.id] = marcador(W, { x: p.pos[0], y: p.pos[1], z: p.pos[2], tipo: p.id, icono: p.icono, etiqueta: p.et, mira: [0, 1.4, 3], escala: 0.6 }); MK[p.id].rot.visible = true; });
+
+const ORDEN = [
+  { id: 'tirantes', txt: 'Sostén el arnés por el anillo dorsal, deja que las bandas cuelguen sin torceduras y pasa los <b>tirantes por los hombros</b>.' },
+  { id: 'piernas', txt: 'Pasa y abrocha cada <b>pernera</b>, sin torceduras.' },
+  { id: 'pecho', txt: 'Abrocha la <b>correa del pecho</b> a la altura indicada.' },
+  { id: 'ajuste', txt: '<b>Ajusta</b> tirantes y perneras: firme, sin apretar de más (según la ficha).' },
+  { id: 'anillo', txt: 'Verifica que el <b>anillo dorsal</b> quede en la espalda, entre los omóplatos.' },
+];
+function pasoPieza(k) {
+  const o = ORDEN[k];
+  return { titulo: `Paso ${k + 1} del instructivo`, texto: `¿Qué pieza sigue? Toca el marcador correcto.<br><small style="display:inline">${INSTR}</small>`, fuente: `${N09}, 8.4.3 a) y 16.2 c) 2); ${INSTR}`, puntos: 10,
+    iniciar() { W.resaltar(PIEZAS.filter(p => !this._hechas || true).map(p => MK[p.id].marco)); },
+    tocar(obj) { const t = obj.userData.tipo; if (!MK[t] || this._ok) return;
+      if (t !== o.id) { const ya = ORDEN.slice(0, k).some(x => x.id === t);
+        return W.mal(ya ? 'Esa pieza ya está colocada.' : `Todavía no: según el instructivo, primero va otra pieza.`, `${N09}, 16.2 c) 2); ${INSTR}`); }
+      this._ok = true; const p = PIEZAS.find(x => x.id === t); T.partes[p.parte].visible = true; if (t === 'ajuste') T.partes.tirantes.scale.set(0.97, 1, 0.97);
+      MK[t].marco.material.color.set(0x2E7D32); W.bien(o.txt.replace(/<[^>]+>/g, ''), `${INSTR}; ${N09}, 8.4.3 a)`); setTimeout(() => W.siguiente(), 700); } };
+}
+
+const revisionPrevia = { titulo: 'Antes de ponértelo', texto: 'Decide.', fuente: `${N09}, 7.3 y 8.4.3 g)`,
+  iniciar() { decidir(W, 'Tomaste un arnés del almacén. ¿Qué haces ANTES de ponértelo?', [
+    { t: 'Lo reviso conforme al fabricante: metal, herrajes, conectores, bandas y etiquetas', ok: true, fb: 'Revisión previa de 5 puntos.', f: `${N09}, 8.4.3 g)` },
+    { t: 'Me lo pongo de una vez: lo revisaron el año pasado', ok: false, fb: 'La revisión es antes de cada uso, además de la revisión anual.', f: `${N09}, 7.3, 7.14 y 8.4.3 g)` },
+    { t: 'Solo veo que sea de mi talla', ok: false, fb: 'La talla importa, pero también los 5 puntos de revisión.', f: `${N09}, 8.4.3 g)` },
+  ], () => W.siguiente()); } };
+
+let MASA = 0;
+const preguntasFinales = { titulo: 'Listo para conectarte', texto: 'Tres decisiones.', fuente: `${N09}, 8.4.3 d), 8.3.1 a)`, puntos: 30,
+  iniciar() {
+    decidir(W, '¿A qué punto del arnés conectas la línea de vida con absorbedor para DETENER una caída?', [
+      { t: 'Al anillo dorsal (espalda), como indica el instructivo para detención de caídas', ok: true, fb: 'Así lo indica la ficha de este curso; siempre sigue al fabricante.', f: `${INSTR}; ${N09}, 8.4.3 a)` },
+      { t: 'A la hebilla de la pernera', ok: false, crit: true, fb: 'Según el instructivo, las hebillas no son puntos de conexión; conecta solo donde indica el fabricante.', f: `${INSTR}; ${N09}, 8.4.3 a) y k)` },
+      { t: 'A una presilla de herramientas del cinturón', ok: false, crit: true, fb: 'No es un punto diseñado para detener caídas.', f: `${INSTR}; ${N09}, 8.4.2` },
+    ], () => setTimeout(() => decidir(W, `Tu masa con herramientas es de ${MASA} kg. La ficha indica una masa total máxima de 140 kg ${FIC}. ¿Puedes usar este sistema?`, MASA <= 140 ? [
+      { t: 'Sí: no se rebasa la masa total especificada por el fabricante', ok: true, fb: 'Masa del trabajador + herramientas ≤ lo especificado.', f: `${N09}, 8.4.3 d) y 7.6` },
+      { t: 'No, nunca con herramientas', ok: false, fb: 'Se permite mientras la masa total no rebase lo especificado.', f: `${N09}, 8.4.3 d)` },
+    ] : [
+      { t: 'No: se rebasa la masa total especificada; se requiere un sistema adecuado o reducir la carga', ok: true, fb: 'Nunca se rebasa la capacidad nominal.', f: `${N09}, 8.4.3 d) y 7.6` },
+      { t: 'Sí, el arnés aguanta un poco más', ok: false, crit: true, fb: 'Prohibido rebasar la capacidad especificada.', f: `${N09}, 7.6` },
+    ], () => setTimeout(() => decidir(W, 'Un compañero dice: "Para el borde de la losa me basta el cinturón de posicionamiento". ¿Tiene razón?', [
+      { t: 'No: el posicionamiento solo mantiene en el punto de trabajo; para el borde se requiere detención de caídas (o restricción a ≥1.20 m)', ok: true, fb: 'Correcto.', f: `${N09}, 8.3.1 a), 8.2.2 y 8.4.1 a)` },
+      { t: 'Sí, es lo mismo', ok: false, crit: true, fb: 'El posicionamiento no debe emplearse para detener caídas.', f: `${N09}, 8.3.1 a)` },
+    ], () => W.siguiente()), 600)), 600)); } };
+
+W.inicio([{ id: 'normal', txt: '🧍 <b>Colocación completa</b> con instructivo del fabricante' }, { id: 'pesado', txt: '🧰 <b>Con carga de herramientas</b> (revisa la masa total)' }],
+  id => { MASA = id === 'pesado' ? 150 : 104;
+    return [intro(W, `<h2>🧍 Colócate el arnés</h2><p>La NOM-009 no fija una secuencia única: pide <b>instalar, colocar, ajustar y usar</b> el sistema <b>conforme a las instrucciones del fabricante</b>, y que la capacitación enseñe a hacerlo (8.4.3 a, 16.2 c 2).</p><p>En este escenario usarás el <b>${INSTR}</b>. Toca, en orden, la pieza que sigue. Cuando aciertes, la verás puesta en el trabajador.</p>`, 'Instructivo, arnés y trabajador ficticios; en tu centro de trabajo usa el instructivo real del fabricante.'),
+      revisionPrevia, ...ORDEN.map((_, k) => pasoPieza(k)), preguntasFinales]; },
+  'Basado en: NOM-009-STPS-2011 7.3, 7.6, 8.1.1, 8.2.2, 8.3.1, 8.4.1, 8.4.3 a), d), g), k) y 16.2 c) 2). Instructivo y fichas ficticios. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { MK, T, tocar: W.tocar, estado: W.qa };
+</script>
+</body>
+</html>

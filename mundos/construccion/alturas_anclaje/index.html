@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Anclaje y distancia de caída</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+<script src="../comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Anclaje y distancia de caída: NOM-009-STPS-2011 8.4.3 b), c), e), f), m) 2), n), p)-q); 8.4.4 d); 16.2 c) 1) y 6)-8);
+// NOM-031-STPS-2011 14.1.4. La NOM no fija márgenes: los valores son de una FICHA DE FABRICANTE [FICTICIO] (igual que el
+// curso). Comparativo no obligatorio: OSHA 1926.502(d)(16)(iv). Fuentes: registro_fuentes.md (consulta 06/10/2026).
+const { N09, N31, FIC, FICHA, COL, tubo, V, exterior, obra, trabajador, lineaVida } = window.Alturas;
+const { decidir, intro } = window.Riesgo;
+const ALT = 4.0, BORDE = -1.0, X0 = -1.4, Z0 = BORDE - 0.4;
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Anclaje y distancia de caída', icono: '⚓',
+  clave: 'construccion_alturas_anclaje', criterio: { pct: 80, sinCriticos: true }, fondo: 0xBFD9EC,
+  vistas: [[[6.8, 5.4, 4.8], [X0, 4.2, BORDE]], [[X0, 6.0, 4.5], [X0, 4.6, BORDE - 0.5]], [[X0 - 4.5, 3.0, 1.5], [X0, 2.6, BORDE]]] });
+const { scene, caja, cil, letrero, tocable } = W;
+W.controls.maxDistance = 16;
+exterior(W);
+const O = obra(W, { altura: ALT, bordeZ: BORDE, rotulo: '' });
+W.activarXR({ inicio: [X0 + 3, 3.0], piso: O.piso, entorno: O.entorno.filter(e => e !== O.piso) });
+
+// Ficha del fabricante en un pizarrón
+const ficha = letrero(`Línea ${FICHA.linea} m · absorbedor ${FICHA.despliegue} m · anillo-pies ${FICHA.anilloPies} m · margen ${FICHA.margen} m · caída libre máx. ${FICHA.caidaLibreMax} m  [FICTICIO]`, 5.2, 0.32, '#102A43');
+ficha.position.set(2.6, 1.3, 1.6); ficha.rotation.y = -0.7; scene.add(ficha);
+const regla = new THREE.Group(); scene.add(regla);   // regla de altura junto al borde
+for (let m = 0; m <= ALT; m++) { caja(0.25, 0.02, 0.02, 0x212121, X0 + 1.1, m, BORDE + 0.25, regla); const t = letrero(`${m} m`, 0.32, 0.16, '#FFFFFF', '#111'); t.position.set(X0 + 1.45, m + 0.08, BORDE + 0.25); regla.add(t); }
+caja(0.04, ALT, 0.04, 0xFFC107, X0 + 1.1, ALT / 2, BORDE + 0.25, regla);
+
+// Trabajador en el borde de la losa, de frente al vacío (anillo dorsal atrás)
+const T = trabajador(W, { x: X0, y: ALT, z: Z0, arnes: true });
+const LV = lineaVida(W, { color: 0x1565C0 });
+
+// ---------------------------------------------------------------- puntos de anclaje candidatos
+const anclas = {};
+function ancla(id, pos, nombre, crear) { const g = new THREE.Group(); scene.add(g); crear(g);
+  const aro = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.016, 8, 20), W.M(0xB0BEC5, { metalness: .85, roughness: .25 })); aro.position.copy(pos); g.add(aro);
+  tocable(aro, id, 0.45); const et = letrero(nombre, Math.max(1.2, nombre.length * 0.055), 0.17, '#0E7490'); et.position.copy(pos).add(V(W, 0, 0.32, 0.05)); et.lookAt(6, pos.y + 0.3, 4); g.add(et);
+  anclas[id] = { id, pos, nombre, aro, g }; }
+ancla('viga', V(W, X0, ALT + FICHA.anilloPies + 1.0, Z0 - 0.15), 'Viga de acero (1 m arriba del anillo)', g => {
+  caja(9, 0.3, 0.18, COL.acero, 0, ALT + FICHA.anilloPies + 1.17, Z0 - 0.15, g); });
+ancla('perno', V(W, X0 + 0.15, ALT + 0.05, Z0 - 0.6), 'Perno en la losa (a nivel de los pies)', g => { caja(0.16, 0.02, 0.16, 0x9E9E9E, X0 + 0.15, ALT + 0.01, Z0 - 0.6, g); });
+ancla('tubo', V(W, X0 + 0.5, ALT - 0.45, BORDE + 0.12), 'Tubería bajo la losa', g => { const t = cil(0.05, 4, 0x78909C, X0 + 0.5, ALT - 0.45, BORDE + 0.12, g); t.rotation.z = Math.PI / 2; });
+ancla('barandal', V(W, X0 - 1.0, ALT + 1.0, BORDE - 0.1), 'Poste de madera provisional', g => { caja(0.08, 1.0, 0.08, COL.madera, X0 - 1.0, ALT + 0.5, BORDE - 0.1, g); caja(1.8, 0.06, 0.04, COL.madera, X0 - 1.0, ALT + 0.95, BORDE - 0.1, g); });
+ancla('columna', V(W, 0, ALT + FICHA.anilloPies, BORDE + 0.0), 'Columna a 1.4 m de lado', g => { });
+const ESTADO = { feet: V(W, X0, ALT, Z0), despl: 0, flojo: 0.35, ancla: null };
+const reposo = () => { T.g.position.set(X0, ALT, Z0); T.g.rotation.set(0, 0, 0); ESTADO.despl = 0; ESTADO.flojo = 0.35; };
+W.cuadro.push(() => { if (ESTADO.ancla) LV.set(ESTADO.ancla.pos, T.anillo(), ESTADO.despl, ESTADO.flojo); });
+const choque = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12), W.M(0xFF1744, { transparent: true, opacity: .55, emissive: 0xFF1744 })); choque.visible = false; scene.add(choque);
+
+// ---------------------------------------------------------------- simulación de la caída (cinemática simplificada)
+const espera = ms => new Promise(r => setTimeout(r, ms));
+async function simular(id) {
+  const a = anclas[id]; ESTADO.ancla = a; reposo(); choque.visible = false; await espera(400);
+  const P = T.g.position, anilloY0 = ALT + FICHA.anilloPies;
+  await W.mover(P, V(W, X0, ALT, BORDE + 0.45), 380);                                   // sale del borde
+  T.g.rotation.x = 0.15;
+  if (id === 'barandal') {                                                              // el poste no resiste: cae al piso
+    ESTADO.flojo = 0; await W.mover(P, V(W, X0 - 0.4, ALT - 1.0, BORDE + 0.6), 250); a.g.children[0].rotation.z = 1.2; a.g.children[0].position.y = ALT + 0.2;
+    await W.mover(P, V(W, X0 - 0.6, 0, BORDE + 0.9), 650); golpe(P); return { ok: false, ff: null, msg: 'El poste provisional no soporta la fuerza de detención: cediste y caíste al piso.' }; }
+  const dx = Math.hypot(a.pos.x - X0, a.pos.z - (BORDE + 0.45));
+  const ff = Math.max(0, FICHA.linea - (a.pos.y - anilloY0)), finAnillo = a.pos.y - Math.sqrt(Math.max(0, (FICHA.linea + FICHA.despliegue) ** 2 - dx * dx));
+  if (id === 'columna') {                                                               // efecto pendular hacia la columna
+    ESTADO.flojo = 0.1; const dy = Math.sqrt(FICHA.linea ** 2 - dx * dx);
+    await W.mover(P, V(W, X0, ALT - (FICHA.linea - dy) - 0.2, BORDE + 0.45), 380);
+    ESTADO.flojo = 0; for (let k = 0; k <= 10; k++) ESTADO.despl = k / 10 * 0.6;
+    await W.mover(P, V(W, -0.35, finAnillo - FICHA.anilloPies + 0.6, BORDE + 0.2), 650); golpe(V(W, -0.25, P.y + 1.2, BORDE + 0.1));
+    return { ok: false, ff, msg: 'Efecto pendular: al caer te balanceaste y te golpeaste contra la columna.' }; }
+  ESTADO.flojo = 0.15;
+  const pieLibre = ALT - ff;                                                           // pies al terminar la caída libre
+  await W.mover(P, V(W, X0, Math.max(0, pieLibre), BORDE + 0.45), Math.max(250, ff * 250));
+  ESTADO.flojo = 0;
+  const pieFinal = finAnillo - FICHA.anilloPies;
+  const t0 = performance.now(); const dur = 520, y0 = P.y;
+  await new Promise(res => { const f = () => { const k = Math.min(1, (performance.now() - t0) / dur); ESTADO.despl = FICHA.despliegue * k;
+    P.y = Math.max(0, y0 + (pieFinal - y0) * (1 - (1 - k) ** 2)); if (k < 1) requestAnimationFrame(f); else res(); }; f(); });
+  T.g.rotation.x = 0.35;
+  if (pieFinal <= 0.02) { golpe(V(W, X0, 0.3, BORDE + 0.45)); return { ok: false, ff, golpe: true, msg: `Golpeaste el piso: el sistema necesitaba ${(ff + FICHA.despliegue + FICHA.margen).toFixed(1)} m libres bajo tus pies y solo había ${ALT.toFixed(1)} m.` }; }
+  return { ok: true, ff, pieFinal, msg: `Detención correcta: caída libre ${ff.toFixed(1)} m, despliegue ${FICHA.despliegue} m; tus pies quedaron a ${pieFinal.toFixed(1)} m del piso.` };
+}
+function golpe(p) { choque.position.copy(p); choque.visible = true; }
+
+const VERED = {
+  viga: { f: `${N09}, 8.4.3 b), c), e) y n)` },
+  perno: { crit: true, extra: 'Además, la caída libre sería de 3.3 m y este absorbedor solo admite 1.8 m.', f: `${N09}, 8.4.3 b), f) y n); 16.2 c) 6)` },
+  tubo: { crit: true, extra: 'El anclaje nunca debe ubicarse por debajo del plano de trabajo ni del nivel de sustentación, y una tubería no está diseñada para la fuerza de detención.', f: `${N09}, 8.4.3 c) y e)` },
+  barandal: { crit: true, extra: 'El punto de anclaje debe soportar la fuerza de detención generada durante una caída.', f: `${N09}, 8.4.3 e)` },
+  columna: { crit: false, extra: 'Hay que considerar el efecto pendular en la instalación y en la capacitación.', f: `${N09}, 8.4.3 m) 2) y 16.2 c) 8)` },
+};
+const pasoAncla = { titulo: 'Elige el punto de anclaje', texto: 'Toca un punto de anclaje (aros metálicos) y observa la caída simulada. Busca el que te detiene sin golpear nada.', fuente: `${N09}, 8.4.3 c), e), f), n)`, puntos: 10,
+  iniciar() { W.resaltar(Object.values(anclas).map(a => a.aro)); },
+  async tocar(o) { const id = o.userData.tipo; if (!anclas[id] || this._ocupado || this._ok) return; this._ocupado = true; W.resaltar([]);
+    const r = await simular(id); const v = VERED[id];
+    if (r.ok) { this._ok = true; W.bien(r.msg, v.f); setTimeout(() => { reposo(); W.siguiente(); }, 2600); }
+    else { W.mal(`${r.msg} ${v.extra}`, v.f, v.crit); setTimeout(() => { reposo(); ESTADO.ancla = null; LV.set(V(W, 0, -5, 0), V(W, 0, -5, 0.01)); choque.visible = false; this._ocupado = false; W.resaltar(Object.values(anclas).map(a => a.aro)); }, 3200); } } };
+
+const opc = (v, ds) => [...new Set([v, ...ds.map(d => +(v + d).toFixed(1))])].filter(x => x > 0).slice(0, 4).sort((a, b) => a - b);
+const pasoCalculo = { titulo: 'Calcula el espacio libre', texto: 'Con la viga de acero (1 m arriba de tu anillo dorsal).', fuente: `${N09}, 16.2 c) 6); ${FIC}`, puntos: 20,
+  iniciar() { const ff = +(FICHA.linea - 1.0).toFixed(1), req = +(ff + FICHA.despliegue + FICHA.margen).toFixed(1);
+    decidir(W, '1 · ¿Cuánta caída libre hay antes de que actúe el absorbedor?', opc(ff, [1.0, 0.5, 1.5]).map(x => ({ t: `${x.toFixed(1)} m`, ok: x === ff,
+      fb: `Línea ${FICHA.linea} m − 1.0 m que el anclaje está arriba del anillo = ${ff} m (≤ ${FICHA.caidaLibreMax} m que admite el absorbedor).`, f: `${N09}, 8.4.3 n); ficha ${FIC}` })), () =>
+      setTimeout(() => decidir(W, '2 · ¿Cuánto espacio libre necesitas bajo tus pies?', opc(req, [1.5, -1.0, 2.0]).map(x => ({ t: `${x.toFixed(1)} m`, ok: x === req,
+        fb: `${ff} (caída libre) + ${FICHA.despliegue} (despliegue) + ${FICHA.margen} (margen) = ${req} m. Hay ${ALT} m: sí alcanza.`, f: `${N09}, 16.2 c) 6) y 8.4.3 f); ficha ${FIC}` })), () => W.siguiente(), '', false), 600), '', false); } };
+
+const pasoBajo = { titulo: 'Ahora, en un mezzanine de 2.5 m', texto: 'Mismo equipo, pero el piso inferior está a 2.5 m.', fuente: `${N09}, 7.1, 8.2.2 y 16.2 c) 6)`, puntos: 10,
+  iniciar() { decidir(W, 'Con anclaje a la altura del anillo se necesitan 4.0 m libres y solo hay 2.5 m. ¿Qué haces?', [
+    { t: 'Protección colectiva (barandal o red) o, si no es posible, un sistema de restricción que no te deje acercarte a menos de 1.20 m del borde', ok: true, fb: 'Si no alcanza el espacio libre, que la caída no ocurra.', f: `${N09}, 7.1, 8.2.1 y 8.2.2` },
+    { t: 'Uso la misma línea: "a esa altura no pasa nada"', ok: false, crit: true, fb: 'Golpearías el nivel inferior antes de que el sistema te detenga.', f: `${N09}, 8.4.3 f) y 16.2 c) 6)` },
+    { t: 'Amarro dos líneas para que sea más larga', ok: false, crit: true, fb: 'Más longitud = más caída. Y no se ensamblan componentes de forma no autorizada.', f: `${N09}, 8.4.3 b), o) y 16.2 d) 2)` },
+  ], () => W.siguiente()); } };
+
+const pasoDespues = { titulo: 'Después de una detención', texto: 'El sistema detuvo una caída real.', fuente: `${N09}, 8.4.3 p)-q); 15.1`, puntos: 20,
+  iniciar() { decidir(W, 'Tu compañero quedó suspendido y lo rescataron. ¿Qué pasa con su sistema?', [
+    { t: 'Se marca e identifica, y no se reutiliza salvo que el fabricante lo permita expresamente', ok: true, fb: 'El absorbedor desplegado ya trabajó.', f: `${N09}, 8.4.3 p)-q)` },
+    { t: 'Se guarda tal cual para mañana', ok: false, crit: true, fb: 'Prohibido reutilizarlo sin autorización expresa del fabricante.', f: `${N09}, 8.4.3 q)` },
+  ], () => setTimeout(() => decidir(W, 'En obra, ¿cuántas personas pueden anclarse al mismo punto?', [
+    { t: 'Las que permitan la resistencia del punto y las especificaciones del fabricante', ok: true, fb: 'Así lo restringe la NOM-031 en construcción.', f: `${N31}, 14.1.4` },
+    { t: 'Todas las que quepan', ok: false, crit: true, fb: 'Se limita por resistencia y por fabricante.', f: `${N31}, 14.1.4` },
+  ], () => W.siguiente()), 600)); } };
+
+W.inicio([{ id: 'todo', txt: '⚓ <b>Completo:</b> anclaje con caída simulada, cálculo, mezzanine y después de la detención' }, { id: 'rapido', txt: '⚡ <b>Rápido:</b> anclaje y cálculo' }],
+  id => [intro(W, `<h2>⚓ ¿Dónde te anclas?</h2><p>Trabajarás en el <b>borde de la losa a ${ALT} m</b>. Tu sistema: arnés + línea de vida de ${FICHA.linea} m con absorbedor. Datos de la <b>ficha del fabricante ${FIC}</b>: despliegue ${FICHA.despliegue} m, anillo a pies ${FICHA.anilloPies} m, margen ${FICHA.margen} m, caída libre máxima ${FICHA.caidaLibreMax} m.</p><p>La NOM-009 pide: anclaje que <b>no</b> esté por debajo del plano de trabajo y que soporte la fuerza de detención; caída libre mínima posible (máx. 1.8 m o 3.5 m según el absorbedor); espacio libre en la trayectoria; considerar el <b>efecto pendular</b> (8.4.3).</p><p>Toca un aro de anclaje y mira qué pasaría.</p>`, 'Obra y ficha ficticias; los valores reales los da el fabricante.'),
+    pasoAncla, pasoCalculo, ...(id === 'todo' ? [pasoBajo, pasoDespues] : [])],
+  'Basado en: NOM-009-STPS-2011 7.1, 8.2, 8.4.3 b), c), e), f), m), n), o), p), q), 8.4.4 d) y 16.2 c) 6)-8); NOM-031-STPS-2011 14.1.4. Ficha de fabricante ficticia; simulación cinemática simplificada (no es un cálculo de ingeniería). 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { anclas, simular, tocar: W.tocar, estado: W.qa, T };
+</script>
+</body>
+</html>

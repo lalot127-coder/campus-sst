@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Inspección del arnés y del equipo</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+<script src="../comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Revisión previa del sistema personal para interrumpir caídas: NOM-009-STPS-2011 7.3, 7.14, 8.4.3 g)-j), p)-q).
+// Fuentes verificadas (02_fuentes_verificadas/registro_fuentes.md, consulta 06/10/2026). Equipo y defectos [FICTICIO].
+const { N09, FIC, COL, tubo, V, exterior, obra, mosqueton, lineaVida } = window.Alturas;
+const { decidir, encuentra, intro, barajar } = window.Riesgo;
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Inspección del arnés y del equipo', icono: '🔎',
+  clave: 'construccion_alturas_inspeccion', criterio: { pct: 80, sinCriticos: true }, fondo: 0xBFD9EC,
+  vistas: [[[0, 1.75, 0.55], [0, 0.92, -1.05]], [[-1.1, 1.5, 0.2], [-0.5, 0.92, -1.1]], [[1.1, 1.5, 0.2], [0.6, 0.92, -1.1]], [[0, 3.2, 4.5], [0, 2, -2]]] });
+const { scene, caja, M, letrero, tocable } = W;
+exterior(W);
+const O = obra(W, { altura: 4, bordeZ: -3.2 });
+W.activarXR({ inicio: [0, 0.4], piso: O.piso, entorno: O.entorno.filter(e => e !== O.piso) });
+W.controls.minDistance = 0.35;
+
+// Mesa de revisión con manta clara
+const mesa = new THREE.Group(); mesa.position.set(0, 0, -1.1); scene.add(mesa);
+caja(2.2, 0.05, 0.9, 0x8D6E63, 0, 0.88, 0, mesa); caja(2.1, 0.005, 0.85, 0xF5F5F5, 0, 0.91, 0, mesa);
+for (const [a, b] of [[-1, -0.38], [1, -0.38], [-1, 0.38], [1, 0.38]]) caja(0.06, 0.88, 0.06, 0x5D4037, a, 0.44, b, mesa);
+const rot = letrero('MESA DE REVISIÓN PREVIA · NOM-009 8.4.3 g)', 1.9, 0.14, '#102A43'); rot.position.set(0, 1.25, -0.47); mesa.add(rot);
+const Y = 0.925;
+
+// ---------------------------------------------------------------- arnés tendido sobre la mesa (vista superior)
+O.cinta.visible = false;   // la mesa está fuera del área bajo el borde
+const arnes = new THREE.Group(); arnes.position.set(-0.5, 0, 0.02); arnes.scale.set(1.45, 1, 1.25); mesa.add(arnes);
+const banda = (a, b, c = COL.arnes, padre = arnes) => tubo(W, V(W, a[0], Y, a[1]), V(W, b[0], Y, b[1]), 0.016, c, padre);
+banda([-0.12, -0.32], [-0.08, 0.12]); banda([0.12, -0.32], [0.08, 0.12]);                       // tirantes
+banda([-0.15, -0.12], [0.15, -0.12]);                                                          // pectoral
+banda([-0.16, 0.12], [0.16, 0.12]); banda([-0.16, 0.2], [0.16, 0.2]);                          // subpelviana
+const piernaG = []; for (const s of [-1, 1]) { const t = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.016, 6, 24), M(COL.arnes)); t.rotation.x = Math.PI / 2; t.position.set(0.14 * s, Y, 0.34); arnes.add(t); piernaG.push(t); }
+const PARTES = {};
+// Parte tocable de la inspección: {clave, nombre, obj, bien:{color}, mal:{aplicar()}, fb, f}
+function parte(clave, obj) { tocable(obj, clave, 0.12); PARTES[clave] = obj; return obj; }
+parte('pierna', piernaG[1]);
+const hebilla = parte('hebilla', caja(0.06, 0.012, 0.04, 0x9E9E9E, 0, Y + 0.008, -0.12, arnes));
+const anilloD = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.009, 8, 20), M(0xB0BEC5, { metalness: .85, roughness: .25 })); anilloD.rotation.x = Math.PI / 2; anilloD.position.set(0, Y + 0.01, -0.36); arnes.add(anilloD); parte('anillo', anilloD);
+const etiqueta = parte('etiqueta', letrero('NOM · NMX-S-058/1 · Lote 25-118 [FIC]', 0.16, 0.06, '#FFFFFF', '#111')); etiqueta.rotation.x = -Math.PI / 2; etiqueta.position.set(-0.06, Y + 0.004, 0.0); arnes.add(etiqueta);
+const costura = parte('costura', caja(0.05, 0.008, 0.07, 0xFFE0B2, 0.0, Y + 0.012, 0.16, arnes));
+
+// ---------------------------------------------------------------- línea de vida con absorbedor
+const LV = lineaVida(W, { color: 0x1565C0 }); mesa.add(LV.g);
+LV.set(V(W, 0.15, Y + 0.01, 0.25), V(W, 0.85, Y + 0.01, -0.25), 0, -0.002);
+const absorbedor = parte('absorbedor', caja(0.09, 0.05, 0.16, 0x212121, 0.73, Y + 0.025, -0.15, mesa));
+const cuerdaZona = parte('cuerda', caja(0.3, 0.02, 0.05, 0x1565C0, 0.42, Y + 0.008, 0.06, mesa)); cuerdaZona.material.transparent = true; cuerdaZona.material.opacity = 0.0;
+// ---------------------------------------------------------------- conectores
+const mosq = [mosqueton(W, { x: 0.55, y: Y + 0.02, z: 0.3, padre: mesa }), mosqueton(W, { x: 0.8, y: Y + 0.02, z: 0.3, padre: mesa })];
+mosq.forEach((m, i) => { m.rotation.x = -Math.PI / 2; parte('mosq' + i, m.children[0]); });
+
+// ---------------------------------------------------------------- defectos (al azar por partida)
+const DEFECTOS = {
+  pierna: { nombre: 'Banda de la pierna descosida', fb: 'Descosidos o deshilados en bandas: el arnés pierde resistencia.', f: `${N09}, 8.4.3 g) 4)`,
+    aplicar() { for (let i = 0; i < 6; i++) { const h = caja(0.012, 0.012, 0.03, 0xFFF3E0, 0.14 + 0.1 * Math.cos(i), Y + 0.018, 0.34 + 0.1 * Math.sin(i), arnes); h.rotation.y = i; } PARTES.pierna.material.color.set(0xBF6A1A); } },
+  hebilla: { nombre: 'Hebilla del pecho deformada', fb: 'Deformaciones o grietas en hebillas.', f: `${N09}, 8.4.3 g) 2)`,
+    aplicar() { hebilla.rotation.z = 0.5; hebilla.rotation.y = 0.4; hebilla.material.color.set(0x6D4C41); } },
+  anillo: { nombre: 'Anillo D con corrosión y una grieta', fb: 'Corrosión o degradación en partes metálicas.', f: `${N09}, 8.4.3 g) 1)-2)`,
+    aplicar() { anilloD.material.color.set(0x8D4A1F); anilloD.material.metalness = 0.2; } },
+  etiqueta: { nombre: 'Etiqueta ilegible', fb: 'Las etiquetas y marcas deben estar legibles.', f: `${N09}, 8.4.3 g) 5)`,
+    aplicar() { etiqueta.material.map = null; etiqueta.material.color.set(0x9E9E9E); etiqueta.material.needsUpdate = true; } },
+  costura: { nombre: 'Costura de la espalda quemada', fb: 'Quemaduras en cuerdas, bandas o costuras (p. ej., chispas de soldadura).', f: `${N09}, 8.4.3 g) 4) y 7.7`,
+    aplicar() { costura.material.color.set(0x1B1B1B); } },
+  absorbedor: { nombre: 'Absorbedor desplegado', fb: 'Indica que el sistema ya detuvo una caída: se marca y no se reutiliza, salvo autorización expresa del fabricante.', f: `${N09}, 8.4.3 p)-q) y 4.11`,
+    aplicar() { absorbedor.scale.z = 3.2; absorbedor.position.z = -0.02; absorbedor.material.color.set(0xFFB300); } },
+  cuerda: { nombre: 'Cuerda con quemadura y deshilado', fb: 'Rupturas, deshilados o quemaduras en cuerdas: retirar.', f: `${N09}, 8.4.3 g) 4)`,
+    aplicar() { cuerdaZona.material.opacity = 1; cuerdaZona.material.color.set(0x263238); } },
+  mosq1: { nombre: 'Mosquetón que no cierra ni bloquea', fb: 'Los conectores deben cerrar y bloquearse automáticamente (doble seguro).', f: `${N09}, 8.4.3 g) 3) y k)`,
+    aplicar() { mosq[1].children[1].rotation.z = 1.15; mosq[1].children[1].material.color.set(0xE53935); } },
+};
+const BIEN = { pierna: 'Banda de la pierna sin daños', hebilla: 'Hebilla sin deformaciones', anillo: 'Anillo D sin corrosión ni grietas',
+  etiqueta: 'Etiqueta legible', costura: 'Costura en buen estado', absorbedor: 'Absorbedor sin desplegar', cuerda: 'Cuerda sin daños',
+  mosq0: 'Mosquetón que cierra y bloquea solo', mosq1: 'Mosquetón que cierra y bloquea solo' };
+
+// Prueba de compuerta: al tocar un mosquetón se anima la apertura/cierre
+let defectos = new Set();
+function probarMosq(i) { const comp = mosq[i].children[1], malo = defectos.has('mosq' + i); const z0 = comp.rotation.z;
+  comp.rotation.z = 1.2; setTimeout(() => { comp.rotation.z = malo ? 1.15 : 0.25; }, 450); return malo; }
+
+function pasoGrupo(titulo, texto, claves, fuente) {
+  const buenas = claves.filter(k => defectos.has(k)).map(k => ({ tipo: k, nombre: DEFECTOS[k].nombre, fb: DEFECTOS[k].fb, f: DEFECTOS[k].f }));
+  const sanas = claves.filter(k => !defectos.has(k));   // revisar una pieza sana no resta: en la vida real se revisa TODO
+  if (!buenas.length) return { titulo, texto: texto + ' <b>Revisa y confirma.</b>', fuente, iniciar() { W.resaltar(claves.map(k => PARTES[k])); decidir(W, '¿Encontraste algún daño en estas piezas?', [
+    { t: 'No: todo está bien, se registra y puede usarse conforme al fabricante', ok: true, fb: 'Pasa la revisión previa.', f: fuente },
+    { t: 'Sí: retiro todo por si acaso', ok: false, fb: 'Revisa cada punto: solo se retira lo que tiene daño.', f: fuente }], () => W.siguiente(), 'Revisa cada pieza que brilla.'); } };
+  const e = encuentra(W, { titulo, texto, fuente, buenas, malas: [] });
+  const ini = e.iniciar, toc = e.tocar;
+  e.iniciar = () => { ini(); W.resaltar(claves.map(k => PARTES[k])); };
+  e.tocar = (o) => { const t = o.userData.tipo; if (t && t.startsWith('mosq')) probarMosq(+t.slice(4));
+    if (sanas.includes(t)) return W.toast('info', `✔ Revisado: ${BIEN[t]}.`, fuente);
+    toc.call(e, o); };
+  return e;
+}
+
+const decisionRetiro = { titulo: '¿Qué haces con el equipo dañado?', texto: 'Decide.', fuente: `${N09}, 8.4.3 h)-j) y 7.3`, puntos: 20,
+  iniciar() { decidir(W, '¿Qué haces con los componentes defectuosos?', [
+    { t: 'Los identifico y retiro del servicio; solo se reemplazan por originales o autorizados por el fabricante', ok: true, fb: 'Así se evita que alguien los use.', f: `${N09}, 8.4.3 h)-i) y 7.3` },
+    { t: 'Los reparo con cinta o un nudo y los sigo usando', ok: false, crit: true, fb: 'Las reparaciones solo según el fabricante y por personal capacitado y autorizado.', f: `${N09}, 8.4.3 j)` },
+    { t: 'Los regreso al almacén sin marcar para que otro los use', ok: false, crit: true, fb: 'Deben identificarse para evitar su uso.', f: `${N09}, 7.3 y 8.4.3 h)` },
+  ], () => setTimeout(() => decidir(W, 'Además de esta revisión diaria, ¿cada cuánto se revisa formalmente el sistema?', [
+    { t: 'Cada año o con la periodicidad del fabricante, la que resulte menor, por personal capacitado (y con registro)', ok: true, fb: 'Y en ambientes agresivos, con mayor frecuencia.', f: `${N09}, 7.14 y 7.15` },
+    { t: 'Cada cinco años', ok: false, fb: 'Es anual o la del fabricante, la menor.', f: `${N09}, 7.14` },
+    { t: 'Solo cuando se rompe', ok: false, fb: 'Debe existir un programa de revisión y mantenimiento.', f: `${N09}, 5.7 y 7.14` },
+  ], () => W.siguiente()), 600)); } };
+
+W.inicio([{ id: 'azar', txt: '🎲 <b>Revisión completa:</b> defectos al azar (cambian en cada partida)' },
+          { id: 'fijo', txt: '📋 <b>Caso guiado:</b> arnés con 2 daños, línea y conectores' }],
+  id => {
+    defectos = new Set(id === 'fijo' ? ['pierna', 'anillo', 'absorbedor', 'mosq1']
+      : [...barajar(['pierna', 'hebilla', 'anillo', 'etiqueta', 'costura']).slice(0, 2), ...barajar(['absorbedor', 'cuerda', '']).slice(0, 1), ...(Math.random() < .6 ? ['mosq1'] : [])].filter(Boolean));
+    defectos.forEach(k => DEFECTOS[k].aplicar());
+    return [
+      intro(W, '<h2>🔎 Antes de subir, revisa tu equipo</h2><p>Mañana trabajarás en el borde de la losa del nivel 1. La NOM-009 pide revisar el sistema <b>antes de cada uso</b>, conforme al fabricante, al menos en <b>5 puntos</b>:</p><ol><li>Partes metálicas sin corrosión.</li><li>Hebillas, anillos, ganchos y mosquetones sin deformaciones ni grietas.</li><li>Conectores que abren, cierran y bloquean bien.</li><li>Cuerdas y bandas sin rupturas, deshilados, descosidos ni quemaduras.</li><li>Etiquetas legibles.</li></ol><p>Acércate con dos dedos y toca cada pieza que brilla. Si está dañada, cuenta como hallazgo.</p><p class="ficticio">Fuente: NOM-009-STPS-2011, 8.4.3 g).</p>',
+        'Constructora del Centro; equipo y defectos ficticios.'),
+      pasoGrupo('Revisa el arnés', 'Toca las piezas del arnés y encuentra los daños.', ['pierna', 'hebilla', 'anillo', 'etiqueta', 'costura'], `${N09}, 8.4.3 g) 1)-5)`),
+      pasoGrupo('Revisa la línea de vida', 'Revisa la cuerda y el absorbedor de energía.', ['absorbedor', 'cuerda'], `${N09}, 8.4.3 g) 4), p)-q)`),
+      pasoGrupo('Prueba los conectores', 'Toca cada mosquetón para abrirlo y soltarlo: debe cerrar y bloquearse solo.', ['mosq0', 'mosq1'], `${N09}, 8.4.3 g) 3) y k)`),
+      decisionRetiro,
+    ];
+  },
+  'Basado en: NOM-009-STPS-2011 (DOF 06/05/2011) 7.3, 7.14, 7.15, 8.4.3 g)-j), p)-q). Equipo, lote y defectos ficticios. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { PARTES, defectos: () => [...defectos], tocar: W.tocar, estado: W.qa };
+</script>
+</body>
+</html>

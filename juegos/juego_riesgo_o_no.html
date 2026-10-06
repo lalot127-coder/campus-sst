@@ -1,13 +1,13 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#16323F"><title>¿Es factor de riesgo? · NOM-035</title>
+<meta name="theme-color" content="#14213D"><title>¿Es riesgo o no? · Análisis de riesgo</title>
 <style>
-:root{--navy:#16323F;--rojo:#1F5F6B;--teal:#4F8A7C;--ambar:#C9A227;--rosa:#E3EFE6;--hielo:#F2F6F4;--texto:#1F2433;--tenue:#5B6270;--bien:#2E7D32;--mal:#C62828}
+:root{--navy:#14213D;--rojo:#C2410C;--teal:#1F6F8B;--ambar:#F2A900;--rosa:#FFF4E0;--hielo:#F3F4F7;--texto:#1F2433;--tenue:#5B6270;--bien:#2E7D32;--mal:#C62828}
 *{box-sizing:border-box}html,body{margin:0}
 body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:var(--hielo);color:var(--texto);-webkit-tap-highlight-color:transparent}
 header{background:var(--navy);color:#fff;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;position:sticky;top:0;z-index:5}
-header h1{margin:0;font-size:1.2rem}header .meta{color:#CFE3D4;font-size:.88rem}
+header h1{margin:0;font-size:1.2rem}header .meta{color:#FFE2C2;font-size:.88rem}
 .marcador{margin-left:auto;display:flex;gap:8px;font-weight:700;flex-wrap:wrap}.marcador span{background:var(--rojo);padding:5px 11px;border-radius:999px;font-size:.92rem}
 .volver{background:#fff;color:var(--navy);border:0;border-radius:10px;padding:6px 10px;font-weight:700;cursor:pointer}
 main{max-width:980px;margin:0 auto;padding:14px}
@@ -30,31 +30,27 @@ table{width:100%;border-collapse:collapse;font-size:.95rem}td,th{padding:6px;bor
 .pie{font-size:.78rem;color:var(--tenue);margin-top:14px}
 .big{font-size:2.6rem;font-weight:800;color:var(--rojo);text-align:center}
 .fila{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.objs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.obj{background:#fff;border-radius:14px;padding:10px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,.08);border:3px solid transparent}
-.obj .ic{font-size:2.2rem}.obj.bien{border-color:var(--bien);background:#F1F8F2}.obj.mal{border-color:var(--mal);background:#FFF4F4}
-.obj button{padding:6px 10px;font-size:.92rem}.obj .si{border-color:var(--bien);color:var(--bien)}.obj .no{border-color:var(--mal);color:var(--mal)}
-.caja{font-size:3.4rem;background:var(--rosa);border-radius:16px;padding:6px 12px;text-align:center;min-width:110px}#dentro{font-size:1.2rem;max-width:160px}
+.av{font-size:3.4rem}
 </style></head><body>
 <header><button class="volver" onclick="history.length>1?history.back():location.href='manual.html'">‹ Volver</button>
-<div><h1>🧠 ¿Es factor de riesgo?</h1><div class="meta">Contra reloj · NOM-035, 7.2</div></div><div class="marcador" id="marc"></div></header>
-<main><div id="app"></div><p class="pie">Fuentes: NOM-035-STPS-2018 (DOF 23/10/2018); LFT (últ. reforma DOF 14/05/2026). Casos ficticios con fines didácticos. Cursos NOM-035 · Ing. Carlos Eduardo Roa Sánchez.</p></main>
-<div class="modal" id="inicio" style="display:flex"><div class="tarjeta"><h2>🧠 ¿Es factor de riesgo?</h2><p>Decide en 90 segundos qué situaciones son <b>factores de riesgo psicosocial</b> y cuáles <b>no</b> (protegen tu bienestar).</p>
+<div><h1>⚠️ ¿Es riesgo o no?</h1><div class="meta">Peligro × exposición · NOM-030-STPS-2009</div></div><div class="marcador" id="marc"></div></header>
+<main><div id="app"></div><p class="pie">Fuentes: RFSST (DOF 13/11/2014); NOM-030-STPS-2009; NOM-017-STPS-2024; NOM-031-STPS-2011 y demás NOM citadas en cada retroalimentación (verificadas el 05/10/2026); jerarquía de controles NIOSH como referencia. Casos ficticios con fines didácticos. Curso Análisis de riesgo · Ing. Carlos Eduardo Roa Sánchez.</p></main>
+<div class="modal" id="inicio" style="display:flex"><div class="tarjeta"><h2>⚠️ ¿Es riesgo o no?</h2><p>En cada situación decide si hay <b>riesgo</b> (peligro + personas expuestas sin control), si el peligro está <b>controlado</b> o si <b>no hay un peligro relevante</b>. Después, clasifica el tipo de riesgo.</p>
 <input type="text" id="nombre" placeholder="Nombre completo" autocomplete="off">
 <button class="prim" id="empezar">Empezar</button> <button class="sec" id="verGrupo">Resultados del grupo</button></div></div>
 <div class="modal" id="final"><div class="tarjeta" id="finalCont"></div></div>
 <script>
-const CLAVE='riesgo_o_no', TITULO='¿Es factor de riesgo?';
+const CLAVE='riesgo_o_no', TITULO='¿Es riesgo o no?';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let JUGADOR='';
-function leer(){try{return JSON.parse(localStorage.getItem('n35_'+CLAVE)||'[]')}catch(e){return[]}}
+function leer(){try{return JSON.parse(localStorage.getItem('ar_'+CLAVE)||'[]')}catch(e){return[]}}
 async function registrar(fila){if(!location.protocol.startsWith('http')||location.hostname.endsWith('github.io'))return false;
  try{const r=await fetch('/api/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo:'juego',fila})});return r.ok}catch(e){return false}}
 function marc(items){$('#marc').innerHTML=items.map(t=>`<span>${t}</span>`).join('')}
 async function terminar(pts,max,repaso,extra){
  const pct=max?Math.round(pts/max*100):0, reg={juego:TITULO,nombre:JUGADOR,fecha:new Date().toLocaleString('es-MX'),puntos:pts,maximo:max,porcentaje:pct,...(extra||{})};
- try{const a=leer();a.push(reg);localStorage.setItem('n35_'+CLAVE,JSON.stringify(a))}catch(e){}
+ try{const a=leer();a.push(reg);localStorage.setItem('ar_'+CLAVE,JSON.stringify(a))}catch(e){}
  const ok=await registrar(reg);
  $('#finalCont').innerHTML=`<h2>${pct>=80?'🏆 ¡Excelente!':pct>=60?'👏 ¡Muy bien!':'💪 ¡Sigue practicando!'}</h2>
  <div class="big">${pts} / ${max}</div><p style="text-align:center"><b>${esc(JUGADOR)}</b> · ${pct}%${extra&&extra.tiempo?' · '+extra.tiempo:''}</p>
@@ -66,25 +62,28 @@ function grupo(){const a=leer();
  $('#finalCont').innerHTML=`<h2>Resultados del grupo (${a.length})</h2><table><tr><th>Nombre</th><th>Puntos</th><th>%</th><th>Fecha</th></tr>
  ${a.map(r=>`<tr><td>${esc(r.nombre)}</td><td>${r.puntos}/${r.maximo}</td><td>${r.porcentaje}%</td><td>${esc(r.fecha)}</td></tr>`).join('')||'<tr><td colspan=4>Sin registros</td></tr>'}</table><br>
  <button class="prim" onclick="csv()">Descargar CSV</button> <button class="sec" onclick="location.reload()">Cerrar</button>
- <button class="sec" onclick="if(confirm('¿Borrar los resultados de este dispositivo?')){localStorage.removeItem('n35_'+CLAVE);grupo()}">Borrar</button>`;
+ <button class="sec" onclick="if(confirm('¿Borrar los resultados de este dispositivo?')){localStorage.removeItem('ar_'+CLAVE);grupo()}">Borrar</button>`;
  $('#inicio').style.display='none';$('#final').style.display='flex'}
 function csv(){const a=leer();const t='Juego,Nombre,Fecha,Puntos,Maximo,Porcentaje\n'+a.map(r=>[r.juego,r.nombre,r.fecha,r.puntos,r.maximo,r.porcentaje].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
  const b=new Blob(['﻿'+t],{type:'text/csv'});const l=document.createElement('a');l.href=URL.createObjectURL(b);l.download='resultados_'+CLAVE+'.csv';l.click()}
 const barajar=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 $('#verGrupo').onclick=grupo;
 $('#empezar').onclick=()=>{JUGADOR=$('#nombre').value.trim()||'Participante';$('#inicio').style.display='none';iniciar()};
-const DATOS={"items": [["🔊", "Ruido constante que no deja escuchar a los compañeros", true, "Condición del ambiente de trabajo.", "NOM-035-STPS-2018, 7.2 a)"], ["📚", "El doble de pedidos con la mitad del personal, todos los días", true, "Carga de trabajo que excede la capacidad.", "NOM-035-STPS-2018, 7.2 b)"], ["🔀", "Dos jefes dan órdenes que se contradicen", true, "Cargas contradictorias o inconsistentes.", "NOM-035-STPS-2018, 7.2 b)"], ["🚫", "Nunca te preguntan cómo mejorar tu tarea, aunque sabes hacerla", true, "Falta de control sobre el trabajo.", "NOM-035-STPS-2018, 7.2 c)"], ["🌙", "Turno nocturno toda la semana sin descanso", true, "Jornadas y rotación de turnos que exceden la LFT.", "NOM-035-STPS-2018, 7.2 d)"], ["📱", "Mensajes del jefe a medianoche que hay que contestar", true, "Interferencia trabajo-familia.", "NOM-035-STPS-2018, 7.2 e)"], ["😠", "Jefe que grita y no aclara funciones", true, "Liderazgo negativo.", "NOM-035-STPS-2018, 7.2 f) 1)"], ["🙊", "Apodos y burlas diarias a un compañero", true, "Violencia laboral (malos tratos).", "NOM-035-STPS-2018, 7.2 g) 3)"], ["🧊", "Nadie ayuda a nadie: cada quien resuelve solo", true, "Relaciones negativas: sin trabajo en equipo ni apoyo.", "NOM-035-STPS-2018, 7.2 f) 2)"], ["🏅", "Reconocen tu desempeño sobresaliente en la junta", false, "Es una medida del entorno favorable.", "NOM-035-STPS-2018, 8.2 f)"], ["📋", "Te explican con claridad tus funciones", false, "Responsabilidades bien definidas: entorno favorable.", "NOM-035-STPS-2018, 7.3 c)"], ["🤝", "Compañeros que te ayudan con un problema del trabajo", false, "Apoyo social: protege.", "NOM-035-STPS-2018, 4.2"], ["🎓", "Te capacitan para tus tareas", false, "Formación para realizar bien las tareas.", "NOM-035-STPS-2018, 7.3 b)"], ["☕", "Pausas programadas en una tarea repetitiva", false, "Medida para evitar ritmos acelerados.", "NOM-035-STPS-2018, 8.2 b) 2)"], ["💬", "Tu jefa te corrige con respeto un error", false, "Una corrección respetuosa no es violencia.", "NOM-035-STPS-2018, 7.3"], ["📮", "Buzón seguro y confidencial de quejas", false, "Es una obligación de prevención.", "NOM-035-STPS-2018, 8.1 b)"]]};
+const DATOS={"casos": [{"av": "🪚", "t": "Un operador retira la guarda de la sierra para trabajar \"más rápido\".", "pasos": [["¿Qué hay aquí?", ["Hay riesgo: peligro con personas expuestas sin control suficiente", "Hay peligro, pero el riesgo está controlado o no hay exposición", "No hay un peligro relevante en esta situación"], 0, "Peligro mecánico + exposición directa por una condición insegura.", "RFSST (DOF 13/11/2014) art. 3 fr. V; NOM-004-STPS-1999, 5.2.1"], ["¿De qué tipo es el riesgo?", ["Físico", "Mecánico", "Químico", "Biológico", "Ergonómico", "Psicosocial"], 1, "Cortes y atrapamientos por la acción de la máquina.", "NOM-017-STPS-2024, 5.1 d) 2)"]]}, {"av": "🛢️", "t": "Tambo de solvente inflamable cerrado y etiquetado en un almacén ventilado al que nadie entra sin permiso.", "pasos": [["¿Qué hay aquí?", ["Hay riesgo: peligro con personas expuestas sin control suficiente", "Hay peligro, pero el riesgo está controlado o no hay exposición", "No hay un peligro relevante en esta situación"], 1, "El peligro (inflamable) existe, pero el recipiente está cerrado, identificado y sin personas expuestas.", "NOM-030-STPS-2009, 3.12; RFSST (DOF 13/11/2014) art. 22 fr. IV"]]}, {"av": "🔌", "t": "Cable pelado y energizado en un pasillo por donde pasan todos los días.", "pasos": [["¿Qué hay aquí?", ["Hay riesgo: peligro con personas expuestas sin control suficiente", "Hay peligro, pero el riesgo está controlado o no hay exposición", "No hay un peligro relevante en esta situación"], 0, "Peligro eléctrico y personas expuestas.", "NOM-030-STPS-2009, 6.1 a)"], ["¿De qué tipo es el riesgo?", ["Físico", "Mecánico", "Químico", "Biológico", "Ergonómico", "Psicosocial"], 0, "El riesgo eléctrico se incluye en los riesgos físicos.", "NOM-017-STPS-2024, 5.1 d) 1)"]]}, {"av": "🔒", "t": "Tablero eléctrico con bloqueo, candado y tarjeta durante el mantenimiento; nadie puede energizarlo.", "pasos": [["¿Qué hay aquí?", ["Hay riesgo: peligro con personas expuestas sin control suficiente", "Hay peligro, pero el riesgo está controlado o no hay exposición", "No hay un peligro relevante en esta situación"], 1, "La energía sigue siendo un peligro, pero la exposición está controlada con el bloqueo.", "NOM-030-STPS-2009, 3.12; NOM-029-STPS-2011, 7.2 f)"]]}, {"av": "💉", "t": "Una enfermera recolecta agujas usadas sin contenedor rígido.", "pasos": [["¿Qué hay aquí?", ["Hay riesgo: peligro con personas expuestas sin control suficiente", "Hay peligro, pero el riesgo está controlado o no hay exposición", "No hay un peligro relevante en esta situación"], 0, "Peligro biológico con exposición: punción y posible contagio.", "NOM-017-STPS-2024, 5.1 d) 4)"], ["¿De qué tipo es el riesgo?", ["Físico", "Mecánico", "Químico", "Biológico", "Ergonómico", "Psicosocial"], 3, "Microorganismos presentes en la sangre.", "NOM-017-STPS-2024, 5.1 d) 4)"]]}, {"av": "📦", "t": "Un almacenista levanta costales desde el piso con torsión del tronco durante todo el turno.", "pasos": [["¿Qué hay aquí?", ["Hay riesgo: peligro con personas expuestas sin control suficiente", "Hay peligro, pero el riesgo está controlado o no hay exposición", "No hay un peligro relevante en esta situación"], 0, "Sobreesfuerzo y posturas forzadas con exposición diaria.", "RFSST (DOF 13/11/2014) art. 3 fr. XVI"], ["¿De qué tipo es el riesgo?", ["Físico", "Mecánico", "Químico", "Biológico", "Ergonómico", "Psicosocial"], 4, "Factor de riesgo ergonómico por manejo manual de cargas.", "NOM-036-1-STPS-2018, cap. 7"]]}, {"av": "📱", "t": "La jefa envía mensajes a las 23:30 exigiendo respuesta inmediata casi todos los días.", "pasos": [["¿Qué hay aquí?", ["Hay riesgo: peligro con personas expuestas sin control suficiente", "Hay peligro, pero el riesgo está controlado o no hay exposición", "No hay un peligro relevante en esta situación"], 0, "Exigencias fuera de la jornada: interferencia trabajo-familia.", "NOM-035-STPS-2018, 7.2 e)"], ["¿De qué tipo es el riesgo?", ["Físico", "Mecánico", "Químico", "Biológico", "Ergonómico", "Psicosocial"], 5, "Factor de riesgo psicosocial por el tipo de jornada.", "RFSST (DOF 13/11/2014) art. 3 fr. XVII"]]}, {"av": "🖼️", "t": "Un cuadro decorativo ligero bien fijado a la pared de la sala de juntas.", "pasos": [["¿Qué hay aquí?", ["Hay riesgo: peligro con personas expuestas sin control suficiente", "Hay peligro, pero el riesgo está controlado o no hay exposición", "No hay un peligro relevante en esta situación"], 2, "No todo es un peligro: el análisis se enfoca en lo que puede causar daño. Si estuviera suelto sobre una salida, sí habría que analizarlo.", "NOM-030-STPS-2009, 3.8"]]}, {"av": "🧪", "t": "Se limpian piezas con solvente en un cuarto cerrado sin extracción; el trabajador refiere mareo.", "pasos": [["¿Qué hay aquí?", ["Hay riesgo: peligro con personas expuestas sin control suficiente", "Hay peligro, pero el riesgo está controlado o no hay exposición", "No hay un peligro relevante en esta situación"], 0, "Vapores químicos con exposición y síntomas: riesgo a la salud.", "NOM-010-STPS-2014, 4.34"], ["¿De qué tipo es el riesgo?", ["Físico", "Mecánico", "Químico", "Biológico", "Ergonómico", "Psicosocial"], 2, "Riesgo químico por inhalación de vapores.", "NOM-017-STPS-2024, 5.1 d) 3)"]]}, {"av": "🔊", "t": "Una compresora muy ruidosa funciona junto a los puestos de ensamble todo el turno.", "pasos": [["¿Qué hay aquí?", ["Hay riesgo: peligro con personas expuestas sin control suficiente", "Hay peligro, pero el riesgo está controlado o no hay exposición", "No hay un peligro relevante en esta situación"], 0, "Agente físico con exposición continua.", "RFSST (DOF 13/11/2014) art. 33 fr. II"], ["¿De qué tipo es el riesgo?", ["Físico", "Mecánico", "Químico", "Biológico", "Ergonómico", "Psicosocial"], 0, "El ruido es un riesgo físico.", "NOM-017-STPS-2024, 5.1 d) 1)"]]}], "etq": "Situación", "fijo": true};
 
-let it=[],pts=0,max=0,t0=0,h=null,rep=[],hechos=0;const LIM=90;
-function iniciar(){it=barajar(DATOS.items);max=it.length*5;t0=Date.now();h=setInterval(rel,500);pinta()}
-function rel(){const s=Math.max(0,LIM-Math.floor((Date.now()-t0)/1000));marc([`⏱ ${s} s`,`${pts} pts`,`${hechos}/${it.length}`]);if(s<=0){clearInterval(h);cerrar()}}
-function pinta(){$('#app').innerHTML=`<div class="card"><div class="fila"><div class="caja" id="caja">🧠<div id="dentro"></div></div><p style="flex:1">Toca cada objeto y decide: ¿es un <b>factor de riesgo psicosocial</b> o <b>no</b>? Tienes ${LIM} segundos.</p></div></div>
- <div class="objs">${it.map((x,i)=>`<div class="obj" id="o${i}"><div class="ic">${x[0]}</div><div>${esc(x[1])}</div><div class="fila" style="justify-content:center;margin-top:6px"><button class="sec si" data-i="${i}" data-v="1">⚠ Es riesgo</button><button class="sec no" data-i="${i}" data-v="0">✅ No es</button></div><div class="rt"></div></div>`).join('')}</div>`;
- $$('.obj button').forEach(b=>b.onclick=()=>decidir(+b.dataset.i,b.dataset.v==='1'))}
-function decidir(i,va){const x=it[i],o=$('#o'+i);if(o.dataset.l)return;o.dataset.l=1;hechos++;const ok=va===x[2];if(ok)pts+=5;else rep.push(`${x[1]}: ${x[2]?'ES riesgo':'NO es riesgo'} — ${x[3]}`);
- o.classList.add(ok?'bien':'mal');o.querySelectorAll('button').forEach(b=>b.disabled=true);
- o.querySelector('.rt').innerHTML=`<small>${ok?'✅':'❌'} ${x[2]?'Es factor de riesgo':'No es factor de riesgo'}. ${esc(x[3])}<br><i>${esc(x[4])}</i></small>`;
- if(x[2]&&va){const d=document.createElement('span');d.textContent=x[0];$('#dentro').appendChild(d)}rel();if(hechos===it.length){clearInterval(h);setTimeout(cerrar,1200)}}
-function cerrar(){const s=Math.floor((Date.now()-t0)/1000);it.forEach((x,i)=>{if(!$('#o'+i).dataset.l)rep.push(`${x[1]}: ${x[2]?'ES riesgo':'NO es riesgo'} (sin responder)`)});terminar(pts,max,rep,{tiempo:`${Math.min(s,LIM)} s`})}
+let i=0,p=0,pts=0,max=0,rep=[],ord=[];
+function iniciar(){i=0;p=0;pts=0;max=DATOS.casos.reduce((s,c)=>s+c.pasos.length,0)*10;pinta()}
+function pinta(){const c=DATOS.casos[i],s=c.pasos[p];ord=DATOS.fijo?s[1].map((_,k)=>k):barajar(s[1].map((_,k)=>k));marc([`${i+1}/${DATOS.casos.length}`,`${pts} pts`]);
+ $('#app').innerHTML=`<div class="card"><span class="etq">${esc(DATOS.etq||'Caso')} ${i+1}${c.pasos.length>1?' · paso '+(p+1)+'/'+c.pasos.length:''}</span>
+ <div class="fila" style="margin:10px 0"><div class="av">${c.av}</div><div style="flex:1;font-size:1.12rem">${esc(c.t)}</div></div>
+ <h3>${esc(s[0])}</h3><div class="opciones">${ord.map(k=>`<button class="op" data-k="${k}">${esc(s[1][k])}</button>`).join('')}</div><div id="retro"></div></div>`;
+ $$('.op').forEach(b=>b.onclick=()=>elegir(+b.dataset.k,b))}
+function elegir(k,b){const c=DATOS.casos[i],s=c.pasos[p];if($('#app').dataset.l==='1')return;$('#app').dataset.l='1';const ok=k===s[2];
+ $$('.op').forEach(x=>{x.disabled=true;if(+x.dataset.k===s[2])x.classList.add('ok')});if(!ok){b.classList.add('no');rep.push(`${DATOS.etq||'Caso'} ${i+1}: ${s[0]} → ${s[1][s[2]]}`)}else pts+=10;
+ const ult=p===c.pasos.length-1, fin=ult&&i===DATOS.casos.length-1;
+ $('#retro').innerHTML=`<div class="retro ${ok?'ok':'no'}"><b>${ok?'✅ ¡Correcto!':'❌ No es así.'}</b> ${esc(s[3])}<small>Fuente: ${esc(s[4])}</small></div><div style="text-align:right;margin-top:10px"><button class="prim" id="sig">${fin?'Ver resultado':'Continuar ➜'}</button></div>`;
+ marc([`${i+1}/${DATOS.casos.length}`,`${pts} pts`]);
+ $('#sig').onclick=()=>{$('#app').dataset.l='';if(fin)return terminar(pts,max,rep);if(ult){i++;p=0}else p++;pinta();scrollTo(0,0)};
+ $('#retro').scrollIntoView({behavior:'smooth',block:'center'})}
 
 </script></body></html>

@@ -71,8 +71,8 @@ function pasoSit(s) {
       decidir(W, '¿Qué hay aquí?', [R, C, NP].map((t, k) => ({ t, ok: k === s.r, fb: s.fb, f: s.f, crit: s.r === 0 && k === 2 && s.id === 'sierra' })), () => {
         S[s.id].marco.material.color.set(s.r === 0 ? 0xB03A2E : 0x2E7D32);
         if (s.t === undefined) return W.siguiente();
-        setTimeout(() => decidir(W, '¿De qué tipo es el riesgo?', TIPOS.map((t, k) => ({ t, ok: k === s.t, fb: k === s.t ? `Riesgo ${t.toLowerCase()}.` : 'Revisa los tipos de riesgo.', f: s.ft })), () => W.siguiente(), s.txt), 600);
-      }, s.txt); } };
+        setTimeout(() => decidir(W, '¿De qué tipo es el riesgo?', TIPOS.map((t, k) => ({ t, ok: k === s.t, fb: k === s.t ? `Riesgo ${t.toLowerCase()}.` : 'Revisa los tipos de riesgo.', f: s.ft })), () => W.siguiente(), s.txt, false), 600);
+      }, s.txt, false); } };
 }
 
 const CASOS = {

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14213D"><title>Ordena los controles · Análisis de riesgo</title>
+<style>
+:root{--navy:#14213D;--rojo:#C2410C;--teal:#1F6F8B;--ambar:#F2A900;--rosa:#FFF4E0;--hielo:#F3F4F7;--texto:#1F2433;--tenue:#5B6270;--bien:#2E7D32;--mal:#C62828}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:var(--hielo);color:var(--texto);-webkit-tap-highlight-color:transparent}
+header{background:var(--navy);color:#fff;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:1.2rem}header .meta{color:#FFE2C2;font-size:.88rem}
+.marcador{margin-left:auto;display:flex;gap:8px;font-weight:700;flex-wrap:wrap}.marcador span{background:var(--rojo);padding:5px 11px;border-radius:999px;font-size:.92rem}
+.volver{background:#fff;color:var(--navy);border:0;border-radius:10px;padding:6px 10px;font-weight:700;cursor:pointer}
+main{max-width:980px;margin:0 auto;padding:14px}
+.card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 2px 10px rgba(29,27,46,.1);margin-bottom:12px}
+.etq{display:inline-block;background:var(--rosa);color:var(--rojo);font-weight:800;border-radius:999px;padding:3px 12px;font-size:.85rem}
+.opciones{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px}
+.op{background:var(--hielo);border:2px solid transparent;border-radius:14px;padding:13px;font-size:1.03rem;cursor:pointer;text-align:left;color:var(--texto);display:flex;gap:10px;align-items:center;min-height:62px;font-family:inherit}
+.op:hover{border-color:var(--ambar)}.op .i{font-size:1.7rem}
+.op.ok{background:#E8F5E9;border-color:var(--bien)}.op.no{background:#FDECEA;border-color:var(--mal)}.op.sel{border-color:var(--teal);background:#E2F2F4}
+.retro{margin-top:12px;border-radius:14px;padding:13px;font-size:1.02rem}.retro.ok{background:#E8F5E9}.retro.no{background:#FDECEA}
+.retro small,.fuente{display:block;color:var(--tenue);font-style:italic;margin-top:6px;font-size:.85rem}
+button.prim{background:var(--rojo);color:#fff;border:0;border-radius:12px;padding:12px 20px;font-size:1.05rem;font-weight:700;cursor:pointer;font-family:inherit}
+button.sec{background:#fff;color:var(--navy);border:2px solid var(--navy);border-radius:12px;padding:10px 18px;font-size:1rem;cursor:pointer;font-family:inherit}
+button:disabled{opacity:.45;cursor:default}
+.modal{position:fixed;inset:0;background:rgba(29,27,46,.75);display:none;align-items:center;justify-content:center;padding:14px;z-index:9}
+.tarjeta{background:#fff;border-radius:18px;max-width:680px;width:100%;padding:22px;max-height:92vh;overflow:auto}
+.tarjeta h2{color:var(--navy);margin-top:0}
+input[type=text]{font-size:1.05rem;padding:10px;border-radius:10px;border:1px solid #c9ccd6;width:100%;margin:6px 0 12px;font-family:inherit}
+table{width:100%;border-collapse:collapse;font-size:.95rem}td,th{padding:6px;border-bottom:1px solid var(--hielo);text-align:left;vertical-align:top}
+.pie{font-size:.78rem;color:var(--tenue);margin-top:14px}
+.big{font-size:2.6rem;font-weight:800;color:var(--rojo);text-align:center}
+.fila{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.av{font-size:3.2rem}.num{display:inline-flex;min-width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;font-weight:800;align-items:center;justify-content:center;flex-shrink:0}
+.num:empty{background:#ccd}.retro li small{display:block}
+</style></head><body>
+<header><button class="volver" onclick="history.length>1?history.back():location.href='manual.html'">‹ Volver</button>
+<div><h1>🪜 Ordena los controles</h1><div class="meta">Jerarquía de controles · del más al menos efectivo</div></div><div class="marcador" id="marc"></div></header>
+<main><div id="app"></div><p class="pie">Fuentes: RFSST (DOF 13/11/2014); NOM-030-STPS-2009; NOM-017-STPS-2024; NOM-031-STPS-2011 y demás NOM citadas en cada retroalimentación (verificadas el 05/10/2026); jerarquía de controles NIOSH como referencia. Casos ficticios con fines didácticos. Curso Análisis de riesgo · Ing. Carlos Eduardo Roa Sánchez.</p></main>
+<div class="modal" id="inicio" style="display:flex"><div class="tarjeta"><h2>🪜 Ordena los controles</h2><p>Para cada riesgo, toca las 5 medidas en orden: de la <b>más efectiva</b> (eliminar) a la <b>menos efectiva</b> (EPP).</p>
+<input type="text" id="nombre" placeholder="Nombre completo" autocomplete="off">
+<button class="prim" id="empezar">Empezar</button> <button class="sec" id="verGrupo">Resultados del grupo</button></div></div>
+<div class="modal" id="final"><div class="tarjeta" id="finalCont"></div></div>
+<script>
+const CLAVE='ordena_controles', TITULO='Ordena los controles';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let JUGADOR='';
+function leer(){try{return JSON.parse(localStorage.getItem('ar_'+CLAVE)||'[]')}catch(e){return[]}}
+async function registrar(fila){if(!location.protocol.startsWith('http')||location.hostname.endsWith('github.io'))return false;
+ try{const r=await fetch('/api/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo:'juego',fila})});return r.ok}catch(e){return false}}
+function marc(items){$('#marc').innerHTML=items.map(t=>`<span>${t}</span>`).join('')}
+async function terminar(pts,max,repaso,extra){
+ const pct=max?Math.round(pts/max*100):0, reg={juego:TITULO,nombre:JUGADOR,fecha:new Date().toLocaleString('es-MX'),puntos:pts,maximo:max,porcentaje:pct,...(extra||{})};
+ try{const a=leer();a.push(reg);localStorage.setItem('ar_'+CLAVE,JSON.stringify(a))}catch(e){}
+ const ok=await registrar(reg);
+ $('#finalCont').innerHTML=`<h2>${pct>=80?'🏆 ¡Excelente!':pct>=60?'👏 ¡Muy bien!':'💪 ¡Sigue practicando!'}</h2>
+ <div class="big">${pts} / ${max}</div><p style="text-align:center"><b>${esc(JUGADOR)}</b> · ${pct}%${extra&&extra.tiempo?' · '+extra.tiempo:''}</p>
+ ${repaso&&repaso.length?'<h3>Para repasar</h3><ul>'+repaso.map(e=>'<li>'+e+'</li>').join('')+'</ul>':'<p>Sin errores. 👏</p>'}
+ <p class="fuente">${ok?'Registrado en la computadora de la persona instructora.':'Guardado en este dispositivo.'}</p>
+ <button class="prim" onclick="location.reload()">Jugar otra vez</button> <button class="sec" onclick="grupo()">Resultados del grupo</button>`;
+ $('#final').style.display='flex'}
+function grupo(){const a=leer();
+ $('#finalCont').innerHTML=`<h2>Resultados del grupo (${a.length})</h2><table><tr><th>Nombre</th><th>Puntos</th><th>%</th><th>Fecha</th></tr>
+ ${a.map(r=>`<tr><td>${esc(r.nombre)}</td><td>${r.puntos}/${r.maximo}</td><td>${r.porcentaje}%</td><td>${esc(r.fecha)}</td></tr>`).join('')||'<tr><td colspan=4>Sin registros</td></tr>'}</table><br>
+ <button class="prim" onclick="csv()">Descargar CSV</button> <button class="sec" onclick="location.reload()">Cerrar</button>
+ <button class="sec" onclick="if(confirm('¿Borrar los resultados de este dispositivo?')){localStorage.removeItem('ar_'+CLAVE);grupo()}">Borrar</button>`;
+ $('#inicio').style.display='none';$('#final').style.display='flex'}
+function csv(){const a=leer();const t='Juego,Nombre,Fecha,Puntos,Maximo,Porcentaje\n'+a.map(r=>[r.juego,r.nombre,r.fecha,r.puntos,r.maximo,r.porcentaje].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+ const b=new Blob(['﻿'+t],{type:'text/csv'});const l=document.createElement('a');l.href=URL.createObjectURL(b);l.download='resultados_'+CLAVE+'.csv';l.click()}
+const barajar=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+$('#verGrupo').onclick=grupo;
+$('#empezar').onclick=()=>{JUGADOR=$('#nombre').value.trim()||'Participante';$('#inicio').style.display='none';iniciar()};
+const DATOS={"casos": [{"av": "🧪", "t": "Vapores de un solvente tóxico al desengrasar piezas.", "m": [["Eliminar el desengrase cambiando el proceso por piezas que llegan limpias del proveedor", "NIOSH, Hierarchy of Controls (10/04/2024) — referencia no obligatoria"], ["Sustituir el solvente por otro cuyos efectos sean menos nocivos", "NOM-010-STPS-2014, 11.3 h)"], ["Instalar extracción localizada en la tina de desengrase", "NOM-010-STPS-2014, 11.3 f)"], ["Procedimiento de trabajo y rotación para reducir el tiempo de exposición", "NOM-010-STPS-2014, 11.3 a)"], ["Respirador con cartuchos mientras se instala la extracción", "NOM-017-STPS-2024, 5.2 a)"]]}, {"av": "🕳️", "t": "Inspección interior de un tanque (espacio confinado).", "m": [["Hacer la inspección con una cámara desde el exterior, sin entrar", "NOM-033-STPS-2015, 7.1"], ["Sustituir el producto del tanque por uno no peligroso antes de la inspección", "NIOSH, Hierarchy of Controls (10/04/2024) — referencia no obligatoria"], ["Ventilación forzada y aislamiento de las líneas de energía y fluidos", "NOM-033-STPS-2015, 9.3 a)-b)"], ["Autorización por escrito, vigía y procedimiento de rescate", "NOM-033-STPS-2015, cap. 8 y 10"], ["Arnés, línea de rescate y equipo respiratorio", "NOM-033-STPS-2015, 9.1 g)"]]}, {"av": "⚙️", "t": "Atrapamiento de manos en una prensa.", "m": [["Automatizar la alimentación para que nadie meta las manos", "NIOSH, Hierarchy of Controls (10/04/2024) — referencia no obligatoria"], ["Sustituir la prensa por un modelo con menor energía de cierre para la pieza", "NIOSH, Hierarchy of Controls (10/04/2024) — referencia no obligatoria"], ["Guarda fija y mando bimanual", "NOM-004-STPS-1999, 5.3; NOM-010-STPS-2014, 11.3 d)"], ["Procedimiento de bloqueo de energía para mantenimiento", "NOM-029-STPS-2011, 7.1"], ["Guantes resistentes al corte", "NOM-017-STPS-2024, 5.2 b)"]]}, {"av": "🔊", "t": "Ruido de un molino en el área de producción.", "m": [["Retirar el molino del área porque ya no es necesario en el proceso", "NIOSH, Hierarchy of Controls (10/04/2024) — referencia no obligatoria"], ["Sustituirlo por un equipo de menor emisión de ruido", "RFSST (DOF 13/11/2014) art. 33 fr. V; NIOSH, Hierarchy of Controls (10/04/2024) — referencia no obligatoria"], ["Encapsular el molino y aislar el área", "RFSST (DOF 13/11/2014) art. 33 fr. V; NIOSH, Hierarchy of Controls (10/04/2024) — referencia no obligatoria"], ["Limitar el tiempo de permanencia y señalizar la zona", "RFSST (DOF 13/11/2014) art. 33 fr. III y V"], ["Protección auditiva", "RFSST (DOF 13/11/2014) art. 33 fr. VI; NOM-017-STPS-2024, 5.2"]]}]};
+
+let i=0,pts=0,max=0,rep=[],orden=[],ops=[];
+function iniciar(){i=0;pts=0;max=DATOS.casos.length*25;rep=[];pinta()}
+function pinta(){const c=DATOS.casos[i];orden=[];ops=barajar(c.m.map((m,k)=>({t:m[0],f:m[1],k})));marc([`${i+1}/${DATOS.casos.length}`,`${pts} pts`]);
+ $('#app').innerHTML=`<div class="card"><span class="etq">Riesgo ${i+1} [FICTICIO]</span>
+ <div class="fila" style="margin:10px 0"><div class="av">${c.av}</div><div style="flex:1;font-size:1.12rem">${esc(c.t)}</div></div>
+ <p>Toca las medidas <b>de la más efectiva (1) a la menos efectiva (5)</b>.</p>
+ <div class="opciones" style="grid-template-columns:1fr">${ops.map((o,j)=>`<button class="op" data-j="${j}"><span class="num"></span>${esc(o.t)}</button>`).join('')}</div>
+ <div id="retro"></div><div style="text-align:right;margin-top:10px"><button class="sec" id="reset">Reiniciar orden</button> <button class="prim" id="bOk" disabled>Comprobar ✔</button></div></div>`;
+ $$('.op').forEach(b=>b.onclick=()=>{const j=+b.dataset.j;if(orden.includes(j))return;orden.push(j);b.classList.add('sel');b.querySelector('.num').textContent=orden.length;$('#bOk').disabled=orden.length<ops.length});
+ $('#reset').onclick=()=>{orden=[];$$('.op').forEach(b=>{b.classList.remove('sel');b.querySelector('.num').textContent=''});$('#bOk').disabled=true};
+ $('#bOk').onclick=comprobar}
+function comprobar(){const c=DATOS.casos[i],N=['Eliminación','Sustitución','Ingeniería','Administrativo','EPP'];let b=0;
+ orden.forEach((j,pos)=>{const ok=ops[j].k===pos;const el=$$('.op')[j];el.classList.add(ok?'ok':'no');if(ok){b++;pts+=5}});
+ if(b<5)rep.push(`Riesgo ${i+1}: el orden correcto es ${c.m.map((m,k)=>(k+1)+') '+N[k]).join(', ')}`);
+ $$('.op').forEach(x=>x.disabled=true);$('#reset').remove();
+ $('#retro').innerHTML=`<div class="retro ${b===5?'ok':'no'}"><b>${b===5?'✅ ¡Orden perfecto!':b+' de 5 en su lugar'}</b><ol>${c.m.map((m,k)=>`<li><b>${N[k]}:</b> ${esc(m[0])}<small>${esc(m[1])}</small></li>`).join('')}</ol>
+ <small>Jerarquía: NIOSH (referencia no obligatoria). El EPP es transitorio o complementario (NOM-017-STPS-2024, 5.2).</small></div>`;
+ $('#bOk').textContent=i<DATOS.casos.length-1?'Siguiente riesgo ➜':'Ver resultado';$('#bOk').onclick=()=>{if(i<DATOS.casos.length-1){i++;pinta();scrollTo(0,0)}else terminar(pts,max,rep)};
+ marc([`${i+1}/${DATOS.casos.length}`,`${pts} pts`]);$('#retro').scrollIntoView({behavior:'smooth',block:'center'})}
+
+</script></body></html>

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Persona suspendida: rescate</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+<script src="../comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Persona suspendida en el arnés tras una caída. Obligatorio: NOM-009-STPS-2011 5.11, 15.1 a)-f), 16.2 i)-k), 8.4.3 p)-q);
+// RFSST art. 24 fr. IV. Referencia técnica NO obligatoria: OSHA SHIB 03-24-2004 (act. 2011) (síntomas y acciones).
+// El escenario NO fija tiempos de rescate (la NOM no los establece); el cronómetro es para practicar rapidez.
+// Fuentes verificadas (02_fuentes_verificadas/registro_fuentes.md, consulta 06/10/2026). Persona y obra [FICTICIO].
+const { N09, RF, SHIB, FIC, exterior, obra, trabajador, lineaVida, plataforma, marcador, cronometro, V } = window.Alturas;
+const { decidir, intro } = window.Riesgo;
+const ALT = 4.0, BORDE = -1.0, XS = -1.4;
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Persona suspendida: rescate', icono: '🚑',
+  clave: 'construccion_alturas_rescate', criterio: { pct: 80, sinCriticos: true }, fondo: 0xBFD9EC,
+  vistas: [[[3.6, 2.6, 5.6], [XS, 2.6, BORDE]], [[XS + 0.4, 3.0, 1.8], [XS, 2.8, BORDE + 0.4]], [[XS - 4, 2, 3], [XS, 1.5, 0]]] });
+const { scene, letrero } = W; W.controls.maxDistance = 14;
+exterior(W);
+const O = obra(W, { altura: ALT, bordeZ: BORDE, rotulo: '' });
+W.activarXR({ inicio: [XS + 2.5, 3.0], piso: O.piso, entorno: O.entorno.filter(e => e !== O.piso) });
+O.cinta.visible = false;
+
+// Persona suspendida (anclaje en la viga, línea tensa, absorbedor desplegado)
+const ANCLA = V(W, XS, ALT + 2.5, BORDE - 0.15);
+W.caja(9, 0.3, 0.18, 0x7B8794, 0, ALT + 2.67, BORDE - 0.15);
+const P = trabajador(W, { x: XS, y: ALT - 1.6, z: BORDE + 0.45, arnes: true, pose: 'colgado' });
+P.g.rotation.x = 0.3;
+const LV = lineaVida(W); W.cuadro.push(() => LV.set(ANCLA, P.anillo(), 1.2, 0));
+const piel = P.g.children.find(o => o.geometry && o.geometry.type === 'SphereGeometry');
+// Compañeros y equipo
+trabajador(W, { x: XS + 2.6, z: 1.4, ry: -2.6, arnes: false });
+const PL = plataforma(W, { x: XS + 3.2, z: BORDE + 1.4 }); PL.g.rotation.y = Math.PI / 2;
+const MK = {
+  radio: marcador(W, { x: XS + 2.2, y: 1.6, z: 1.9, tipo: 'radio', icono: '📻', etiqueta: 'Radio · plan de emergencias', escala: 0.75, mira: [3.6, 2.6, 5.6] }),
+  plataforma: marcador(W, { x: XS + 3.2, y: 2.2, z: BORDE + 1.4, tipo: 'plataforma', icono: '🛗', etiqueta: 'Plataforma de elevación del plan', escala: 0.75, mira: [3.6, 2.6, 5.6] }),
+  escalera: marcador(W, { x: XS - 1.6, y: 1.2, z: 0.9, tipo: 'escalera', icono: '🪜', etiqueta: 'Escalera de mano suelta', escala: 0.75, mira: [3.6, 2.6, 5.6] }),
+  persona: marcador(W, { x: XS + 0.7, y: ALT - 0.6, z: BORDE + 0.6, tipo: 'persona', icono: '🗣️', etiqueta: 'Hablar con Luis', escala: 0.75, mira: [3.6, 2.6, 5.6] }),
+};
+Object.values(MK).forEach(m => m.rot.visible = true);
+const tablero = letrero('Luis, 34 años, quedó suspendido después de una caída [FICTICIO]', 4.4, 0.3, '#C62828'); tablero.position.set(XS + 1, 0.6, 2.6); tablero.rotation.y = -0.5; scene.add(tablero);
+
+let CRON = null, nSint = 0;
+const SINT = ['Luis dice que siente las piernas dormidas.', 'Luis está pálido y sudoroso; dice que se marea.', 'Luis siente náusea y ve "gris".', 'Luis responde cada vez más lento.'];
+function empeora() { nSint = Math.min(SINT.length - 1, nSint + 1); if (piel) piel.material.color.lerp(new THREE.Color(0xE8E2D6), 0.4); W.toast('info', `🩺 ${SINT[nSint]}`, SHIB, 3000); }
+const toca = (id, fn) => ({ tocar(o) { if (o.userData.tipo === id && !this._h) { this._h = true; W.resaltar([]); fn(); } } });
+
+const pasoAlerta = { titulo: '¡Emergencia!', texto: 'Luis quedó colgado de su arnés. ¿Qué haces primero? Toca lo que corresponde.', fuente: `${N09}, 15.1 b) 1)-2)`, puntos: 10,
+  iniciar() { CRON = CRON || cronometro(W, { etiqueta: '🚨' }); W.resaltar([MK.radio.marco, MK.escalera.marco]); },
+  tocar(o) { const t = o.userData.tipo; if (this._h) return;
+    if (t === 'escalera') return W.mal('Subir sin equipo ni procedimiento puede generar una segunda víctima. Primero se activa el plan.', `${N09}, 15.1 b) 6) y 16.2 k)`, true);
+    if (t !== 'radio') return; this._h = true; W.resaltar([]);
+    decidir(W, 'Por el radio activas el plan de atención a emergencias. ¿Qué comunicas?', [
+      { t: 'Alerta de persona suspendida, ubicación exacta, que se suspendan las actividades y que llamen al directorio de auxilio (rescate, hospital)', ok: true, fb: 'Alertamiento, comunicación con directorio y suspensión de actividades.', f: `${N09}, 15.1 b) 1)-3)` },
+      { t: 'Que alguien venga cuando pueda', ok: false, fb: 'La comunicación debe ser inmediata y completa.', f: `${N09}, 15.1 b) 1)-2)` },
+    ], () => { empeora(); W.siguiente(); }); } };
+
+const pasoHablar = { titulo: 'Habla con Luis', texto: 'Mientras llega el equipo de rescate, toca a Luis para hablar con él.', fuente: SHIB, puntos: 10,
+  iniciar() { W.resaltar([MK.persona.marco]); }, ...toca('persona', () => decidir(W, '¿Qué le indicas a Luis mientras llega el rescate?', [
+    { t: 'Que mueva ("bombee") las piernas y, si puede, apoye los pies en la estructura; que no se desconecte', ok: true, fb: 'Reduce la acumulación de sangre en las piernas mientras llega el rescate.', f: SHIB },
+    { t: 'Que se quede completamente quieto y no hable', ok: false, fb: 'La inmovilidad favorece la intolerancia ortostática.', f: SHIB },
+    { t: 'Que se quite el arnés y salte a la losa', ok: false, crit: true, fb: '¡Jamás! Caería al vacío.', f: `${N09}, 8.4.3 k)` },
+  ], () => { empeora(); W.siguiente(); })) };
+
+const pasoSintomas = { titulo: 'Vigila sus señales', texto: 'Hay que vigilarlo de forma continua.', fuente: SHIB, puntos: 10,
+  iniciar() { W.pregunta('¿Cuáles son señales de intolerancia ortostática que debes vigilar? (marca todas las correctas)', ['Mareo', 'Palidez', 'Sudoración', 'Náusea', 'Visión gris o pérdida de la visión', 'Hambre', 'Ganas de reír'], [0, 1, 2, 3, 4], SHIB,
+    () => { empeora(); W.siguiente(); }, true, 'Además: desmayo, falta de aire, bochornos y frecuencia cardiaca o presión alteradas.'); } };
+
+const pasoMetodo = { titulo: 'Elige cómo rescatarlo', texto: 'Toca el equipo con el que harás el rescate.', fuente: `${N09}, 15.1 b) 6) y e); 16.2 k); ${RF} art. 24 fr. IV`, puntos: 20,
+  iniciar() { W.resaltar([MK.plataforma.marco, MK.escalera.marco]); },
+  async tocar(o) { const t = o.userData.tipo; if (this._h) return;
+    if (t === 'escalera') return W.mal('Una escalera suelta no es el equipo de rescate del plan; apoyarla en una persona suspendida es inestable y peligroso.', `${N09}, 12.3 e) y 15.1 e)`);
+    if (t !== 'plataforma') return; this._h = true; W.resaltar([]);
+    W.bien('Equipo de rescate previsto en el plan de atención a emergencias.', `${N09}, 15.1 b) 6) y e)`);
+    decidir(W, '¿Quién opera la plataforma para el rescate?', [
+      { t: 'Personal capacitado y autorizado en el equipo y en el plan, con su sistema contra caídas anclado en la canastilla y un segundo trabajador que asiste', ok: true, fb: 'Capacitación en rescate y operación segura de la plataforma.', f: `${N09}, 16.2 k), 16.5, 11.5 b) 3) y m)` },
+      { t: 'Cualquiera que sepa manejar', ok: false, crit: true, fb: 'Solo personal capacitado y autorizado.', f: `${N09}, 16.5 y 5.13` },
+    ], async () => { await rescatar(); W.siguiente(); }); } };
+async function rescatar() {
+  const g = PL.g; await W.mover(g.position, V(W, XS + 0.9, 0, BORDE + 0.45), 1300);
+  for (let h = 0.6; h <= ALT - 1.8; h += 0.25) { PL.elevar(h); await new Promise(r => setTimeout(r, 70)); }
+  P.g.rotation.x = 0; await W.mover(P.g.position, V(W, XS + 0.9, ALT - 1.75, BORDE + 0.45), 700);
+  for (let h = ALT - 1.8; h >= 0.6; h -= 0.25) { PL.elevar(h); P.g.position.y = h + 0.05; await new Promise(r => setTimeout(r, 70)); }
+  await W.mover(P.g.position, V(W, XS + 0.6, 0, BORDE + 1.8), 700); P.g.rotation.set(-Math.PI / 2, 0, 0); P.g.position.y = 0.2;
+  CRON && CRON.parar();
+}
+const pasoAtencion = { titulo: 'Luis ya está en el piso', texto: 'Decide la atención.', fuente: `${SHIB}; ${N09}, 15.1 b) 4)`, puntos: 10,
+  iniciar() { decidir(W, 'Luis está en el piso, consciente pero muy mareado. ¿Qué sigue?', [
+    { t: 'Primeros auxilios y vigilancia; si pierde el conocimiento, mantener la vía aérea abierta; trasladarlo a valoración médica aunque diga sentirse bien', ok: true, fb: 'Puede haber efectos tardíos, como daño renal: siempre valoración médica.', f: `${SHIB}; ${N09}, 15.1 b) 4)` },
+    { t: 'Que se levante rápido y regrese a trabajar', ok: false, crit: true, fb: 'Requiere atención y valoración médica.', f: SHIB },
+  ], () => W.siguiente()); } };
+const pasoDespues = { titulo: 'Después de la emergencia', texto: 'Cierra la emergencia.', fuente: `${N09}, 8.4.3 p)-q) y 15.1 b) 5) y 7)`, puntos: 10,
+  iniciar() { const s = CRON ? CRON.seg() : 0;
+    W.aviso(`<h2>⏱ Tiempo de rescate en la simulación: ${Math.floor(s / 60)} min ${s % 60} s</h2><p>Rescatar <b>lo antes posible</b>: la suspensión prolongada puede causar pérdida del conocimiento y, según la bibliografía citada por OSHA, la muerte en menos de 30 minutos.</p><p class="ficticio">Fuente: ${SHIB}. La NOM-009 no fija un tiempo: exige plan, equipo de rescate y capacitación teórico-práctica (15.1, 16.2 k).</p>`, () =>
+      decidir(W, '¿Qué se hace con el sistema de Luis y con los trabajos?', [
+        { t: 'Su sistema se marca y retira (no se reutiliza sin autorización del fabricante); se eliminan los riesgos y solo entonces se reanudan las actividades', ok: true, fb: 'Así lo prevé el plan de emergencias.', f: `${N09}, 8.4.3 p)-q); 15.1 b) 5) y 7)` },
+        { t: 'Se reanuda de inmediato con el mismo equipo', ok: false, crit: true, fb: 'El sistema accionado no se reutiliza y antes se eliminan los riesgos.', f: `${N09}, 8.4.3 q) y 15.1 b) 5)` },
+      ], () => W.siguiente())); } };
+
+W.inicio([{ id: 'todo', txt: '🚑 <b>Rescate completo</b> con cronómetro' }],
+  () => [intro(W, `<h2>🚑 Persona suspendida</h2><p>El sistema de Luis <b>sí detuvo su caída</b>: el absorbedor se desplegó y quedó colgado bajo el borde de la losa. Ahora corre otro riesgo: la <b>suspensión prolongada</b> en el arnés (intolerancia ortostática o "trauma por suspensión").</p><p>Tú diriges la respuesta con el <b>plan de atención a emergencias</b> (NOM-009, 15.1). El cronómetro corre: actúa rápido, pero sin crear otra víctima.</p>`, 'Obra, persona y situación ficticias.'),
+    pasoAlerta, pasoHablar, pasoSintomas, pasoMetodo, pasoAtencion, pasoDespues],
+  `Basado en: NOM-009-STPS-2011 5.11, 8.4.3 p)-q), 11.5, 12.3, 15.1, 16.2 i)-k) y 16.5; RFSST art. 24 fr. IV; ${SHIB}. Situación ficticia. 🥽 En visor: botón VR.`);
+
+if (location.search.includes('qa')) window.__qa = { MK, tocar: W.tocar, estado: W.qa, P };
+</script>
+</body>
+</html>

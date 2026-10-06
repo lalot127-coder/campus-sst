@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Análisis de riesgo del edificio</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../comun.js"></script>
+<script src="../catalogo.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Puerta "Análisis de riesgo" de cada edificio: ?e=<edificio> (cafeteria, biblioteca, hospital, industria, proteccion,
+// laboral, empresa). Los riesgos salen de ../catalogo.js (regla: cada módulo nuevo del campus agrega su zona).
+// Método: identificar (NOM-030-STPS-2009 6.1) → evaluar con la matriz NOM-031-STPS-2011 8.3 o con el método propio de la
+// NOM que aplique (selector) → controlar (NOM-017-STPS-2024 5.2; jerarquía NIOSH como referencia).
+const P = new URLSearchParams(location.search);
+const CAT = window.CATALOGO_RIESGOS.edificios;
+const E = CAT[P.get('e')] ? P.get('e') : 'industria';
+const ED = CAT[E];
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: `Análisis de riesgo · ${ED.nombre}`, icono: '🔎',
+  clave: 'riesgo_analisis_' + E, criterio: { pct: 80, sinCriticos: true }, fondo: 0xE8ECEF,
+  campus: '../../../index.html?mundo=' + E,
+  vistas: [[[0, 3.1, 5.4], [0, 1.0, -2.6]], [[-1.2, 1.8, 0.4], [-4.5, 1.0, -2.2]], [[1.2, 1.8, 0.4], [4.5, 1.0, -2.2]], [[0, 1.7, 0.6], [0, 1.0, -4.4]]] });
+const { scene, letrero, caja } = W;
+const R = window.Riesgo;
+const Z = ED.zonas, S = {}, n = Z.length;
+const { piso, entorno, z0 } = R.sala(W, { ancho: n > 2 ? 15 : 12, fondo: n > 2 ? 11 : 9, rotulo: `${ED.icono} ${ED.nombre.toUpperCase()} · ANÁLISIS DE RIESGO`, color: '#' + ED.color.toString(16).padStart(6, '0') });
+W.activarXR({ inicio: [0, 0.6], piso, entorno });
+
+// ------------------------------------------------------------------ zonas en arco alrededor de la persona (una estación por zona)
+const radio = n > 2 ? 5 : 4.2, abre = n === 1 ? 0 : Math.min(1.2, 0.42 * (n - 1));
+Z.forEach((zona, i) => {
+  const a = n === 1 ? 0 : -abre + 2 * abre * i / (n - 1);
+  const cx = Math.sin(a) * radio, cz = 0.6 - Math.cos(a) * radio;
+  const base = caja(3.1, 0.03, 1.6, 0xD7DEE4, cx, 0.015, cz); base.rotation.y = -a;
+  const rot = letrero(zona.titulo, Math.min(3.0, 0.085 * zona.titulo.length + 0.5), 0.24, '#14213D'); rot.position.set(cx, 2.55, cz - 0.1); rot.lookAt(0, 2.55, 0.6); scene.add(rot);
+  const m = zona.riesgos.length, paso = m > 1 ? 2.7 / (m - 1) : 0;
+  zona.riesgos.forEach((r, k) => {
+    const dx = (k - (m - 1) / 2) * paso;
+    const px = cx + Math.cos(a) * dx, pz = cz + Math.sin(a) * dx;
+    R.prop(W, r.prop, px, pz, -a);
+    const bajo = ['charco', 'cable', 'multicontacto'].includes(r.prop);
+    S[zona.id + ':' + r.id] = R.situacion(W, { x: px - Math.sin(a) * 0.45, z: pz + Math.cos(a) * 0.45, y: bajo ? 0.7 : (k % 2 ? 1.75 : 2.05), tipo: zona.id + ':' + r.id, icono: r.icono, etiqueta: r.nombre });
+  });
+});
+
+// ------------------------------------------------------------------ pasos por zona
+const FREQ = ['A', 'B', 'C', 'D', 'E'], SEVS = ['I', 'II', 'III', 'IV'], NIVELES = ['Grave', 'Elevado', 'Medio', 'Bajo', 'Mínimo'];
+function pasosZona(zona) {
+  const buenas = zona.riesgos.filter(r => r.real).map(r => ({ tipo: zona.id + ':' + r.id, nombre: r.nombre, fb: `${r.tipo}: ${r.fb}`, f: r.f, obj: S[zona.id + ':' + r.id] }));
+  const malas = zona.riesgos.filter(r => !r.real).map(r => ({ tipo: zona.id + ':' + r.id, nombre: r.nombre, fb: r.fb, f: r.f, obj: S[zona.id + ':' + r.id] }));
+  const pr = zona.riesgos.find(r => r.id === zona.principal), ev = zona.evalua;
+  const pasos = [R.encuentra(W, { titulo: `${zona.titulo}: identifica`, texto: `${zona.escena}<br>Toca los <b>riesgos</b> de esta zona. Cuidado: hay medidas de control y objetos que no son riesgo.`,
+    fuente: 'NOM-030-STPS-2009, 3.12 y 6.1', buenas, malas })];
+  if (ev.metodo) {
+    pasos.push({ titulo: `${zona.titulo}: ¿qué método?`, texto: `Riesgo principal: <b>${pr.nombre}</b>.`, fuente: 'RFSST art. 7 fr. I (selector de metodología)',
+      iniciar() { W.resaltar([S[zona.id + ':' + pr.id].marco]); R.decidir(W, ev.metodo.pregunta, ev.metodo.ops, () => W.siguiente(), `Riesgo: <b>${pr.nombre}</b>. Una NOM específica puede fijar su propio método.`); } });
+  } else {
+    const nv = R.nivel(ev.f, ev.s);
+    pasos.push({ titulo: `${zona.titulo}: evalúa`, texto: `Califica el riesgo principal: <b>${pr.nombre}</b>.<br><i>${ev.pista}</i>`, fuente: R.N31, puntos: 30,
+      iniciar() { W.resaltar([S[zona.id + ':' + pr.id].marco]);
+        const ctx = `<b>${pr.nombre}</b><br><i>${ev.pista}</i> <span class="ficticio">[ejemplo didáctico]</span>`;
+        R.decidir(W, '1 · ¿Qué frecuencia de ocurrencia tiene?', FREQ.map(f => ({ t: R.FREC[f], ok: f === ev.f, fb: `Frecuencia ${R.FREC[ev.f]}.`, f: 'NOM-031-STPS-2011, 8.3 a) Tabla 2' })), () =>
+          setTimeout(() => R.decidir(W, '2 · ¿Qué severidad del daño puede ocasionar?', SEVS.map(s => ({ t: R.SEV[s], ok: s === ev.s, fb: `Severidad ${R.SEV[ev.s]}.`, f: 'NOM-031-STPS-2011, 8.3 b) Tabla 3' })), () =>
+            setTimeout(() => R.decidir(W, `3 · Con ${ev.f} × ${ev.s}, ¿qué nivel indica la matriz?`, NIVELES.map(x => ({ t: x, ok: x === nv, fb: `${ev.f} × ${ev.s} = ${nv}. ${nv === 'Grave' ? 'Se atiende de inmediato.' : 'Se atiende en orden: graves, elevados, medios, bajos y mínimos.'}`, f: 'NOM-031-STPS-2011, 8.3 c) Tabla 4 y 8.3.1' })), () => {
+              S[zona.id + ':' + pr.id].marco.material.color.set(R.NIVEL_COLOR[nv]); W.siguiente(); }, ctx + tablaMatriz(ev.f, ev.s), false), 500), ctx, false), 500), ctx, false); } });
+  }
+  pasos.push({ titulo: `${zona.titulo}: controla`, texto: `Elige la medida más efectiva para <b>${pr.nombre}</b>.`, fuente: 'NOM-017-STPS-2024, 5.2; NIOSH (referencia)',
+    iniciar() { R.decidir(W, '¿Cuál es la medida MÁS efectiva?', zona.control, () => W.siguiente(), `Riesgo: <b>${pr.nombre}</b>. Recuerda: eliminación → sustitución → ingeniería → administrativos → EPP.`); } });
+  return pasos;
+}
+function tablaMatriz(f, s) {
+  const col = { Grave: '#B03A2E', Elevado: '#E67E22', Medio: '#F2C94C', Bajo: '#A5D6A7', 'Mínimo': '#2E7D32' };
+  return `<table style="margin-top:8px;font-size:.8rem;text-align:center"><tr><th></th>${SEVS.map(x => `<th>${x}</th>`).join('')}</tr>${['E', 'D', 'C', 'B', 'A'].map(fr => `<tr><th>${fr}</th>${SEVS.map((x, j) => {
+    const v = R.MATRIZ[fr][j]; return `<td style="background:${col[v]};color:${['Grave', 'Elevado', 'Mínimo'].includes(v) ? '#fff' : '#1F2433'};${fr === f || x === s ? 'outline:2px solid #14213D' : ''}">${fr === f && x === s ? '?' : v}</td>`; }).join('')}</tr>`).join('')}</table>
+    <p class="ficticio">Matriz NOM-031-STPS-2011, Tabla 4 (la celda "?" es la tuya).</p>`;
+}
+
+const intro = R.intro(W, `<h2>🔎 Análisis de riesgo · ${ED.nombre}</h2><p>Recorre las zonas del edificio. En cada una: <b>1)</b> identifica los riesgos (peligro + exposición), <b>2)</b> evalúa el principal con la matriz de la NOM-031-STPS-2011 o con el método que exige su NOM y <b>3)</b> elige el control más efectivo.</p><p class="ficticio">La matriz NOM-031 es obligatoria en construcción; aquí se usa como método de referencia validado en una NOM.</p>`,
+  `${ED.nombre} del campus. Escenas, frecuencias y severidades de ejemplo.`);
+const casos = [{ id: '*', txt: `🏢 <b>Recorrido completo:</b> ${Z.length} zona${Z.length > 1 ? 's' : ''} del edificio` }].concat(Z.length > 1 ? Z.map(z => ({ id: z.id, txt: `📍 <b>Zona:</b> ${z.titulo}` })) : []);
+W.inicio(casos, id => [intro, ...(id === '*' ? Z : Z.filter(z => z.id === id)).flatMap(pasosZona)],
+  `Basado en: RFSST (DOF 13/11/2014) art. 7 fr. I; NOM-030-STPS-2009 3.12 y 6.1; NOM-031-STPS-2011 8.3; NOM-017-STPS-2024 5.1-5.2; NOM específicas citadas en cada riesgo; jerarquía de controles NIOSH (referencia). Catálogo ${window.CATALOGO_RIESGOS.version}. 🥽 En visor: botón VR.`);
+
+if (P.has('qa')) window.__qa = { S: Object.fromEntries(Object.entries(S).map(([k, v]) => [k, v.marco])), ED, tocar: W.tocar, estado: W.qa };
+</script>
+</body>
+</html>

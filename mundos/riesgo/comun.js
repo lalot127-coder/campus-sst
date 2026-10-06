@@ -93,13 +93,15 @@
   }
 
   // Decisión: ops [{t, ok, crit, fb, f}]
-  function decidir(W, titulo, ops, alAcertar, contexto = '') {
+  // mezclar=true baraja las opciones una vez (se conserva el orden en los reintentos); false para escalas ordenadas.
+  function decidir(W, titulo, ops, alAcertar, contexto = '', mezclar = true) {
+    if (mezclar) { ops = barajar(ops); mezclar = false; }
     const $ = W.$;
     $('mCont').innerHTML = `<h2>${titulo}</h2>${contexto ? `<p>${contexto}</p>` : ''}<div id="ops"></div>`;
     ops.forEach(o => { const b = document.createElement('button'); b.className = 'op'; b.textContent = o.t;
       b.onclick = () => { $('modal').style.display = 'none';
         if (o.ok) { W.bien(o.fb || 'Correcto.', o.f); alAcertar && alAcertar(); }
-        else { W.mal(o.fb || 'No es lo correcto.', o.f, !!o.crit); setTimeout(() => decidir(W, titulo, ops, alAcertar, contexto), 900); } };
+        else { W.mal(o.fb || 'No es lo correcto.', o.f, !!o.crit); setTimeout(() => decidir(W, titulo, ops, alAcertar, contexto, false), 900); } };
       $('ops').appendChild(b); });
     $('modal').style.display = 'flex';
   }
