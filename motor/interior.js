@@ -35,7 +35,7 @@ export function construirInterior(area, ctx) {
   }
   const zE = L / 2 + 1;   // muro de la entrada
   muro(W, 0, -L / 2, 0); muro(L + 2, -W / 2, 1, Math.PI / 2); muro(L + 2, W / 2, 1, Math.PI / 2);
-  muro((W - 3) / 2, -(W + 3) / 4, zE, 0); muro((W - 3) / 2, (W + 3) / 4, zE, 0); caja(3, H - 2.6, 0.2, 0xF4F7FA, 0, 2.6 + (H - 2.6) / 2, zE);
+  muro((W - 3) / 2, -(W + 3) / 4, zE, 0); muro((W - 3) / 2, (W + 3) / 4, zE, 0);
   nav.liberarRect(0, zE, 2.6, 1);
 
   // ---------------- ruta de circulación (franjas amarillas) y flechas verdes de evacuación hacia la salida
@@ -55,7 +55,7 @@ export function construirInterior(area, ctx) {
     const L0 = { mesh: m, id, pos: new THREE.Vector3(x, 0, z).addScaledVector(frente, 1.6), mira: new THREE.Vector3(x, y, z) };
     m.userData = { tipo: 'senal', id, letrero: letreros.length }; letreros.push(L0); tocables.push(m); return m;
   }
-  senal('salida', 1.0, 0, 3.0, zE - 0.12, Math.PI);
+  senal('salida', 1.0, -4.2, 2.9, zE - 0.12, Math.PI);
   senal('extintor', 0.5, -2.2, 1.9, zE - 0.12, Math.PI); senal('primeros', 0.55, 2.2, 1.9, zE - 0.12, Math.PI);
   (area.senales || []).filter(s => s !== 'salida').slice(0, 3).forEach((id, k) => senal(id, 0.6, -2 + k * 2, 2.4, -L / 2 + 0.12, 0));
   senal('ruta', 0.9, -W / 2 + 0.12, 2.9, L / 2 - 4, Math.PI / 2); senal('ruta', 0.9, W / 2 - 0.12, 2.9, L / 2 - 4, -Math.PI / 2);
@@ -65,7 +65,7 @@ export function construirInterior(area, ctx) {
 
   // ---------------- logotipo CERS y directorio en el muro del fondo
   if (ctx.logo) { const lg = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5), new THREE.MeshBasicMaterial({ map: ctx.logo })); lg.position.set(-W / 2 + 2.2, 2.2, -L / 2 + 0.12); escena.add(lg); }
-  const dir = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 1.9), new THREE.MeshBasicMaterial({ map: letreroTextura(THREE, { titulo: `${area.nombre}`, sub: area.desc ? area.desc.slice(0, 46) : '', estado: 'sala', color: 'marino', W: 760, H: 340 }) }));
+  const dir = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 1.9), new THREE.MeshBasicMaterial({ map: letreroTextura(THREE, { titulo: `${area.nombre}`, sub: area.desc ? area.desc.slice(0, 46) : '', estado: 'info', color: 'marino', W: 760, H: 340 }) }));
   dir.position.set(2.2, 2.2, -L / 2 + 0.12); escena.add(dir);
 
   // ---------------- puertas: lados izquierdo y derecho del pasillo
@@ -98,7 +98,7 @@ export function construirInterior(area, ctx) {
   const zv = L / 2 - 2.6;
   caja(2.4, 1.05, 0.7, area.color, -W / 2 + 2.2, 0.525, zv - 0.3); caja(2.5, 0.06, 0.8, 0xFFFFFF, -W / 2 + 2.2, 1.08, zv - 0.3);
   nav.bloquearRect(-W / 2 + 2.2, zv - 0.3, 2.8, 1.1);
-  const recep = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.4), new THREE.MeshBasicMaterial({ map: letreroTextura(THREE, { titulo: 'RECEPCIÓN', estado: 'sala', color: 'marino', W: 600, H: 200 }) })); recep.position.set(-W / 2 + 2.2, 0.6, zv + 0.06); escena.add(recep);
+  const recep = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.4), new THREE.MeshBasicMaterial({ map: letreroTextura(THREE, { titulo: 'RECEPCIÓN', estado: 'vacio', color: 'marino', W: 600, H: 200 }) })); recep.position.set(-W / 2 + 2.2, 0.6, zv + 0.06); escena.add(recep);
   function silla(x, z, ry) {
     const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; escena.add(g);
     const asiento = caja(0.48, 0.06, 0.46, 0x3FA7C6, 0, 0.46, 0, g), resp = caja(0.48, 0.5, 0.06, 0x3FA7C6, 0, 0.72, -0.21, g);
@@ -119,7 +119,7 @@ export function construirInterior(area, ctx) {
   nav.bloquearCirculo(W / 2 - 0.7, L / 2 + 0.3, 0.4); nav.bloquearCirculo(-W / 2 + 0.7, -L / 2 + 0.7, 0.4);
 
   // salida (puerta de la entrada, del lado interior)
-  const salidaMesh = caja(2.4, 2.5, 0.05, 0x2E7D32, 0, 1.25, zE + 0.02, escena, { transparent: true, opacity: .25 }); salidaMesh.userData = { tipo: 'salir' }; tocables.push(salidaMesh);
+  const salidaMesh = caja(2.4, 2.5, 0.05, 0x2E7D32, 0, 1.25, zE + 0.02, escena, { transparent: true, opacity: .12, depthWrite: false }); salidaMesh.userData = { tipo: 'salir' }; tocables.push(salidaMesh);
   const entrada = new THREE.Vector3(0, 0, L / 2 - 0.4);
 
   // ---------------- cada cuadro: puertas que se abren y muros que no tapan la vista

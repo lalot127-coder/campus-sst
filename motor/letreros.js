@@ -5,7 +5,7 @@
 //   letreroSVG({titulo, sub, estado, color, senal}) → texto SVG
 //   letreroTextura(THREE, opciones, alListo) → CanvasTexture (dibuja el SVG y encima el pictograma de Senales)
 export const COLORES = { rojo: ['#D3122A', '#FFFFFF'], amarillo: ['#FFD100', '#111111'], verde: ['#00995C', '#FFFFFF'], azul: ['#0D6EB8', '#FFFFFF'], gris: ['#8A99A8', '#FFFFFF'], marino: ['#0E3A6B', '#FFFFFF'] };
-export const ESTADOS = { '3d': 'SIMULADOR 3D', juego: 'JUEGO', sala: 'SALA DE MODELOS', pronto: 'PRÓXIMAMENTE', pendiente: 'PENDIENTE', bloqueado: 'SOLICITAR ACCESO', salida: 'SALIDA' };
+export const ESTADOS = { '3d': 'SIMULADOR 3D', juego: 'JUEGO', sala: 'SALA DE MODELOS', pronto: 'PRÓXIMAMENTE', pendiente: 'PENDIENTE', bloqueado: 'SOLICITAR ACCESO', salida: 'SALIDA', info: 'BIENVENIDA', entrada: 'ENTRA CAMINANDO', vacio: '' };
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 function partir(t, max) { const pal = String(t).split(' '), l = ['']; pal.forEach(p => { if ((l[l.length - 1] + ' ' + p).trim().length > max && l[l.length - 1]) l.push(p); else l[l.length - 1] = (l[l.length - 1] + ' ' + p).trim(); }); return l.slice(0, 3); }
 export function letreroSVG({ titulo, sub = '', estado = '3d', color = 'marino', senal = null, W = 640, H = 300 }) {

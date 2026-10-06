@@ -208,11 +208,11 @@ export function construirZonas(ctx) {
       p.push(poner(z, 'nave', ax - 6, az - 2, Math.PI / 2), poner(z, 'mesa_sierra', ax + 4, az + 6, 0), poner(z, 'sierra', ax + 8, az + 6, 0), poner(z, 'aserradero', ax + 6, az + 3, 0));
       for (let k = 0; k < 4; k++) p.push(poner(z, k % 2 ? 'pila' : 'troncos', ax - 2 + k * 5, az + 16, k * .3)); for (let k = 0; k < 3; k++) p.push(poner(z, 'tablas', ax + 14, az + k * 2, 0), poner(z, 'madera', ax + 16, az + k * 2 + 1, .3));
       p.push(poner(z, 'camion', ax + 12, az + 14, -Math.PI / 2), poner(z, 'hacha', ax + 3, az + 9, .5), poner(z, 'serrucho', ax + 3.6, az + 9.2, 1));
-      for (let k = 0; k < 46; k++) { const a = k * 2.399, r = 26 + (k * 7 % 22); const x = ax + Math.sin(a) * r - 6, zz = az + Math.cos(a) * r - 6; if (zz > az + 10 && x > ax - 14) continue;
+      for (let k = 0; k < 46; k++) { const a = k * 2.399, r = 26 + (k * 7 % 22); const x = ax + Math.sin(a) * r - 6, zz = az + Math.cos(a) * r - 6; if (zz > az + 10 && x > ax - 14) continue; if (Math.hypot(x - z.entrada.x, zz - z.entrada.z) < 9 || Math.hypot(x - z.def.caseta[0], zz - z.def.caseta[1]) < 8) continue; { const [ci, ck] = nav.celda(x, zz); if (nav.dentro(ci, ck) && nav.costo[nav.idx(ci, ck)] < .5) continue; }
         p.push(poner(z, k % 3 ? 'pino' : 'pino_b', x, zz, a)); obst(x, zz, .9); nav.bloquearCirculo(x, zz, .8); }
       for (let k = 0; k < 8; k++) p.push(poner(z, 'tocon', ax - 20 + k * 2.4, az - 20 - (k % 2) * 3, k));
       await Promise.all(p); },
-    async ferrocarril(z) { const p = []; const via = await kit.pieza(z.kit, 'via'); const largo = new THREE.Box3().setFromObject(via).getSize(new THREE.Vector3()).x || 4;
+    async ferrocarril(z) { const p = []; const via = await kit.pieza(z.kit, 'via'); via.rotation.y = Math.PI / 2; const largo = new THREE.Box3().setFromObject(via).getSize(new THREE.Vector3()).x || 4;   // rieles a lo largo de x
       for (let x = -168; x <= 168; x += largo) { const c = via.clone(true); c.position.set(x, .3, fz); z.grupo.add(c); }
       p.push(poner(z, 'senal', fx - 26, fz + 4, 0), poner(z, 'senal', fx + 18, fz + 4, 0), poner(z, 'contenedor', fx + 30, fz + 10, 0), poner(z, 'contenedor', fx + 30, fz + 13, 0));
       for (let k = 0; k < 4; k++) p.push(poner(z, 'poste', fx - 60 + k * 40, fz - 4, 0));
