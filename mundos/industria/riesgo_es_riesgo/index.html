@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · ¿Es riesgo o no?</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Fuentes verificadas (02_fuentes_verificadas/registro_fuentes.md, consulta 05/10/2026)
+const RF = 'RFSST (DOF 13/11/2014)', N30 = 'NOM-030-STPS-2009', N17 = 'NOM-017-STPS-2024';
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: '¿Es riesgo o no?', icono: '⚠️',
+  clave: 'industria_riesgo_es_riesgo', criterio: { pct: 80, sinCriticos: true }, fondo: 0xECEFF1,
+  vistas: [[[0, 1.8, 2.6], [0, 0.9, -3]], [[-2, 1.8, 0.8], [-3.6, 0.9, -2.2]], [[2, 1.8, 0.8], [3.6, 0.9, -2.2]]] });
+const { scene, letrero } = W;
+const { sala, prop, persona, situacion, decidir, intro, PALETA } = window.Riesgo;
+
+const { piso, entorno } = sala(W, { ancho: 11, fondo: 9, rotulo: 'TALLER Y ALMACÉN · RECORRIDO DE VERIFICACIÓN' });
+W.activarXR({ inicio: [0, 0.6], piso, entorno });
+
+const R = 'Hay riesgo: peligro con personas expuestas sin control suficiente';
+const C = 'Hay peligro, pero el riesgo está controlado o no hay exposición';
+const NP = 'No hay un peligro relevante';
+const TIPOS = ['Físico', 'Mecánico', 'Químico', 'Biológico', 'Ergonómico', 'Psicosocial', 'Condición de instalaciones'];
+// Situaciones: {tipo, prop, x, z, icono, etiqueta, persona?, txt, r (0 R / 1 C / 2 NP), fb, f, t (tipo correcto) , ft}
+const SIT = [
+  { id: 'sierra', prop: 'prensa', x: -4.2, z: -4.6, icono: '🪚', et: 'Prensa sin guarda', per: { x: -4.2, z: -3.8, ry: Math.PI, pose: 'agachado' },
+    txt: 'El operador quitó la guarda de la prensa para "ir más rápido" y mete las manos.', r: 0, fb: 'Peligro mecánico con exposición directa por una condición insegura.', f: `${RF} art. 3 fr. V; NOM-004-STPS-1999, 5.2.1`,
+    t: 1, ft: `${N17}, 5.1 d) 2)` },
+  { id: 'tambo', prop: 'tambo', x: -2.2, z: -4.8, icono: '🛢️', et: 'Solvente en almacén',
+    txt: 'Tambo de solvente inflamable cerrado, etiquetado, en almacén ventilado al que solo entra personal autorizado.', r: 1,
+    fb: 'El peligro existe, pero el recipiente está cerrado e identificado y no hay exposición.', f: `${N30}, 3.12; ${RF} art. 22 fr. IV` },
+  { id: 'cable', prop: 'cable', x: 0, z: -3.2, icono: '🔌', et: 'Cable pelado',
+    txt: 'Cable pelado y energizado atravesando el pasillo por donde pasan todos.', r: 0, fb: 'Peligro eléctrico con personas expuestas.', f: `${N30}, 6.1 a)`,
+    t: 0, ft: `${N17}, 5.1 d) 1) (el eléctrico es físico)` },
+  { id: 'loto', prop: 'tablero', x: 2.2, z: -4.8, icono: '🔒', et: 'Tablero bloqueado',
+    txt: 'Tablero eléctrico con candado y tarjeta de bloqueo durante el mantenimiento; nadie puede energizarlo.', r: 1,
+    fb: 'La energía es un peligro, pero el bloqueo controla la exposición.', f: `${N30}, 3.12; NOM-029-STPS-2011, 7.2 f)` },
+  { id: 'cajas', prop: 'cajas', x: 4.2, z: -4.4, icono: '📦', et: 'Carga manual', per: { x: 4.2, z: -3.6, ry: Math.PI, pose: 'agachado' },
+    txt: 'Un almacenista levanta costales desde el piso con torsión del tronco todo el turno.', r: 0, fb: 'Sobreesfuerzo y posturas forzadas con exposición diaria.', f: `${RF} art. 3 fr. XVI`,
+    t: 4, ft: 'NOM-036-1-STPS-2018, cap. 7' },
+  { id: 'charco', prop: 'charco', x: -3.4, z: -1.2, icono: '💧', et: 'Aceite en el piso',
+    txt: 'Mancha de aceite en el pasillo de tránsito, sin señalizar ni limpiar.', r: 0, fb: 'Condición física insegura en las instalaciones: caída al mismo nivel.', f: `${N30}, 6.1 a)`,
+    t: 6, ft: `${N30}, 6.1 a)` },
+  { id: 'compresora', prop: 'compresora', x: 3.4, z: -1.0, icono: '🔊', et: 'Compresora ruidosa', per: { x: 2.6, z: -1.2, ry: -Math.PI / 2 },
+    txt: 'La compresora funciona junto a los puestos de ensamble todo el turno; nadie usa protección.', r: 0, fb: 'Agente físico con exposición continua.', f: `${RF} art. 33 fr. II`,
+    t: 0, ft: `${N17}, 5.1 d) 1)` },
+  { id: 'planta', prop: 'planta', x: -1.4, z: -1.6, icono: '🪴', et: 'Planta decorativa',
+    txt: 'Una maceta pequeña en una esquina, fuera de rutas y salidas.', r: 2, fb: 'No todo es un peligro: el análisis se enfoca en lo que puede causar daño.', f: `${N30}, 3.8` },
+  { id: 'extintor', prop: 'extintor', x: 1.4, z: -1.8, icono: '🧯', et: 'Extintor en su lugar',
+    txt: 'Extintor señalizado, accesible y con su revisión vigente.', r: 2, fb: 'Es una medida de protección, no un peligro.', f: 'RFSST art. 19 fr. II' },
+  { id: 'mensajes', prop: 'escritorio', x: 0, z: -5.6, icono: '📱', et: 'Mensajes de madrugada', per: { x: 0, z: -5.0, ry: Math.PI, ropa: 0x6A1B9A },
+    txt: 'El supervisor de turno exige al almacenista contestar mensajes de trabajo a las 23:30 casi todos los días.', r: 0, fb: 'Interferencia trabajo-familia por exigencias fuera de la jornada.', f: 'NOM-035-STPS-2018, 7.2 e)',
+    t: 5, ft: `${RF} art. 3 fr. XVII` },
+];
+const S = {};
+SIT.forEach(s => { prop(W, s.prop, s.x, s.z); if (s.per) persona(W, { ropa: 0x1565C0, casco: 0xF2C94C, ...s.per });
+  S[s.id] = situacion(W, { x: s.x, z: s.z + 0.55, y: s.prop === 'cable' || s.prop === 'charco' ? 0.8 : 1.9, tipo: s.id, icono: s.icono, etiqueta: s.et }); });
+
+function pasoSit(s) {
+  return { titulo: s.et, texto: `Toca la situación que brilla: <b>${s.et}</b>.`, fuente: s.f,
+    puntos: s.t !== undefined ? 20 : 10,
+    iniciar() { W.resaltar([S[s.id].marco]); },
+    tocar(o) { if (o.userData.tipo !== s.id || this._h) return; this._h = true; W.resaltar([]); if (S[s.id].rot) S[s.id].rot.visible = true;
+      decidir(W, '¿Qué hay aquí?', [R, C, NP].map((t, k) => ({ t, ok: k === s.r, fb: s.fb, f: s.f, crit: s.r === 0 && k === 2 && s.id === 'sierra' })), () => {
+        S[s.id].marco.material.color.set(s.r === 0 ? 0xB03A2E : 0x2E7D32);
+        if (s.t === undefined) return W.siguiente();
+        setTimeout(() => decidir(W, '¿De qué tipo es el riesgo?', TIPOS.map((t, k) => ({ t, ok: k === s.t, fb: k === s.t ? `Riesgo ${t.toLowerCase()}.` : 'Revisa los tipos de riesgo.', f: s.ft })), () => W.siguiente(), s.txt), 600);
+      }, s.txt); } };
+}
+
+const CASOS = {
+  completo: () => [intro(W, '<h2>⚠️ Recorrido de verificación</h2><p>Eres parte de la comisión de seguridad e higiene y haces el recorrido del taller. En cada situación decide: ¿hay <b>riesgo</b> (peligro + exposición sin control), el riesgo está <b>controlado</b> o <b>no hay un peligro relevante</b>? Si hay riesgo, clasifícalo.</p><p><b>Recuerda:</b> riesgo = peligro × exposición (NOM-030-STPS-2009, 3.12).</p>',
+    'Taller y almacén de Metalmecánica del Centro.'), ...SIT.map(pasoSit)],
+  rapido: () => [intro(W, '<h2>⚡ Recorrido rápido</h2><p>Cinco situaciones para practicar en poco tiempo.</p>', 'Taller y almacén de Metalmecánica del Centro.'),
+    ...['sierra', 'tambo', 'cable', 'planta', 'mensajes'].map(id => pasoSit(SIT.find(s => s.id === id)))],
+};
+W.inicio([{ id: 'completo', txt: '🔎 <b>Recorrido completo:</b> 10 situaciones' }, { id: 'rapido', txt: '⚡ <b>Recorrido rápido:</b> 5 situaciones' }],
+  id => CASOS[id](),
+  'Basado en: NOM-030-STPS-2009 3.8, 3.12 y 6.1; RFSST art. 3 fr. V, XVI y XVII, arts. 22 y 33; NOM-017-STPS-2024 5.1 d); NOM-004-STPS-1999; NOM-029-STPS-2011; NOM-036-1-STPS-2018; NOM-035-STPS-2018 7.2; RFSST art. 19. Empresa ficticia. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { S: Object.fromEntries(Object.entries(S).map(([k, v]) => [k, v.marco])), SIT, tocar: W.tocar, estado: W.qa };
+</script>
+</body>
+</html>
