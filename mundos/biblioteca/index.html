@@ -180,7 +180,25 @@ const RETOS = [
   { q: 'Masas máximas que puede cargar una persona trabajadora', ok: ['nom036'] },
 ];
 const RETO = { on: false, lista: [], i: 0, pts: 0, fallas: 0, t0: 0 };
-function iniciarReto() { RETO.on = true; RETO.lista = [...RETOS].sort(() => Math.random() - .5).slice(0, 8); RETO.i = 0; RETO.pts = 0; RETO.fallas = 0; RETO.t0 = Date.now(); pintarReto();
+// Más retos generados del catálogo (crecen con cada norma verificada): la pista es el "para qué sirve" de cada documento,
+// sin su clave. Y selección de temas por estante/dependencia (07/10/2026).
+const esc = t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+DOCUMENTOS.forEach(d => { if (!d.uso || RETOS.some(r => r.ok.includes(d.id))) return;
+  const q = d.uso.replace(new RegExp(esc(d.clave), 'gi'), 'este documento'); if (q.length > 30 && q.length < 220) RETOS.push({ q, ok: [d.id] }); });
+function elegirTemasReto() {
+  let sel; try { sel = JSON.parse(localStorage.getItem('temas_reto') || 'null'); } catch (e) { sel = null; }
+  const ops = ESTANTES.map(e => ({ e, n: RETOS.filter(r => DOC[r.ok[0]] && DOC[r.ok[0]].estante === e.id).length })).filter(o => o.n);
+  if (!Array.isArray(sel)) sel = ops.map(o => o.e.id);
+  $('#mCont').innerHTML = `<h2>🎯 Reto: ¿qué temas incluyes?</h2><p>Elige los estantes (dependencias) de donde saldrán las preguntas:</p><div id="tRet" style="display:grid;gap:6px;margin:8px 0">${ops.map(o => `<label style="display:flex;gap:8px;align-items:center;background:#E8F5F9;border-radius:10px;padding:9px 11px;cursor:pointer"><input type="checkbox" value="${o.e.id}" ${sel.includes(o.e.id) ? 'checked' : ''}> ${o.e.icono} ${o.e.nombre} <small style="color:#5B6B7C">(${o.n} retos)</small></label>`).join('')}</div>
+    <button class="sec" id="tTodos">Todos</button> <button class="prim" id="tOk">Empezar el reto</button>`;
+  $('#modal').style.display = 'flex';
+  $('#tTodos').onclick = () => document.querySelectorAll('#tRet input').forEach(i => i.checked = true);
+  $('#tOk').onclick = () => { const e = [...document.querySelectorAll('#tRet input:checked')].map(i => i.value); if (!e.length) return toast('Elige al menos un tema.', 'no');
+    try { localStorage.setItem('temas_reto', JSON.stringify(e)); } catch (x) { } $('#modal').style.display = 'none'; iniciarReto(e); };
+}
+function iniciarReto(estantes) { if (!Array.isArray(estantes)) return elegirTemasReto();
+  const base = RETOS.filter(r => DOC[r.ok[0]] && estantes.includes(DOC[r.ok[0]].estante));
+  RETO.on = true; RETO.lista = [...(base.length ? base : RETOS)].sort(() => Math.random() - .5).slice(0, 8); RETO.i = 0; RETO.pts = 0; RETO.fallas = 0; RETO.t0 = Date.now(); pintarReto();
   toast('🎯 Busca el documento en el estante correcto, ábrelo y toca "Este es el documento del reto".', 'info', 4500); }
 function pintarReto() { const r = RETO.lista[RETO.i]; $('#reto').style.display = 'block'; $('#reto').innerHTML = `🎯 Reto ${RETO.i + 1}/${RETO.lista.length}: ¿Dónde lo buscarías?<small>${r.q}</small>`;
   $('#cReto').style.display = 'inline-block'; $('#cReto').textContent = `🎯 ${RETO.pts} pts`; }
@@ -195,7 +213,7 @@ async function finReto() {
   let ok = false; if (location.protocol.startsWith('http')) try { ok = (await fetch('/api/registro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tipo: 'simulador', fila: reg }) })).ok; } catch (e) { }
   $('#mCont').innerHTML = `<h2>${pct >= 80 ? '🏆 ¡Excelente búsqueda!' : '💪 Sigue practicando'}</h2><p><b>${nombre}</b> · ${RETO.pts}/${max} puntos (${pct}%) · ${RETO.fallas} intento(s) fallido(s) · ${Math.floor(s / 60)} min ${s % 60} s</p>
     <p class="aviso">${ok ? '✅ Resultado registrado en la computadora de la persona instructora.' : 'Resultado guardado en este dispositivo.'}</p><div class="acc"><button class="prim" id="bOtra">Jugar otra vez</button><button class="sec" id="bFin">Seguir explorando</button></div>`;
-  $('#modal').style.display = 'flex'; $('#bOtra').onclick = () => { $('#modal').style.display = 'none'; iniciarReto(); }; $('#bFin').onclick = () => { $('#modal').style.display = 'none'; $('#cReto').style.display = 'none'; };
+  $('#modal').style.display = 'flex'; $('#bOtra').onclick = () => { $('#modal').style.display = 'none'; elegirTemasReto(); }; $('#bFin').onclick = () => { $('#modal').style.display = 'none'; $('#cReto').style.display = 'none'; };
 }
 $('#bReto').onclick = iniciarReto;
 
@@ -210,7 +228,7 @@ addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; cam
 renderer.setAnimationLoop(() => { const ahora = performance.now();
   for (let i = tweens.length - 1; i >= 0; i--) { const t = tweens[i]; const k = Math.min(1, (ahora - t.t0) / t.ms); const ee = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; t.v.lerpVectors(t.de, t.a, ee); if (k >= 1) { tweens.splice(i, 1); t.r(); } }
   controls.update(); renderer.render(scene, camera); etiquetas(); });
-Acceso.proteger('📚 Biblioteca normativa', CAMPUS + '?mundo=biblioteca');
+Acceso.sesionUnica(); Acceso.proteger('📚 Biblioteca normativa', CAMPUS + '?mundo=biblioteca');
 if (P.has('reto')) iniciarReto();
 if (P.get('estante') && ESTA[P.get('estante')]) abrirEstante(P.get('estante'));
 if (QA) window.__qa = { abrirEstante, leer, responderReto, iniciarReto, RETO, DOCUMENTOS, ESTANTES, vistaGeneral };

@@ -8,11 +8,16 @@
 <script src="../../../motor/senales.js"></script>
 <script src="../../../motor/motor.js"></script>
 <style>#xrBar{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}#xrBar button{background:#0E3A6B;color:#fff;border:0;border-radius:12px;padding:10px 14px;font-weight:800}
-#medidor{position:fixed;right:12px;bottom:12px;z-index:4;background:rgba(255,255,255,.96);border-radius:14px;padding:10px 12px;width:210px;display:none;box-shadow:0 6px 20px rgba(0,0,0,.2);font-weight:700;color:#0E3A6B}
-#medidor .b{height:12px;border-radius:6px;background:#E8F5F9;overflow:hidden;margin:3px 0 7px}#medidor .b i{display:block;height:100%}</style>
+#medidor{position:fixed;right:12px;top:calc(var(--barraH,60px) + 10px);z-index:4;background:rgba(255,255,255,.96);border-radius:14px;padding:10px 12px;width:210px;display:none;box-shadow:0 6px 20px rgba(0,0,0,.2);font-weight:700;color:#0E3A6B}
+#medidor .b{height:12px;border-radius:6px;background:#E8F5F9;overflow:hidden;margin:3px 0 7px}#medidor .b i{display:block;height:100%}
+#palanca{position:fixed;right:18px;bottom:110px;z-index:6;width:118px;height:118px;border-radius:50%;border:5px solid #fff;background:radial-gradient(circle at 35% 30%,#ef5350,#b71c1c);color:#fff;font-weight:900;font-size:.95rem;line-height:1.1;box-shadow:0 8px 24px rgba(0,0,0,.35);display:none;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+#palanca.on{transform:scale(.93);background:radial-gradient(circle at 35% 30%,#ff8a65,#d84315);box-shadow:0 0 0 8px rgba(255,138,101,.45)}
+#mira{position:fixed;z-index:5;width:46px;height:46px;margin:-23px 0 0 -23px;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 2px #0E3A6B,inset 0 0 0 2px #0E3A6B;display:none;pointer-events:none}
+#mira:before,#mira:after{content:'';position:absolute;background:#fff;box-shadow:0 0 0 1px #0E3A6B}#mira:before{left:50%;top:-10px;bottom:-10px;width:2px;margin-left:-1px}#mira:after{top:50%;left:-10px;right:-10px;height:2px;margin-top:-1px}
+@media (max-width:700px){#medidor{width:170px;padding:7px 9px;font-size:.85rem}#palanca{width:104px;height:104px;bottom:96px}}</style>
 </head>
 <body>
-<div id="medidor">🔥 Fuego<div class="b"><i id="mFuego" style="background:#E65100;width:100%"></i></div>🧯 Agente<div class="b"><i id="mAgente" style="background:#1F6FB2;width:100%"></i></div><small id="mZona">Mantén presionado y apunta a la base</small></div>
+<button id="palanca" aria-label="Mantén presionado para descargar el extintor">🧯<br>MANTÉN<br>PARA<br>DESCARGAR</button><div id="mira"></div><div id="medidor">🔥 Fuego<div class="b"><i id="mFuego" style="background:#E65100;width:100%"></i></div>🧯 Agente<div class="b"><i id="mAgente" style="background:#1F6FB2;width:100%"></i></div><small id="mZona">Mueve la mira a la base y mantén la palanca 🧯</small></div>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -23,7 +28,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 // alcance 1 a 2.5 m; no al aire libre), Tabla VII.3 (agua alcance 9 m). La técnica de descarga NO está en la NOM: se
 // presenta como instrucción general que debe confirmarse con la etiqueta de cada extintor (7.2 l) 3).
 const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Uso de extintores: fuego virtual', icono: '🧯', clave: 'pc_extintores',
-  criterio: { pct: 80, sinCriticos: true }, fondo: 0xDCE6EE,
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xDCE6EE, xr: false,   // VR propia (paso 7: extintor en la mano)
+ 
   vistas: [[[0, 2.4, 4.6], [0, 0.8, -2.4]], [[-1.0, 1.7, 1.6], [-3.1, 0.9, 0.2]], [[1.4, 1.8, 1.4], [3.4, 1.3, -0.6]], [[0, 5.5, 1.8], [0, 0, -2]]] });
 const { scene, camera, controls, renderer, caja, cil, esfera, tocable, letrero, M } = W;
 renderer.xr.enabled = true;
@@ -116,11 +122,24 @@ function apuntar(origen, dir) {
   const caso = CASOS[F.caso], dx = Math.hypot(p.x - c.x, p.z - c.z), dy = p.y - c.y;
   F.zona = dx < caso.radio * 1.1 && dy > -0.3 && dy < caso.alto * 0.35 ? 'base' : dx < caso.radio * 1.4 && dy < caso.alto * 1.3 ? 'llamas' : 'fuera'; return p;
 }
-function pointerApunta(e) { ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ptr, camera); const o = new THREE.Vector3(); enMano.getWorldPosition(o);
+// Pantalla: la MIRA marca a dónde apuntas (arrástrala con el dedo o el mouse) y la PALANCA roja se mantiene presionada
+// para descargar (07/10/2026: en celular y tablet se usan dos dedos, uno apunta y otro descarga). Mouse: también basta con
+// mantener presionado el botón sobre la escena. Teclado: barra espaciadora.
+const mira = { x: innerWidth / 2, y: innerHeight / 2 }; let dedoPalanca = null, dedoMira = null;
+function apuntaPantalla(x, y) { ptr.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); ray.setFromCamera(ptr, camera); const o = new THREE.Vector3(); enMano.getWorldPosition(o);
   const p = apuntar(ray.ray.origin, ray.ray.direction); F.desde.copy(o); if (p) F.hacia.copy(p); else F.hacia.copy(ray.ray.origin).addScaledVector(ray.ray.direction, 4); }
-renderer.domElement.addEventListener('pointerdown', e => { if (!modoDescarga || renderer.xr.isPresenting) return; controls.enabled = false; F.rociando = true; pointerApunta(e); });
-renderer.domElement.addEventListener('pointermove', e => { if (F.rociando && !renderer.xr.isPresenting) pointerApunta(e); });
-addEventListener('pointerup', () => { if (!renderer.xr.isPresenting) { F.rociando = false; controls.enabled = true; } });
+function moverMira(x, y) { mira.x = Math.max(10, Math.min(innerWidth - 10, x)); mira.y = Math.max(10, Math.min(innerHeight - 10, y)); const m = $('mira'); m.style.left = mira.x + 'px'; m.style.top = mira.y + 'px'; apuntaPantalla(mira.x, mira.y); }
+function miraALaBase() { const v = centroFuego().add(new THREE.Vector3(0, 0.1, 0)).project(camera); moverMira((v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight); }
+function descargar(si) { F.rociando = si && modoDescarga; $('palanca').classList.toggle('on', F.rociando); if (F.rociando) apuntaPantalla(mira.x, mira.y); }
+renderer.domElement.addEventListener('pointerdown', e => { if (!modoDescarga || renderer.xr.isPresenting) return; controls.enabled = false; dedoMira = e.pointerId; moverMira(e.clientX, e.clientY);
+  if (e.pointerType === 'mouse') { dedoPalanca = e.pointerId; descargar(true); } });
+renderer.domElement.addEventListener('pointermove', e => { if (modoDescarga && e.pointerId === dedoMira && !renderer.xr.isPresenting) moverMira(e.clientX, e.clientY); });
+addEventListener('pointerup', e => { if (renderer.xr.isPresenting) return; if (e.pointerId === dedoMira) dedoMira = null; if (e.pointerId === dedoPalanca) { dedoPalanca = null; descargar(false); } });
+addEventListener('pointercancel', e => { if (e.pointerId === dedoPalanca) { dedoPalanca = null; descargar(false); } if (e.pointerId === dedoMira) dedoMira = null; });
+$('palanca').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); try { $('palanca').setPointerCapture(e.pointerId); } catch (x) { } dedoPalanca = e.pointerId; descargar(true); });
+$('palanca').addEventListener('contextmenu', e => e.preventDefault());
+addEventListener('keydown', e => { if (e.code === 'Space' && modoDescarga && !e.repeat) { e.preventDefault(); descargar(true); } });
+addEventListener('keyup', e => { if (e.code === 'Space') descargar(false); });
 // controles del visor
 const mandos = [0, 1].map(i => { const c = renderer.xr.getController(i); scene.add(c); c.addEventListener('selectstart', () => { if (modoDescarga) { F.rociando = true; F.mando = c; } }); c.addEventListener('selectend', () => { F.rociando = false; }); return c; });
 let modeloMando = null;
@@ -143,6 +162,7 @@ W.cuadro.push(t => {
     s.position.set(c.x + Math.cos(u.a) * u.r * (1 - k * 0.6), c.y + k * caso.alto * (0.4 + I * 0.6), c.z + Math.sin(u.a) * u.r * (1 - k * 0.6)); s.scale.setScalar((0.45 + I * 0.35) * (1 - k * 0.7)); s.material.opacity = 1 - k; });
   humo.forEach((s, i) => { if (!caso || I <= 0.02) { s.visible = false; return; } const u = s.userData; u.vida += dt * 0.35; if (u.vida > 1) { u.vida = 0; u.x = (Math.random() - .5) * caso.radio; }
     const c = centroFuego(); s.visible = true; s.position.set(c.x + u.x + u.vida * 0.3, c.y + caso.alto * 0.8 + u.vida * 1.6, c.z); s.scale.setScalar(0.4 + u.vida * 1.2); s.material.opacity = 0.35 * (1 - u.vida) * I; });
+  if (F.centrar > 0) { F.centrar -= dt; if (F.centrar <= 0) miraALaBase(); }   // la mira inicia en la base del fuego (cuando la cámara ya llegó)
   // descarga
   if (F.rociando && modoDescarga && F.carga > 0) {
     if (renderer.xr.isPresenting && F.mando) { const o = new THREE.Vector3(), q = new THREE.Quaternion(); F.mando.getWorldPosition(o); F.mando.getWorldQuaternion(q); const d = new THREE.Vector3(0, 0, -1).applyQuaternion(q);
@@ -155,14 +175,17 @@ W.cuadro.push(t => {
   chorro.forEach(s => { const u = s.userData; if (u.vida >= 1) { s.visible = false; return; } u.vida += dt * 2.2; s.visible = true; s.material.color.setHex(AGENTES[F.agente] ? AGENTES[F.agente].chorro : 0xffffff);
     s.position.lerpVectors(u.ini, u.fin, Math.min(1, u.vida)); s.scale.setScalar(0.08 + u.vida * 0.45); s.material.opacity = 0.85 * (1 - u.vida * 0.8); });
   if (modoDescarga) { $('mFuego').style.width = Math.round(F.I * 100) + '%'; $('mAgente').style.width = Math.round(F.carga * 100) + '%';
-    $('mZona').textContent = !F.rociando ? 'Mantén presionado y apunta a la base' : F.zona === 'base' ? '✅ Apuntas a la base del fuego' : F.zona === 'llamas' ? '⚠️ Apunta más abajo: a la base' : '❌ No alcanzas el fuego';
+    $('mZona').textContent = !F.rociando ? 'Mueve la mira a la base y mantén la palanca 🧯' : F.zona === 'base' ? '✅ Apuntas a la base del fuego' : F.zona === 'llamas' ? '⚠️ Apunta más abajo: a la base' : '❌ No alcanzas el fuego';
     if (renderer.xr.isPresenting && t - F.ultimo > 0.3) { F.ultimo = t; panelXR.pintar(`Fuego ${Math.round(F.I * 100)}% · Agente ${Math.round(F.carga * 100)}%`, F.rociando ? (F.zona === 'base' ? 'Bien: a la base del fuego' : 'Apunta a la BASE del fuego') : 'Aprieta el gatillo y apunta a la base'); }
     if (F.I <= 0.001 && F.alTerminar) { const cb = F.alTerminar; F.alTerminar = null; F.activo = false; setTimeout(cb, 300); }
     if (F.carga <= 0 && F.I > 0 && F.alAgotar) { const cb = F.alAgotar; F.alAgotar = null; cb(); } }
 });
 
 // ------------------------------------------------------------------ realidad virtual y realidad mixta (Meta Quest: navegador del visor)
-async function soporta(m) { try { return !!(navigator.xr && await navigator.xr.isSessionSupported(m)); } catch (e) { return false; } }
+const ua = navigator.userAgent || '', esVisor = /OculusBrowser|Quest|Pico|Wolvic|Vive/i.test(ua);
+const esMovil = !esVisor && (/Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (navigator.maxTouchPoints > 1 && matchMedia('(pointer: coarse)').matches));
+// en celulares no se ofrece VR (Cardboard partía la pantalla); ?xr=1 lo fuerza
+async function soporta(m) { if (esMovil && !/[?&]xr=1/.test(location.search)) return false; try { return !!(navigator.xr && await navigator.xr.isSessionSupported(m)); } catch (e) { return false; } }
 async function entrarXR(mixta) {
   const s = await navigator.xr.requestSession(mixta ? 'immersive-ar' : 'immersive-vr', { requiredFeatures: ['local-floor'], optionalFeatures: ['hand-tracking'] });
   renderer.xr.setReferenceSpaceType('local-floor'); await renderer.xr.setSession(s);
@@ -227,14 +250,14 @@ function pasos(c) {
           W.mover(camera.position, new THREE.Vector3(0.25, 1.55, FUEGO_Z + a.dist), 800); W.mover(controls.target, centroFuego().add(new THREE.Vector3(0, 0.25, 0)), 800); W.siguiente(); }
         else if (t === 'marca_cerca') W.mal('Demasiado cerca: te expones al calor y a las llamas.', a.fAlc, true);
         else W.mal(`Demasiado lejos: el agente no alcanza el fuego (${a.alcance}).`, a.fAlc); } },
-    { titulo: '7 · Descarga a la base del fuego', texto: `<b>Pantalla:</b> mantén presionado y apunta a la <b>base</b> de las llamas, moviendo de lado a lado. <b>Visor:</b> aprieta el gatillo.<div id="xrBar"></div>`,
+    { titulo: '7 · Descarga a la base del fuego', texto: `<b>Pantalla:</b> arrastra la <b>mira</b> a la <b>base</b> de las llamas y <b>mantén presionada la palanca roja 🧯</b> mientras barres de lado a lado (con mouse: mantén el clic; teclado: barra espaciadora). <b>Visor:</b> aprieta el gatillo.<div id="xrBar"></div>`,
       fuente: 'Instrucción general de uso; confirma siempre con la etiqueta del extintor (NOM-002-STPS-2010, 7.2 l) 3).', puntos: 20,
-      iniciar() { modoDescarga = true; F.carga = 1; F.activo = true; F.I = Math.max(F.I, 0.85); $('medidor').style.display = 'block'; let agotado = 0;
+      iniciar() { modoDescarga = true; F.carga = 1; F.activo = true; F.I = Math.max(F.I, 0.85); $('medidor').style.display = 'block'; $('palanca').style.display = 'block'; $('mira').style.display = 'block'; controls.enabled = false; F.centrar = 1.2; if (innerWidth < 700) { W.$('panel').classList.add('mini'); W.$('bMin').textContent = '▴'; } let agotado = 0;
         (async () => { const bar = $('xrBar'); if (await soporta('immersive-vr')) { const b = document.createElement('button'); b.textContent = '🥽 Realidad virtual'; b.onclick = () => entrarXR(false); bar.appendChild(b); }
           if (await soporta('immersive-ar')) { const b = document.createElement('button'); b.textContent = '🔲 Realidad mixta (tu espacio real)'; b.onclick = () => entrarXR(true); bar.appendChild(b); } })();
         const alAgotar = () => { agotado++; W.mal('Se agotó el agente antes de apagar el fuego: apunta a la base y no a las llamas. Toma otro extintor y continúa.', 'Instrucción general de uso del extintor'); F.carga = 1; F.alAgotar = alAgotar; };
         F.alAgotar = alAgotar;
-        F.alTerminar = () => { modoDescarga = false; F.rociando = false; $('medidor').style.display = 'none'; terminarXR(); W.bien('¡Fuego extinguido! Apuntaste a la base del fuego.', 'Instrucción general de uso del extintor'); W.siguiente(); }; } },
+        F.alTerminar = () => { modoDescarga = false; descargar(false); $('medidor').style.display = 'none'; $('palanca').style.display = 'none'; $('mira').style.display = 'none'; controls.enabled = true; terminarXR(); W.bien('¡Fuego extinguido! Apuntaste a la base del fuego.', 'Instrucción general de uso del extintor'); W.siguiente(); }; } },
     { titulo: '8 · Después de apagar el fuego', texto: 'Una última decisión.', fuente: `${F26}, 4.19 y 7.2`,
       iniciar() { W.irVista(0); elegir('El fuego se apagó. ¿Qué haces con el extintor y con la emergencia?', [
         { t: 'Vigilo que no se reavive, aviso a la brigada y reporto el extintor usado para su mantenimiento y recarga', ok: true, fb: 'Correcto: un extintor usado debe recargarse antes de volver a su lugar.' },
@@ -245,7 +268,7 @@ function pasos(c) {
 W.inicio(Object.keys(CASOS).map(k => ({ id: k, txt: CASOS[k].txt })), c => pasos(c),
   'Basado en la NOM-002-STPS-2010 (DOF 09/12/2010): clases de fuego 4.11, revisión 7.2, Guía VII Tabla VII.1. Escenarios ficticios; el fuego es virtual. En el Meta Quest 3S abre esta página en el navegador del visor para usar realidad virtual o mixta.');
 armarEscenario('A'); encender('A'); F.I = 0.4;
-if (location.search.includes('qa')) window.__qa = { F, RACK, MARCAS, alarma, tocar: W.tocar, estado: W.qa,
+if (location.search.includes("qa")) window.__qa = { W, F, RACK, MARCAS, alarma, tocar: W.tocar, estado: W.qa, mira, moverMira, miraALaBase,
   rociar: (zona = 'base') => { F.rociando = true; F.zona = zona; F.desde.set(0.3, 1.25, FUEGO_Z + 3); F.hacia.copy(centroFuego()); }, soltar: () => { F.rociando = false; } };
 </script>
 </body>

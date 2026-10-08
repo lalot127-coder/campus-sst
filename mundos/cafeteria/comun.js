@@ -36,6 +36,7 @@ function iniciar(cfg) {
   document.title = `${cfg.titulo} · Cafetería · Campus SST`;
   const proteger = () => Acceso.proteger(`${cfg.icono} ${cfg.titulo}`, base + 'index.html?mundo=cafeteria');
   if (window.Acceso) proteger(); else { const s = document.createElement('script'); s.src = base + 'motor/acceso.js'; s.onload = proteger; document.head.appendChild(s); }
+  if (!window.EnviarRes) { const s = document.createElement('script'); s.src = base + 'motor/enviar_resultados.js'; document.head.appendChild(s); }
 }
 function nombre() { try { return JSON.parse(localStorage.getItem('campus_perfil') || '{}').nombre || ''; } catch (e) { return ''; } }
 function toast(html, cls = 'info', ms) { const t = document.getElementById('jToast'); t.className = cls; t.innerHTML = html; t.style.display = 'block'; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', ms || (cls === 'no' ? 4200 : 2600)); }
@@ -48,5 +49,19 @@ async function registrar(r) {
   try { return (await fetch('/api/registro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tipo: 'juego', fila: reg }) })).ok; } catch (e) { return false; }
 }
 const barajar = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
-window.Juego = { iniciar, nombre, toast, modal, cerrar, registrar, barajar, base };
+
+// Selector de temas para cualquier juego (07/10/2026): opciones [{id, txt, n}] → alListo([ids elegidos]). Se recuerda por juego.
+function elegirTemas(titulo, opciones, clave, alListo, minimo = 1) {
+  let sel; try { sel = JSON.parse(localStorage.getItem('temas_' + clave) || 'null'); } catch (e) { sel = null; }
+  if (!Array.isArray(sel) || !sel.some(x => opciones.some(o => o.id === x))) sel = opciones.map(o => o.id);
+  modal(`<h2>🎯 ${titulo}</h2><p>Marca los temas que quieres incluir:</p><div id="jTemas" style="display:grid;gap:6px;margin:8px 0">${opciones.map(o => `<label style="display:flex;gap:8px;align-items:center;background:#E8F5F9;border-radius:10px;padding:9px 11px;cursor:pointer"><input type="checkbox" value="${o.id}" ${sel.includes(o.id) ? 'checked' : ''}> ${o.txt}${o.n !== undefined ? ` <small style="color:#5B6B7C">(${o.n})</small>` : ''}</label>`).join('')}</div>
+    <button class="sec" id="jTodos">Todos</button> <button class="sec" id="jNinguno">Ninguno</button> <button class="prim" id="jTemOk">Jugar con estos temas</button>`, true);
+  const caja = document.getElementById('jCaja'), marcar = v => caja.querySelectorAll('#jTemas input').forEach(i => i.checked = v);
+  caja.querySelector('#jTodos').onclick = () => marcar(true); caja.querySelector('#jNinguno').onclick = () => marcar(false);
+  caja.querySelector('#jTemOk').onclick = () => { const e = [...caja.querySelectorAll('#jTemas input:checked')].map(i => i.value);
+    const n = opciones.filter(o => e.includes(o.id)).reduce((a, o) => a + (o.n ?? 1), 0);
+    if (!e.length || n < minimo) { toast(`Elige temas con al menos ${minimo} elementos.`, 'no'); return; }
+    try { localStorage.setItem('temas_' + clave, JSON.stringify(e)); } catch (x) { } cerrar(); alListo(e); };
+}
+window.Juego = { iniciar, nombre, toast, modal, cerrar, registrar, barajar, base, elegirTemas };
 })();

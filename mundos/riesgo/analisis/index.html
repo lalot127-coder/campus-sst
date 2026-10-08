@@ -29,23 +29,28 @@ const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: `Análisis de ries
 const { scene, letrero, caja } = W;
 const R = window.Riesgo;
 const Z = ED.zonas, S = {}, n = Z.length;
-const { piso, entorno, z0 } = R.sala(W, { ancho: n > 2 ? 15 : 12, fondo: n > 2 ? 11 : 9, rotulo: `${ED.icono} ${ED.nombre.toUpperCase()} · ANÁLISIS DE RIESGO`, color: '#' + ED.color.toString(16).padStart(6, '0') });
+const { piso, entorno, z0 } = R.sala(W, { ancho: n > 2 ? 17 : 13, fondo: n > 2 ? 12 : 10, rotulo: `${ED.icono} ${ED.nombre.toUpperCase()} · ANÁLISIS DE RIESGO`, color: '#' + ED.color.toString(16).padStart(6, '0') });
 W.activarXR({ inicio: [0, 0.6], piso, entorno });
 
 // ------------------------------------------------------------------ zonas en arco alrededor de la persona (una estación por zona)
-const radio = n > 2 ? 5 : 4.2, abre = n === 1 ? 0 : Math.min(1.2, 0.42 * (n - 1));
+// Cada estación es una plataforma con DOS filas de objetos (riesgos reales y condiciones controladas, mezclados en un orden
+// fijo por zona para que no estén siempre en el mismo lugar los reales).
+const radio = n > 2 ? 6.4 : 4.8, abre = n === 1 ? 0 : Math.min(1.2, 0.42 * (n - 1));
+const mezclar = (lista, semilla) => { let h = 0; for (const ch of semilla) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const a = [...lista]; for (let i = a.length - 1; i > 0; i--) { h = (h * 1103515245 + 12345) >>> 0; const j = h % (i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 Z.forEach((zona, i) => {
   const a = n === 1 ? 0 : -abre + 2 * abre * i / (n - 1);
   const cx = Math.sin(a) * radio, cz = 0.6 - Math.cos(a) * radio;
-  const base = caja(3.1, 0.03, 1.6, 0xD7DEE4, cx, 0.015, cz); base.rotation.y = -a;
-  const rot = letrero(zona.titulo, Math.min(3.0, 0.085 * zona.titulo.length + 0.5), 0.24, '#14213D'); rot.position.set(cx, 2.55, cz - 0.1); rot.lookAt(0, 2.55, 0.6); scene.add(rot);
-  const m = zona.riesgos.length, paso = m > 1 ? 2.7 / (m - 1) : 0;
-  zona.riesgos.forEach((r, k) => {
-    const dx = (k - (m - 1) / 2) * paso;
-    const px = cx + Math.cos(a) * dx, pz = cz + Math.sin(a) * dx;
-    R.prop(W, r.prop, px, pz, -a);
-    const bajo = ['charco', 'cable', 'multicontacto'].includes(r.prop);
-    S[zona.id + ':' + r.id] = R.situacion(W, { x: px - Math.sin(a) * 0.45, z: pz + Math.cos(a) * 0.45, y: bajo ? 0.7 : (k % 2 ? 1.75 : 2.05), tipo: zona.id + ':' + r.id, icono: r.icono, etiqueta: r.nombre });
+  const base = caja(4.6, 0.03, 2.7, 0xD7DEE4, cx, 0.015, cz); base.rotation.y = -a;
+  const rot = letrero(zona.titulo, Math.min(3.4, 0.085 * zona.titulo.length + 0.5), 0.24, '#14213D'); rot.position.set(cx + Math.sin(a) * 1.45, 2.75, cz - Math.cos(a) * 1.45); rot.lookAt(0, 2.75, 0.6); scene.add(rot);
+  const lista = mezclar(zona.riesgos, zona.id), m = lista.length, cols = Math.ceil(m / 2), paso = cols > 1 ? 4.0 / (cols - 1) : 0;
+  lista.forEach((r, k) => {
+    const fila = k < cols ? 0 : 1, col = fila ? k - cols : k, nf = fila ? m - cols : cols;
+    const dx = (col - (nf - 1) / 2) * paso + (fila ? paso * 0.25 : 0), dz = fila ? 0.65 : -0.6;   // fila 0 = atrás, fila 1 = adelante
+    const px = cx + Math.cos(a) * dx - Math.sin(a) * dz, pz = cz + Math.sin(a) * dx + Math.cos(a) * dz;
+    const g = R.prop(W, r.prop, px, pz, -a); g.scale.setScalar(0.8);
+    const bajo = ['charco', 'cable', 'multicontacto', 'charco_senalado', 'cable_canalizado', 'franja'].includes(r.prop);
+    S[zona.id + ':' + r.id] = R.situacion(W, { x: px - Math.sin(a) * 0.4, z: pz + Math.cos(a) * 0.4, y: bajo ? 0.7 : (k % 2 ? 1.7 : 2.0) - (fila ? 0.25 : 0), tipo: zona.id + ':' + r.id, icono: r.icono, etiqueta: r.nombre });
   });
 });
 
@@ -55,7 +60,7 @@ function pasosZona(zona) {
   const buenas = zona.riesgos.filter(r => r.real).map(r => ({ tipo: zona.id + ':' + r.id, nombre: r.nombre, fb: `${r.tipo}: ${r.fb}`, f: r.f, obj: S[zona.id + ':' + r.id] }));
   const malas = zona.riesgos.filter(r => !r.real).map(r => ({ tipo: zona.id + ':' + r.id, nombre: r.nombre, fb: r.fb, f: r.f, obj: S[zona.id + ':' + r.id] }));
   const pr = zona.riesgos.find(r => r.id === zona.principal), ev = zona.evalua;
-  const pasos = [R.encuentra(W, { titulo: `${zona.titulo}: identifica`, texto: `${zona.escena}<br>Toca los <b>riesgos</b> de esta zona. Cuidado: hay medidas de control y objetos que no son riesgo.`,
+  const pasos = [R.encuentra(W, { titulo: `${zona.titulo}: identifica`, texto: `${zona.escena}<br>Toca solo los <b>riesgos sin control</b> de esta zona. ¡Cuidado! Hay más condiciones controladas y objetos inofensivos que riesgos: si tocas uno, pierdes puntos.`,
     fuente: 'NOM-030-STPS-2009, 3.12 y 6.1', buenas, malas })];
   if (ev.metodo) {
     pasos.push({ titulo: `${zona.titulo}: ¿qué método?`, texto: `Riesgo principal: <b>${pr.nombre}</b>.`, fuente: 'RFSST art. 7 fr. I (selector de metodología)',
@@ -87,7 +92,7 @@ const casos = [{ id: '*', txt: `🏢 <b>Recorrido completo:</b> ${Z.length} zona
 W.inicio(casos, id => [intro, ...(id === '*' ? Z : Z.filter(z => z.id === id)).flatMap(pasosZona)],
   `Basado en: RFSST (DOF 13/11/2014) art. 7 fr. I; NOM-030-STPS-2009 3.12 y 6.1; NOM-031-STPS-2011 8.3; NOM-017-STPS-2024 5.1-5.2; NOM específicas citadas en cada riesgo; jerarquía de controles NIOSH (referencia). Catálogo ${window.CATALOGO_RIESGOS.version}. 🥽 En visor: botón VR.`);
 
-if (P.has('qa')) window.__qa = { S: Object.fromEntries(Object.entries(S).map(([k, v]) => [k, v.marco])), ED, tocar: W.tocar, estado: W.qa };
+if (P.has('qa')) window.__qa = { W, S: Object.fromEntries(Object.entries(S).map(([k, v]) => [k, v.marco])), ED, tocar: W.tocar, estado: W.qa };
 </script>
 </body>
 </html>

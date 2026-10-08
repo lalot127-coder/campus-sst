@@ -199,7 +199,15 @@ export function construirZonas(ctx) {
       p.push(poner(z, 'camioneta', cx - 26, cz + 30, .5)); for (let k = 0; k < 6; k++) p.push(poner(z, 'cono', cx - 28 + k * 1.6, cz + 33, 0));
       for (let k = 0; k < 18; k++) { const a = k / 18 * Math.PI * 2 + .2, r = 36 + (k % 3) * 4; p.push(poner(z, k % 4 ? 'arbol' : 'arbusto', cx + Math.sin(a) * r, cz + Math.cos(a) * r, a)); obst(cx + Math.sin(a) * r, cz + Math.cos(a) * r, .8); }
       for (let k = 0; k < 6; k++) { const a = k * 1.1, r = 6 + k; p.push(poner(z, k % 2 ? 'roca_a' : 'roca_b', cx + Math.sin(a) * r, cz + Math.cos(a) * r, a, null, -NB * ALTO_B)); }
-      for (let k = 0; k < 3; k++) { const c = await kit.pieza(z.kit, 'camion'); z.grupo.add(c); z.anim.push({ o: c, t: k / 3, v: .018 * (k % 2 ? -1 : 1), tipo: 'rampa' }); }
+      // Camiones de acarreo: el modelo trae el frente hacia -z (FRENTE = π). Avanzan siempre de frente; en cada extremo de la
+      // rampa giran, retroceden unos metros con alarma de reversa, luz ámbar y letrero, cargan/descargan y regresan.
+      for (let k = 0; k < 3; k++) { const c = await kit.pieza(z.kit, 'camion'); z.grupo.add(c);
+        const alto = new THREE.Box3().setFromObject(c).getSize(new THREE.Vector3()).y || 2.5;
+        const faro = new THREE.Mesh(new THREE.SphereGeometry(.22, 12, 8), new THREE.MeshBasicMaterial({ color: 0xFFA000 })); faro.position.set(0, alto + .15, 0); faro.visible = false; c.add(faro);
+        const cv = document.createElement('canvas'); cv.width = 256; cv.height = 72; const g = cv.getContext('2d'); g.fillStyle = '#FFC107'; g.fillRect(0, 0, 256, 72); g.strokeStyle = '#111'; g.lineWidth = 8; g.strokeRect(4, 4, 248, 64);
+        g.fillStyle = '#111'; g.font = 'bold 44px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('⚠ REVERSA', 128, 38);
+        const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; const aviso = new THREE.Sprite(new THREE.SpriteMaterial({ map: tx, depthTest: false })); aviso.scale.set(3.2, .9, 1); aviso.position.set(0, alto + 1.4, 0); aviso.visible = false; c.add(aviso);
+        z.anim.push({ o: c, t: .1 + k * .28, d: k % 2 ? -1 : 1, v: .018, tipo: 'rampa', fase: 'avanza', reloj: 0, giro: 0, FRENTE: Math.PI, faro, aviso, bip: 0 }); }
       await Promise.all(p); },
     async mina_subterranea(z) { const p = []; const [px, pz] = [MS.portal.x, MS.portal.z];
       for (let k = 0; k < 6; k++) p.push(poner(z, 'via', px - 1 - k * 2, pz, Math.PI / 2));
@@ -242,11 +250,31 @@ export function construirZonas(ctx) {
     z.promesa = CARGA[id](z).then(() => { z.estado = 'listo'; z.ms = Math.round(performance.now() - t0); }).catch(e => { z.estado = 'error'; console.warn('zona', id, e); }); return z.promesa; }
 
   const tmp = new THREE.Vector3();
+  // ---- alarma de reversa (pitido intermitente) que se oye al acercarse; requiere que la persona ya haya tocado la pantalla
+  let audio = null;
+  function bip(dist) { try { if (!audio) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; audio = new AC(); (window.__audioCtxs = window.__audioCtxs || []).push(audio); }
+    if (audio.state === 'suspended') audio.resume(); const o = audio.createOscillator(), g = audio.createGain(); o.type = 'square'; o.frequency.value = 1150;
+    const vol = Math.max(0, .18 * (1 - dist / 45)); g.gain.setValueAtTime(vol, audio.currentTime); g.gain.setValueAtTime(0, audio.currentTime + .28);
+    o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime + .3); } catch (e) { } }
+  // Ciclo del camión: avanza (de frente) → en el extremo frena y gira → reversa corta con alarma → carga/descarga → regresa.
+  function camionRampa(a, dt, pos) {
+    const c = MA.rampa, fin = a.d > 0 ? .985 : .015, borde = a.d > 0 ? .93 : .07;
+    if (a.fase === 'avanza') { a.t += a.d * a.v * dt; if ((a.d > 0 && a.t >= borde) || (a.d < 0 && a.t <= borde)) { a.t = borde; a.fase = 'gira'; a.reloj = 0; } }
+    else if (a.fase === 'gira') { a.reloj += dt; a.giro = Math.min(1, a.reloj / 2.6); if (a.giro >= 1) { a.fase = 'reversa'; a.reloj = 0; } }
+    else if (a.fase === 'reversa') { a.reloj += dt; a.t += a.d * a.v * .55 * dt; if ((a.d > 0 && a.t >= fin) || (a.d < 0 && a.t <= fin)) { a.t = fin; a.fase = 'carga'; a.reloj = 0; } }
+    else if (a.fase === 'carga') { a.reloj += dt; if (a.reloj > 4) { a.d *= -1; a.giro = 0; a.fase = 'avanza'; } }
+    a.o.position.copy(c.getPointAt(Math.min(1, Math.max(0, a.t)))); c.getTangentAt(Math.min(1, Math.max(0, a.t)), tmp);
+    // rumbo: hacia donde avanza; al girar rota 180° poco a poco; en reversa y carga mira al lado contrario de su movimiento
+    let rumbo = Math.atan2(tmp.x * a.d, tmp.z * a.d) + Math.PI * (a.fase === 'avanza' ? 0 : a.fase === 'gira' ? a.giro : 1);
+    a.o.rotation.y = rumbo + a.FRENTE;
+    const rev = a.fase === 'reversa', parpadeo = rev && Math.floor(performance.now() / 300) % 2 === 0;
+    a.faro.visible = parpadeo; a.aviso.visible = rev;
+    if (rev && pos) { a.bip -= dt; const dist = Math.hypot(pos.x - a.o.position.x, pos.z - a.o.position.z); if (a.bip <= 0 && dist < 45) { a.bip = .6; bip(dist); } }
+  }
   function actualizar(dt, pos) {
     ZONAS.forEach(z => { if (z.estado === 'sin cargar' && pos && Math.hypot(pos.x - z.entrada.x, pos.z - z.entrada.z) < 40) cargar(z.id);
       z.anim.forEach(a => {
-        if (a.tipo === 'rampa') { a.t += a.v * dt; if (a.t > 1) { a.t = 1; a.v *= -1; } if (a.t < 0) { a.t = 0; a.v *= -1; }
-          const c = MA.rampa; a.o.position.copy(c.getPointAt(a.t)); c.getTangentAt(a.t, tmp); if (a.v < 0) tmp.negate(); a.o.rotation.y = Math.atan2(tmp.x, tmp.z); }
+        if (a.tipo === 'rampa') camionRampa(a, dt, pos);
         else if (a.tipo === 'tren') { if (a.pausa > 0) { a.pausa -= dt; return; } const antes = a.x; a.x += a.v * dt; if (antes < fx - 4 && a.x >= fx - 4 && a.v > 0) a.pausa = 8; if (a.x > 190) a.x = -190; a.o.position.x = a.x; }
         else if (a.tipo === 'surcos') { a.t += dt * .04; const f = a.t % 2, ida = f < 1, u = ida ? f : 2 - f, fila = Math.floor(a.t / 2) % 4;
           a.o.position.set(gx - 12 + u * 32, 0, gz + 1.6 + fila * 6.4 - 3); a.o.rotation.y = ida ? Math.PI / 2 : -Math.PI / 2; }

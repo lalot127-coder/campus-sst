@@ -221,6 +221,38 @@
       control: [{ t: 'Colocar los archivos a la altura de la cintura y usar un carrito', ok: true, fb: 'Medidas sobre el puesto para mitigar el factor ergonómico.', f: `${RF} art. 42 fr. II` },
         { t: 'Solo darle una faja', ok: false, fb: 'El EPP no sustituye las medidas sobre el puesto.', f: `${N17}, 5.2` }, NO_CUIDADO] },
   ] },
-
   } };
+
+  // ---- MÁS EJEMPLOS QUE NO SON RIESGOS (07/10/2026, pedido del propietario: hacer el juego más difícil).
+  // Son condiciones CONTROLADAS u objetos sin peligro relevante que "parecen" riesgo. Se agregan a cada zona por su id.
+  const N26 = 'NOM-026-STPS-2008', N04 = 'NOM-004-STPS-1999';
+  const D = {
+    botiquin: { prop: 'botiquin', icono: '🩹', nombre: 'Botiquín de primeros auxilios señalizado', fb: 'Es un recurso para atender emergencias, no un peligro.', f: 'LFT art. 504 fr. I; NOM-026-STPS-2008, Apéndice D 2' },
+    senal: { prop: 'senal_obligacion', icono: '🔵', nombre: 'Señal azul de uso obligatorio de casco', fb: 'Es una señal de obligación: comunica una medida de control.', f: `${N26}, Apéndice B` },
+    franja: { prop: 'franja', icono: '🟨', nombre: 'Material dentro del área delimitada con franja amarilla', fb: 'El amarillo delimita áreas: el material está en su lugar.', f: `${N26}, 7.1 Tabla 1` },
+    charco: { prop: 'charco_senalado', icono: '🚧', nombre: 'Piso mojado YA acordonado y con señal de precaución', fb: 'El peligro existe pero ya está controlado (señal de superficie resbalosa y delimitación).', f: `${N26}, Apéndice C (C.15) y 7.1` },
+    cilindro: { prop: 'cilindro_encadenado', icono: '⛓️', nombre: 'Cilindro sujeto con cadena, con capuchón y manguera en buen estado', fb: 'Condición controlada: sujeto y sin daños visibles.', f: `${N30}, 6.1 a) (solo las condiciones peligrosas o inseguras son hallazgo)` },
+    cable: { prop: 'cable_canalizado', icono: '🟫', nombre: 'Cable protegido con cubrecables en el paso', fb: 'No hay tropiezo ni daño al cable: está controlado.', f: `${N30}, 6.1 a)` },
+    escalera: { prop: 'escalera_guardada', icono: '🪜', nombre: 'Escalera en buen estado, guardada en su soporte', fb: 'Guardada y sin daños: no es una condición insegura.', f: `${N30}, 6.1 a)` },
+    guarda: { prop: 'guarda', icono: '🛡️', nombre: 'Máquina con su guarda de protección colocada', fb: 'La guarda es un sistema de protección de la maquinaria (control de ingeniería).', f: `${N04}, objetivo y 5.2.1 (partes en movimiento)` },
+    basurero: { prop: 'basurero', icono: '🗑️', nombre: 'Bote de basura con tapa', fb: 'No es un peligro relevante.', f: `${N30}, 3.8` },
+    agua: { prop: 'dispensador', icono: '🚰', nombre: 'Dispensador de agua potable', fb: 'No es un peligro relevante.', f: `${N30}, 3.8` },
+    cuadro: { prop: 'cuadro', icono: '🖼️', nombre: 'Cuadro bien fijado a la pared', fb: 'No es un peligro relevante.', f: `${N30}, 3.8` },
+    lampara: { prop: 'lampara', icono: '💡', nombre: 'Lámpara de emergencia encendida', fb: 'Es equipo de apoyo para la evacuación, no un peligro.', f: `${N30}, 3.8` },
+    rpbi: { prop: 'contenedor_cerrado', icono: '🟥', nombre: 'Recipiente rojo para punzocortantes, cerrado y lleno a menos del 80 %', fb: 'Cumple el envasado y el llenado máximo.', f: `${N87}, 6.2 y 6.2.1` },
+    epp: { prop: 'persona_epp', icono: '👷', nombre: 'Trabajador con casco, chaleco y lentes de su puesto', fb: 'Usa su equipo de protección: es una medida de control.', f: `${N17}, 5.2` },
+    regadera: { prop: 'regadera', icono: '🚿', nombre: 'Regadera de emergencia con acceso libre', fb: 'Es equipo de emergencia disponible.', f: `${N30}, 3.8` },
+    planta: { prop: 'planta', icono: '🪴', nombre: 'Planta decorativa', fb: 'No es un peligro relevante.', f: `${N30}, 3.8` },
+  };
+  const EXTRA = {
+    cocina: ['botiquin', 'basurero', 'agua', 'charco'], sala: ['cuadro', 'lampara', 'escalera', 'cable'],
+    traslado: ['botiquin', 'franja', 'epp'], infecciones: ['rpbi', 'basurero', 'agua'], emergencias: ['botiquin', 'lampara', 'cuadro'],
+    alturas: ['senal', 'franja', 'escalera', 'epp'], confinado: ['senal', 'franja', 'epp'], electrica: ['cable', 'franja', 'epp'],
+    taller: ['guarda', 'franja', 'senal', 'basurero'], obra_alturas: ['senal', 'franja', 'epp'], incendio: ['lampara', 'botiquin', 'franja', 'cilindro'],
+    evacuacion: ['lampara', 'cuadro', 'botiquin'], psicosocial: ['agua', 'cuadro', 'planta', 'basurero'], oficina: ['lampara', 'cuadro', 'cable', 'agua'],
+    rh: ['cuadro', 'agua', 'basurero', 'planta'],
+  };
+  Object.values(window.CATALOGO_RIESGOS.edificios).forEach(ed => ed.zonas.forEach(z => (EXTRA[z.id] || ['basurero', 'cuadro', 'agua']).forEach(k => {
+    if (z.riesgos.some(r => r.id === 'x_' + k || r.prop === D[k].prop)) return;
+    z.riesgos.push({ id: 'x_' + k, real: false, ...D[k] }); })));
 })();

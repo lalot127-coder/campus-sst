@@ -48,7 +48,7 @@ const CAMPUS = '../../index.html', alCampus = q => { location.href = CAMPUS + q;
 document.title = `${MOD.titulo} · Sala de módulo · Campus SST`; $('#tit').textContent = MOD.titulo; $('#sub').textContent = MOD.nom;
 $('#bAtras').onclick = () => alCampus('?mundo=' + MOD.area); $('#bInicio').onclick = () => alCampus('?plaza'); $('#bSalir').onclick = () => alCampus('?salir');
 $('#bComp').onclick = () => Compartir.abrir(Compartir.url('index.html?m=' + ID), `${MOD.titulo} · Sala de módulo · Campus SST`);
-Acceso.proteger(`${MOD.titulo}`, CAMPUS + '?mundo=' + MOD.area, `${MOD.area}/${ID}`);
+Acceso.sesionUnica(); Acceso.proteger(`${MOD.titulo}`, CAMPUS + '?mundo=' + MOD.area, `${MOD.area}/${ID}`);
 const T0 = performance.now();
 
 // ---------------------------------------------------------------- escena

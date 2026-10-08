@@ -20,7 +20,7 @@
     <p class="tenue">Pensé en una NOM. Haz preguntas de sí o no, voltea las que ya no pueden ser y adivina con las menos preguntas posibles. Toca una tarjeta para voltearla; toca <b>🎯 Adivinar</b> y luego la tarjeta que creas que es.</p>
     <div class="fila"><label><input type="checkbox" id="auto" checked> Modo aprendizaje (voltear automáticamente las que no cumplen)</label><span id="marc" style="margin-left:auto;font-weight:800;color:#0E3A6B"></span></div></div>
   <div class="tarjeta"><b>Haz una pregunta:</b><div class="preg" id="preg"></div><div class="hist" id="hist"></div>
-    <div class="fila" style="margin-top:8px"><button class="prim" id="bAdivinar">🎯 Adivinar</button><button class="sec" id="bNueva">Nueva partida</button></div></div>
+    <div class="fila" style="margin-top:8px"><button class="prim" id="bAdivinar">🎯 Adivinar</button><button class="sec" id="bNueva">Nueva partida</button><button class="sec" id="bTemas">🎯 Temas</button></div></div>
   <div class="grid" id="grid"></div>
   <p class="fuente">Datos de cada norma tomados de la Biblioteca del campus (registro de fuentes verificadas, consulta 02-03/10/2026).</p>
 </main>
@@ -46,7 +46,13 @@ const PREGUNTAS = [
   { t: '¿Trata de residuos?', f: c => c.temas.includes('residuos') },
 ];
 let secreta, hechas, fallas, adivinando, t0;
+// temas = dependencia (estante de la Biblioteca) de cada norma (07/10/2026)
+const DEPS = [...new Set(CARTAS.map(c => c.estante))];
+let DEP_SEL = DEPS; try { const g = JSON.parse(localStorage.getItem('temas_adivina') || 'null'); if (Array.isArray(g) && g.some(t => DEPS.includes(t))) DEP_SEL = g.filter(t => DEPS.includes(t)); } catch (e) { }
+const enJuego = () => { const f = CARTAS.filter(c => DEP_SEL.includes(c.estante)); return f.length >= 4 ? f : CARTAS; };
+function elegirDeps() { Juego.elegirTemas('¿Qué normas entran al juego?', DEPS.map(d => { const e = ESTANTES.find(x => x.id === d); return { id: d, txt: e ? `${e.icono || ''} ${e.nombre}` : d, n: CARTAS.filter(c => c.estante === d).length }; }), 'adivina', e => { DEP_SEL = e; nueva(); }, 4); }
 function nueva() {
+  const CARTAS = enJuego();
   secreta = CARTAS[Math.floor(Math.random() * CARTAS.length)]; hechas = 0; fallas = 0; adivinando = false; t0 = Date.now(); $('#hist').innerHTML = '';
   $('#grid').innerHTML = Juego.barajar(CARTAS).map(c => `<button class="nom" data-id="${c.id}" style="--c:${c.color}"><b>${c.clave}</b>${c.titulo}<br><span class="dep">${c.emisor}</span></button>`).join('');
   document.querySelectorAll('.nom').forEach(b => b.onclick = () => tocarCarta(b));
@@ -56,7 +62,7 @@ function nueva() {
 function marc() { $('#marc').textContent = `Preguntas: ${hechas} · Intentos fallidos: ${fallas}/3`; $('#bAdivinar').textContent = adivinando ? '👉 Toca la tarjeta elegida' : '🎯 Adivinar'; }
 function preguntar(i, b) { const p = PREGUNTAS[i], r = p.f(secreta); hechas++; b.disabled = true;
   $('#hist').insertAdjacentHTML('afterbegin', `<div>${p.t} <span class="${r ? 'si' : 'no'}">${r ? 'SÍ' : 'NO'}</span></div>`);
-  if ($('#auto').checked) document.querySelectorAll('.nom').forEach(el => { const c = CARTAS.find(x => x.id === el.dataset.id); if (p.f(c) !== r) el.classList.add('abajo'); });
+  if ($('#auto').checked) document.querySelectorAll('.nom').forEach(el => { const c = enJuego().find(x => x.id === el.dataset.id); if (p.f(c) !== r) el.classList.add('abajo'); });
   marc(); }
 function tocarCarta(el) {
   if (!adivinando) { el.classList.toggle('abajo'); return; }
@@ -65,7 +71,7 @@ function tocarCarta(el) {
   if (fallas >= 3) perder();
 }
 $('#bAdivinar').onclick = () => { adivinando = !adivinando; marc(); if (adivinando) Juego.toast('Toca la tarjeta de la NOM que crees que es.', 'info'); };
-$('#bNueva').onclick = nueva;
+$('#bNueva').onclick = nueva; $('#bTemas').onclick = elegirDeps;
 async function ganar() { const pts = Math.max(10, 100 - hechas * 8 - fallas * 20), s = Math.round((Date.now() - t0) / 1000);
   const ok = await Juego.registrar({ modulo: 'Cafetería: adivina quién NOM', caso: secreta.clave, puntos: pts, porcentaje: pts, errores: fallas, segundos: s, resultado: 'Adivinó' });
   Juego.modal(`<h2>🏆 ¡Era la ${secreta.clave}!</h2><p>${secreta.titulo}</p><p><b>${pts} puntos</b> · ${hechas} preguntas · ${fallas} intento(s) fallido(s).</p><p class="fuente">${secreta.publicacion} · ${secreta.uso}</p>

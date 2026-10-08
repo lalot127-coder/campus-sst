@@ -77,6 +77,24 @@
       extintor() { k(0.09, 0.5, 0xC62828, 0, 0.3, 0); k(0.03, 0.08, 0x212121, 0, 0.6, 0); },
       extintor_obstruido() { k(0.09, 0.5, 0xC62828, 0, 0.3, 0); for (let i = 0; i < 3; i++) c(0.5, 0.4, 0.4, 0xC8A27A, (i - 1) * 0.5, 0.2, 0.35); },
       planta() { k(0.18, 0.35, 0x8D6E63, 0, 0.17, 0); esfera(0.3, 0x43A047, 0, 0.6, 0, g); },
+      // ---- objetos y condiciones CONTROLADAS (distractores del juego, 07/10/2026)
+      botiquin() { c(0.45, 0.35, 0.16, 0xFFFFFF, 0, 1.4, 0); c(0.24, 0.07, 0.01, 0x2E7D32, 0, 1.4, 0.085); c(0.07, 0.24, 0.01, 0x2E7D32, 0, 1.4, 0.086); k(0.025, 1.2, 0x9E9E9E, 0, 0.6, -0.1); },
+      senal_obligacion() { k(0.03, 1.6, 0x9E9E9E, 0, 0.8, 0); const d = new THREE.Mesh(new THREE.CircleGeometry(0.22, 32), M(0x1565C0)); d.position.set(0, 1.75, 0.03); g.add(d); esfera(0.07, 0xFFFFFF, 0, 1.78, 0.05, g); c(0.16, 0.03, 0.02, 0xFFFFFF, 0, 1.72, 0.05); },
+      franja() { for (const [w, d, x, z] of [[1.4, 0.08, 0, -0.6], [1.4, 0.08, 0, 0.6], [0.08, 1.2, -0.7, 0], [0.08, 1.2, 0.7, 0]]) c(w, 0.006, d, 0xF2C94C, x, 0.004, z); c(0.5, 0.4, 0.4, 0xC8A27A, 0, 0.2, 0); },
+      charco_senalado() { const m = new THREE.Mesh(new THREE.CircleGeometry(0.5, 24), M(0x7FB3D5, { transparent: true, opacity: .6, roughness: .05 })); m.rotation.x = -Math.PI / 2; m.position.y = 0.006; g.add(m);
+        const cono = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.6, 4), M(0xF2C94C)); cono.position.set(0.55, 0.3, 0); g.add(cono); for (const x of [-0.6, 0.6]) k(0.02, 0.9, 0xF57F17, x, 0.45, -0.55); c(1.2, 0.04, 0.02, 0xF2C94C, 0, 0.85, -0.55); },
+      cilindro_encadenado() { k(0.16, 1.0, 0x8E24AA, 0, 0.5, 0); esfera(0.16, 0x8E24AA, 0, 1.0, 0, g); k(0.08, 0.14, 0x607D8B, 0, 1.2, 0); c(0.5, 1.4, 0.06, 0xB0BEC5, 0, 0.7, -0.2); const t = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.015, 6, 24), M(0x9E9E9E)); t.rotation.x = Math.PI / 2; t.position.y = 0.75; g.add(t); },
+      cable_canalizado() { c(1.8, 0.05, 0.22, 0xF2C94C, 0, 0.025, 0); for (let i = -3; i <= 3; i++) c(0.12, 0.052, 0.2, 0x212121, i * 0.26, 0.026, 0); },
+      escalera_guardada() { c(1.0, 2.2, 0.08, 0xEEF1F4, 0, 1.1, -0.15); for (const px of [-0.22, 0.22]) c(0.05, 1.9, 0.05, 0xFFB300, px, 1.05, 0); for (let i = 0; i < 6; i++) c(0.44, 0.03, 0.05, 0xFFB300, 0, 0.25 + i * 0.3, 0); for (const y of [0.6, 1.6]) c(0.6, 0.05, 0.12, 0x616161, 0, y, -0.06); },
+      guarda() { c(0.9, 0.9, 0.7, 0x1565C0, 0, 0.45, 0); c(0.3, 1.3, 0.3, 0x0D47A1, 0, 1.55, -0.15); const m = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.45, 0.6), M(0xF2C94C, { transparent: true, opacity: .55, wireframe: true })); m.position.set(0, 1.12, 0.05); g.add(m); },
+      basurero() { k(0.2, 0.6, 0x546E7A, 0, 0.3, 0, 0.18); k(0.22, 0.05, 0x37474F, 0, 0.62, 0); },
+      dispensador() { c(0.35, 1.0, 0.35, 0xECEFF1, 0, 0.5, 0); k(0.15, 0.4, 0x81D4FA, 0, 1.2, 0); },
+      cuadro() { c(0.9, 0.6, 0.04, 0x6D4C41, 0, 1.6, 0); c(0.8, 0.5, 0.01, 0x90CAF9, 0, 1.6, 0.025); c(0.8, 1.2, 0.06, 0xEEF1F4, 0, 1.6, -0.06); },
+      lampara() { c(0.8, 1.6, 0.06, 0xEEF1F4, 0, 1.6, -0.06); c(0.45, 0.14, 0.12, 0xFFFFFF, 0, 2.1, 0); esfera(0.05, 0xFFF59D, -0.12, 2.08, 0.07, g); esfera(0.05, 0xFFF59D, 0.12, 2.08, 0.07, g); c(0.06, 0.04, 0.01, 0x2E7D32, 0, 2.06, 0.07); },
+      contenedor_cerrado() { c(0.8, 0.8, 0.5, 0xECEFF1, 0, 0.4, 0); c(0.22, 0.26, 0.16, 0xD32F2F, 0, 0.93, 0); c(0.24, 0.03, 0.18, 0xB71C1C, 0, 1.07, 0); },
+      persona_epp() { for (const dx of [-0.09, 0.09]) { const pi = W.capsula(0.075, 0.55, 0x37474F); pi.position.set(dx, 0.42, 0); g.add(pi); } const tr = W.capsula(0.2, 0.42, 0xFF9800); tr.position.y = 1.05; g.add(tr);
+        esfera(0.14, 0xE0B48F, 0, 1.52, 0, g); k(0.16, 0.08, 0xFDD835, 0, 1.64, 0, 0.12); c(0.2, 0.05, 0.03, 0x263238, 0, 1.53, 0.13); },
+      regadera() { k(0.04, 2.3, 0x2E7D32, 0, 1.15, 0); k(0.18, 0.06, 0x2E7D32, 0, 2.3, 0.25); c(0.04, 0.04, 0.3, 0x2E7D32, 0, 2.3, 0.12); const d = new THREE.Mesh(new THREE.CircleGeometry(0.5, 24), M(0x66BB6A)); d.rotation.x = -Math.PI / 2; d.position.set(0, 0.006, 0.25); g.add(d); },
     };
     (P[clave] || P.cajas)();
     return g;

@@ -22,7 +22,7 @@
 <main>
   <div class="tarjeta"><h1>🧩 Memorama de señales de seguridad</h1>
     <p class="tenue">Encuentra las parejas: cada señal con su nombre. Las señales siguen los colores y formas de la NOM-026-STPS-2008 y la NOM-003-SEGOB-2011 (verde = condición segura, rojo = prohibición y equipo contra incendio, amarillo = precaución, azul = obligación).</p>
-    <div class="niv"><button class="sec" data-n="6">Fácil · 6 parejas</button><button class="prim" data-n="8">Normal · 8 parejas</button><button class="sec" data-n="10">Difícil · 10 parejas</button></div></div>
+    <div class="niv"><button class="sec" data-n="6">Fácil · 6 parejas</button><button class="prim" data-n="8">Normal · 8 parejas</button><button class="sec" data-n="10">Difícil · 10 parejas</button> <button class="sec" id="bTemas">🎯 Temas</button></div><p class="tenue" id="temasTxt" style="margin:6px 0 0"></p></div>
   <div class="marc"><span id="mPar">Parejas: 0/8</span><span id="mMov">Movimientos: 0</span><span id="mTiempo">0:00</span></div>
   <div id="tablero"></div>
   <p class="fuente" style="text-align:center">Símbolos simplificados con fines didácticos. Fuentes: NOM-026-STPS-2008 (DOF 25/11/2008) Apéndices A-D; NOM-003-SEGOB-2011 (DOF 23/12/2011) 5.1-5.2. Consúltalas en la Biblioteca del campus.</p>
@@ -33,14 +33,21 @@ const $ = s => document.querySelector(s);
 let pares = 8, abiertas = [], hechas = 0, movs = 0, t0 = 0, reloj = null, bloqueo = false;
 function nuevo(n) {
   pares = n; abiertas = []; hechas = 0; movs = 0; t0 = 0; clearInterval(reloj); $('#mTiempo').textContent = '0:00';
-  document.querySelectorAll('.niv button').forEach(b => b.className = +b.dataset.n === n ? 'prim' : 'sec');
-  const elegidas = Juego.barajar(Senales.LISTA).slice(0, n);
+  document.querySelectorAll('.niv button[data-n]').forEach(b => b.className = +b.dataset.n === n ? 'prim' : 'sec');
+  const pool = Senales.LISTA.filter(x => TEMAS_SEL.includes(x.tipo)); n = Math.min(n, pool.length); pares = n;
+  const elegidas = Juego.barajar(pool).slice(0, n);
   const cartas = Juego.barajar(elegidas.flatMap(s => [{ id: s.id, tipo: 'img' }, { id: s.id, tipo: 'txt' }]));
   $('#tablero').style.setProperty('--cols', n > 8 ? 5 : 4); $('#tablero').style.setProperty('--rows', n > 8 ? 4 : n * 2 / 4);
   $('#tablero').innerHTML = cartas.map((c, i) => { const s = Senales.POR_ID[c.id];
     return `<button class="carta" data-id="${c.id}" data-i="${i}" aria-label="Carta"><div class="in"><div class="cara dorso">?</div><div class="cara frente">${c.tipo === 'img' ? `<img src="${Senales.dataURL(c.id, 200)}" alt="señal">` : s.nombre}</div></div></button>`; }).join('');
   document.querySelectorAll('.carta').forEach(b => b.onclick = () => voltear(b)); marcador();
 }
+// temas = tipo de señal (prohibición, obligación, precaución, informativa, contra incendio…)
+const TIPOS = [...new Set(Senales.LISTA.map(x => x.tipo))];
+let TEMAS_SEL = TIPOS; try { const g = JSON.parse(localStorage.getItem('temas_memorama') || 'null'); if (Array.isArray(g) && g.some(t => TIPOS.includes(t))) TEMAS_SEL = g.filter(t => TIPOS.includes(t)); } catch (e) { }
+function txtTemas() { $('#temasTxt').textContent = 'Señales: ' + (TEMAS_SEL.length === TIPOS.length ? 'todos los tipos' : TEMAS_SEL.join(' · ')); }
+$('#bTemas').onclick = () => Juego.elegirTemas('Tipos de señales', TIPOS.map(t => ({ id: t, txt: t, n: Senales.LISTA.filter(x => x.tipo === t).length })), 'memorama', e => { TEMAS_SEL = e; txtTemas(); nuevo(+document.querySelector('.niv .prim[data-n]')?.dataset.n || 8); }, 3);
+txtTemas();
 function marcador() { $('#mPar').textContent = `Parejas: ${hechas}/${pares}`; $('#mMov').textContent = `Movimientos: ${movs}`; }
 function voltear(b) {
   if (bloqueo || b.classList.contains('vuelta') || b.classList.contains('ok')) return;
@@ -58,7 +65,7 @@ async function fin() {
   Juego.modal(`<h2>🏆 ¡Memorama completo!</h2><p>${pares} parejas en <b>${movs}</b> movimientos y ${Math.floor(s / 60)} min ${s % 60} s · precisión ${pct}%.</p>
     <p class="fuente">${ok ? '✅ Resultado enviado a la persona instructora.' : 'Resultado guardado en este dispositivo.'}</p><button class="prim" onclick="Juego.cerrar();nuevo(pares)">Jugar otra vez</button> <button class="sec" onclick="location.href=Juego.base+'index.html?mundo=cafeteria'">Volver a la cafetería</button>`);
 }
-document.querySelectorAll('.niv button').forEach(b => b.onclick = () => nuevo(+b.dataset.n));
+document.querySelectorAll('.niv button[data-n]').forEach(b => b.onclick = () => nuevo(+b.dataset.n));
 nuevo(8);
 </script>
 </body>
