@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Consultorio de la planta (enfermería industrial)</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Curso "Enfermería industrial" (UT de Oriental, 19/11/2026). Fuentes verificadas el 10/10/2026
+// (02_fuentes_verificadas/registro_fuentes.md). Empresa, personas y casos [FICTICIO].
+const C161 = 'Convenio 161 OIT (DOF 13/04/1987)', LFT = 'LFT (últ. ref. DOF 14/05/2026)', RF = 'RFSST (DOF 13/11/2014)';
+const N10 = 'NOM-010-STPS-2014', N35 = 'NOM-035-STPS-2018', N19S = 'NOM-019-SSA3-2013';
+const FA = 'Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024';
+
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Consultorio de la planta', icono: '🩺',
+  clave: 'industria_consultorio_planta', criterio: { pct: 80, sinCriticos: true }, fondo: 0xEAF6F4,
+  vistas: [[[0, 1.7, 2.4], [0, 1.1, -3]], [[-1.6, 1.7, 0.4], [-3.4, 1.0, -2.5]], [[1.6, 1.7, 0.4], [3.4, 1.0, -2.5]]] });
+const { scene, letrero } = W;
+const { sala, prop, persona, situacion, tocaYDecide, decide, intro, PALETA } = window.Riesgo;
+
+// ------------------------------------------------------------------ Servicio médico de Autopartes del Oriente [FICTICIO]
+const { piso, entorno, z0 } = sala(W, { ancho: 10, fondo: 9, piso: 0xDCE7E5, muro: 0xF4FBFA, rotulo: 'SERVICIO MÉDICO · AUTOPARTES DEL ORIENTE', color: '#0F766E' });
+W.activarXR({ inicio: [0, 0.6], piso, entorno });
+prop(W, 'camilla', -2.6, z0 + 1.6, Math.PI / 2);
+prop(W, 'botiquin', -4.0, z0 + 0.25);
+prop(W, 'lavamanos', -4.3, z0 + 2.6, Math.PI / 2);
+prop(W, 'contenedor_cerrado', -1.0, z0 + 0.5);
+prop(W, 'escritorio', 2.4, z0 + 1.6);
+prop(W, 'silla', 2.4, z0 + 2.4, Math.PI);
+prop(W, 'cuadro', 0.9, z0 + 0.12);
+prop(W, 'dea', 4.3, z0 + 2.8, -Math.PI / 2);
+prop(W, 'senal_salida', 0, z0 + 0.1);
+prop(W, 'planta', 4.2, z0 + 0.5);
+// Personas: Don Ramón (operador lesionado) y el médico de la planta
+persona(W, { x: -0.7, z: -1.8, ry: Math.PI * 0.9, ropa: 0x37474F, casco: 0xFDD835 });
+const lRam = letrero('🧑‍🏭 Don Ramón · operador', 1.7, 0.22, PALETA.noche); lRam.position.set(-0.7, 2.0, -1.8); scene.add(lRam);
+persona(W, { x: 3.3, z: z0 + 2.0, ry: -Math.PI * 0.6, ropa: 0xFFFFFF, pantalon: 0x90A4AE });
+const lMed = letrero('👩‍⚕️ Médica de la planta', 1.6, 0.22, '#0F766E'); lMed.position.set(3.3, 2.0, z0 + 2.0); scene.add(lMed);
+
+const S = {
+  ramon: situacion(W, { x: -0.7, z: -1.5, y: 1.3, tipo: 'ramon', icono: '🩸', etiqueta: 'Herida en el antebrazo' }),
+  botiquin: situacion(W, { x: -4.0, z: z0 + 0.6, y: 1.4, tipo: 'botiquin', icono: '🧰', etiqueta: 'Botiquín' }),
+  expediente: situacion(W, { x: 2.4, z: z0 + 2.0, y: 1.25, tipo: 'expediente', icono: '📋', etiqueta: 'Expedientes y registros' }),
+  programa: situacion(W, { x: 0.9, z: z0 + 0.5, y: 1.6, tipo: 'programa', icono: '📅', etiqueta: 'Programa de salud' }),
+  medica: situacion(W, { x: 3.3, z: z0 + 2.4, y: 1.5, tipo: 'medica', icono: '👩‍⚕️', etiqueta: 'Médica de la planta' }),
+};
+
+const CASOS = {
+  urg: () => [
+    intro(W, '<h2>🩸 Urgencia en la línea</h2><p>Son las 10:15. Don Ramón, operador de troqueladora, llega al servicio médico con una <b>herida en el antebrazo que sangra mucho</b>. Tú eres la enfermera o el enfermero de la planta. Ya te pusiste guantes.</p>',
+      'Autopartes del Oriente · 450 trabajadores · servicio médico interno.'),
+    tocaYDecide(W, 'Primero, detener la hemorragia', 'Toca a <b>Don Ramón</b>.', S.ramon.marco, 'ramon', '¿Qué haces primero?', [
+      { t: 'Aplicar presión directa firme sobre la herida con gasa o tela limpia', ok: true, fb: 'Es la primera medida ante una hemorragia.', f: FA },
+      { t: 'Poner hielo directo para cerrar los vasos', ok: false, fb: 'No se usa hielo para detener una hemorragia.', f: FA },
+      { t: 'Buscar "puntos de presión" lejos de la herida', ok: false, fb: 'No se recomiendan los puntos de presión.', f: FA },
+      { t: 'Sentarlo y esperar a que deje de sangrar solo', ok: false, crit: true, fb: 'Una hemorragia grave puede poner en riesgo la vida.', f: FA },
+    ], FA),
+    decide(W, 'Si no se detiene', 'La sangre sigue saliendo a pesar de la presión firme. ¿Qué sigue?', [
+      { t: 'Llamar al 911 sin soltar la presión; si es brazo o pierna y no cede, torniquete apretado hasta que deje de sangrar', ok: true, fb: 'Toda hemorragia grave requiere servicios de emergencia.', f: FA },
+      { t: 'Quitar la gasa empapada para ver la herida', ok: false, fb: 'Se mantiene la presión; no se interrumpe para revisar.', f: FA },
+      { t: 'Mandarlo solo en transporte público al hospital', ok: false, crit: true, fb: 'Es una emergencia: se activa el servicio de emergencias.', f: FA },
+    ], FA),
+    tocaYDecide(W, 'El botiquín', 'Toca el <b>botiquín</b>.', S.botiquin.marco, 'botiquin', '¿Qué obliga la ley sobre este material?', [
+      { t: 'Toda empresa mantiene medicamentos y material de curación para primeros auxilios y adiestra personal; el patrón surte al servicio médico', ok: true, fb: 'LFT y RFSST lo exigen.', f: `${LFT} art. 504 fr. I; ${RF} art. 49 fr. III` },
+      { t: 'Es opcional: cada trabajador trae su propio botiquín', ok: false, fb: 'Es obligación del patrón.', f: `${LFT} art. 504 fr. I` },
+      { t: 'Solo los hospitales deben tener botiquín', ok: false, fb: 'Aplica a todo centro de trabajo.', f: `${LFT} art. 504 fr. I` },
+    ], `${LFT} art. 504 fr. I`),
+    decide(W, 'El tamaño importa', 'Autopartes del Oriente tiene 450 trabajadores. Además del servicio médico, ¿qué exige la LFT?', [
+      { t: 'Instalar un hospital con personal médico y auxiliar, o contratar un sanatorio u hospital cercano previo acuerdo con los trabajadores', ok: true, fb: 'Aplica a más de 300 trabajadores.', f: `${LFT} art. 504 fr. III y IV` },
+      { t: 'Solo un botiquín, como cualquier empresa', ok: false, fb: 'Con más de 100 se exige enfermería y con más de 300, hospital.', f: `${LFT} art. 504 fr. II y III` },
+      { t: 'Nada: el IMSS se encarga de todo', ok: false, fb: 'La LFT fija obligaciones directas al patrón.', f: `${LFT} art. 504` },
+    ], `${LFT} art. 504`),
+    tocaYDecide(W, 'Registro y aviso', 'Toca los <b>expedientes y registros</b>.', S.expediente.marco, 'expediente', 'Fue un accidente de trabajo. ¿Qué aviso exige la LFT?', [
+      { t: 'Aviso escrito o electrónico a la STPS, al Inspector del Trabajo y al Tribunal dentro de las 72 horas', ok: true, fb: 'Con los datos del accidente.', f: `${LFT} art. 504 fr. V` },
+      { t: 'No se avisa si no hubo muerte', ok: false, fb: 'Se avisan los accidentes que ocurran.', f: `${LFT} art. 504 fr. V` },
+      { t: 'Se avisa a fin de año, en un resumen', ok: false, fb: 'El plazo es de 72 horas.', f: `${LFT} art. 504 fr. V` },
+    ], `${LFT} art. 504 fr. V`),
+    tocaYDecide(W, 'El regreso al trabajo', 'Toca a la <b>médica de la planta</b>.', S.medica.marco, 'medica', 'Don Ramón regresa 10 días después. ¿Quién certifica que puede reanudar su trabajo?', [
+      { t: 'El médico de los servicios preventivos de medicina del trabajo, con plena autonomía; tú apoyas en equipo', ok: true, fb: 'La enfermería participa con intervenciones interdependientes.', f: `${RF} arts. 49 fr. V y 50; ${N19S}, 4.7.3` },
+      { t: 'El supervisor de producción, porque necesita gente', ok: false, fb: 'La aptitud la certifica el médico.', f: `${RF} art. 49 fr. V` },
+      { t: 'El propio trabajador, si se siente bien', ok: false, fb: 'La aptitud la certifica el médico.', f: `${RF} art. 50` },
+    ], `${RF} arts. 49-50`),
+    decide(W, 'Confidencialidad', 'El gerente te pide el diagnóstico completo de Don Ramón para comentarlo en la junta.', [
+      { t: 'Al patrón se le comunica la aptitud laboral, con respeto a la confidencialidad; no el expediente', ok: true, fb: 'Así lo establece el RFSST.', f: `${RF} art. 50` },
+      { t: 'Enviarle una copia del expediente clínico completo', ok: false, crit: true, fb: 'Se viola la confidencialidad que obliga la ética médica.', f: `${RF} art. 50` },
+    ], `${RF} art. 50`),
+  ],
+  prev: () => [
+    intro(W, '<h2>📅 Lunes de planeación</h2><p>La médica de la planta te pide armar con ella el <b>programa preventivo</b> del año. Aquí se nota que la enfermería industrial es, sobre todo, <b>prevención</b>.</p>',
+      'Autopartes del Oriente · 450 trabajadores · área de pintura con solventes.'),
+    tocaYDecide(W, 'El programa de salud', 'Toca el <b>programa de salud</b>.', S.programa.marco, 'programa', '¿Qué programas debe instaurar el patrón, con la opinión del servicio médico interno?', [
+      { t: 'Programas para promover la salud de los trabajadores y prevenir las adicciones', ok: true, fb: 'El patrón los instaura y les da seguimiento.', f: `${RF} art. 49 fr. II y IV` },
+      { t: 'Solo el calendario de vacaciones', ok: false, fb: 'Es un tema laboral, no de salud.', f: `${RF} art. 49` },
+      { t: 'Ninguno: el servicio médico solo atiende urgencias', ok: false, fb: 'Los servicios de salud en el trabajo son esencialmente preventivos.', f: `${C161} art. 1 a)` },
+    ], `${RF} art. 49`),
+    tocaYDecide(W, 'Vigilancia en pintura', 'Toca los <b>expedientes</b>.', S.expediente.marco, 'expediente', 'Para el personal expuesto a solventes del área de pintura, ¿qué pide la NOM-010?', [
+      { t: 'Un programa de vigilancia con historia clínica laboral y un expediente que se conserva al menos 5 años', ok: true, fb: 'Bajo la responsabilidad de un médico con conocimientos en medicina del trabajo.', f: `${N10}, 12.2 a), 12.3 y 12.4` },
+      { t: 'Solo una plática al año, sin registros', ok: false, fb: 'La norma exige programa, exámenes y expediente.', f: `${N10}, 12.1-12.4` },
+      { t: 'Destruir los expedientes cada año', ok: false, fb: 'Se conservan al menos 5 años desde el último examen.', f: `${N10}, 12.4` },
+    ], `${N10}, cap. 12`),
+    decide(W, 'Un encargo indebido', 'Un supervisor te pide ir a la casa de un trabajador que faltó para "comprobar si de verdad está enfermo".', [
+      { t: 'No: los empleadores no deben encargar al servicio de salud que verifique las causas de la ausencia', ok: true, fb: 'Protege tu independencia profesional.', f: `${C161} arts. 10 y 15` },
+      { t: 'Sí, es parte de tus funciones', ok: false, fb: 'No está entre las funciones del art. 5 y el art. 15 lo excluye.', f: `${C161} art. 15` },
+    ], `${C161} art. 15`),
+    decide(W, 'Después de un evento traumático', 'Una operadora presenció el accidente grave de un compañero en la línea y desde entonces no duerme bien.', [
+      { t: 'Identificarla y canalizarla para su atención a la institución de seguridad social o privada, o al médico del centro de trabajo', ok: true, fb: 'Es una obligación de la NOM-035 (Guía de referencia I).', f: `${N35}, 5.5` },
+      { t: 'Decirle que se le pasará sola', ok: false, fb: 'La norma pide identificar y canalizar.', f: `${N35}, 5.5` },
+      { t: 'Cambiarla de turno sin más', ok: false, fb: 'Primero se identifica y se canaliza para su atención.', f: `${N35}, 5.5` },
+    ], `${N35}, 5.5`),
+    decide(W, '¿Quién paga?', 'Un trabajador pregunta si le van a descontar el tiempo de su examen médico periódico.', [
+      { t: 'No: la vigilancia de la salud es gratuita, sin pérdida de ingresos y, en lo posible, en horas de trabajo', ok: true, fb: 'Así lo establece el Convenio 161.', f: `${C161} art. 12` },
+      { t: 'Sí, se descuenta del salario', ok: false, fb: 'No debe significar pérdida de ingresos.', f: `${C161} art. 12` },
+    ], `${C161} art. 12`),
+    decide(W, 'Tu autonomía', '¿Qué intervenciones puedes realizar sin prescripción previa de otro profesional?', [
+      { t: 'Las intervenciones independientes, de acuerdo con tu formación académica y experiencia', ok: true, fb: 'Las interdependientes las haces con el equipo de salud.', f: `${N19S}, 4.7.2 y 4.7.3` },
+      { t: 'Ninguna: todo lo indica el médico', ok: false, fb: 'La norma reconoce intervenciones independientes.', f: `${N19S}, 4.7.2` },
+      { t: 'Cualquier tratamiento, sin límites', ok: false, fb: 'Solo las que tu formación te autoriza.', f: `${N19S}, 4.7.2` },
+    ], `${N19S}, 4.7`),
+  ],
+};
+
+W.inicio([{ id: 'urg', txt: '🩸 <b>Caso 1:</b> Urgencia en la línea — atención, registro y regreso al trabajo' }, { id: 'prev', txt: '📅 <b>Caso 2:</b> Programa preventivo — vigilancia, ética y autonomía' }],
+  id => CASOS[id](),
+  'Basado en: Convenio 161 OIT (arts. 1, 10, 12 y 15); LFT art. 504; RFSST arts. 49 y 50; NOM-010-STPS-2014 cap. 12; NOM-035-STPS-2018 5.5; NOM-019-SSA3-2013 4.7; Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024. Empresa y personas ficticias. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { S: Object.fromEntries(Object.entries(S).map(([k, v]) => [k, v.marco])), tocar: W.tocar, estado: W.qa };
+</script>
+</body>
+</html>

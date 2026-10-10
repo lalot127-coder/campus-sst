@@ -136,6 +136,30 @@
       ],
       principal: 'prensa', evalua: { f: 'C', s: 'III', pista: 'Los atrapamientos ocurren pocas veces, pero pueden causar la pérdida de un dedo.' },
       control: [{ t: 'Guarda fija y mando bimanual', ok: true, fb: 'Control de ingeniería.', f: `NOM-004-STPS-1999, 5.3; ${NIOSH}` }, SOLO_EPP, NO_CUIDADO] },
+    // Curso "Enfermería industrial" (UT de Oriental, 19/11/2026) · fuentes verificadas el 10/10/2026
+    { id: 'servicio_medico', titulo: 'Servicio médico de la planta (curso Enfermería industrial)', modulos: ['industria/consultorio_planta', 'industria/juego_ei_mito_realidad', 'industria/juego_ei_maraton'],
+      escena: 'Consultorio de la planta de Autopartes del Oriente, 450 trabajadores, a media mañana. [FICTICIO]',
+      riesgos: [
+        { id: 'aguja', prop: 'punzo', icono: '💉', nombre: 'Agujas usadas sobre la mesa, sin recipiente rígido', real: true, tipo: 'Biológico', fb: 'Piquete accidental y exposición a agentes biológicos.', f: `${N87}, 6.2` },
+        { id: 'botiquin_vacio', prop: 'cajas', icono: '🧰', nombre: 'Botiquín sin material de curación', real: true, tipo: 'Condición de instalaciones', fb: 'No se podrían dar primeros auxilios.', f: 'LFT art. 504 fr. I; RFSST art. 49 fr. III' },
+        { id: 'piso', prop: 'charco', icono: '💧', nombre: 'Piso mojado junto a la camilla, sin señal', real: true, tipo: 'Condición de instalaciones', fb: 'Caída al mismo nivel al movilizar a una persona.', f: `${N30}, 6.1 a)` },
+        { id: 'rpbi', prop: 'contenedor_cerrado', icono: '♻️', nombre: 'Recipiente rojo de RPBI cerrado e identificado', real: false, fb: 'Es un envasado correcto de residuos.', f: `${N87}, 6.2` },
+        { id: 'botiquin_ok', prop: 'botiquin', icono: '✚', nombre: 'Botiquín surtido y señalizado', real: false, fb: 'Cumple con el material para primeros auxilios.', f: 'LFT art. 504 fr. I' },
+      ],
+      principal: 'aguja', evalua: { f: 'C', s: 'III', pista: 'Los piquetes ocurren pocas veces, pero pueden transmitir una infección grave. (Ejemplo didáctico.)' },
+      control: [{ t: 'Desechar las agujas de inmediato en un recipiente rígido de polipropileno rojo', ok: true, fb: 'Es el envasado que la norma fija para punzocortantes.', f: `${N87}, 6.2` },
+        SOLO_EPP, NO_CUIDADO] },
+    { id: 'agentes_salud', titulo: 'Nave con agentes de salud (curso Enfermería industrial)', modulos: ['industria/normas_salud', 'industria/juego_ei_que_nom', 'industria/juego_ei_memorama_vigilancia'],
+      escena: 'Nave de prensas y pintura de Autopartes del Oriente durante el turno matutino. [FICTICIO]',
+      riesgos: [
+        { id: 'ruido', prop: 'compresora', icono: '🔊', nombre: 'Prensas a 92 dB(A) sin programa de conservación de la audición', real: true, tipo: 'Físico', fb: 'Exposición a ruido de 85 dB(A) o más.', f: 'NOM-011-STPS-2001, 8.1 y 8.6' },
+        { id: 'solvente', prop: 'tambo', icono: '🧪', nombre: 'Pintores con solventes sin vigilancia a la salud', real: true, tipo: 'Químico', fb: 'Exposición a agentes químicos sin programa de vigilancia.', f: 'NOM-010-STPS-2014, 12.1' },
+        { id: 'cargas', prop: 'cajas', icono: '📦', nombre: 'Cajas de 20 kg levantadas a mano todo el turno', real: true, tipo: 'Ergonómico', fb: 'Manejo manual de cargas.', f: 'NOM-036-1-STPS-2018, 5.3 y 9.2' },
+        { id: 'epp_aud', prop: 'persona_epp', icono: '🎧', nombre: 'Operador con protección auditiva y audiometría al día', real: false, fb: 'Es parte del programa de conservación de la audición.', f: 'NOM-011-STPS-2001, 8.1 c) y e)' },
+      ],
+      principal: 'ruido', evalua: { f: 'E', s: 'III', pista: 'La exposición ocurre todos los días durante el turno y la hipoacusia puede dejar una incapacidad permanente parcial. (Ejemplo didáctico.)' },
+      control: [{ t: 'Reducir el ruido con medidas técnicas de control y mantener el programa de conservación de la audición con exámenes anuales', ok: true, fb: 'Primero los controles técnicos; el EPP auditivo es complementario.', f: 'NOM-011-STPS-2001, 8.6 y 8.7.1 a)' },
+        SOLO_EPP, NO_CUIDADO] },
   ] },
 
   construccion: { nombre: 'Obra en construcción', icono: '🏗️', color: 0xE07A1F, zonas: [

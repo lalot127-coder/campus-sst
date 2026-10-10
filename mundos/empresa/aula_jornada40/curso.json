@@ -1,0 +1,477 @@
+{
+ "clave": "jornada40",
+ "titulo": "Nueva Jornada Laboral de 40 Horas",
+ "subtitulo": "Curso base · 57 láminas · ~37 minutos de narración. Contenido verificado contra el DOF y fuentes oficiales al 3 de octubre de 2026. Información orientativa: no sustituye la asesoría legal de un caso concreto.",
+ "area": "empresa",
+ "volver": "../../../index.html?mundo=empresa",
+ "fuente": "03_cursos/BASE_jornada_40_horas_2h/02_presentacion/Jornada_40_Horas_Curso_Base_2h.pptx",
+ "laminas": [
+  {
+   "n": 1,
+   "titulo": "Portada",
+   "bloque": "INICIO",
+   "img": "slides/01.webp",
+   "audio": "audio/01.mp3",
+   "texto": "Bienvenida, bienvenido al aula del Campus de Simulación SST. Este es el curso de capacitación ejecutiva: Nueva Jornada Laboral de cuarenta horas. Lo que debo hacer y saber. Vamos a revisar el calendario dos mil veintiséis a dos mil treinta, los topes diarios por turno, las horas extra, el registro electrónico, el salario íntegro y la salud en el trabajo. Todo el contenido fue verificado contra el Diario Oficial de la Federación y fuentes oficiales al tres de octubre de dos mil veintiséis. Usa los botones para pausar, avanzar o regresar cuando lo necesites."
+  },
+  {
+   "n": 2,
+   "titulo": "Tu instructor",
+   "bloque": "INICIO",
+   "img": "slides/02.webp",
+   "audio": "audio/02.mp3",
+   "texto": "Soy el ingeniero Carlos Eduardo Roa Sánchez, con especialidad en Salud Ocupacional y Derecho Laboral, y especialización en Ergonomía y Psicosociología. Te acompaño en este curso porque esta reforma no es solo jurídica: también es de turnos y de salud."
+  },
+  {
+   "n": 3,
+   "titulo": "Objetivo general",
+   "bloque": "INICIO",
+   "img": "slides/03.webp",
+   "audio": "audio/03.mp3",
+   "texto": "Objetivo general. Al término de la sesión, identificarás las obligaciones vigentes de la reforma constitucional y legal de la jornada de cuarenta horas: el calendario dos mil veintiséis a dos mil treinta, el máximo semanal de cada año, los topes diarios por tipo de jornada, las horas extra, el salario íntegro y el registro electrónico. Y las aplicarás para evaluar horarios reales y proponer acciones de cumplimiento y de prevención de riesgos a la salud en tu centro de trabajo. Fíjate en los verbos: identificar, aplicar y proponer. Al final debes poder decir si tu horario cumple en dos mil veintisiete."
+  },
+  {
+   "n": 4,
+   "titulo": "Objetivos específicos",
+   "bloque": "INICIO",
+   "img": "slides/04.webp",
+   "audio": "audio/04.mp3",
+   "texto": "Estos son los objetivos específicos, uno por cada módulo. Módulo uno: distinguir la reforma constitucional de la legal, e identificar el máximo semanal de cada año, los topes diarios y las horas extra permitidas. Módulo dos: identificar las obligaciones patronales, como el registro electrónico, el salario íntegro y la actualización documental, y las consecuencias de incumplir. Módulo tres: relacionar la duración y distribución de la jornada con fatiga, riesgo psicosocial, ergonomía y siniestralidad. Módulo cuatro: resolver con fundamento legal las dudas más frecuentes, con casos de oficina, producción, turno nocturno y servicios de veinticuatro horas. Y módulo cinco: elaborar una ruta de siete pasos para llegar a dos mil veintisiete con la jornada rediseñada, documentada y auditable."
+  },
+  {
+   "n": 5,
+   "titulo": "Reglas del curso",
+   "bloque": "INICIO",
+   "img": "slides/05.webp",
+   "audio": "audio/05.mp3",
+   "texto": "Reglas del curso. Avanza a tu ritmo, pero sin saltarte los módulos. Ten tu celular a la mano para el manual digital, el juego y las evaluaciones. Piensa en tu horario real: los casos de tu empresa son el mejor material. Recuerda que esta información es orientativa: explica la ley vigente, pero no sustituye la asesoría legal de un caso concreto. Y habrá un diagnóstico al inicio y un examen final, con aprobación recomendada de ochenta por ciento o más."
+  },
+  {
+   "n": 6,
+   "titulo": "Alcances",
+   "bloque": "INICIO",
+   "img": "slides/06.webp",
+   "audio": "audio/06.mp3",
+   "texto": "Alcances. El curso incluye la reforma constitucional, publicada en el Diario Oficial el tres de marzo de dos mil veintiséis, y la reforma a la Ley Federal del Trabajo, del uno de mayo de dos mil veintiséis, con sus transitorios. También el calendario de cuarenta y ocho a cuarenta horas, los topes diarios, las horas extra, el registro electrónico, el salario íntegro, los documentos, las sanciones y la salud en el trabajo. No incluye asesoría legal ni revisión del contrato colectivo de una empresa en particular, cálculo de nómina real, ni criterios que la Secretaría del Trabajo aún no publica, como las disposiciones del registro electrónico, que entran en vigor el uno de enero de dos mil veintisiete. Este curso no emite constancia DC tres."
+  },
+  {
+   "n": 7,
+   "titulo": "Agenda",
+   "bloque": "INICIO",
+   "img": "slides/07.webp",
+   "audio": "audio/07.mp3",
+   "texto": "Esta es la agenda. Primero, bienvenida y diagnóstico. Luego el módulo uno: lo que cambió. El módulo dos: lo que debo hacer. Un receso. El módulo tres: el costo oculto en la salud. El módulo cuatro, el más largo: preguntas y respuestas con casos prácticos. El módulo cinco: el plan de acción. Y al final, el examen, la encuesta y las conclusiones."
+  },
+  {
+   "n": 8,
+   "titulo": "Tu manual digital",
+   "bloque": "INICIO",
+   "img": "slides/08.webp",
+   "audio": "audio/08.mp3",
+   "texto": "Tu manual digital. Es un solo enlace para todo el curso: prácticas, juego, evaluación y tu plan. Ábrelo con el botón que aparece en pantalla y guárdalo en tu celular, porque lo usaremos en cada práctica. Tus respuestas se guardan solo en tu dispositivo.",
+   "enlace": "https://lalot127-coder.github.io/jornada40multas/curso2h/manual.html"
+  },
+  {
+   "n": 9,
+   "titulo": "Entra al Campus 3D",
+   "bloque": "INICIO",
+   "img": "slides/09.webp",
+   "audio": "audio/09.mp3",
+   "texto": "Ya estás dentro del Campus de Simulación 3D. Además de esta aula, en el edificio Empresa y RH encontrarás simuladores y juegos de este mismo tema. Usa una sola pestaña del Campus para que funcione bien en tu dispositivo."
+  },
+  {
+   "n": 10,
+   "titulo": "¿Mito o realidad?",
+   "bloque": "INICIO",
+   "img": "slides/10.webp",
+   "audio": "audio/10.mp3",
+   "texto": "Empecemos con un rompehielo: ¿mito o realidad? Escucha cada frase y decide. Uno: en dos mil veintiséis ya debo trabajar cuarenta horas. Dos: me pueden bajar el sueldo porque trabajo menos. Tres: mi patrón deberá registrar electrónicamente mi entrada y salida. Cuatro: el turno nocturno puede durar ocho horas ordinarias. Pausa si necesitas pensarlo. En la siguiente lámina están las respuestas."
+  },
+  {
+   "n": 11,
+   "titulo": "¿Mito o realidad? Respuestas",
+   "bloque": "INICIO",
+   "img": "slides/11.webp",
+   "audio": "audio/11.mp3",
+   "texto": "Respuestas. Uno: mito. En dos mil veintiséis el máximo es de cuarenta y ocho horas, y baja a cuarenta y seis en dos mil veintisiete. Dos: mito. El transitorio séptimo garantiza el salario íntegro. Tres: realidad. Lo establece el artículo ciento treinta y dos, fracción treinta y cuatro, de la Ley Federal del Trabajo. Cuatro: mito. El artículo sesenta y uno fija un tope de siete horas para la jornada nocturna. En este curso veremos el porqué de cada una."
+  },
+  {
+   "n": 12,
+   "titulo": "Examen diagnóstico",
+   "bloque": "INICIO",
+   "img": "slides/12.webp",
+   "audio": "audio/12.mp3",
+   "texto": "Examen diagnóstico. ¿Qué sabes hoy? No cuenta para aprobar. Abre tu manual digital en la pestaña Diagnóstico, escribe tu nombre y responde las diez preguntas. Al terminar verás tu resultado, y lo compararás con el examen final. Pausa el curso mientras lo contestas.",
+   "enlace": "https://lalot127-coder.github.io/jornada40multas/curso2h/manual.html#diagnostico",
+   "pausa": true
+  },
+  {
+   "n": 13,
+   "titulo": "M1. Lo que cambió: dos reformas, calendario y topes por turno",
+   "bloque": "M1 · LO QUE CAMBIÓ",
+   "img": "slides/13.webp",
+   "audio": "audio/13.mp3",
+   "texto": "Módulo uno. Lo que cambió: dos reformas, calendario y topes por turno. El objetivo es distinguir la reforma constitucional de la legal, e identificar el máximo semanal de cada año, los topes diarios por tipo de jornada y las horas extra permitidas de dos mil veintiséis a dos mil treinta."
+  },
+  {
+   "n": 14,
+   "titulo": "No es una reforma: son dos",
+   "bloque": "M1 · LO QUE CAMBIÓ",
+   "img": "slides/14.webp",
+   "audio": "audio/14.mp3",
+   "texto": "No es una reforma: son dos, y confundirlas es el error más común. La primera es la reforma constitucional, publicada en el Diario Oficial el tres de marzo de dos mil veintiséis y en vigor ese mismo día. El artículo ciento veintitrés, apartado A, fracción cuarta, dice: la jornada laboral será de cuarenta horas semanales en los términos que establezca la Ley. La fracción once regula las horas extra, y los transitorios fijan el calendario y prohíben bajar salarios. La segunda es la reforma a la Ley Federal del Trabajo, publicada el uno de mayo de dos mil veintiséis y también en vigor ese día. Reforma los artículos cincuenta y nueve, sesenta y uno, sesenta y seis, sesenta y ocho, sesenta y nueve y setenta y uno; adiciona el registro electrónico y nuevas sanciones; y trae siete transitorios. La constitucional fija el principio y el calendario; la de la Ley define el cómo. Ambas ya están publicadas y en vigor: ya no son iniciativas."
+  },
+  {
+   "n": 15,
+   "titulo": "Calendario 2026-2030: 48 → 40 horas",
+   "bloque": "M1 · LO QUE CAMBIÓ",
+   "img": "slides/15.webp",
+   "audio": "audio/15.mp3",
+   "texto": "Calendario dos mil veintiséis a dos mil treinta. Cada ajuste entra el uno de enero. En dos mil veintiséis se mantienen cuarenta y ocho horas: es el periodo de ajuste. El uno de enero de dos mil veintisiete llega el primer ajuste real: cuarenta y seis horas. En dos mil veintiocho, cuarenta y cuatro. En dos mil veintinueve, cuarenta y dos. Y en dos mil treinta, cuarenta horas. Las horas extra dobles permitidas por semana también tienen calendario: nueve, nueve, diez, once y doce. La urgencia no es dos mil treinta: es el uno de enero de dos mil veintisiete."
+  },
+  {
+   "n": 16,
+   "titulo": "Topes diarios por tipo de jornada",
+   "bloque": "M1 · LO QUE CAMBIÓ",
+   "img": "slides/16.webp",
+   "audio": "audio/16.mp3",
+   "texto": "Topes diarios por tipo de jornada. Estos no cambiaron con la reforma. Jornada diurna, de seis de la mañana a ocho de la noche: ocho horas. Jornada nocturna, de ocho de la noche a seis de la mañana: siete horas. Jornada mixta, que combina ambas con menos de tres horas y media nocturnas: siete horas y media. Si tiene tres horas y media o más de nocturnas, se considera nocturna. No existe la jornada ordinaria de diez o doce horas: lo que pase del tope diario es tiempo extraordinario, y la ordinaria más la extra nunca puede superar doce horas al día. Por ejemplo, un turno de diez de la noche a seis de la mañana es nocturno de ocho horas: excede una hora diaria."
+  },
+  {
+   "n": 17,
+   "titulo": "Dos reglas que se revisan juntas",
+   "bloque": "M1 · LO QUE CAMBIÓ",
+   "img": "slides/17.webp",
+   "audio": "audio/17.mp3",
+   "texto": "Esta es una lámina clave. Hay dos reglas que siempre se revisan juntas. Primera: el máximo semanal del año, que es el mismo para todos los turnos: cuarenta y ocho horas en dos mil veintiséis, cuarenta y seis en dos mil veintisiete, cuarenta y cuatro en dos mil veintiocho, cuarenta y dos en dos mil veintinueve y cuarenta en dos mil treinta. Segunda: el tope diario de cada tipo de jornada: ocho horas la diurna, siete y media la mixta y siete la nocturna. Los turnos se distinguen por día, no por semana. Un horario cumple solo si ningún día rebasa el tope de su turno y la semana no rebasa el máximo del año. Por ejemplo, un turno nocturno en dos mil veintisiete: máximo siete horas cada día y cuarenta y seis en la semana."
+  },
+  {
+   "n": 18,
+   "titulo": "¿Cómo se acomodan las horas?",
+   "bloque": "M1 · LO QUE CAMBIÓ",
+   "img": "slides/18.webp",
+   "audio": "audio/18.mp3",
+   "texto": "¿Cómo se acomodan las horas? Estos son ejemplos en jornada diurna que sí cumplen. Dos mil veintisiete, cuarenta y seis horas: lunes a viernes ocho horas, más sábado seis. Dos mil veintiocho, cuarenta y cuatro horas: lunes a viernes ocho, más sábado cuatro. Dos mil veintinueve, cuarenta y dos horas: lunes a viernes ocho, más sábado dos; o lunes a sábado siete. Dos mil treinta, cuarenta horas: lunes a viernes ocho, y se descansa sábado y domingo. Lo que no se recomienda es pactar cuatro días de diez horas como jornada ordinaria: el artículo sesenta y uno mantiene ocho horas diarias, y la distribución de común acuerdo del artículo cincuenta y ocho no elimina ese tope. Es una lectura prudente. Las dos horas diarias de más serían tiempo extra, que solo procede por circunstancias extraordinarias. La distribución es de común acuerdo y debe documentarse."
+  },
+  {
+   "n": 19,
+   "titulo": "Horas extraordinarias: nuevo régimen",
+   "bloque": "M1 · LO QUE CAMBIÓ",
+   "img": "slides/19.webp",
+   "audio": "audio/19.mp3",
+   "texto": "Horas extraordinarias: el nuevo régimen, que también tiene calendario. Las dobles, pagadas al cien por ciento más: hasta nueve horas por semana en dos mil veintiséis y dos mil veintisiete, diez en dos mil veintiocho, once en dos mil veintinueve y doce en dos mil treinta; en hasta cuatro horas diarias y máximo cuatro días. Las triples, al doscientos por ciento más: es lo que exceda ese tope, con un máximo de cuatro horas más por semana. El techo diario: la jornada ordinaria más la extraordinaria nunca puede pasar de doce horas al día. Y está prohibido el tiempo extra a menores de dieciocho años. Además, nadie está obligado a trabajar más de lo permitido: el tiempo extra es voluntario. El tiempo extra deja de ser un colchón permanente."
+  },
+  {
+   "n": 20,
+   "titulo": "Actividad: ¿cumple o no cumple?",
+   "bloque": "M1 · LO QUE CAMBIÓ",
+   "img": "slides/20.webp",
+   "audio": "audio/20.mp3",
+   "texto": "Actividad: ¿cumple o no cumple? Analiza estos tres horarios y justifica tu respuesta con el artículo. Uno: lunes a sábado de siete a quince horas en dos mil veintisiete, ocho horas diarias, diurna. Dos: de diez de la noche a seis de la mañana, cinco noches por semana. Tres: lunes a viernes de ocho a dieciséis horas, más sábado de ocho a catorce, en dos mil veintisiete. Pausa y decide. Las respuestas vienen en la siguiente lámina."
+  },
+  {
+   "n": 21,
+   "titulo": "Respuestas de la actividad",
+   "bloque": "M1 · LO QUE CAMBIÓ",
+   "img": "slides/21.webp",
+   "audio": "audio/21.mp3",
+   "texto": "Respuestas. Uno: no cumple. Son cuarenta y ocho horas, y el máximo de dos mil veintisiete es de cuarenta y seis. Hay que reducir dos horas, por ejemplo, el sábado de siete a trece. Dos: no cumple el tope diario. Son ocho horas nocturnas y el tope es de siete. La octava hora es extra desde hoy. Tres: sí cumple. Cuarenta más seis son cuarenta y seis horas, sin pasar de ocho horas diarias. Recuerda: el tope diario y el máximo del año se revisan juntos."
+  },
+  {
+   "n": 22,
+   "titulo": "M2. Lo que debo hacer: registro, salario, documentos y sanciones",
+   "bloque": "M2 · LO QUE DEBO HACER",
+   "img": "slides/22.webp",
+   "audio": "audio/22.mp3",
+   "texto": "Módulo dos. Lo que debo hacer: registro, salario, documentos y sanciones. El objetivo es identificar las obligaciones patronales que derivan de la reforma, como el registro electrónico, el salario íntegro y la actualización documental, y las consecuencias de no cumplirlas."
+  },
+  {
+   "n": 23,
+   "titulo": "Registro electrónico de jornada",
+   "bloque": "M2 · LO QUE DEBO HACER",
+   "img": "slides/23.webp",
+   "audio": "audio/23.mp3",
+   "texto": "Registro electrónico de jornada. Es una nueva obligación patronal, en el artículo ciento treinta y dos, fracción treinta y cuatro, de la Ley Federal del Trabajo. Qué: registrar electrónicamente el inicio y el fin de la jornada de cada persona trabajadora, y entregarlo a la autoridad cuando lo requiera. Cuándo: la obligación está vigente desde el uno de mayo de dos mil veintiséis; las disposiciones de la Secretaría del Trabajo sobre su ámbito y excepciones entran en vigor el uno de enero de dos mil veintisiete, y al tres de octubre aún no se publicaban. Valor de prueba: hace prueba plena si se acredita que fue acordado entre trabajador y empleador. Y si no existe, se presumen ciertos los hechos que afirma el trabajador, según los artículos ochocientos cuatro y ochocientos cinco. No es un checador más: es la evidencia que decide un juicio."
+  },
+  {
+   "n": 24,
+   "titulo": "Menos horas, el mismo salario",
+   "bloque": "M2 · LO QUE DEBO HACER",
+   "img": "slides/24.webp",
+   "audio": "audio/24.mp3",
+   "texto": "Menos horas, el mismo salario. El transitorio séptimo de la reforma a la Ley dice: en ningún caso la reducción de la jornada laboral implicará la disminución de sueldos, salarios o prestaciones de las personas trabajadoras. Lo que sube es el costo por hora. Veamos un ejemplo ficticio, con un salario semanal de dos mil ochocientos pesos. Con cuarenta y ocho horas, la hora cuesta cincuenta y ocho pesos con treinta y tres centavos. Con cuarenta y seis, sesenta pesos con ochenta y siete. Con cuarenta y cuatro, sesenta y tres pesos con sesenta y cuatro. Con cuarenta y dos, sesenta y seis pesos con sesenta y siete. Y con cuarenta horas, setenta pesos. Bajar el sueldo porque se trabaja menos es de los errores con mayor riesgo de demanda."
+  },
+  {
+   "n": 25,
+   "titulo": "Qué documentos se actualizan",
+   "bloque": "M2 · LO QUE DEBO HACER",
+   "img": "slides/25.webp",
+   "audio": "audio/25.mp3",
+   "texto": "Qué documentos se actualizan. Un horario nuevo que no está en los documentos es un pasivo. Cambiar un horario no es editar un Excel: toca toda la cadena. La Constitución y la Ley Federal del Trabajo marcan el piso. El contrato individual debe señalar la duración de la jornada, según el artículo veinticinco, fracción quinta. El contrato colectivo, si existe, y el Reglamento Interior de Trabajo, con las horas de entrada y salida, conforme al artículo cuatrocientos veintitrés. El reglamento se deposita ante el Centro Federal de Conciliación y Registro Laboral, y surte efectos desde su depósito. Y las políticas internas, junto con el registro electrónico de asistencia."
+  },
+  {
+   "n": 26,
+   "titulo": "Qué SÍ y qué NO hacer",
+   "bloque": "M2 · LO QUE DEBO HACER",
+   "img": "slides/26.webp",
+   "audio": "audio/26.mp3",
+   "texto": "Qué sí y qué no hacer. Sí: redistribuir la jornada de común acuerdo y documentarlo; rediseñar turnos y relevos para no depender del tiempo extra; recalcular el costo por hora manteniendo el salario íntegro; implementar un registro electrónico confiable y acordado; y actualizar el contrato, el reglamento interior depositado y el contrato colectivo. No: bajar el salario porque ahora se trabaja menos; mantener el horario real y solo borrar horas del registro; pedir que se siga trabajando fuera de horario sin registrarlo; usar las horas extra como parte fija del turno; aplicar el esquema diurno a turnos nocturnos o mixtos; ni ordenar tiempo extra a menores. Cada no es un caso real de demanda o multa. El más frecuente: mantener la operación igual y solo ajustar el registro."
+  },
+  {
+   "n": 27,
+   "titulo": "Sanciones",
+   "bloque": "M2 · LO QUE DEBO HACER",
+   "img": "slides/27.webp",
+   "audio": "audio/27.mp3",
+   "texto": "Sanciones. Las multas se calculan por cada trabajador afectado, con la Unidad de Medida y Actualización de dos mil veintiséis, de ciento diecisiete pesos con treinta y un centavos. No llevar el registro electrónico de jornada: de doscientas cincuenta a cinco mil UMA, es decir, de veintinueve mil trescientos veintisiete pesos con cincuenta centavos a quinientos ochenta y seis mil quinientos cincuenta pesos. Rebasar los topes diarios o negar el descanso semanal: de cincuenta a doscientas cincuenta UMA. Violar las normas de trabajo de menores, por ejemplo con horas extra: de cincuenta a dos mil quinientas UMA. Y otras violaciones sin sanción específica, como un contrato o reglamento sin actualizar: de cincuenta a cinco mil UMA. La multa se duplica si hay reincidencia. Existe además una dimensión penal: la Ley General en materia de Trata de Personas considera las jornadas por encima de lo estipulado por la Ley como una forma de explotación laboral, con tres a diez años de prisión. Pero requiere acreditar la explotación: no es la hora extra ocasional, pactada y pagada."
+  },
+  {
+   "n": 28,
+   "titulo": "El error más caro",
+   "bloque": "M2 · LO QUE DEBO HACER",
+   "img": "slides/28.webp",
+   "audio": "audio/28.mp3",
+   "texto": "El error más caro: reducir el registro sin cambiar la operación. Hoy se operan cuarenta y ocho horas. Se quitan dos horas del checador. Se sigue produciendo igual. El trabajador se queda a terminar. Y la jornada real ya no es la jornada registrada. Recuerda esta frase: la inspección compara el papel contra la realidad. Sin registros confiables se presume cierto lo que afirma el trabajador, y aplica la multa por no llevar el registro."
+  },
+  {
+   "n": 29,
+   "titulo": "Actividad: mini-auditoría",
+   "bloque": "M2 · LO QUE DEBO HACER",
+   "img": "slides/29.webp",
+   "audio": "audio/29.mp3",
+   "texto": "Actividad: mini auditoría. Abre la práctica del módulo dos en tu manual digital. Revisarás el caso ficticio de una empresa llamada Muebles del Centro. Marca cada punto como en regla o como brecha, y verás su fundamento. ¿Cuántas brechas encontraste? Pausa el curso mientras la resuelves.",
+   "enlace": "https://lalot127-coder.github.io/jornada40multas/curso2h/manual.html#m2",
+   "pausa": true
+  },
+  {
+   "n": 30,
+   "titulo": "Alinear al sindicato",
+   "bloque": "M2 · LO QUE DEBO HACER",
+   "img": "slides/30.webp",
+   "audio": "audio/30.mp3",
+   "texto": "Alinear al sindicato. La distribución de la jornada es de común acuerdo, así que el contrato colectivo es una palanca, no un obstáculo. Antes de la mesa: involucra al sindicato desde el diagnóstico, con datos de horas por puesto y escenarios. Qué se negocia: la distribución, es decir, días y turnos, y las contrapartidas. No se negocia el número de horas ni el salario, que ya fija la ley. Y al cerrar: pacta por escrito el calendario de dos mil veintisiete a dos mil treinta y deposita el reglamento interior actualizado."
+  },
+  {
+   "n": 31,
+   "titulo": "Receso",
+   "bloque": "RECESO",
+   "img": "slides/31.webp",
+   "audio": "audio/31.mp3",
+   "texto": "Receso. Tómate diez minutos de descanso. El curso se queda en pausa; cuando regreses, pulsa reproducir para continuar.",
+   "pausa": true
+  },
+  {
+   "n": 32,
+   "titulo": "M3. El costo oculto: salud en el trabajo",
+   "bloque": "M3 · SALUD EN EL TRABAJO",
+   "img": "slides/32.webp",
+   "audio": "audio/32.mp3",
+   "texto": "Módulo tres. El costo oculto: salud en el trabajo. El objetivo es relacionar la duración y distribución de la jornada con la fatiga, el riesgo psicosocial, la ergonomía y la siniestralidad, conforme a la evidencia y a las normas oficiales aplicables."
+  },
+  {
+   "n": 33,
+   "titulo": "Las jornadas largas cuestan vidas",
+   "bloque": "M3 · SALUD EN EL TRABAJO",
+   "img": "slides/33.webp",
+   "audio": "audio/33.mp3",
+   "texto": "Las jornadas largas cuestan vidas. Un estudio global de la Organización Mundial de la Salud y la Organización Internacional del Trabajo, publicado en Environment International en dos mil veintiuno, encontró que trabajar cincuenta y cinco horas o más por semana eleva treinta y cinco por ciento el riesgo de accidente cerebrovascular, y diecisiete por ciento el riesgo de morir por cardiopatía isquémica, frente a jornadas de treinta y cinco a cuarenta horas. Atribuyó setecientas cuarenta y cinco mil muertes en dos mil dieciséis a las jornadas largas. En México, el Seguro Social registró en dos mil veinticuatro seiscientos diez mil setecientos cincuenta y un riesgos de trabajo y mil doscientas setenta y cuatro defunciones en un solo año."
+  },
+  {
+   "n": 34,
+   "titulo": "El riesgo de comprimir sin recalcular",
+   "bloque": "M3 · SALUD EN EL TRABAJO",
+   "img": "slides/34.webp",
+   "audio": "audio/34.mp3",
+   "texto": "El riesgo de comprimir sin recalcular. Primero, la fatiga acumulada: concentrar horas en menos días alarga la jornada diaria y reduce la recuperación entre turnos. Segundo, el riesgo psicosocial: la NOM cero treinta y cinco considera factores de riesgo las jornadas superiores a la ley, la rotación con turno nocturno y la interferencia trabajo familia. Tercero, la ergonomía: la NOM cero treinta y seis uno fija un límite de diez mil kilogramos de masa acumulada por jornada de ocho horas, en distancias menores a diez metros; un turno más largo no amplía ese margen. Y cuarto, la siniestralidad: más fatiga significa más errores y accidentes. Comprimir la semana sin recalcular la fatiga cambia un problema de horas por uno de siniestralidad."
+  },
+  {
+   "n": 35,
+   "titulo": "Menos horas, bien organizadas, sí funcionan",
+   "bloque": "M3 · SALUD EN EL TRABAJO",
+   "img": "slides/35.webp",
+   "audio": "audio/35.mp3",
+   "texto": "Menos horas, bien organizadas, sí funcionan. Un estudio publicado en Nature Human Behaviour en dos mil veinticinco, con dos mil ochocientas noventa y seis personas de ciento cuarenta y una organizaciones en seis países, encontró que la semana reducida con salario íntegro trajo menos agotamiento, más satisfacción laboral y mejor salud física y mental, explicado por una mejor capacidad para el trabajo, menos problemas de sueño y menos fatiga. Y según la OCDE, en México las horas trabajadas bajaron cero punto cincuenta y dos por ciento por año entre dos mil veintitrés y dos mil veinticinco, y la productividad laboral creció uno punto noventa y seis por ciento. Trabajar más horas no equivale a producir más. Pero funciona si se rediseña el trabajo, no solo si se quitan horas."
+  },
+  {
+   "n": 36,
+   "titulo": "M4. Preguntas y respuestas con casos prácticos",
+   "bloque": "M4 · PREGUNTAS Y CASOS",
+   "img": "slides/36.webp",
+   "audio": "audio/36.mp3",
+   "texto": "Módulo cuatro. Preguntas y respuestas con casos prácticos. El objetivo es resolver con fundamento legal las dudas más frecuentes sobre horarios, turnos, horas extra y salario, aplicadas a casos de oficina, producción, turno nocturno y servicios de veinticuatro horas. Antes de escuchar cada respuesta, intenta contestar tú."
+  },
+  {
+   "n": 37,
+   "titulo": "Preguntas y respuestas (1/6)",
+   "bloque": "M4 · PREGUNTAS Y CASOS",
+   "img": "slides/37.webp",
+   "audio": "audio/37.mp3",
+   "texto": "Primera pregunta: ¿en dos mil veintiséis ya tengo que trabajar cuarenta horas? No. En dos mil veintiséis el máximo sigue siendo de cuarenta y ocho horas. El primer ajuste es el uno de enero de dos mil veintisiete, a cuarenta y seis horas. Dos mil veintiséis es el periodo para ajustar procesos, no para esperar. Una planta que hoy trabaja cuarenta y ocho horas cumple en dos mil veintiséis, pero el uno de enero de dos mil veintisiete debe tener listo su horario de cuarenta y seis. Segunda pregunta: ¿puedo seguir operando de lunes a sábado? Sí, si no rebasas el máximo semanal del año, ni los topes diarios del artículo sesenta y uno, y das al menos un día de descanso por cada seis de trabajo. Por ejemplo, en dos mil veintisiete: lunes a viernes ocho horas, más sábado seis."
+  },
+  {
+   "n": 38,
+   "titulo": "Preguntas y respuestas (2/6)",
+   "bloque": "M4 · PREGUNTAS Y CASOS",
+   "img": "slides/38.webp",
+   "audio": "audio/38.mp3",
+   "texto": "¿Puedo trabajar ocho horas de lunes a viernes y descansar sábado y domingo? Sí. Son cuarenta horas: ya cumples con la meta de dos mil treinta. Es el esquema que describe la Secretaría del Trabajo. Por ejemplo, de ocho a diecisiete horas, con una hora de comida fuera del centro de trabajo: ocho horas efectivas por cinco días. Y ¿puedo pactar cuatro días de diez horas como jornada ordinaria? No. El artículo sesenta y uno conserva el tope de ocho horas diarias en jornada diurna, y la distribución de común acuerdo no elimina ese tope. Es una lectura prudente, porque la Secretaría del Trabajo no ha emitido criterio. Cuatro por diez son cuarenta horas, pero ocho de ellas serían extra cada semana, pagadas al doble, y no pueden ser permanentes."
+  },
+  {
+   "n": 39,
+   "titulo": "Preguntas y respuestas (3/6)",
+   "bloque": "M4 · PREGUNTAS Y CASOS",
+   "img": "slides/39.webp",
+   "audio": "audio/39.mp3",
+   "texto": "¿Qué pasa con los turnos de doce horas? Depende. No existe la jornada ordinaria de doce horas: son ocho ordinarias más cuatro extra, y la suma nunca puede pasar de doce al día. Las horas extra solo pueden repartirse en cuatro días por semana y dentro del tope del año. Cuatro turnos de doce horas en dos mil veintisiete suman dieciséis horas extra; el máximo legal es nueve dobles más cuatro triples, es decir, trece horas. Las tres restantes no están permitidas. ¿Y los turnos nocturnos? Tienen un tope diario de siete horas. El máximo semanal es el mismo que para cualquier turno: el del año. La ley no fija un máximo semanal distinto para el turno nocturno. Un turno de diez de la noche a seis de la mañana son ocho horas nocturnas: ya hoy excede una hora el tope, y esa hora se paga como extra."
+  },
+  {
+   "n": 40,
+   "titulo": "Preguntas y respuestas (4/6)",
+   "bloque": "M4 · PREGUNTAS Y CASOS",
+   "img": "slides/40.webp",
+   "audio": "audio/40.mp3",
+   "texto": "¿Puedo bajar el sueldo porque ahora se trabaja menos? No. En ningún caso la reducción de la jornada implica bajar sueldos, salarios o prestaciones. Lo que cambia es el costo por hora. ¿Desde qué hora empieza el tiempo extra? Depende. Es extra lo que exceda el tope diario del artículo sesenta y uno, o el máximo semanal del año. Para dos mil treinta, la Secretaría del Trabajo lo resume así: el extra se cuenta desde la hora cuarenta y uno. Por ejemplo, en dos mil veintisiete, en jornada diurna, la hora cuarenta y siete de la semana ya es extra, y también la novena hora de cualquier día."
+  },
+  {
+   "n": 41,
+   "titulo": "Preguntas y respuestas (5/6)",
+   "bloque": "M4 · PREGUNTAS Y CASOS",
+   "img": "slides/41.webp",
+   "audio": "audio/41.mp3",
+   "texto": "¿Y si el trabajador se queda porque quiere? Cuenta. Jornada es el tiempo en que la persona está a disposición del patrón para prestar su trabajo. Si sigue trabajando para la empresa, es jornada o tiempo extra, y debe registrarse y pagarse. Si sale a las cinco de la tarde pero cierra pedidos hasta las siete, cinco días, son diez horas extra: en dos mil veintisiete, nueve dobles y una triple. Y ¿el trabajador está obligado a hacer horas extra? No. No está obligado a trabajar más del tiempo permitido, y la Secretaría del Trabajo señala que el tiempo extra sigue siendo voluntario. Se recomienda una autorización previa y por escrito: solicitud del jefe, aceptación del trabajador y registro en el sistema."
+  },
+  {
+   "n": 42,
+   "titulo": "Preguntas y respuestas (6/6)",
+   "bloque": "M4 · PREGUNTAS Y CASOS",
+   "img": "slides/42.webp",
+   "audio": "audio/42.mp3",
+   "texto": "¿La hora de comida cuenta como jornada? Depende. En jornada continua debe haber al menos treinta minutos de descanso. Si la persona no puede salir del centro de trabajo, ese tiempo cuenta como jornada efectiva. Un comedor obligatorio dentro de la planta, sin poder salir, de una hora por seis días, son seis horas que sí suman a la semana. Y ¿qué documentos debo actualizar? Varios: el contrato individual, el reglamento interior con su depósito, el contrato colectivo si existe, las políticas internas y el control de asistencia. El reglamento surte efectos desde su depósito: un horario nuevo sin reglamento depositado es un riesgo."
+  },
+  {
+   "n": 43,
+   "titulo": "Casos prácticos",
+   "bloque": "M4 · PREGUNTAS Y CASOS",
+   "img": "slides/43.webp",
+   "audio": "audio/43.mp3",
+   "texto": "Casos prácticos. Son ejercicios didácticos con empresas y horarios ficticios. Uno, oficina: lunes a viernes de ocho a dieciocho horas, con una hora de comida fuera. ¿Cuántas horas efectivas trabaja y cumple en dos mil veintisiete? Dos, producción: lunes a sábado de siete a quince horas, con treinta minutos de descanso sin salir de la planta. ¿Qué debe cambiar el uno de enero de dos mil veintisiete? Tres, turno nocturno: de diez de la noche a seis de la mañana. ¿Puede usar el mismo esquema que la diurna? Cuatro, hospital de veinticuatro horas: guardias de doce horas, cuatro por semana, en dos mil veintisiete. ¿Es legal? Cinco, turno mixto: lunes a sábado de quince a veintidós treinta. ¿Qué tipo de jornada es y hasta cuándo cumple? Y seis: sale a las cinco pero trabaja hasta las siete. ¿Es tiempo personal o tiempo extra? Pausa y resuélvelos.",
+   "pausa": true
+  },
+  {
+   "n": 44,
+   "titulo": "Casos prácticos: respuestas (1/2)",
+   "bloque": "M4 · PREGUNTAS Y CASOS",
+   "img": "slides/44.webp",
+   "audio": "audio/44.mp3",
+   "texto": "Respuestas, primera parte. Oficina: nueve horas por cinco días son cuarenta y cinco; caben en las cuarenta y seis de dos mil veintisiete, pero nueve horas diarias exceden el tope diurno de ocho: una hora diaria es extra. Solución: de ocho a diecisiete horas, cuarenta horas. Producción: los treinta minutos sin salir cuentan como jornada. Ocho horas por seis días son cuarenta y ocho, más que cuarenta y seis: hay que reducir dos horas, por ejemplo el sábado de siete a trece, y repetir el ajuste cada año. Turno nocturno: no. Son ocho horas nocturnas y el tope es de siete, así que una hora diaria es extra desde hoy. Se puede ajustar a diez de la noche a cinco de la mañana, o pagar y registrar la hora extra dentro de los topes."
+  },
+  {
+   "n": 45,
+   "titulo": "Casos prácticos: respuestas (2/2)",
+   "bloque": "M4 · PREGUNTAS Y CASOS",
+   "img": "slides/45.webp",
+   "audio": "audio/45.mp3",
+   "texto": "Respuestas, segunda parte. Hospital: doce horas son ocho ordinarias más cuatro extra; cuatro guardias suman dieciséis horas extra, y el máximo legal es de trece. Hay que rediseñar relevos, por ejemplo con más personal o guardias de ocho horas. Turno mixto: tiene dos horas y media nocturnas, menos de tres y media, así que es mixta, con tope diario de siete horas y media. Suma cuarenta y cinco horas a la semana: cumple en dos mil veintiséis y dos mil veintisiete, pero en dos mil veintiocho, con máximo de cuarenta y cuatro, debe reducir una hora. Y el que se queda porque quiere: si trabaja para la empresa, es tiempo extra, diez horas por semana. Si es sistemático, no es una circunstancia extraordinaria: hay que rediseñar la carga."
+  },
+  {
+   "n": 46,
+   "titulo": "Juego en vivo: ¿cumple o no cumple?",
+   "bloque": "M4 · PREGUNTAS Y CASOS",
+   "img": "slides/46.webp",
+   "audio": "audio/46.mp3",
+   "texto": "Juego: ¿cumple o no cumple? Abre la pestaña Repaso de tu manual digital. Responde cada situación; cada respuesta trae su fundamento, y al final verás tu puntaje. Si logras quince aciertos o más, vas muy bien. Pausa el curso mientras juegas.",
+   "enlace": "https://lalot127-coder.github.io/jornada40multas/curso2h/manual.html#repaso",
+   "pausa": true
+  },
+  {
+   "n": 47,
+   "titulo": "M5. Plan de acción: rediseño de turnos, costos y checklist",
+   "bloque": "M5 · PLAN DE ACCIÓN",
+   "img": "slides/47.webp",
+   "audio": "audio/47.mp3",
+   "texto": "Módulo cinco. Plan de acción: rediseño de turnos, costos y checklist. El objetivo es elaborar una ruta de implementación de siete pasos para llegar a dos mil veintisiete con la jornada rediseñada, documentada y auditable."
+  },
+  {
+   "n": 48,
+   "titulo": "Plan de acción en 7 pasos",
+   "bloque": "M5 · PLAN DE ACCIÓN",
+   "img": "slides/48.webp",
+   "audio": "audio/48.mp3",
+   "texto": "Plan de acción en siete pasos. Uno, diagnosticar: las horas reales por puesto y turno, no las del contrato. Dos, revisar: contratos, contrato colectivo, reglamento interior y políticas de horario. Tres, simular: nómina, cobertura, horas extra y descansos por año. Cuatro, rediseñar: turnos y relevos sin depender del tiempo extra. Cinco, comunicar: acordar la distribución y explicarla al personal. Seis, documentar: contrato, reglamento depositado y registro electrónico. Y siete, auditar: que el horario del papel sea el que se trabaja. Este último paso es el que evita sanciones. La urgencia no es dos mil treinta: es el uno de enero de dos mil veintisiete. Quien empieza ahora, transita ordenado."
+  },
+  {
+   "n": 49,
+   "titulo": "El peso financiero del tiempo extra",
+   "bloque": "M5 · PLAN DE ACCIÓN",
+   "img": "slides/49.webp",
+   "audio": "audio/49.mp3",
+   "texto": "El peso financiero del tiempo extra. Un ejemplo ficticio, con una hora ordinaria de cien pesos, en dos mil veintisiete. La hora extra dentro del tope cuesta doscientos pesos; la excedente, trescientos. Cubrir trece horas extra por semana, nueve dobles y cuatro triples, cuesta tres mil pesos por semana. Cubrir esas mismas horas con relevos en horario ordinario cuesta mil trescientos pesos, más el factor de integración. Simula tu propio caso en tu manual digital: pestaña Recursos, simulador de costos."
+  },
+  {
+   "n": 50,
+   "titulo": "Checklist mínimo antes del 1 de enero de 2027",
+   "bloque": "M5 · PLAN DE ACCIÓN",
+   "img": "slides/50.webp",
+   "audio": "audio/50.mp3",
+   "texto": "Checklist mínimo antes del uno de enero de dos mil veintisiete. Inventario de horas efectivas por puesto y turno. Puestos que rebasan el máximo del año, identificados. Contratos con la duración de la jornada actualizada. Reglamento interior con horas de entrada y salida, depositado. Sistema de registro electrónico elegido y probado. Política escrita de autorización de horas extra. Nómina que distingue hora ordinaria, doble y triple. Y reevaluación de los turnos nuevos con la NOM cero treinta y cinco y la NOM cero treinta y seis uno. La versión completa está en el checklist digital y en el manual del participante."
+  },
+  {
+   "n": 51,
+   "titulo": "Examen final y encuesta",
+   "bloque": "CIERRE",
+   "img": "slides/51.webp",
+   "audio": "audio/51.mp3",
+   "texto": "Examen final y encuesta. Abre la pestaña Evaluación de tu manual digital. Responde las diez preguntas y descarga tu comprobante. La aprobación recomendada es de ochenta por ciento o más. Después contesta la encuesta de satisfacción, y compara tu resultado con el diagnóstico del inicio. Pausa el curso mientras respondes.",
+   "enlace": "https://lalot127-coder.github.io/jornada40multas/curso2h/manual.html#evaluacion",
+   "pausa": true
+  },
+  {
+   "n": 52,
+   "titulo": "Conclusiones",
+   "bloque": "CIERRE",
+   "img": "slides/52.webp",
+   "audio": "audio/52.mp3",
+   "texto": "Conclusiones. Uno: la jornada de cuarenta horas ya es Constitución y ley; lo gradual es el calendario, no la obligación. Dos: dos mil veintiséis es el año para diagnosticar y rediseñar; el primer ajuste es el uno de enero de dos mil veintisiete. Tres: los topes diarios de ocho, siete y media y siete horas siguen igual, y el máximo semanal del año es uno para todos los turnos. Cuatro: el salario no baja; el costo por hora sube y el tiempo extra se vuelve más caro y auditable. Cinco: el registro electrónico decide la prueba; la jornada real debe coincidir con la registrada. Y seis: menos horas mal organizadas pueden generar más fatiga; hay que rediseñar con la NOM cero treinta y cinco y la NOM cero treinta y seis uno."
+  },
+  {
+   "n": 53,
+   "titulo": "Recomendaciones",
+   "bloque": "CIERRE",
+   "img": "slides/53.webp",
+   "audio": "audio/53.mp3",
+   "texto": "Recomendaciones. Haz hoy el inventario de horas reales por puesto y turno. Ajusta los horarios por año, de dos mil veintisiete a dos mil treinta, y documenta cada cambio en el contrato y el reglamento. Elige un registro electrónico con bitácora de cambios y acuérdalo por escrito con el personal. Define una política de horas extra con autorización previa y alertas de tope. Consulta el Diario Oficial y la Secretaría del Trabajo: las disposiciones del registro entran en vigor el uno de enero de dos mil veintisiete. Y ante un caso concreto, valida con asesoría legal antes de cambiar el contrato colectivo o el reglamento."
+  },
+  {
+   "n": 54,
+   "titulo": "Frase final",
+   "bloque": "CIERRE",
+   "img": "slides/54.webp",
+   "audio": "audio/54.mp3",
+   "texto": "La ley ya decidió cuántas horas; a tu empresa le toca decidir cómo organizarlas, registrarlas con verdad y cuidar a quien las trabaja. Legalidad, productividad, operación, costo, y seguridad y salud. Gracias por tu atención."
+  },
+  {
+   "n": 55,
+   "titulo": "Contacto y agradecimiento",
+   "bloque": "CIERRE",
+   "img": "slides/55.webp",
+   "audio": "audio/55.mp3",
+   "texto": "Si necesitas apoyo para diagnosticar o rediseñar la jornada en tu empresa, aquí están mis datos de contacto. Puedes escribirme por teléfono o correo."
+  },
+  {
+   "n": 56,
+   "titulo": "Fuentes y bibliografía (1/2)",
+   "bloque": "CIERRE",
+   "img": "slides/56.webp",
+   "audio": "audio/56.mp3",
+   "texto": "Estas son las fuentes y la bibliografía, verificadas contra fuentes primarias al tres de octubre de dos mil veintiséis: los decretos publicados en el Diario Oficial el tres de marzo y el uno de mayo de dos mil veintiséis, la Ley Federal del Trabajo vigente, la Ley General en materia de Trata de Personas, y las normas oficiales mexicanas cero treinta y cinco y cero treinta y seis uno de la Secretaría del Trabajo."
+  },
+  {
+   "n": 57,
+   "titulo": "Fuentes y bibliografía (2/2)",
+   "bloque": "CIERRE",
+   "img": "slides/57.webp",
+   "audio": "audio/57.mp3",
+   "texto": "Y también las preguntas frecuentes de la Secretaría del Trabajo, el valor de la UMA publicado por el INEGI, el estudio de la OMS y la OIT, la memoria estadística del Seguro Social, el estudio publicado en Nature Human Behaviour y la nota de país de la OCDE. Recuerda revisar el Diario Oficial vigente, porque las cifras y los criterios pueden cambiar. Aquí termina el curso. Gracias."
+  }
+ ]
+}

@@ -503,6 +503,251 @@ window.BANCO_TRIVIA = [
 ]
 },
 {
+"tema": "Enfermería industrial",
+"preguntas": [
+{
+"p": "¿Qué incluyen los servicios preventivos de medicina del trabajo según el RFSST?",
+"o": [
+"Solo la nómina",
+"Solo la limpieza",
+"Solo la vigilancia del estacionamiento",
+"Prevención, atención médica, primeros auxilios y orientación y capacitación"
+],
+"r": 3,
+"f": "RFSST (DOF 13/11/2014) art. 3 fr. XXIX",
+"rf": ""
+},
+{
+"p": "Una intervención de enfermería que no requiere prescripción de otro profesional es…",
+"o": [
+"Interdependiente",
+"Ilegal",
+"Independiente",
+"Administrativa"
+],
+"r": 2,
+"f": "NOM-019-SSA3-2013, 4.7.2",
+"rf": ""
+},
+{
+"p": "¿El patrón puede encargar a la enfermera verificar las causas de la ausencia de un trabajador?",
+"o": [
+"Sí, siempre",
+"No, el Convenio 161 lo impide",
+"Solo los lunes",
+"Solo si hay sindicato"
+],
+"r": 1,
+"f": "Convenio 161 OIT (DOF 13/04/1987) art. 15",
+"rf": ""
+},
+{
+"p": "¿Qué deben tener TODAS las empresas, sin importar su tamaño?",
+"o": [
+"Medicamentos y material de curación para primeros auxilios y personal adiestrado",
+"Un hospital",
+"Una ambulancia",
+"Un quirófano"
+],
+"r": 0,
+"f": "LFT (últ. ref. DOF 14/05/2026) art. 504 fr. I",
+"rf": ""
+},
+{
+"p": "La enfermería de una empresa con más de 100 trabajadores está bajo la dirección de…",
+"o": [
+"El gerente de ventas",
+"El vigilante",
+"El contador",
+"Un médico cirujano"
+],
+"r": 3,
+"f": "LFT (últ. ref. DOF 14/05/2026) art. 504 fr. II",
+"rf": ""
+},
+{
+"p": "¿Dentro de cuántas horas se avisa a la STPS de un accidente de trabajo?",
+"o": [
+"1 semana",
+"30 días",
+"72 horas",
+"No se avisa"
+],
+"r": 2,
+"f": "LFT (últ. ref. DOF 14/05/2026) art. 504 fr. V",
+"rf": ""
+},
+{
+"p": "En 2024, ¿cuántos riesgos de trabajo registró el IMSS, aproximadamente?",
+"o": [
+"Menos de mil",
+"Más de 600 mil",
+"Unos 10 mil",
+"Ninguno"
+],
+"r": 1,
+"f": "Rev Med Inst Mex Seguro Soc (2026), art. 6877, con datos de la Memoria Estadística IMSS 2024",
+"rf": ""
+},
+{
+"p": "Para ejercer la enfermería se requiere…",
+"o": [
+"Título o certificado de especialización legalmente expedido y registrado",
+"Solo experiencia",
+"Solo un curso en línea",
+"Nada"
+],
+"r": 0,
+"f": "LGS (últ. ref. DOF 15/01/2026) art. 79",
+"rf": ""
+},
+{
+"p": "La prima vacacional que marca la LFT es de al menos…",
+"o": [
+"5%",
+"10%",
+"100%",
+"25%"
+],
+"r": 3,
+"f": "LFT (últ. ref. DOF 14/05/2026) art. 80",
+"rf": ""
+},
+{
+"p": "El aguinaldo mínimo que marca la LFT equivale a…",
+"o": [
+"3 días de salario",
+"1 mes de salario",
+"15 días de salario",
+"2 meses de salario"
+],
+"r": 2,
+"f": "LFT (últ. ref. DOF 14/05/2026) art. 87",
+"rf": ""
+},
+{
+"p": "¿Cuántas NOM clasifica la STPS como normas de \"Salud\"?",
+"o": [
+"3",
+"10",
+"25",
+"41"
+],
+"r": 1,
+"f": "STPS, portal ASINOM: clasificación de las NOM (consulta 10/10/2026)",
+"rf": ""
+},
+{
+"p": "Iluminación especial: ¿qué exámenes anuales pide la NOM-025?",
+"o": [
+"Agudeza visual, campimetría y percepción de colores",
+"Audiometría",
+"Espirometría",
+"Radiografía de tórax"
+],
+"r": 0,
+"f": "NOM-025-STPS-2008, 5.9",
+"rf": ""
+},
+{
+"p": "Vibraciones: ¿con qué periodicidad mínima se hacen los exámenes médicos?",
+"o": [
+"Cada mes",
+"Cada 10 años",
+"Nunca",
+"Al menos uno cada 2 años"
+],
+"r": 3,
+"f": "NOM-024-STPS-2001, 8.5.2 a)",
+"rf": ""
+},
+{
+"p": "¿A quién NO se debe exponer a vibraciones según la NOM-024?",
+"o": [
+"A personas zurdas",
+"A personas con lentes",
+"A mujeres en estado de gestación",
+"A nadie"
+],
+"r": 2,
+"f": "NOM-024-STPS-2001, 5.7",
+"rf": ""
+},
+{
+"p": "Químicos: ¿cuánto tiempo mínimo se conserva el expediente clínico de la vigilancia?",
+"o": [
+"6 meses",
+"5 años desde el último examen",
+"1 año",
+"No se conserva"
+],
+"r": 1,
+"f": "NOM-010-STPS-2014, 12.4",
+"rf": ""
+},
+{
+"p": "Presiones ambientales anormales (buceo): ¿quién puede realizar esas actividades?",
+"o": [
+"Solo mayores de 18 años con certificado médico",
+"Cualquier persona",
+"Solo menores de edad",
+"Solo visitantes"
+],
+"r": 0,
+"f": "NOM-014-STPS-2000, 5.8",
+"rf": ""
+},
+{
+"p": "Un trabajador sufrió un acontecimiento traumático severo en la planta. Según la NOM-035…",
+"o": [
+"Se ignora",
+"Se le descuenta el día",
+"Se le cambia de turno sin más",
+"Se identifica y se canaliza para su atención"
+],
+"r": 3,
+"f": "NOM-035-STPS-2018, 5.5",
+"rf": ""
+},
+{
+"p": "Hemorragia grave en el brazo de un trabajador: ¿qué haces primero (tras protegerte)?",
+"o": [
+"Poner hielo",
+"Buscar \"puntos de presión\"",
+"Presión directa firme sobre la herida",
+"Esperar a que pare sola"
+],
+"r": 2,
+"f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024",
+"rf": ""
+},
+{
+"p": "¿Quién certifica que un trabajador accidentado puede reanudar su trabajo?",
+"o": [
+"El supervisor de producción",
+"El médico de los servicios preventivos de medicina del trabajo",
+"El propio trabajador",
+"Recursos humanos"
+],
+"r": 1,
+"f": "RFSST (DOF 13/11/2014) arts. 49 fr. V y 50",
+"rf": ""
+},
+{
+"p": "Radiaciones ionizantes: antes de exponerse, al trabajador se le practica…",
+"o": [
+"Examen médico inicial y certificado de aptitud, con su ficha de registro",
+"Nada",
+"Solo una encuesta de satisfacción",
+"Solo un examen de la vista"
+],
+"r": 0,
+"f": "NOM-012-STPS-2012, 13.3",
+"rf": ""
+}
+]
+},
+{
 "tema": "NOM-035 · Directivos y jefes",
 "preguntas": [
 {

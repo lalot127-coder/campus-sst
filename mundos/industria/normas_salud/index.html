@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Normas de salud STPS: recorrido de vigilancia</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Las 10 NOM de "Salud" de la STPS (portal ASINOM, consulta 10/10/2026) y su vigilancia de la salud, con textos oficiales
+// verificados el 10/10/2026 (02_fuentes_verificadas/registro_fuentes.md). Planta y personas [FICTICIO].
+const ASINOM = 'STPS, portal ASINOM: clasificación de las NOM (consulta 10/10/2026)';
+const N10 = 'NOM-010-STPS-2014', N11 = 'NOM-011-STPS-2001', N12 = 'NOM-012-STPS-2012', N13 = 'NOM-013-STPS-1993',
+  N14 = 'NOM-014-STPS-2000', N15 = 'NOM-015-STPS-2001', N24 = 'NOM-024-STPS-2001', N25 = 'NOM-025-STPS-2008',
+  N35 = 'NOM-035-STPS-2018', N36 = 'NOM-036-1-STPS-2018';
+
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Normas de salud STPS: recorrido de vigilancia', icono: '🏭',
+  clave: 'industria_normas_salud', criterio: { pct: 80, sinCriticos: true }, fondo: 0xE6ECEF,
+  vistas: [[[0, 2.0, 3.0], [0, 1.0, -3.5]], [[-2.2, 1.8, 0.6], [-5, 1.0, -3]], [[2.2, 1.8, 0.6], [5, 1.0, -3]]] });
+const { scene, letrero } = W;
+const { sala, prop, persona, situacion, tocaYDecide, decide, encuentra, intro, PALETA } = window.Riesgo;
+
+// ------------------------------------------------------------------ Nave de Autopartes del Oriente [FICTICIO]
+const { piso, entorno, z0 } = sala(W, { ancho: 12, fondo: 10, rotulo: 'AUTOPARTES DEL ORIENTE · RECORRIDO DE VIGILANCIA DE LA SALUD' });
+W.activarXR({ inicio: [0, 0.6], piso, entorno });
+const rot = (t, x, y, z, col = PALETA.azul) => { const l = letrero(t, Math.max(1.0, t.length * 0.075), 0.2, col); l.position.set(x, y, z); scene.add(l); };
+// Fondo de la nave (de izquierda a derecha)
+prop(W, 'prensa', -4.6, z0 + 0.8); rot('Prensas', -4.6, 2.35, z0 + 0.8);
+prop(W, 'tambo', -3.0, z0 + 0.7); prop(W, 'tambo', -2.5, z0 + 0.9); rot('Pintura con solventes', -2.8, 1.55, z0 + 0.8);
+prop(W, 'estufa', -1.0, z0 + 0.7); rot('Horno de fundición', -1.0, 1.55, z0 + 0.7, PALETA.naranja);
+prop(W, 'puerta_candado', 0.8, z0 + 0.1); rot('☢️ Radiografía industrial', 0.8, 2.42, z0 + 0.3, PALETA.ambar);
+prop(W, 'tablero', 2.5, z0 + 0.3); rot('Corte láser', 2.5, 2.0, z0 + 0.3);
+prop(W, 'tanque', 4.4, z0 + 1.0); rot('Toma de agua · buceo', 4.4, 2.0, z0 + 1.0);
+// Lados de la nave
+prop(W, 'compresora', -5.0, -0.8, Math.PI / 2); rot('Martillo neumático', -5.0, 1.3, -0.8);
+prop(W, 'cajas', -4.6, 0.9); prop(W, 'anaquel', -5.3, 1.9, Math.PI / 2); rot('Almacén: carga manual', -4.6, 1.3, 0.9);
+prop(W, 'lampara', 5.9, -0.6, -Math.PI / 2); prop(W, 'mesa', 5.0, -0.6, Math.PI / 2); rot('Inspección de calidad', 5.0, 1.3, -0.6);
+persona(W, { x: 4.6, z: 1.2, ry: -Math.PI / 2, ropa: 0x6A1B9A });
+// Distractores (no son agentes de una NOM de salud)
+prop(W, 'planta', -0.3, -4.6); prop(W, 'reloj', -2.0, z0 + 0.12); prop(W, 'cuadro', 3.6, z0 + 0.12);
+
+const ST = (tipo, x, z, y, icono, etiqueta) => situacion(W, { x, z, y, tipo, icono, etiqueta });
+const S = {
+  ruido: ST('ruido', -4.6, z0 + 1.4, 1.5, '🔊', '92 dB(A)'),
+  quim: ST('quim', -2.8, z0 + 1.5, 1.2, '🧪', 'Solventes'),
+  term: ST('term', -1.0, z0 + 1.4, 1.2, '🔥', 'Calor extremo'),
+  rad: ST('rad', 0.8, z0 + 0.8, 1.4, '☢️', 'Radiación ionizante'),
+  laser: ST('laser', 2.5, z0 + 0.9, 1.4, '📡', 'Radiación no ionizante'),
+  buceo: ST('buceo', 4.4, z0 + 2.1, 1.3, '🤿', 'Presión alta (buceo)'),
+  vib: ST('vib', -4.2, -0.8, 1.2, '〰️', 'Vibraciones'),
+  carga: ST('carga', -3.8, 0.9, 1.0, '📦', 'Cajas de 20 kg'),
+  luz: ST('luz', 4.4, -0.6, 1.4, '💡', 'Iluminación especial'),
+  psico: ST('psico', 4.2, 1.2, 1.8, '🧠', 'Evento traumático'),
+  planta: ST('planta', -0.3, -4.3, 1.1, '🪴', 'Maceta'),
+  reloj: ST('reloj', -2.0, z0 + 0.6, 2.0, '🕒', 'Reloj'),
+  cuadro: ST('cuadro', 3.6, z0 + 0.6, 1.6, '🖼️', 'Cuadro'),
+};
+
+// Paso de recorrido: toca la estación y elige NOM + vigilancia correctas
+const estacion = (tipo, titulo, ctx, ok, malas) => tocaYDecide(W, titulo, `Toca la estación <b>${titulo.toLowerCase()}</b>.`, S[tipo].marco, tipo,
+  `${ctx} ¿Qué norma aplica y qué vigilancia de la salud pide?`, [ok, ...malas], ok.f);
+
+const CASOS = {
+  rec: () => [
+    intro(W, '<h2>🏭 Recorrido de vigilancia</h2><p>Acompañas a la médica de la planta en el recorrido anual. En cada estación identifica <b>la norma de salud de la STPS</b> que aplica y <b>la vigilancia de la salud</b> que exige. Ese programa lo vas a operar tú.</p>',
+      'Autopartes del Oriente · 450 trabajadores.'),
+    decide(W, 'Las normas de salud', 'Antes de empezar: ¿cuántas NOM clasifica la STPS como normas de "Salud"?', [
+      { t: '10: NOM-010, 011, 012, 013, 014, 015, 024, 025, 035 y 036-1', ok: true, fb: 'Las demás son de seguridad, organización, específicas o de producto.', f: ASINOM },
+      { t: '41: todas las NOM de la STPS', ok: false, fb: 'La STPS tiene 41 NOM en 5 categorías; solo 10 son de salud.', f: ASINOM },
+      { t: 'Solo una, la NOM-030', ok: false, fb: 'La NOM-030 es de servicios preventivos (organización).', f: ASINOM },
+    ], ASINOM),
+    estacion('ruido', 'Prensas', 'El sonómetro marca 92 dB(A) en los puestos de las prensas.',
+      { t: `${N11}: exámenes médicos anuales específicos a quien se expone a 85 dB(A) o más`, ok: true, fb: 'Dentro del programa de conservación de la audición.', f: `${N11}, 8.1 e) y 8.6` },
+      [{ t: `${N25}: exámenes de agudeza visual cada año`, ok: false, fb: 'Esa es la norma de iluminación.', f: `${N25}, 5.9` },
+       { t: `${N11}: no hay exámenes, solo tapones`, ok: false, crit: true, fb: 'La norma exige exámenes anuales a expuestos a 85 dB(A) o más.', f: `${N11}, 8.6` }]),
+    estacion('quim', 'Pintura con solventes', 'Los pintores aplican pintura con solventes todo el turno.',
+      { t: `${N10}: programa con historia clínica laboral y expediente mínimo 5 años`, ok: true, fb: 'A cargo de un médico con conocimientos en medicina del trabajo.', f: `${N10}, 12.1-12.4` },
+      [{ t: `${N15}: un examen cada 6 meses por calor`, ok: false, fb: 'Esa es la norma de condiciones térmicas.', f: `${N15}, Apéndice B.1 c)` },
+       { t: `${N10}: basta con entregar mascarillas`, ok: false, fb: 'La vigilancia a la salud es obligatoria para el POE.', f: `${N10}, 12.1` }]),
+    estacion('term', 'Horno de fundición', 'Los fundidores trabajan junto a los hornos de aluminio.',
+      { t: `${N15}: vigilancia a la salud con al menos un examen médico cada 6 meses`, ok: true, fb: 'Con evaluación inicial e historia clínica (Apéndice B).', f: `${N15}, 5.9 y Apéndice B.1` },
+      [{ t: `${N24}: un examen cada 2 años`, ok: false, fb: 'Esa es la periodicidad de vibraciones.', f: `${N24}, 8.5.2 a)` },
+       { t: `${N15}: solo un examen al contratar`, ok: false, fb: 'Al menos uno cada 6 meses.', f: `${N15}, Apéndice B.1 c)` }]),
+    estacion('vib', 'Martillo neumático', 'El operador usa el martillo neumático gran parte del turno.',
+      { t: `${N24}: al menos un examen cada 2 años, con énfasis músculo-esquelético y cardiovascular`, ok: true, fb: 'Dentro del programa de prevención de alteraciones a la salud.', f: `${N24}, 5.6 y 8.5.2` },
+      [{ t: `${N11}: solo audiometría`, ok: false, fb: 'La vibración tiene su propia norma.', f: `${N24}, 8.5.2` },
+       { t: `${N36}: solo para cargas`, ok: false, fb: 'Esa norma es de manejo manual de cargas.', f: `${N36}, 1` }]),
+    estacion('carga', 'Almacén: carga manual', 'En el almacén se levantan cajas de 20 kg a mano.',
+      { t: `${N36}: exámenes iniciales (historia clínica laboral) y seguimiento clínico anual o ante signos`, ok: true, fb: 'Para detectar trastornos músculo-esqueléticos.', f: `${N36}, 9.2 a)-b)` },
+      [{ t: `${N25}: campimetría`, ok: false, fb: 'Esa es de iluminación.', f: `${N25}, 5.9` },
+       { t: 'Ninguna: cargar es parte del trabajo', ok: false, fb: 'La NOM-036-1 obliga a vigilar la salud de los expuestos.', f: `${N36}, 5.3` }]),
+    estacion('luz', 'Inspección de calidad', 'Los inspectores revisan defectos finos con iluminación especial.',
+      { t: `${N25}: exámenes anuales de agudeza visual, campimetría y percepción de colores`, ok: true, fb: 'Para quienes trabajan en áreas con iluminación especial.', f: `${N25}, 5.9` },
+      [{ t: `${N13}: examen cada 6 meses`, ok: false, fb: 'La NOM-013 es de radiaciones no ionizantes.', f: `${N13}, 3.2.5` },
+       { t: `${N25}: solo cambiar focos`, ok: false, fb: 'Además del mantenimiento, pide exámenes de la vista.', f: `${N25}, 5.9 y 5.10` }]),
+  ],
+  esp: () => [
+    intro(W, '<h2>☢️ Exposiciones especiales</h2><p>Hay áreas con reglas muy específicas para la salud. Encuéntralas y decide lo que la norma pide.</p>',
+      'Autopartes del Oriente · 450 trabajadores.'),
+    encuentra(W, { titulo: 'Exposiciones especiales', texto: 'Toca las <b>4 estaciones</b> con radiación, presión alta o un evento traumático. Cuidado con lo que no es un agente.',
+      fuente: ASINOM,
+      buenas: [{ tipo: 'rad', nombre: 'Radiografía industrial', fb: 'Radiación ionizante.', f: N12, obj: S.rad },
+        { tipo: 'laser', nombre: 'Corte láser', fb: 'Radiación electromagnética no ionizante (incluye láser, infrarroja, ultravioleta y microondas).', f: `${N13} (definiciones)` },
+        { tipo: 'buceo', nombre: 'Buceo en la toma de agua', fb: 'Presión ambiental alta.', f: `${N14}, 8` },
+        { tipo: 'psico', nombre: 'Trabajadora tras un evento traumático', fb: 'Factor de riesgo psicosocial.', f: `${N35}, 5.5` }].map(b => ({ ...b, obj: S[b.tipo] })),
+      malas: [{ tipo: 'planta', nombre: 'Maceta', fb: 'No es un agente de una NOM de salud.', obj: S.planta, msg: 'Maceta: no es un agente de riesgo para la salud.' },
+        { tipo: 'reloj', nombre: 'Reloj', fb: '', obj: S.reloj, msg: 'Reloj: no es un agente de riesgo para la salud.' },
+        { tipo: 'cuadro', nombre: 'Cuadro', fb: '', obj: S.cuadro, msg: 'Cuadro: no es un agente de riesgo para la salud.' }] }),
+    decide(W, 'Radiación ionizante', 'Un técnico nuevo empezará en radiografía industrial. ¿Qué se hace antes?', [
+      { t: 'Generar su ficha de registro, practicarle el examen médico inicial y emitir el certificado médico de aptitud', ok: true, fb: 'Después, los periódicos se comparan con los iniciales.', f: `${N12}, 13.3 y 13.4` },
+      { t: 'Nada, solo darle un dosímetro', ok: false, crit: true, fb: 'La vigilancia de la salud del POE es obligatoria.', f: `${N12}, 5.20-5.22` },
+    ], `${N12}, cap. 13`),
+    decide(W, 'Radiación no ionizante', 'Para el personal del corte láser, ¿qué promueve la NOM-013?', [
+      { t: 'Exámenes médicos periódicos en relación con su exposición', ok: true, fb: 'Autoridades, patrones y trabajadores los promueven.', f: `${N13}, 3.2.5` },
+      { t: 'Que no se haga ningún examen', ok: false, fb: 'La norma sí los promueve.', f: `${N13}, 3.2.5` },
+    ], `${N13}, 3.2.5`),
+    decide(W, 'Buceo de mantenimiento', 'El contratista propone que un aprendiz de 17 años bucee en la toma de agua.', [
+      { t: 'No: solo mayores de 18 años con certificado médico de aptitud, y con exámenes iniciales, periódicos y especiales', ok: true, fb: 'Así lo exige la NOM-014.', f: `${N14}, 5.6, 5.8 y 8.2.2` },
+      { t: 'Sí, si sabe nadar', ok: false, crit: true, fb: 'Está prohibido para menores de 18 años.', f: `${N14}, 5.8` },
+    ], `${N14}, 5.8`),
+    decide(W, 'Embarazo y vibraciones', 'Una operadora de montacargas te informa que está embarazada.', [
+      { t: 'No debe exponerse a vibraciones: avisar para reubicarla', ok: true, fb: 'La NOM-024 prohíbe exponer a vibraciones a mujeres en estado de gestación.', f: `${N24}, 5.7` },
+      { t: 'Que siga igual hasta el parto', ok: false, crit: true, fb: 'La norma lo prohíbe.', f: `${N24}, 5.7` },
+    ], `${N24}, 5.7`),
+    decide(W, 'Factores psicosociales', 'La trabajadora que presenció el accidente sigue con signos de alteración a su salud y hay quejas de violencia laboral en su área.', [
+      { t: 'Practicarle exámenes médicos y evaluaciones psicológicas, y canalizarla para su atención', ok: true, fb: 'La NOM-035 lo pide cuando hay signos o síntomas y/o quejas.', f: `${N35}, 5.5 y 5.6` },
+      { t: 'Despedirla para evitar problemas', ok: false, crit: true, fb: 'Es contrario a la norma y a la ética profesional.', f: `${N35}, 5.5-5.6` },
+    ], `${N35}, 5.6`),
+  ],
+};
+
+W.inicio([{ id: 'rec', txt: '🏭 <b>Caso 1:</b> Recorrido — ruido, químicos, calor, vibraciones, cargas e iluminación' }, { id: 'esp', txt: '☢️ <b>Caso 2:</b> Exposiciones especiales — radiaciones, buceo, embarazo y factores psicosociales' }],
+  id => CASOS[id](),
+  'Basado en: las 10 NOM de "Salud" de la STPS (ASINOM, 10/10/2026): NOM-010-STPS-2014 cap. 12; NOM-011-STPS-2001 8.6; NOM-012-STPS-2012 cap. 13; NOM-013-STPS-1993 3.2.5; NOM-014-STPS-2000 5.6 y 5.8; NOM-015-STPS-2001 5.9 y Apéndice B; NOM-024-STPS-2001 5.7 y 8.5; NOM-025-STPS-2008 5.9; NOM-035-STPS-2018 5.5-5.6; NOM-036-1-STPS-2018 cap. 9. Planta ficticia. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { S: Object.fromEntries(Object.entries(S).map(([k, v]) => [k, v.marco])), tocar: W.tocar, estado: W.qa };
+</script>
+</body>
+</html>
