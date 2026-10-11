@@ -1,5 +1,5 @@
 // Zonas de trabajo alejadas del campus, dentro del mismo mundo (módulo ES): mina a cielo abierto, mina subterránea,
-// obra en construcción, aserradero, ferrocarril y campo agrícola. El relieve (tajo, cerro, estructuras) se dibuja con
+// obra en construcción, aserradero, ferrocarril, campo agrícola y patio de prácticas (hidrocarburos). El relieve (tajo, cerro, estructuras) se dibuja con
 // geometría propia desde el inicio; los modelos 3D de cada zona (kit .glb) se cargan SOLO cuando el avatar se acerca o
 // se teletransporta (carga diferida). Cada zona tiene: caminos desde el campus, marcadores numerados tocables con
 // información, señales NOM-026 y una caseta de acceso caminable con las puertas de sus normas (próximamente/pendiente).
@@ -44,6 +44,13 @@ export const DEF_ZONAS = [
   { id: 'agricola', nombre: 'Campo agrícola', icono: '🚜', color: 0x2E7D32, kit: 'agricola', centro: [72, 74], entrada: [52, 56], caseta: [46, 62, -2.3], salida: 30, piso: 'tierra',
     desc: 'Cultivo, maquinaria agrícola y bodega', senales: ['guantes', 'respiratoria'],
     modulos: [{ titulo: 'Actividades agrícolas', icono: '🌽', nom: NOM.g03, estado: 'pendiente', color: 'amarillo', senal: 'prec_general' }] },
+  { id: 'practicas', nombre: 'Prácticas', icono: '🛢️', color: 0x2E9E4F, kit: null, centro: [-6, 134], entrada: [-6, 104], caseta: [-14, 110, Math.PI], salida: 352, piso: 'concreto',
+    desc: 'Patio de prácticas: estación de servicio, galera de gas LP y ductos (nombres genéricos)', senales: ['no_fumar', 'no_llama', 'extintor'],
+    modulos: [{ titulo: 'Estación de servicio (gasolina)', icono: '⛽', nom: 'NOM-005-ASEA-2016 · GRE 128', tipo: '3d', url: 'mundos/practicas/hidrocarburos/index.html?e=gasolinera', color: 'rojo', senal: 'no_fumar' },
+      { titulo: 'Galera de gas LP (cilindros)', icono: '🔥', nom: 'NOM-011-ASEA-2019 · GRE 115', tipo: '3d', url: 'mundos/practicas/hidrocarburos/index.html?e=galera', color: 'rojo', senal: 'no_llama' },
+      { titulo: 'Ducto de gas natural', icono: '💨', nom: 'NOM-020-ASEA-2024 · GRE 115', tipo: '3d', url: 'mundos/practicas/hidrocarburos/index.html?e=ducto_gn', color: 'amarillo', senal: 'inflamable' },
+      { titulo: 'Ducto de petróleo crudo', icono: '🛢️', nom: 'NOM-009-ASEA-2017 · GRE 128', tipo: '3d', url: 'mundos/practicas/hidrocarburos/index.html?e=ducto_crudo', color: 'amarillo', senal: 'inflamable' },
+      { titulo: 'Ducto de gasolina (poliducto)', icono: '⛓️', nom: 'NOM-009-ASEA-2017 · GRE 128', tipo: '3d', url: 'mundos/practicas/hidrocarburos/index.html?e=ducto_gasolina', color: 'amarillo', senal: 'inflamable' }] },
 ];
 // Marcadores numerados (como en un recorrido de inspección). Textos generales; el detalle normativo se verifica al crear cada curso.
 const PINES = {
@@ -69,6 +76,11 @@ const PINES = {
   ferrocarril: [
     [-6, -114, 'Andén', 'Mantenerse detrás de la franja amarilla hasta que el tren se detenga.'],
     [20, -120, 'Vía', 'No cruzar ni caminar sobre la vía fuera de los pasos autorizados (NOM-016-STPS-2001, operación y mantenimiento de ferrocarriles).'] ],
+  practicas: [
+    [-14, 126, 'Estación de servicio', 'Gasolina: UN1203, clase 3, Guía 128 de la GRE 2024. Diseño, construcción, operación y mantenimiento: NOM-005-ASEA-2016.'],
+    [2, 126, 'Galera de gas LP', 'Gas LP: UN1075, Guía 115 de la GRE 2024. Bodegas de gas LP en recipientes portátiles y transportables: NOM-011-ASEA-2019.'],
+    [-6, 140, 'Ductos', 'Las tuberías con fluidos peligrosos se identifican en amarillo (NOM-026-STPS-2008). Integridad de ductos: NOM-009-ASEA-2017; gas natural por ductos terrestres: NOM-020-ASEA-2024.'],
+    [10, 138, 'Manga de viento', 'Ante una fuga o derrame, la GRE 2024 indica mantenerse viento arriba, cuesta arriba y/o aguas arriba.'] ],
   agricola: [[60, 66, 'Maquinaria agrícola', 'Tractor en operación: mantener distancia y no viajar en el implemento.'], [76, 80, 'Cultivo', 'Aplicación de agroquímicos con equipo de protección (NOM-003-STPS-2023).']],
 };
 
@@ -190,6 +202,26 @@ export function construirZonas(ctx) {
   { const parcela = new THREE.Mesh(new THREE.PlaneGeometry(34, 24), new THREE.MeshStandardMaterial({ color: 0x8C6A45, map: tierra, roughness: 1 })); parcela.rotation.x = -Math.PI / 2; parcela.position.set(gx + 4, .008, gz + 6); parcela.userData.piso = true; escena.add(parcela); pisos.push(parcela);
     nav.bloquearRect(gx + 4, gz + 6, 34, 24); nav.liberarRect(gx + 4, gz - 6.5, 34, 1.4); }
 
+  // ---- PRÁCTICAS: patio con estación de servicio, galera de gas LP y ductos (geometría propia; el simulador va en la caseta)
+  const PR = ZONAS[6], [qx, qz] = PR.def.centro;
+  { parche(qx, qz, 22, 0xBFC3C7, concreto);
+    // estación de servicio genérica (techumbre sin marca, islas y dispensarios)
+    caja(9, .45, 5.5, 0x2E9E4F, qx - 9, 4.6, qz - 6); caja(9.1, .12, 5.6, 0xFFFFFF, qx - 9, 4.33, qz - 6);
+    [[-3.6, -2], [3.6, -2], [-3.6, 2], [3.6, 2]].forEach(([dx, dz]) => caja(.3, 4.3, .3, 0xE8E8E8, qx - 9 + dx, 2.15, qz - 6 + dz));
+    [-1.4, 1.4].forEach(dz => { caja(6, .2, 1, 0xD9D9D9, qx - 9, .1, qz - 6 + dz); [-1.8, 1.8].forEach(dx => caja(.7, 1.7, .45, 0xF4F4F4, qx - 9 + dx, 1.05, qz - 6 + dz)); });
+    nav.bloquearRect(qx - 9, qz - 6, 6.5, 4);
+    // galera de gas LP: techo, postes y cilindros
+    caja(8, .25, 5, 0x9AA5AD, qx + 9, 3.8, qz - 6); [[-3.8, -2.3], [3.8, -2.3], [-3.8, 2.3], [3.8, 2.3]].forEach(([dx, dz]) => caja(.2, 3.8, .2, 0x6D7378, qx + 9 + dx, 1.9, qz - 6 + dz));
+    for (let i = 0; i < 8; i++) for (let k = 0; k < 2; k++) { const c = new THREE.Mesh(new THREE.CylinderGeometry(.18, .18, 1.2, 12), M(0xE7E7E7)); c.position.set(qx + 6.4 + i * .6, .6, qz - 7 + k * .6); escena.add(c); }
+    nav.bloquearRect(qx + 9, qz - 6, 8, 5);
+    // tres ductos en amarillo (NOM-026) sobre soportes
+    [6, 8.5, 11].forEach(dz => { const t = new THREE.Mesh(new THREE.CylinderGeometry(.32, .32, 26, 16), M(0xF2C230)); t.rotation.z = Math.PI / 2; t.position.set(qx, .9, qz + dz); escena.add(t);
+      for (let x = -12; x <= 12; x += 4) caja(.45, .7, .45, 0x8A8F94, qx + x, .35, qz + dz); });
+    nav.bloquearRect(qx, qz + 8.5, 27, 6.5);
+    // manga de viento
+    caja(.1, 4, .1, 0x888888, qx + 16, 2, qz + 2); const manga = new THREE.Mesh(new THREE.ConeGeometry(.25, 1.4, 12, 1, true), M(0xFF7A1A, { side: THREE.DoubleSide })); manga.rotation.z = -Math.PI / 2; manga.position.set(qx + 16.7, 3.8, qz + 2); escena.add(manga);
+    const letrero = ctx.cartel('PRÁCTICAS · HIDROCARBUROS', 8, .7, '#ffffff', '#2E9E4F', .55); letrero.position.set(qx, 2.2, qz - 15); letrero.rotation.y = Math.PI; escena.add(letrero); }
+
   // ================= contenido con modelos (carga diferida por zona)
   const CARGA = {
     async mina_abierta(z) { const p = [];
@@ -238,6 +270,7 @@ export function construirZonas(ctx) {
       for (const n of piezas) { const o = await kit.pieza(z.kit, n); const w = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()); o.rotation.y = w.z > w.x ? Math.PI / 2 : 0; const L = Math.max(w.x, w.z); o.position.x = x - L / 2; tren.add(o); x -= L + .3; }
       tren.position.set(-150, .3, fz); z.grupo.add(tren); z.anim.push({ o: tren, tipo: 'tren', v: 7, x: -150, pausa: 0 });
       await Promise.all(p); },
+    async practicas(z) { },   // por ahora solo geometría propia; kit .glb pendiente (ver CREDITOS)
     async agricola(z) { const p = [];
       for (let i = 0; i < 9; i++) for (let k = 0; k < 6; k++) p.push(poner(z, i < 5 ? 'maiz' : 'trigo', gx - 11 + i * 3.6, gz + k * 3.2, 0));
       p.push(poner(z, 'bodega', gx + 26, gz - 2, -Math.PI / 2), poner(z, 'tambo', gx + 20, gz - 8, 0), poner(z, 'tambo', gx + 21, gz - 8.3, 0));
