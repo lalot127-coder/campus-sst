@@ -5,78 +5,246 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Simulador · Análisis de riesgo del edificio</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/avatar.js"></script>
+<script src="../../../motor/realismo.js"></script>
 <script src="../../../motor/motor.js"></script>
 <script src="../comun.js"></script>
 <script src="../catalogo.js"></script>
+<style>
+#hud{position:fixed;right:10px;top:calc(var(--barraH,60px) + 8px);z-index:4;background:rgba(255,255,255,.96);border-radius:14px;padding:9px 11px;width:min(250px,46vw);box-shadow:0 6px 20px rgba(14,58,107,.22);font-size:.88rem;color:#0E3A6B}
+#hud b{display:block;margin-bottom:4px} #hud .z{display:flex;justify-content:space-between;gap:6px;padding:2px 0;border-bottom:1px solid #E8F5F9;cursor:pointer}
+#hud .z.ok{color:#2E7D32;font-weight:700} #hud .bt{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap} #hud button{flex:1;border:0;border-radius:10px;padding:7px 6px;background:#E8F5F9;color:#0E3A6B;font-weight:800;cursor:pointer;font-size:.85rem}
+#hud.mini .lista{display:none} @media (max-width:700px){#hud{font-size:.78rem;padding:6px 8px}}
+</style>
 </head>
 <body>
+<div id="hud" style="display:none"><b>🔎 Hallazgos por sala <span id="hTot"></span></b><div class="lista" id="hLista"></div>
+  <div class="bt"><button id="bPista" title="Muestra los objetos que se pueden inspeccionar en la sala donde estás">🔍 Pista</button><button id="bGeneral" title="Vista de todo el edificio">🗺️ Plano</button><button id="bHud">▾</button></div></div>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Kit3D } from '../../../motor/kit3d.js';
+import { Personas } from '../../../motor/personas3d.js';
 
-// Puerta "Análisis de riesgo" de cada edificio: ?e=<edificio> (cafeteria, biblioteca, hospital, industria, proteccion,
-// laboral, empresa). Los riesgos salen de ../catalogo.js (regla: cada módulo nuevo del campus agrega su zona).
-// Método: identificar (NOM-030-STPS-2009 6.1) → evaluar con la matriz NOM-031-STPS-2011 8.3 o con el método propio de la
-// NOM que aplique (selector) → controlar (NOM-017-STPS-2024 5.2; jerarquía NIOSH como referencia).
-const P = new URLSearchParams(location.search);
+// Puerta "Análisis de riesgo" de cada edificio: ?e=<edificio>. Los riesgos salen de ../catalogo.js (regla: cada módulo nuevo
+// del campus agrega su zona). 11/10/2026: el juego es un RECORRIDO 3D: un edificio con pasillo y una sala por zona; los
+// riesgos y las condiciones controladas están repartidos por muros, piso y centro de cada sala; el avatar camina (toca el
+// piso) y se acerca a inspeccionar lo que tocas. Método: identificar (NOM-030-STPS-2009 6.1) → evaluar con la matriz
+// NOM-031-STPS-2011 8.3 o con el método propio de la NOM (selector) → controlar (NOM-017-STPS-2024 5.2; NIOSH referencia).
+// Modelos: Kenney y Poly Pizza CC0/CC-BY (assets/INVENTARIO_ASSETS.csv) con respaldo de objetos propios (comun.js).
+const Q = new URLSearchParams(location.search);
 const CAT = window.CATALOGO_RIESGOS.edificios;
-const E = CAT[P.get('e')] ? P.get('e') : 'industria';
-const ED = CAT[E];
+const E = CAT[Q.get('e')] ? Q.get('e') : 'industria';
+const ED = CAT[E], Z = ED.zonas, n = Z.length, R = window.Riesgo;
+// ------------------------------------------------------------------ plano: pasillo a lo largo de x, salas al norte y al sur
+const SX = 7.6, SZ = 6, PZ = 1.3, cols = Math.max(1, Math.ceil(n / 2)), L = cols * SX, X0 = -L / 2;
+const sala = i => { const lado = i % 2 === 0 ? -1 : 1, col = Math.floor(i / 2), xc = X0 + SX / 2 + col * SX; return { i, lado, xc, zc: lado * (PZ + SZ / 2), zPuerta: lado * PZ }; };
 const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: `Análisis de riesgo · ${ED.nombre}`, icono: '🔎',
-  clave: 'riesgo_analisis_' + E, criterio: { pct: 80, sinCriticos: true }, fondo: 0xE8ECEF,
+  clave: 'riesgo_analisis_' + E, criterio: { pct: 80, sinCriticos: true }, fondo: 0xC9DDEA, xr: false, radioSombra: Math.max(14, L * 0.7),
   campus: '../../../index.html?mundo=' + E,
-  vistas: [[[0, 3.1, 5.4], [0, 1.0, -2.6]], [[-1.2, 1.8, 0.4], [-4.5, 1.0, -2.2]], [[1.2, 1.8, 0.4], [4.5, 1.0, -2.2]], [[0, 1.7, 0.6], [0, 1.0, -4.4]]] });
-const { scene, letrero, caja } = W;
-const R = window.Riesgo;
-const Z = ED.zonas, S = {}, n = Z.length;
-const { piso, entorno, z0 } = R.sala(W, { ancho: n > 2 ? 17 : 13, fondo: n > 2 ? 12 : 10, rotulo: `${ED.icono} ${ED.nombre.toUpperCase()} · ANÁLISIS DE RIESGO`, color: '#' + ED.color.toString(16).padStart(6, '0') });
-W.activarXR({ inicio: [0, 0.6], piso, entorno });
+  vistas: [[[X0 - 2, 7.5, 6.5], [X0 + 2.5, 0.5, 0]], [[0, 8 + L * 0.55, 7 + L * 0.45], [0, 0, 0]]] });
+const { scene, camera, controls, caja, letrero, M, tocable } = W;
+camera.far = 200; camera.updateProjectionMatrix(); controls.maxDistance = 30 + L * 0.5;
+if (window.Realismo) scene.background = Realismo.cielo(THREE, '#5B97CC', '#DCEBF3', '#DCEBF3');
+const kit = new Kit3D(THREE, '../../../'), gente = new Personas(THREE, '../../../');
+kit.precargar(['oficina', 'extintores-fuego']);
+const AL = 2.4, MURO = 0xEEF1F4, colorEd = '#' + ED.color.toString(16).padStart(6, '0');
 
-// ------------------------------------------------------------------ zonas en arco alrededor de la persona (una estación por zona)
-// Cada estación es una plataforma con DOS filas de objetos (riesgos reales y condiciones controladas, mezclados en un orden
-// fijo por zona para que no estén siempre en el mismo lugar los reales).
-const radio = n > 2 ? 6.4 : 4.8, abre = n === 1 ? 0 : Math.min(1.2, 0.42 * (n - 1));
+// pisos
+const pasto = new THREE.Mesh(new THREE.PlaneGeometry(L + 40, 50), M(0x7FAF6A, { roughness: .95 })); pasto.rotation.x = -Math.PI / 2; pasto.position.y = -0.03; pasto.userData.sinTextura = true; scene.add(pasto);
+if (window.Realismo) pasto.material = Realismo.material(THREE, pasto.material, 'pasto', (L + 40) / 3, 50 / 3);
+const suelo = new THREE.Mesh(new THREE.PlaneGeometry(L + 1, 2 * (PZ + SZ) + 1), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); suelo.rotation.x = -Math.PI / 2; suelo.position.y = 0.02; suelo.userData.sinTextura = true; scene.add(suelo);
+{ const p = new THREE.Mesh(new THREE.PlaneGeometry(L, 2 * PZ), M(0xBFC5CB)); p.rotation.x = -Math.PI / 2; p.position.y = 0.006; scene.add(p);
+  for (const z of [-PZ + 0.12, PZ - 0.12]) caja(L, 0.004, 0.08, 0xF2C94C, 0, 0.008, z); }   // franjas de circulación (NOM-026)
+const TINTES = [0xD9D4CA, 0xCBD6DD, 0xD6D9CC, 0xDCCFCB, 0xCFD3DC, 0xD8D2C4];
+for (let i = 0; i < cols * 2; i++) { const s = sala(i); const p = new THREE.Mesh(new THREE.PlaneGeometry(SX, SZ), M(i < n ? TINTES[i % TINTES.length] : 0xD0D0D0)); p.rotation.x = -Math.PI / 2; p.position.set(s.xc, 0.005, s.zc); scene.add(p); }
+// muros: exteriores, divisiones entre salas y muros del pasillo con una puerta por sala
+const mX = (x0, x1, z) => caja(x1 - x0, AL, 0.14, MURO, (x0 + x1) / 2, AL / 2, z), mZ = (z0, z1, x) => caja(0.14, AL, z1 - z0, MURO, x, AL / 2, (z0 + z1) / 2);
+mX(X0, -X0, -(PZ + SZ)); mX(X0, -X0, PZ + SZ); mZ(-(PZ + SZ), -PZ, X0); mZ(PZ, PZ + SZ, X0); mZ(-(PZ + SZ), PZ + SZ, -X0);
+for (let c = 1; c < cols; c++) { mZ(-(PZ + SZ), -PZ, X0 + c * SX); mZ(PZ, PZ + SZ, X0 + c * SX); }
+for (const lado of [-1, 1]) { let x = X0; for (let c = 0; c < cols; c++) { const i = c * 2 + (lado < 0 ? 0 : 1), s = sala(i);
+  if (i < n) { mX(x, s.xc - 0.75, lado * PZ); x = s.xc + 0.75; } } mX(x, -X0, lado * PZ); }
+// ventanas en los muros exteriores (cristal con marco) y puerta de acceso al pasillo
+{ const vm = new THREE.MeshPhysicalMaterial({ color: 0x9CCBE6, roughness: .08, metalness: .1, transparent: true, opacity: .55 });
+  for (let i = 0; i < cols * 2; i++) { const s = sala(i), z = s.lado * (PZ + SZ);
+    for (const dx of [-1.9, 1.9]) { const v = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.1, 0.16), vm); v.position.set(s.xc + dx, 1.45, z); scene.add(v);
+      caja(2.56, 0.08, 0.2, 0x8C99A6, s.xc + dx, 0.88, z); caja(2.56, 0.08, 0.2, 0x8C99A6, s.xc + dx, 2.02, z); } } }
+{ const l = letrero(`${ED.icono} ${ED.nombre.toUpperCase()} · ANÁLISIS DE RIESGO`, Math.min(7, 0.16 * ED.nombre.length + 4), 0.42, colorEd); l.position.set(X0 - 0.09, 2.95, 0); l.rotation.y = -Math.PI / 2; scene.add(l); }
+// letrero de cada sala sobre su puerta (lado del pasillo) + contador
+const ROT = {};
+Z.forEach((z, i) => { const s = sala(i); const t = letrero(z.titulo, Math.min(3.6, 0.075 * z.titulo.length + 0.6), 0.26, '#14213D'); t.position.set(s.xc, 2.2, s.zPuerta - s.lado * 0.09); scene.add(t);
+  const k = letrero('0 / 0', 0.7, 0.2, '#1F6FB2'); k.position.set(s.xc, 1.96, s.zPuerta - s.lado * 0.09); scene.add(k); ROT[z.id] = k; });
+
+// ------------------------------------------------------------------ objetos de cada sala (repartidos por toda la sala)
+const PISO = ['charco', 'cable', 'multicontacto', 'franja', 'charco_senalado', 'cable_canalizado'];
+const PARED = ['anaquel', 'escalera_guardada', 'tablero', 'botiquin', 'dea', 'puerta', 'puerta_candado', 'lampara', 'cuadro', 'senal_salida', 'reloj', 'buzon', 'senal_obligacion',
+  'regadera', 'lavamanos', 'estufa', 'cuchillos', 'contenedor_rojo', 'punzo', 'contenedor_cerrado', 'dispensador', 'soldadura', 'prensa', 'guarda', 'compresora', 'tanque', 'cilindro',
+  'cilindro_encadenado', 'azotea', 'extintor', 'extintor_obstruido', 'tambo'];
+// lugares en coordenadas de la sala: u (a lo largo del muro del pasillo) y v (profundidad desde la puerta)
+const SLOT_PARED = [[-2.25, 5.4, 0], [0, 5.4, 0], [2.25, 5.4, 0], [-3.4, 2.0, 1], [3.4, 2.0, -1], [-3.4, 4.0, 1], [3.4, 4.0, -1], [-1.15, 5.4, 0], [1.15, 5.4, 0]];
+const SLOT_CENTRO = [[-1.5, 2.7, 0], [1.6, 3.0, 0], [0, 4.0, 0], [-2.2, 1.0, 0], [2.3, 1.1, 0], [-1.8, 4.3, 0], [1.9, 4.4, 0]];
+const KITS = {
+  escritorio: [['oficina', 'escritorio'], ['oficina', 'monitor', 0, 0.76, -0.18], ['oficina', 'teclado', 0, 0.76, 0.12], ['oficina', 'silla', 0, 0, 0.75, Math.PI]],
+  silla: [['oficina', 'silla']], planta: [['oficina', 'planta']], basurero: [['oficina', 'bote']], mesa: [['oficina', 'mesa', 0, 0, 0, 0, 0.7]],
+  anaquel: [['oficina', 'librero_abierto'], ['oficina', 'caja', 0.2, 1.9, 0], ['oficina', 'caja', -0.18, 1.9, 0.04]],
+  cajas: [['oficina', 'caja', -0.17, 0, 0], ['oficina', 'caja', 0.17, 0, 0.02], ['oficina', 'caja', 0, 0.4, 0]],
+  estufa: [['oficina', 'estufa']], lavamanos: [['oficina', 'lavabo']], tambo: [['extintores-fuego', 'tambo']], extintor: [['extintores-fuego', 'extintor_a']],
+  extintor_obstruido: [['extintores-fuego', 'extintor_a'], ['oficina', 'caja', -0.45, 0, 0.4], ['oficina', 'caja', 0, 0, 0.45], ['oficina', 'caja', 0.45, 0, 0.4], ['oficina', 'caja', 0, 0.4, 0.45]],
+  tablero: [['seguridad-electrica', 'tablero']], prensa: [['loto', 'maquina', 0, 0, 0, 0, 0.75]], guarda: [['loto', 'maquina', 0, 0, 0, 0, 0.75]],
+  botiquin: [['primeros-auxilios', 'botiquin_pared', 0, 1.25, 0]], dea: [['primeros-auxilios', 'dea', 0, 1.15, 0]], camilla: [['primeros-auxilios', 'cama']],
+  puerta: [['puertas', 'puerta']], puerta_candado: [['puertas', 'puerta']], escalera: [['alturas', 'escalera', 0, 0, 0, 0, 0.72]],
+};
+// detalles que hacen visible la condición (se conservan sobre el modelo)
+const DETALLE = {
+  guarda(g) { const m = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.9, 1.0), M(0xF2C94C, { transparent: true, opacity: .5, wireframe: true })); m.position.set(0, 1.0, 0.2); g.add(m); },
+  puerta_candado(g) { caja(0.14, 0.16, 0.08, 0xFFC107, 0.32, 1.05, 0.15, g); caja(0.6, 0.14, 0.02, 0x2E7D32, 0, 2.25, 0.13, g); },
+};
 const mezclar = (lista, semilla) => { let h = 0; for (const ch of semilla) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const a = [...lista]; for (let i = a.length - 1; i > 0; i--) { h = (h * 1103515245 + 12345) >>> 0; const j = h % (i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const S = {}, ITEMS = [];
+// marcador sobre el objeto (aparece al inspeccionarlo): aro + ícono + nombre (sprites: siempre de frente a la cámara)
+const sprite = (dibujar, w, h, px = 256) => { const cv = document.createElement('canvas'); cv.width = px; cv.height = Math.round(px * h / w); dibujar(cv.getContext('2d'), cv.width, cv.height);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: false })); s.scale.set(w, h, 1); s.renderOrder = 6; return s; };
+function marcador(x, y, z, icono, etiqueta) {
+  const marco = sprite((g, w) => { g.strokeStyle = '#fff'; g.lineWidth = w * 0.09; g.beginPath(); g.arc(w / 2, w / 2, w * 0.4, 0, 7); g.stroke(); }, 0.62, 0.62); marco.material.color.set(0x1F6FB2);
+  const ic = sprite((g, w, h) => { g.font = `${h * 0.62}px "Segoe UI Emoji", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(icono, w / 2, h / 2 + 4); }, 0.42, 0.42);
+  const rot = sprite((g, w, h) => { g.fillStyle = 'rgba(20,33,61,.92)'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, h / 3) : g.rect(0, 0, w, h); g.fill(); g.fillStyle = '#fff'; g.font = `bold ${h * 0.5}px Calibri, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(etiqueta, w / 2, h / 2 + 2); },
+    Math.min(3.2, Math.max(1.2, etiqueta.length * 0.07)), 0.24, 1024);
+  for (const [o, dy] of [[marco, 0], [ic, 0], [rot, 0.48]]) { o.position.set(x, y + dy, z); o.visible = false; scene.add(o); }
+  return { marco, ic, rot, mostrar(v = true) { marco.visible = ic.visible = v; } };
+}
+async function vestir(g, clave) {
+  if (clave === 'persona_epp') { try { const p = await gente.crear({ modelo: 'hombre-e', padre: g, chaleco: 0xFF9800 }); if (!p.modelo) return;
+      g.children.forEach(c => { if (c !== p.grupo) c.visible = false; }); const h = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), M(0xFDD835)); h.position.y = 1.5; h.scale.set(1.15, 0.9, 1.15); p.grupo.add(h); } catch (e) { } return; }
+  const lista = KITS[clave]; if (!lista) return;
+  try { const piezas = await Promise.all(lista.map(([k, c, dx = 0, dy = 0, dz = 0, ry = 0, s = 1]) => kit.pieza(k, c).then(m => { m.position.set(dx, dy, dz); m.rotation.y = ry; m.scale.setScalar(s); return m; })));
+    if (piezas.some(m => !m.children.length)) return;   // alguna pieza no existe: se queda el objeto propio
+    g.children.forEach(c => { if (!c.userData.tipo) c.visible = false; }); piezas.forEach(m => g.add(m)); DETALLE[clave] && DETALLE[clave](g); } catch (e) { }
+}
 Z.forEach((zona, i) => {
-  const a = n === 1 ? 0 : -abre + 2 * abre * i / (n - 1);
-  const cx = Math.sin(a) * radio, cz = 0.6 - Math.cos(a) * radio;
-  const base = caja(4.6, 0.03, 2.7, 0xD7DEE4, cx, 0.015, cz); base.rotation.y = -a;
-  const rot = letrero(zona.titulo, Math.min(3.4, 0.085 * zona.titulo.length + 0.5), 0.24, '#14213D'); rot.position.set(cx + Math.sin(a) * 1.45, 2.75, cz - Math.cos(a) * 1.45); rot.lookAt(0, 2.75, 0.6); scene.add(rot);
-  const lista = mezclar(zona.riesgos, zona.id), m = lista.length, cols = Math.ceil(m / 2), paso = cols > 1 ? 4.0 / (cols - 1) : 0;
-  lista.forEach((r, k) => {
-    const fila = k < cols ? 0 : 1, col = fila ? k - cols : k, nf = fila ? m - cols : cols;
-    const dx = (col - (nf - 1) / 2) * paso + (fila ? paso * 0.25 : 0), dz = fila ? 0.65 : -0.6;   // fila 0 = atrás, fila 1 = adelante
-    const px = cx + Math.cos(a) * dx - Math.sin(a) * dz, pz = cz + Math.sin(a) * dx + Math.cos(a) * dz;
-    const g = R.prop(W, r.prop, px, pz, -a); g.scale.setScalar(0.8);
-    const bajo = ['charco', 'cable', 'multicontacto', 'charco_senalado', 'cable_canalizado', 'franja'].includes(r.prop);
-    S[zona.id + ':' + r.id] = R.situacion(W, { x: px - Math.sin(a) * 0.4, z: pz + Math.cos(a) * 0.4, y: bajo ? 0.7 : (k % 2 ? 1.7 : 2.0) - (fila ? 0.25 : 0), tipo: zona.id + ':' + r.id, icono: r.icono, etiqueta: r.nombre });
-  });
+  const s = sala(i), items = mezclar(zona.riesgos, zona.id);
+  const pared = items.filter(r => PARED.includes(r.prop)), piso = items.filter(r => PISO.includes(r.prop)), libre = items.filter(r => !PARED.includes(r.prop) && !PISO.includes(r.prop));
+  const sp = mezclar(SLOT_PARED, zona.id + 'p'), sc = mezclar(SLOT_CENTRO, zona.id + 'c'), asig = [];
+  pared.forEach(r => asig.push([r, sp.shift() || sc.shift()])); piso.forEach(r => asig.push([r, sc.shift() || sp.shift()])); libre.forEach(r => asig.push([r, sc.shift() || sp.shift()]));
+  asig.forEach(([r, slot]) => { if (!slot) return; const [u, v, lateral] = slot;
+    const x = s.xc + u, z = s.zPuerta + s.lado * v;
+    const ry = lateral ? lateral * Math.PI / 2 : (s.lado < 0 ? 0 : Math.PI);   // de frente a la puerta / al centro de la sala
+    const g = R.prop(W, r.prop, x, z, ry); g.scale.setScalar(0.9);
+    const b = new THREE.Box3().setFromObject(g), tam = b.getSize(new THREE.Vector3()), cen = b.getCenter(new THREE.Vector3());
+    const hit = new THREE.Mesh(new THREE.BoxGeometry(Math.max(0.7, tam.x + 0.2), Math.max(0.7, tam.y + 0.2), Math.max(0.7, tam.z + 0.2)), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+    hit.position.copy(cen); scene.add(hit); const tipo = zona.id + ':' + r.id; hit.userData = { tipo, ref: hit }; hit.userData.sinSombra = true;
+    const mk = marcador(cen.x, b.max.y + 0.5, cen.z, r.icono, r.nombre); mk.g = g;
+    // aro en el piso para resaltar el riesgo principal (W.resaltar necesita una malla con material)
+    const aro = new THREE.Mesh(new THREE.RingGeometry(Math.max(0.45, Math.max(tam.x, tam.z) * 0.6), Math.max(0.55, Math.max(tam.x, tam.z) * 0.6 + 0.12), 40), M(0x1F6FB2, { emissive: 0x000000, side: THREE.DoubleSide }));
+    aro.rotation.x = -Math.PI / 2; aro.position.set(cen.x, 0.03, cen.z); aro.visible = false; aro.userData.sinSombra = true; scene.add(aro); mk.aro = aro; mk.hit = hit; mk.zona = zona.id; mk.sala = i; S[tipo] = mk; ITEMS.push({ tipo, r, mk });
+    vestir(g, r.prop); });
 });
+// ambientación de cada sala (muebles NO inspeccionables en las esquinas del fondo, según el edificio)
+const DECOR = { cafeteria: ['refri', 'gabinete'], biblioteca: ['librero_abierto', 'perchero'], hospital: ['lavabo', 'cajonera'], industria: ['cajonera', 'perchero'],
+  proteccion: ['perchero', 'cajonera'], laboral: ['librero_abierto', 'perchero'], empresa: ['librero_abierto', 'cajonera'], practicas: ['cajonera', 'perchero'] };
+Z.forEach((zona, i) => { const s = sala(i), usados = new Set(zona.riesgos.map(r => r.prop)), lista = (DECOR[E] || ['cajonera', 'perchero']).filter(k => !usados.has(k));
+  lista.slice(0, 2).forEach((k, j) => kit.poner({ kit: 'oficina', clave: k, x: s.xc + (j ? 3.3 : -3.3), z: s.zPuerta + s.lado * 5.45, ry: s.lado < 0 ? 0 : Math.PI, padre: scene }).catch(() => { })); });
+// algunos muebles neutros en las salas sin zona (cuando hay número impar de zonas)
+for (let i = n; i < cols * 2; i++) { const s = sala(i); kit.poner({ kit: 'oficina', clave: 'sillon', x: s.xc, z: s.zPuerta + s.lado * 4.8, ry: s.lado < 0 ? 0 : Math.PI, padre: scene }).catch(() => { });
+  kit.poner({ kit: 'oficina', clave: 'planta', x: s.xc - 2.8, z: s.zPuerta + s.lado * 5.2, padre: scene }).catch(() => { }); }
 
-// ------------------------------------------------------------------ pasos por zona
+// ------------------------------------------------------------------ avatar: toca el piso para caminar; toca un objeto para acercarte a inspeccionarlo
+let perfil = {}; try { perfil = JSON.parse(localStorage.getItem('campus_perfil') || '{}'); } catch (e) { }
+const av = Avatar.construir(THREE, perfil), yo = av.grupo; yo.position.set(X0 + 1.2, 0, 0); yo.rotation.y = Math.PI / 2; scene.add(yo);
+let ruta = [], fase = 0, alLlegar = null, seguir = true;
+const celda = (x, z) => { if (Math.abs(z) <= PZ) return -1; const col = Math.floor((x - X0) / SX), i = col * 2 + (z < 0 ? 0 : 1); return i; };
+const limitar = (x, z) => { const c = celda(x, z); if (c === -1) return [Math.max(X0 + 0.4, Math.min(-X0 - 0.4, x)), Math.max(-PZ + 0.35, Math.min(PZ - 0.35, z))];
+  const s = sala(c); return [Math.max(s.xc - SX / 2 + 0.45, Math.min(s.xc + SX / 2 - 0.45, x)), s.lado < 0 ? Math.max(-(PZ + SZ) + 0.45, Math.min(-PZ - 0.35, z)) : Math.min(PZ + SZ - 0.45, Math.max(PZ + 0.35, z))]; };
+function caminarA(x, z, cb) {
+  [x, z] = limitar(x, z); const c0 = celda(yo.position.x, yo.position.z), c1 = celda(x, z), pts = [];
+  if (c1 >= n) return;   // salas sin puerta
+  if (c0 !== c1) { if (c0 >= 0) { const s = sala(c0); pts.push([s.xc, s.zPuerta + s.lado * 0.9], [s.xc, 0]); }
+    if (c1 >= 0) { const s = sala(c1); pts.push([s.xc, 0], [s.xc, s.zPuerta + s.lado * 0.9]); } }
+  pts.push([x, z]); ruta = pts.map(p => new THREE.Vector3(p[0], 0, p[1])); alLlegar = cb || null; seguir = true;
+}
+const salaDe = () => celda(yo.position.x, yo.position.z);
+function irASala(zid) { const i = Z.findIndex(z => z.id === zid), s = sala(i); return new Promise(ok => { if (salaDe() === i) { ok(); return; } caminarA(s.xc, s.zPuerta + s.lado * 2.2, ok); }); }
+let tPrev = 0; const OFF = new THREE.Vector3(0, 9.5, 3.6);   // cámara alta y empinada: ve dentro de las salas por encima de los muros
+W.cuadro.push(t => {
+  const dt = Math.min(0.05, t - tPrev || 0.016); tPrev = t; gente.actualizar(dt);
+  if (ruta.length) { const d = ruta[0].clone().sub(yo.position); d.y = 0; const Ld = d.length();
+    if (Ld < 0.05) { ruta.shift(); if (!ruta.length && alLlegar) { const c = alLlegar; alLlegar = null; c(); } }
+    else { d.normalize(); yo.position.addScaledVector(d, Math.min(Ld, 2.6 * dt)); yo.rotation.y = Math.atan2(d.x, d.z); fase += dt * 10; av.animar(fase, true); } }
+  else av.animar(0, false);
+  if (seguir) { const k = Math.min(1, dt * 2.2), obj = yo.position.clone().add(new THREE.Vector3(0, 0.6, yo.position.z < -PZ ? -1.2 : yo.position.z > PZ ? 1.2 : 0));
+    controls.target.lerp(obj, k); camera.position.lerp(obj.clone().add(OFF), k); if (camera.position.distanceTo(obj.clone().add(OFF)) < 0.05 && !ruta.length) seguir = false; }
+});
+// toques en el piso (los objetos los atiende el motor)
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let abajo = null;
+renderer().domElement.addEventListener('pointerdown', e => { abajo = [e.clientX, e.clientY]; });
+renderer().domElement.addEventListener('pointerup', e => {
+  if (!abajo || Math.hypot(e.clientX - abajo[0], e.clientY - abajo[1]) > 10) return;
+  ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ptr, camera);
+  const hits = ray.intersectObjects(scene.children, true); if (hits.find(h => h.object.userData.tipo && h.object.visible)) return;
+  const h = ray.intersectObject(suelo)[0]; if (h) caminarA(h.point.x, h.point.z);
+});
+function renderer() { return W.renderer; }
+controls.addEventListener('start', () => { seguir = false; });
+
+// ------------------------------------------------------------------ HUD: avance por sala, pista y plano
+const $ = s => document.getElementById(s);
+const hallados = new Set();
+function hud(buenas) {
+  $('hud').style.display = 'block';
+  const porZona = Z.map(z => { const b = buenas.filter(x => x.zona === z.id); return { z, tot: b.length, ok: b.filter(x => hallados.has(x.tipo)).length }; }).filter(x => x.tot);
+  $('hLista').innerHTML = porZona.map(({ z, tot, ok }) => `<div class="z ${ok === tot ? 'ok' : ''}" data-z="${z.id}"><span>${ok === tot ? '✅' : '📍'} ${z.titulo}</span><span>${ok}/${tot}</span></div>`).join('');
+  $('hTot').textContent = `(${porZona.reduce((a, x) => a + x.ok, 0)}/${porZona.reduce((a, x) => a + x.tot, 0)})`;
+  document.querySelectorAll('#hLista .z').forEach(d => d.onclick = () => irASala(d.dataset.z));
+  porZona.forEach(({ z, tot, ok }) => { const t = ROT[z.id]; const cv = t.material.map.image, g = cv.getContext('2d'); g.fillStyle = ok === tot ? '#2E7D32' : '#1F6FB2'; g.fillRect(0, 0, cv.width, cv.height);
+    g.fillStyle = '#fff'; g.font = `bold ${Math.round(cv.height * 0.55)}px Calibri, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(`${ok === tot ? '✓ ' : ''}${ok} / ${tot} riesgos`, cv.width / 2, cv.height / 2); t.material.map.needsUpdate = true; });
+}
+$('bHud').onclick = () => { $('hud').classList.toggle('mini'); $('bHud').textContent = $('hud').classList.contains('mini') ? '▴' : '▾'; };
+$('bGeneral').onclick = () => { seguir = false; W.irVista(1); };
+$('bPista').onclick = () => { const i = salaDe(); const lista = ITEMS.filter(it => it.mk.sala === i && !it.mk.marco.visible);
+  if (!lista.length) { W.toast('info', i < 0 ? 'Entra a una sala para usar la pista.' : 'Ya inspeccionaste todo en esta sala.'); return; }
+  lista.forEach(it => { it.mk.marco.material.color.set(0x7FB3D5); it.mk.marco.visible = true; }); W.toast('info', `🔍 En esta sala hay ${lista.length} objeto(s) por inspeccionar: decide cuáles son riesgos sin control.`);
+  setTimeout(() => lista.forEach(it => { if (!it.mk._visto) { it.mk.marco.visible = false; it.mk.marco.material.color.set(0x1F6FB2); } }), 3500); };
+
+// ------------------------------------------------------------------ pasos
 const FREQ = ['A', 'B', 'C', 'D', 'E'], SEVS = ['I', 'II', 'III', 'IV'], NIVELES = ['Grave', 'Elevado', 'Medio', 'Bajo', 'Mínimo'];
-function pasosZona(zona) {
-  const buenas = zona.riesgos.filter(r => r.real).map(r => ({ tipo: zona.id + ':' + r.id, nombre: r.nombre, fb: `${r.tipo}: ${r.fb}`, f: r.f, obj: S[zona.id + ':' + r.id] }));
-  const malas = zona.riesgos.filter(r => !r.real).map(r => ({ tipo: zona.id + ':' + r.id, nombre: r.nombre, fb: r.fb, f: r.f, obj: S[zona.id + ':' + r.id] }));
-  const pr = zona.riesgos.find(r => r.id === zona.principal), ev = zona.evalua;
-  const pasos = [R.encuentra(W, { titulo: `${zona.titulo}: identifica`, texto: `${zona.escena}<br>Toca solo los <b>riesgos sin control</b> de esta zona. ¡Cuidado! Hay más condiciones controladas y objetos inofensivos que riesgos: si tocas uno, pierdes puntos.`,
-    fuente: 'NOM-030-STPS-2009, 3.12 y 6.1', buenas, malas })];
+const deZona = zona => ({ buenas: zona.riesgos.filter(r => r.real).map(r => ({ tipo: zona.id + ':' + r.id, zona: zona.id, nombre: r.nombre, fb: `${r.tipo}: ${r.fb}`, f: r.f, obj: S[zona.id + ':' + r.id] })),
+  malas: zona.riesgos.filter(r => !r.real).map(r => ({ tipo: zona.id + ':' + r.id, zona: zona.id, nombre: r.nombre, fb: r.fb, f: r.f, obj: S[zona.id + ':' + r.id] })) });
+// identificación: recorrido por todo el edificio (o por una sala). Al tocar un objeto lejano, el avatar camina hasta él.
+function pasoIdentificar(zonas) {
+  const buenas = zonas.flatMap(z => deZona(z).buenas), malas = zonas.flatMap(z => deZona(z).malas);
+  const una = zonas.length === 1;
+  const st = R.encuentra(W, { titulo: una ? `${zonas[0].titulo}: identifica` : 'Recorre el edificio e identifica',
+    texto: (una ? zonas[0].escena + '<br>' : `Camina por las ${zonas.length} salas del edificio (toca el piso para moverte). `) + 'Toca los objetos para inspeccionarlos y marca solo los <b>riesgos sin control</b>. Hay más condiciones controladas y objetos inofensivos que riesgos: si marcas uno, pierdes puntos.',
+    fuente: 'NOM-030-STPS-2009, 3.12 y 6.1', buenas, malas });
+  const ini = st.iniciar, toc = st.tocar;
+  st.iniciar = function () { ini.call(this); hud(buenas); if (una) irASala(zonas[0].id); };
+  st.tocar = function (o) { const tipo = o.userData.tipo, mk = S[tipo]; if (!mk || !(buenas.concat(malas)).some(x => x.tipo === tipo)) return;
+    const c = mk.hit.position, d = Math.hypot(c.x - yo.position.x, c.z - yo.position.z);
+    const revisar = () => { yo.rotation.y = Math.atan2(c.x - yo.position.x, c.z - yo.position.z); toc.call(this, o); mk._visto = true; mk.mostrar(true);
+      if (buenas.some(x => x.tipo === tipo)) { hallados.add(tipo); hud(buenas); } };
+    if (d < 2.4 && salaDe() === mk.sala) return revisar();
+    const s = sala(mk.sala), hacia = new THREE.Vector3(s.xc - c.x, 0, s.zc - c.z).normalize();
+    caminarA(c.x + hacia.x * 1.3, c.z + hacia.z * 1.3, revisar); };
+  return st;
+}
+function pasosEvaluar(zona) {
+  const pr = zona.riesgos.find(r => r.id === zona.principal), ev = zona.evalua, mk = S[zona.id + ':' + pr.id], pasos = [];
+  const preparar = async () => { await irASala(zona.id); mk.mostrar(true); mk.aro.visible = true; W.resaltar([mk.aro]); };
   if (ev.metodo) {
     pasos.push({ titulo: `${zona.titulo}: ¿qué método?`, texto: `Riesgo principal: <b>${pr.nombre}</b>.`, fuente: 'RFSST art. 7 fr. I (selector de metodología)',
-      iniciar() { W.resaltar([S[zona.id + ':' + pr.id].marco]); R.decidir(W, ev.metodo.pregunta, ev.metodo.ops, () => W.siguiente(), `Riesgo: <b>${pr.nombre}</b>. Una NOM específica puede fijar su propio método.`); } });
+      async iniciar() { await preparar(); R.decidir(W, ev.metodo.pregunta, ev.metodo.ops, () => W.siguiente(), `Riesgo: <b>${pr.nombre}</b>. Una NOM específica puede fijar su propio método.`); } });
   } else {
     const nv = R.nivel(ev.f, ev.s);
     pasos.push({ titulo: `${zona.titulo}: evalúa`, texto: `Califica el riesgo principal: <b>${pr.nombre}</b>.<br><i>${ev.pista}</i>`, fuente: R.N31, puntos: 30,
-      iniciar() { W.resaltar([S[zona.id + ':' + pr.id].marco]);
+      async iniciar() { await preparar();
         const ctx = `<b>${pr.nombre}</b><br><i>${ev.pista}</i> <span class="ficticio">[ejemplo didáctico]</span>`;
         R.decidir(W, '1 · ¿Qué frecuencia de ocurrencia tiene?', FREQ.map(f => ({ t: R.FREC[f], ok: f === ev.f, fb: `Frecuencia ${R.FREC[ev.f]}.`, f: 'NOM-031-STPS-2011, 8.3 a) Tabla 2' })), () =>
           setTimeout(() => R.decidir(W, '2 · ¿Qué severidad del daño puede ocasionar?', SEVS.map(s => ({ t: R.SEV[s], ok: s === ev.s, fb: `Severidad ${R.SEV[ev.s]}.`, f: 'NOM-031-STPS-2011, 8.3 b) Tabla 3' })), () =>
             setTimeout(() => R.decidir(W, `3 · Con ${ev.f} × ${ev.s}, ¿qué nivel indica la matriz?`, NIVELES.map(x => ({ t: x, ok: x === nv, fb: `${ev.f} × ${ev.s} = ${nv}. ${nv === 'Grave' ? 'Se atiende de inmediato.' : 'Se atiende en orden: graves, elevados, medios, bajos y mínimos.'}`, f: 'NOM-031-STPS-2011, 8.3 c) Tabla 4 y 8.3.1' })), () => {
-              S[zona.id + ':' + pr.id].marco.material.color.set(R.NIVEL_COLOR[nv]); W.siguiente(); }, ctx + tablaMatriz(ev.f, ev.s), false), 500), ctx, false), 500), ctx, false); } });
+              mk.marco.material.color.set(R.NIVEL_COLOR[nv]); mk.aro.material.color.set(R.NIVEL_COLOR[nv]); W.siguiente(); }, ctx + tablaMatriz(ev.f, ev.s), false), 500), ctx, false), 500), ctx, false); } });
   }
   pasos.push({ titulo: `${zona.titulo}: controla`, texto: `Elige la medida más efectiva para <b>${pr.nombre}</b>.`, fuente: 'NOM-017-STPS-2024, 5.2; NIOSH (referencia)',
-    iniciar() { R.decidir(W, '¿Cuál es la medida MÁS efectiva?', zona.control, () => W.siguiente(), `Riesgo: <b>${pr.nombre}</b>. Recuerda: eliminación → sustitución → ingeniería → administrativos → EPP.`); } });
+    iniciar() { mk.aro.visible = true; W.resaltar([mk.aro]); R.decidir(W, '¿Cuál es la medida MÁS efectiva?', zona.control, () => W.siguiente(), `Riesgo: <b>${pr.nombre}</b>. Recuerda: eliminación → sustitución → ingeniería → administrativos → EPP.`); } });
   return pasos;
 }
 function tablaMatriz(f, s) {
@@ -85,14 +253,13 @@ function tablaMatriz(f, s) {
     const v = R.MATRIZ[fr][j]; return `<td style="background:${col[v]};color:${['Grave', 'Elevado', 'Mínimo'].includes(v) ? '#fff' : '#1F2433'};${fr === f || x === s ? 'outline:2px solid #14213D' : ''}">${fr === f && x === s ? '?' : v}</td>`; }).join('')}</tr>`).join('')}</table>
     <p class="ficticio">Matriz NOM-031-STPS-2011, Tabla 4 (la celda "?" es la tuya).</p>`;
 }
-
-const intro = R.intro(W, `<h2>🔎 Análisis de riesgo · ${ED.nombre}</h2><p>Recorre las zonas del edificio. En cada una: <b>1)</b> identifica los riesgos (peligro + exposición), <b>2)</b> evalúa el principal con la matriz de la NOM-031-STPS-2011 o con el método que exige su NOM y <b>3)</b> elige el control más efectivo.</p><p class="ficticio">La matriz NOM-031 es obligatoria en construcción; aquí se usa como método de referencia validado en una NOM.</p>`,
+const intro = R.intro(W, `<h2>🔎 Análisis de riesgo · ${ED.nombre}</h2><p>Recorre el edificio en 3D: <b>toca el piso</b> para caminar y <b>toca los objetos</b> para inspeccionarlos. Los riesgos están repartidos en las ${n} sala${n > 1 ? 's' : ''}. <b>1)</b> Identifica los riesgos sin control, <b>2)</b> evalúa el principal de cada sala con la matriz de la NOM-031-STPS-2011 o con el método que exige su NOM y <b>3)</b> elige el control más efectivo.</p><p>Usa <b>🔍 Pista</b> si no encuentras qué inspeccionar y <b>🗺️ Plano</b> para ver todo el edificio.</p><p class="ficticio">La matriz NOM-031 es obligatoria en construcción; aquí se usa como método de referencia validado en una NOM.</p>`,
   `${ED.nombre} del campus. Escenas, frecuencias y severidades de ejemplo.`);
-const casos = [{ id: '*', txt: `🏢 <b>Recorrido completo:</b> ${Z.length} zona${Z.length > 1 ? 's' : ''} del edificio` }].concat(Z.length > 1 ? Z.map(z => ({ id: z.id, txt: `📍 <b>Zona:</b> ${z.titulo}` })) : []);
-W.inicio(casos, id => [intro, ...(id === '*' ? Z : Z.filter(z => z.id === id)).flatMap(pasosZona)],
-  `Basado en: RFSST (DOF 13/11/2014) art. 7 fr. I; NOM-030-STPS-2009 3.12 y 6.1; NOM-031-STPS-2011 8.3; NOM-017-STPS-2024 5.1-5.2; NOM específicas citadas en cada riesgo; jerarquía de controles NIOSH (referencia). Catálogo ${window.CATALOGO_RIESGOS.version}. 🥽 En visor: botón VR.`);
-
-if (P.has('qa')) window.__qa = { W, S: Object.fromEntries(Object.entries(S).map(([k, v]) => [k, v.marco])), ED, tocar: W.tocar, estado: W.qa };
+const casos = [{ id: '*', txt: `🏢 <b>Recorrido completo:</b> ${n} sala${n > 1 ? 's' : ''} del edificio` }].concat(n > 1 ? Z.map(z => ({ id: z.id, txt: `📍 <b>Sala:</b> ${z.titulo}` })) : []);
+W.inicio(casos, id => { const zs = id === '*' ? Z : Z.filter(z => z.id === id); hallados.clear(); return [intro, pasoIdentificar(zs), ...zs.flatMap(pasosEvaluar)]; },
+  `Basado en: RFSST (DOF 13/11/2014) art. 7 fr. I; NOM-030-STPS-2009 3.12 y 6.1; NOM-031-STPS-2011 8.3; NOM-017-STPS-2024 5.1-5.2; NOM específicas citadas en cada riesgo; jerarquía de controles NIOSH (referencia). Catálogo ${window.CATALOGO_RIESGOS.version}. Modelos 3D: Kenney y Poly Pizza (CC0/CC-BY, ver Créditos). 🥽 En visor: botón VR.`);
+W.activarXR({ inicio: [X0 + 1.2, 0], piso: suelo, entorno: [] });
+if (Q.has('qa')) window.__qa = { W, S, ED, ITEMS, yo, caminarA, irASala, tocar: W.tocar, estado: W.qa, hallados };
 </script>
 </body>
 </html>

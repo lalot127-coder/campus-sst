@@ -4,6 +4,8 @@ Generado el 07/10/2026. Total: 111 puertas · activas: 72 · próximamente: 16 �
 
 Prueba automática 07/10/2026: las 72 puertas activas cargan sin errores de programa (consola). VR = botón 🥽 en Meta Quest y computadora; en celular no se ofrece (pantalla completa normal).
 
+Actualización 11/10/2026: las puertas «Análisis de riesgo del edificio» son ahora un recorrido 3D (edificio con pasillo y una sala por zona; el avatar camina y los riesgos están repartidos por toda la sala). Personas animadas y mobiliario/exterior con modelos Kenney CC0 en evacuación, extintores y análisis de riesgo.
+
 ## Cafetería
 
 | Puerta | Tipo | Estado | VR | Archivo |
@@ -78,8 +80,8 @@ Prueba automática 07/10/2026: las 72 puertas activas cargan sin errores de prog
 | Puerta | Tipo | Estado | VR | Archivo |
 |---|---|---|---|---|
 | Análisis de riesgo del edificio | 3d | ✅ activa | Sí | `mundos/riesgo/analisis/index.html?e=proteccion` |
-| Uso de extintores: fuego real virtual | 3d | ✅ activa | Sí (VR y mixta en la descarga) | `mundos/proteccion/extintores/index.html` |
-| Evacuación al punto de reunión | 3d | ✅ activa | Sí | `mundos/proteccion/evacuacion/index.html` |
+| Uso de extintores: fuego real virtual | 3d | ✅ activa | Sí (VR y mixta en la descarga) | `mundos/proteccion/extintores/index.html` (11/10/2026: termina evacuando el edificio hasta el punto de reunión exterior) |
+| Evacuación al punto de reunión | 3d | ✅ activa | Sí | `mundos/proteccion/evacuacion/index.html` (11/10/2026: 2 casos — incendio: evacuación total al punto de reunión exterior; sismo sin alerta: repliegue en zona de menor riesgo y evacuación posterior) |
 | Evacuación hospitalaria | 3d | 🔜 próximamente | — | `—` |
 | Extintores y fuego: equipo | sala | ✅ activa | Sí | `mundos/modulos/index.html?m=extintores-fuego` |
 

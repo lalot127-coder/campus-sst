@@ -7,58 +7,169 @@
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script src="../../../motor/senales.js"></script>
 <script src="../../../motor/avatar.js"></script>
+<script src="../../../motor/realismo.js"></script>
 <script src="../../../motor/motor.js"></script>
 </head>
 <body>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-// Fuentes verificadas (registro_fuentes.md, 03/10/2026): NOM-002-STPS-2010 4.2 (alarma audible/visible, estroboscópica),
-// 6.8 (no bloquear rutas ni señalamientos), 8.1 b), c), e) (rutas, alertamiento, evacuación considerando personas con
-// discapacidad), Guía de Referencia II.4 c), h), i), j), k) (brigada de evacuación); NOM-003-SEGOB-2011 5.1 (ruta de
-// evacuación, salida de emergencia, punto de reunión); NOM-026-STPS-2008 A.3 (prohibido el paso).
+import { Kit3D } from '../../../motor/kit3d.js';
+import { Personas } from '../../../motor/personas3d.js';
+import { patio } from '../../../motor/exterior3d.js';
+// Fuentes verificadas (registro_fuentes.md): NOM-002-STPS-2010 4.2 (alarma audible/visible), 6.8 (no bloquear rutas),
+// 8.1 b) (rutas, salidas, zonas de menor riesgo y puntos de reunión), c) alertamiento, e) evacuación considerando personas
+// con discapacidad; Guía de Referencia II.4 c), h), i), j), k) (brigada de evacuación). NOM-003-SEGOB-2011 4.30 (zona de
+// menor riesgo) y 5.1 (ruta de evacuación, salida de emergencia, punto de reunión, zona de menor riesgo); NOM-026-STPS-2008
+// A.3 (prohibido el paso). Sismo: SGIRPC CDMX, tríptico "Taller para la evacuación y el repliegue en caso de sismos" (2022,
+// consulta 11/10/2026): cuándo evacuar, cuándo replegarse, zona de menor riesgo y características del punto de reunión.
+// Modelos: Kenney (CC0) — personas animadas, oficina y exterior (assets/INVENTARIO_ASSETS.csv). Edificio y personas [FICTICIOS].
 const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Evacuación al punto de reunión', icono: '🏃', clave: 'pc_evacuacion',
-  criterio: { pct: 80, sinCriticos: true }, fondo: 0xD7E4EC,
-  vistas: [[[0, 11, 9], [0, 0, 0]], [[-5, 3, 3], [-2, 1, -1]], [[3, 3.2, 3.5], [5, 1, -1]], [[7, 4, 9], [7, 0, 4]]] });
-const { scene, caja, cil, tocable, letrero, M } = W;
-const F2 = 'NOM-002-STPS-2010', F3 = 'NOM-003-SEGOB-2011';
-// ------------------------------------------------------------------ planta de oficinas [FICTICIA]
-const piso = new THREE.Mesh(new THREE.PlaneGeometry(16, 10), M(0xC9CED4)); piso.rotation.x = -Math.PI / 2; piso.position.set(0, 0, -1); scene.add(piso);
-const exterior = new THREE.Mesh(new THREE.PlaneGeometry(10, 8), M(0x9CC48E)); exterior.rotation.x = -Math.PI / 2; exterior.position.set(9, -0.01, 6); scene.add(exterior);
-const muro = (w, d, x, z) => caja(w, 2.6, d, 0xEEF1F4, x, 1.3, z);
-muro(16, 0.15, 0, -6); muro(0.15, 10, -8, -1); muro(11, 0.15, -2.5, 4); muro(0.15, 4.5, 8, -3.75); muro(0.15, 3.2, 8, 2.4);   // hueco de salida en x=8, z≈0
-muro(1.6, 0.15, -7.2, -1.6); muro(4.2, 0.15, -2.1, -1.6); muro(5, 0.15, 3.5, -1.6);   // puerta de la oficina entre x = -6.4 y -4.2   // pasillo z entre -1.6 y 1.6 (pared sur del pasillo = muro z=4 abierto)
-for (let x = -7; x <= -1; x += 2) { caja(1.2, 0.75, 0.7, 0x8D6E63, x, 0.38, -3.5); cil(0.25, 0.45, 0x37474F, x, 0.23, -2.7); }   // escritorios
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xBFD9EA, radioSombra: 26, xr: false,
+  vistas: [[[-3.2, 7.6, -11.5], [-3.2, 0.3, -3.0]], [[-2, 17, 15], [4, 0, -1]], [[2.5, 3.2, 3.6], [5.6, 1, 0]], [[8, 9, 16], [18, 0, 1]], [[21, 4.5, 10], [27, 0, 2]]] });
+const { scene, camera, controls, caja, cil, tocable, letrero, M } = W;
+camera.far = 260; camera.updateProjectionMatrix(); controls.maxDistance = 45;
+if (window.Realismo) scene.background = Realismo.cielo(THREE, '#4F8FC9', '#DCEBF3', '#DCEBF3');
+scene.fog = new THREE.Fog(0xDCEBF3, 70, 180);
+const V = { oficina: 0, edificio: 1, salida: 2, exterior: 3, reunion: 4 };
+const F2 = 'NOM-002-STPS-2010', F3 = 'NOM-003-SEGOB-2011', FS = 'SGIRPC CDMX, «Taller para la evacuación y el repliegue en caso de sismos» (2022)';
+const kit = new Kit3D(THREE, '../../../'); kit.precargar(['oficina', 'exterior']);
+const gente = new Personas(THREE, '../../../');
+const pon = async (clave, x, z, ry = 0, y = 0) => { try { const g = await kit.poner({ kit: 'oficina', clave, x, z, ry, padre: scene }); g.position.y = y; return g; } catch (e) { return null; } };
+
+// ------------------------------------------------------------------ edificio de oficinas de un nivel [FICTICIO]
+// planta: x de -10 a 6, z de -7 a 5 · pasillo z ∈ [-1.6, 1.6] · salida de emergencia en el muro este (x = 6, z = 0)
+const AL = 2.8, MURO = 0xEEF1F4;
+const piso = new THREE.Mesh(new THREE.PlaneGeometry(16, 12), M(0xC9CED4)); piso.rotation.x = -Math.PI / 2; piso.position.set(-2, 0.005, -1); scene.add(piso);
+const muroX = (x0, x1, z, h = AL, y0 = 0) => caja(x1 - x0, h, 0.16, MURO, (x0 + x1) / 2, y0 + h / 2, z);
+const muroZ = (z0, z1, x, h = AL, y0 = 0) => caja(0.16, h, z1 - z0, MURO, x, y0 + h / 2, (z0 + z1) / 2);
+// muro norte con ventanales (vidrio): antepecho, dintel, parteluces y cristales
+const vidrios = [];
+{ const z = -7; muroX(-10, 6, z, 0.9); muroX(-10, 6, z, 0.6, 2.2);
+  const vm = new THREE.MeshPhysicalMaterial({ color: 0xA9D3EA, transparent: true, opacity: .32, roughness: .05, metalness: .1 });
+  for (let x = -10; x < 6; x += 2) { caja(0.12, 1.3, 0.18, 0x8C99A6, x, 1.55, z); const v = new THREE.Mesh(new THREE.PlaneGeometry(1.88, 1.3), vm); v.position.set(x + 1, 1.55, z + 0.02); scene.add(v); vidrios.push(v); }
+  caja(0.12, 1.3, 0.18, 0x8C99A6, 6, 1.55, z); }
+muroX(-10, 6, 5); muroZ(-7, 5, -10);
+muroZ(-7, -0.6, 6); muroZ(0.6, 5, 6); muroZ(-0.6, 0.6, 6, 0.6, 2.2);                    // hueco de la salida de emergencia
+muroX(-10, -6.4, -1.6); muroX(-4.2, 2, -1.6); muroX(3.2, 6, -1.6);                        // pasillo, lado norte (2 accesos a la oficina)
+muroX(-10, -7.2, 1.6); muroX(-6.2, -2.5, 1.6); muroX(-1.5, -0.2, 1.6); muroX(0.8, 4.0, 1.6); muroX(5.0, 6, 1.6);   // pasillo, lado sur
+muroZ(1.6, 5, -3); muroZ(1.6, 5, -0.6);                                                    // sala de juntas | cocineta | sala sur
+// columnas (castillos) y la ZONA DE MENOR RIESGO señalizada junto a una de ellas, lejos de vidrios y muebles altos
+[[-6, -4.3], [2.2, -4.3], [-3, -2.0], [-6, 3.3], [2.6, 3.3]].forEach(([x, z]) => caja(0.42, AL, 0.42, 0xD9DEE3, x, AL / 2, z));
+const zonaMR = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.6), M(0x2E9E5B, { roughness: .8, transparent: true, opacity: .55 })); zonaMR.rotation.x = -Math.PI / 2; zonaMR.position.set(-3, 0.012, -2.75); zonaMR.userData.sinTextura = true; scene.add(zonaMR);
 const sen = (id, w, x, y, z, ry) => { const cv = Senales.canvas(id, 256); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w * cv.height / cv.width), new THREE.MeshBasicMaterial({ map: t, transparent: true })); m.position.set(x, y, z); m.rotation.y = ry; scene.add(m); return m; };
-const sRuta = sen('ruta', 0.9, -2, 2.0, -1.5, 0);              // en el pasillo, apunta al este (salida)
-const pRestringida = caja(0.15, 2.1, 1.1, 0x8D6E63, -7.9, 1.05, 0); const sNo = sen('no_paso', 0.55, -7.8, 1.6, 0, Math.PI / 2);
-const cajas = new THREE.Group(); scene.add(cajas); [[1.5, 0.4], [1.9, -0.3], [1.3, -0.7], [1.7, 0.9]].forEach(([x, z]) => caja(0.6, 0.6, 0.6, 0xB98D5A, x, 0.3, z, cajas));
-const sAlt = sen('ruta', 0.8, 0.3, 2.0, 3.9, Math.PI);           // ruta alterna (por la sala sur)
-caja(1.2, 2.2, 0.15, 0x2E7D32, 8, 1.1, 0); const sSalida = sen('salida', 1.1, 7.85, 2.5, 0, -Math.PI / 2);
-const reunion = new THREE.Mesh(new THREE.CircleGeometry(1.4, 40), M(0x00995C)); reunion.rotation.x = -Math.PI / 2; reunion.position.set(10, 0.02, 6); scene.add(reunion);
-sen('reunion', 0.9, 10, 1.9, 4.5, 0); cil(0.04, 1.5, 0x5B6B7C, 10, 0.75, 4.45);
-const luz = new THREE.PointLight(0xffffff, 0, 30); luz.position.set(0, 2.4, 0); scene.add(luz);   // alarma visible estroboscópica (4.2)
-// personas [FICTICIAS]
-function persona(color, x, z, silla) { const g = new THREE.Group(); g.position.set(x, 0, z); scene.add(g); const c = W.capsula(0.2, silla ? 0.35 : 0.6, color); c.position.y = silla ? 0.75 : 0.85; g.add(c);
-  W.esfera(0.15, 0xC68E62, 0, silla ? 1.22 : 1.42, 0, g); if (silla) { [-0.28, 0.28].forEach(dx => { const r = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.03, 8, 20), M(0x37474F)); r.position.set(dx, 0.3, 0); r.rotation.y = Math.PI / 2; g.add(r); }); caja(0.5, 0.06, 0.45, 0x37474F, 0, 0.5, 0, g); }
-  return { g, c }; }
-const brig = persona(0xF57C00, 0.4, 2.6); const chaleco = letrero('BRIGADA', 0.5, 0.14, '#F57C00'); chaleco.position.set(0, 1.85, 0); brig.g.add(chaleco);
-const ana = persona(0x6A1FA0, -4.5, 1.0, true); const nAna = letrero('Ana · usa silla de ruedas', 1.3, 0.16, '#6A1FA0'); nAna.position.set(0, 1.75, 0); ana.g.add(nAna);
-// avatar del participante
-let perfil = {}; try { perfil = JSON.parse(localStorage.getItem('campus_perfil') || '{}'); } catch (e) { }
-const av = Avatar.construir(THREE, perfil); const yo = av.grupo; yo.position.set(-5, 0, -2.6); scene.add(yo);
-let ruta = [], fase = 0, alLlegar = null;
-const caminar = (pts, cb) => { ruta = pts.map(p => new THREE.Vector3(p[0], 0, p[1])); alLlegar = cb; };
-let tPrev = 0, alarmaOn = false;
-W.cuadro.push(t => { const dt = Math.min(0.05, t - tPrev || 0.016); tPrev = t; luz.intensity = alarmaOn && Math.sin(t * 14) > 0.6 ? 25 : 0;
-  if (ruta.length) { const d = ruta[0].clone().sub(yo.position); const L = d.length(); if (L < 0.05) { ruta.shift(); if (!ruta.length && alLlegar) { const c = alLlegar; alLlegar = null; c(); } }
-    else { d.normalize(); yo.position.addScaledVector(d, Math.min(L, 2.6 * dt)); yo.rotation.y = Math.atan2(d.x, d.z); fase += dt * 10; av.animar(fase, true); } } else av.animar(0, false); });
-// alarma sonora (pitidos) con Web Audio
-let audio = null; function sirena(on) { alarmaOn = on; try { if (on && !audio) { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.value = 880; g.gain.value = 0;
-  o.connect(g); g.connect(ctx.destination); o.start(); audio = { ctx, o, g, i: setInterval(() => { g.gain.setTargetAtTime(g.gain.value > 0 ? 0 : 0.04, ctx.currentTime, 0.01); }, 500) }; }
-  if (!on && audio) { clearInterval(audio.i); audio.o.stop(); audio.ctx.close(); audio = null; } } catch (e) { } }
+const sMenor = sen('menor_riesgo', 0.5, -3, 1.9, -2.23, Math.PI);   // cara norte de la columna (hacia la oficina)
+const sRuta = sen('ruta_izq', 0.9, -1.4, 2.05, -1.69, Math.PI);   // lado de la oficina: la flecha apunta al este (salida)
+const sRutaP = sen('ruta', 0.9, -2, 2.05, -1.5, 0);                 // lado del pasillo
+const pRestringida = caja(0.12, 2.1, 1.1, 0x8D6E63, -9.9, 1.05, 0); const sNo = sen('no_paso', 0.55, -9.8, 1.65, 0, Math.PI / 2);
+const sAlt = sen('ruta', 0.8, 0.3, 2.05, 1.52, Math.PI);              // ruta alterna (por la sala sur)
+const puertaSalida = caja(1.1, 2.15, 0.06, 0x2E7D32, 6.3, 1.08, 0.58); puertaSalida.rotation.y = -1.2;   // hoja abierta hacia afuera
+const sSalida = sen('salida', 1.0, 5.9, 2.5, 0, -Math.PI / 2);
+const barra = caja(0.9, 0.05, 0.08, 0xB0BEC5, 6.0, 1.0, 0.0); barra.visible = false;
+{ const l = letrero('SALIDA DE EMERGENCIA', 1.6, 0.22, '#2E7D32'); l.position.set(6.1, 2.55, 0); l.rotation.y = Math.PI / 2; scene.add(l); }
+{ const l = letrero('OFICINAS CERS · EDIFICIO A [FICTICIO]', 4.2, 0.4, '#0E3A6B'); l.position.set(6.1, 3.2, -3.5); l.rotation.y = Math.PI / 2; scene.add(l); }
+// cajas que obstruyen el pasillo (escenario de incendio)
+const cajas = new THREE.Group(); scene.add(cajas);
+[[1.5, 0.45, 0], [1.9, -0.35, 0], [1.3, -0.75, 0.45], [1.75, 0.95, 0], [1.6, 0.1, 0.45]].forEach(([x, z, y]) => caja(0.6, 0.45, 0.5, 0xB98D5A, x, 0.23 + y, z, cajas));
+// mobiliario (kit oficina, Kenney CC0)
+const muebles = [];
+const fila = (z, xs, ry) => xs.forEach(x => { muebles.push(pon('escritorio', x, z, ry), pon('monitor', x, z + (ry ? 0.15 : -0.15), ry, 0.76), pon('teclado', x, z + (ry ? -0.12 : 0.12), ry, 0.76), pon('silla', x, z + (ry ? -0.75 : 0.75), ry + Math.PI)); });
+fila(-6.1, [-8.4, -4.2, -1.6, 0.9, 3.6], 0); fila(-3.9, [-8.4, 0.9, 3.6], Math.PI);
+const libreros = [];
+pon('librero', -8.7, -2.0, Math.PI).then(g => g && libreros.push(g)); pon('librero', 4.6, -2.0, Math.PI).then(g => g && libreros.push(g));
+[[-9.5, -6.5], [5.5, -6.5], [-9.5, 4.5], [5.5, 4.4], [-0.9, 4.5]].forEach(([x, z]) => pon('planta', x, z));
+pon('cajonera', -9.6, -4.8, Math.PI / 2); pon('bote', -5.2, -6.6); pon('bote', 2.3, -3.4);
+pon('mesa', -6.5, 3.2, 0); [[-7.5, 2.5], [-6.5, 2.5], [-5.5, 2.5], [-7.5, 3.9], [-6.5, 3.9], [-5.5, 3.9]].forEach(([x, z], i) => pon('silla_sala', x, z, i < 3 ? 0 : Math.PI)); pon('tele', -6.5, 4.85, 0, 0.9);
+pon('refri', -2.4, 4.4, 0); pon('gabinete', -1.5, 4.5, 0); pon('cafetera', -1.5, 4.5, 0, 0.9); pon('microondas', -1.1, 4.45, 0, 0.9); pon('mesa_redonda', -1.8, 2.8);
+pon('sillon', 3.0, 4.5, 0); pon('librero_abierto', 5.5, 2.6, -Math.PI / 2); pon('caja', 4.8, 4.5); pon('caja_abierta', 4.2, 4.6);
+pon('perchero', 5.4, -1.2); pon('tapete', 4.5, 0, Math.PI / 2, 0.01);
+const libros = []; for (let i = 0; i < 4; i++) pon('libros', -9.2 + i * 0.35, -2.0, 0.3 * i, 1.2 + (i % 2) * 0.6).then(g => g && libros.push(g));
+// lámparas (colgantes que oscilan en el sismo)
+const lamparas = []; for (const [x, z] of [[-7, -4.8], [-2, -4.8], [3, -4.8], [-2, 0], [-6.5, 3.2]]) { const g = new THREE.Group(); g.position.set(x, AL, z); scene.add(g);
+  const c = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.6, 6), M(0x333333)); c.position.y = -0.3; g.add(c);
+  const p = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 0.22, 20, 1, true), M(0xF4F4F4, { side: THREE.DoubleSide })); p.position.y = -0.68; g.add(p);
+  const b = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 8), new THREE.MeshBasicMaterial({ color: 0xFFF6D8 })); b.position.y = -0.68; g.add(b); lamparas.push(g); }
+const luz = new THREE.PointLight(0xff3030, 0, 30); luz.position.set(-2, 2.5, 0); scene.add(luz);     // luz estroboscópica de la alarma (4.2)
 
+// ------------------------------------------------------------------ exterior con punto de reunión (lejos del edificio)
+const REUNION = [27, 2], SALIDA = [6.8, 0];
+const RUTA_EXT = [[6.8, 0], [10, 0], [24, 1.6]];
+const exterior = patio(W, kit, { suelo: [-30, 50, -32, 26], ruta: RUTA_EXT, banquetas: [[[7.2, -6.5], [7.2, 4.8]]], reunion: REUNION,
+  estacionamiento: [10, 23, -15, -7], calle: [-27, -20], postes: [[-6, -18.6], [14, -18.6], [34, -18.6]],
+  arboles: [[-4, 8.5, 'arbol_b'], [2.5, 8.5, 'arbol'], [-12, -3, 'arbol_c'], [16, 13.5, 'arbol_b'], [40, 12, 'arbol'], [41, -6, 'arbol_c'], [-13, 9, 'arbol']],
+  arbustos: [[8.2, -6], [8.2, 4.6], [-11, -8, 'arbusto_chico'], [16, 9, 'arbusto_chico'], [26, -6]],
+  edificios: [[40, -12.5, Math.PI / 2, 'edificio'], [-21, 6, Math.PI / 2, 'edificio_c'], [-20, -10, Math.PI / 2, 'edificio_b']],
+  objetos: [[17, 14.6, Math.PI, 'banca'], [24.5, -5.8, 0, 'poste_luz'], [8.5, 6.5, 0, 'contenedor']] });
+// lugares que una persona podría escoger para esperar (para el escenario de sismo): solo uno es el punto de reunión
+const LUGARES = { fachada: [7.6, -4.2], arbol: [16.2, 12.4], poste: [14.6, -16.6], reunion: REUNION };
+const marcas = {};
+for (const [k, [x, z]] of Object.entries(LUGARES)) { if (k === 'reunion') continue;
+  const m = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.15, 40), new THREE.MeshBasicMaterial({ color: 0x1F6FB2, side: THREE.DoubleSide })); m.rotation.x = -Math.PI / 2; m.position.set(x, 0.05, z); m.visible = false; scene.add(m); marcas[k] = m;
+  const t = letrero({ fachada: 'A · junto al edificio', arbol: 'B · bajo el árbol', poste: 'C · junto al poste' }[k], 1.6, 0.26, '#1F6FB2'); t.position.set(x, 1.4, z); t.visible = false; scene.add(t); m.userData.etq = t; tocable(m, 'lugar_' + k, 1.6); }
+
+// ------------------------------------------------------------------ personas: participante (tu avatar) y compañeros animados
+let perfil = {}; try { perfil = JSON.parse(localStorage.getItem('campus_perfil') || '{}'); } catch (e) { }
+const av = Avatar.construir(THREE, perfil); const yo = av.grupo; yo.position.set(-4.2, 0, -5.2); scene.add(yo);
+let ruta = [], fase = 0, alLlegar = null, seguir = false;
+const caminar = (pts, cb, correr) => { ruta = pts.map(p => new THREE.Vector3(p[0], 0, p[1])); alLlegar = cb; seguir = true; yo.userData.vel = correr ? 3.0 : 2.4; };
+const P = {};
+const crear = async (id, o) => (P[id] = await gente.crear({ padre: scene, ...o }));
+const listos = Promise.all([
+  crear('brig', { modelo: 'hombre-c', x: 0.4, z: -0.6, ry: -1.2, chaleco: 0xF57C00, etiqueta: 'BRIGADA', colorEtiqueta: '#E65100' }),
+  crear('ana', { modelo: 'mujer-b', x: -4.6, z: 0.6, ry: 1.6, silla: true, etiqueta: 'Ana', colorEtiqueta: '#6A1FA0' }),
+  crear('c1', { modelo: 'mujer-d', x: -8.4, z: -5.3, ry: Math.PI }), crear('c2', { modelo: 'hombre-a', x: -1.6, z: -5.3, ry: Math.PI }),
+  crear('c3', { modelo: 'hombre-e', x: 3.6, z: -3.1, ry: 0 }), crear('c4', { modelo: 'mujer-f', x: 0.9, z: -5.3, ry: Math.PI }),
+  crear('c5', { modelo: 'hombre-b', x: -6.5, z: 2.4, ry: 0 }), crear('c6', { modelo: 'mujer-a', x: -1.8, z: 3.4, ry: 2 }),
+]);
+const COMP = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6'];
+// lugar de cada persona en el punto de reunión (en círculo)
+const enReunion = (i, n = 9) => { const a = i / n * Math.PI * 2; return [REUNION[0] + Math.cos(a) * 1.6, REUNION[1] + Math.sin(a) * 1.6]; };
+// ruta desde un punto del edificio a la salida y al punto de reunión
+function rutaASalida(x, z, porAlterna) {
+  const pts = []; if (z < -1.6) pts.push([x < -5 ? -5.3 : (x < 2.6 ? -5.3 : 2.6), -2.2], [x < -5 ? -5.3 : (x < 2.6 ? -5.3 : 2.6), 0]);
+  else if (z > 1.6) pts.push([x < -3 ? -6.7 : x < -0.6 ? -2 : 4.5, 2.2], [x < -3 ? -6.7 : x < -0.6 ? -2 : 4.5, 0]);
+  if (porAlterna) pts.push([0.3, 0], [0.3, 2.8], [4.5, 2.8], [4.5, 0.6]);
+  pts.push([5.4, 0], [6.8, 0]); return pts;
+}
+async function evacuarCompaneros(porAlterna, retraso = 0) {
+  await listos;
+  COMP.forEach((id, i) => setTimeout(() => { const p = P[id]; if (!p) return; const { x, z } = p.grupo.position;
+    p.caminar([...rutaASalida(x, z, porAlterna), ...RUTA_EXT.slice(1), enReunion(i)], { vel: 1.5 + (i % 3) * 0.15 }).then(() => p.mirarA(...REUNION)); }, retraso + i * 900));
+}
+
+// ------------------------------------------------------------------ ciclo: caminata del avatar, cámara que sigue, alarma y sismo
+let tPrev = 0, alarmaOn = false, sismo = 0, tSismo = 0;
+const baseCam = new THREE.Vector3();
+W.cuadro.push(t => {
+  const dt = Math.min(0.05, t - tPrev || 0.016); tPrev = t; gente.actualizar(dt);
+  luz.intensity = alarmaOn && Math.sin(t * 14) > 0.6 ? 30 : 0;
+  if (ruta.length) { const d = ruta[0].clone().sub(yo.position); const L = d.length();
+    if (L < 0.05) { ruta.shift(); if (!ruta.length) { seguir = false; if (alLlegar) { const c = alLlegar; alLlegar = null; c(); } } }
+    else { d.normalize(); const paso = Math.min(L, (yo.userData.vel || 2.4) * dt); yo.position.addScaledVector(d, paso); yo.rotation.y = Math.atan2(d.x, d.z); fase += dt * 10; av.animar(fase, true);
+      if (seguir) { const k = Math.min(1, dt * 2.5), obj = yo.position.clone().add(new THREE.Vector3(0, 0.8, 0));   // cámara alta que sigue al avatar (no choca con muros)
+        controls.target.lerp(obj, k); camera.position.lerp(obj.clone().add(new THREE.Vector3(2.2, 7.2, 6.2)), k); } } }
+  else av.animar(0, false);
+  // sismo: la cámara y las lámparas se sacuden; caen libros
+  if (sismo > 0) { tSismo += dt; const k = sismo * (0.6 + 0.4 * Math.sin(tSismo * 1.3));
+    camera.position.x += (Math.random() - .5) * 0.05 * k; camera.position.y += (Math.random() - .5) * 0.04 * k;
+    lamparas.forEach((l, i) => { l.rotation.z = Math.sin(tSismo * 6 + i) * 0.25 * k; l.rotation.x = Math.cos(tSismo * 5 + i) * 0.18 * k; });
+    libros.forEach((b, i) => { if (tSismo > 1.2 + i * 0.5 && b.position.y > 0.02) { b.userData.v = (b.userData.v || 0) + 9.8 * dt; b.position.y = Math.max(0.02, b.position.y - b.userData.v * dt); b.position.z += dt * 0.6; b.rotation.x += dt * 3; } });
+    libreros.forEach(l => { l.rotation.z = Math.sin(tSismo * 9) * 0.02 * k; });
+  } else lamparas.forEach(l => { l.rotation.z *= 0.95; l.rotation.x *= 0.95; });
+});
+// sonidos con Web Audio: alarma (pitidos) y retumbo del sismo (ruido grave)
+let audio = null, ctxA = null;
+const ctx = () => ctxA || (ctxA = new (window.AudioContext || window.webkitAudioContext)());
+function sirena(on) { alarmaOn = on; try { if (on && !audio) { const c = ctx(), o = c.createOscillator(), g = c.createGain(); o.type = 'square'; o.frequency.value = 880; g.gain.value = 0;
+  o.connect(g); g.connect(c.destination); o.start(); audio = { o, g, i: setInterval(() => { g.gain.setTargetAtTime(g.gain.value > 0 ? 0 : 0.035, c.currentTime, 0.01); }, 500) }; }
+  if (!on && audio) { clearInterval(audio.i); audio.o.stop(); audio = null; } } catch (e) { } }
+let ruido = null;
+function retumbo(on) { try { if (on && !ruido) { const c = ctx(), b = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), d = b.getChannelData(0); let v = 0; for (let i = 0; i < d.length; i++) { v = 0.985 * v + 0.015 * (Math.random() * 2 - 1); d[i] = v * 3; }
+  const s = c.createBufferSource(); s.buffer = b; s.loop = true; const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 120; const g = c.createGain(); g.gain.value = 0.5; s.connect(f); f.connect(g); g.connect(c.destination); s.start(); ruido = { s, g }; }
+  if (!on && ruido) { ruido.g.gain.setTargetAtTime(0, ctx().currentTime, 0.4); const r = ruido; ruido = null; setTimeout(() => r.s.stop(), 1500); } } catch (e) { } }
+
+// ------------------------------------------------------------------ decisiones
 function elegir(titulo, ops, fuente, ok) {
   W.$('mCont').innerHTML = `<h2>${titulo}</h2><div id="ops"></div><p class="ficticio">[FICTICIO – ejercicio didáctico]</p>`;
   [...ops].sort(() => Math.random() - .5).forEach(o => { const b = document.createElement('button'); b.className = 'op'; b.textContent = o.t;
@@ -66,48 +177,118 @@ function elegir(titulo, ops, fuente, ok) {
     W.$('ops').appendChild(b); });
   W.$('modal').style.display = 'flex'; if (location.search.includes('qa')) window.__ops = ops;
 }
-[sRuta, sNo, sAlt, sSalida, reunion, pRestringida].forEach((o, i) => tocable(o, ['ruta', 'no_paso', 'alterna', 'salida', 'reunion', 'no_paso'][i], 0.9));
-const pasos = () => [
-  { titulo: '¡Suena la alarma!', texto: 'Alarma audible y luz estroboscópica: emergencia de incendio en el piso.', fuente: `${F2}, 4.2 y 8.1 c)`,
-    iniciar() { sirena(true); W.irVista(1); elegir('Suena la alarma de incendio. ¿Qué haces?', [
-      { t: 'Suspendo lo que hago y sigo el procedimiento de evacuación y las indicaciones de la brigada', ok: true, fb: 'Correcto: la brigada da la señal de evacuación y conduce a las personas.' },
+exterior.then(e => { tocable(e.reunion, 'reunion', 2.6); });
+[sRuta, sNo, sAlt, sSalida, pRestringida, sMenor, zonaMR, sRutaP].forEach((o, i) => tocable(o, ['ruta', 'no_paso', 'alterna', 'salida', 'no_paso', 'menor', 'menor', 'ruta'][i], 0.9));
+vidrios.slice(1, 3).forEach(v => tocable(v, 'ventana', 1.2));
+setTimeout(() => libreros.forEach(l => tocable(l, 'librero', 1.6)), 2500);
+const irV = k => W.irVista(V[k]);
+
+// pasos comunes al final: salir del edificio, llegar al punto de reunión, censo y regreso
+function pasosExterior(sismoCaso) {
+  const arr = [];
+  arr.push({ titulo: 'Sal del edificio', texto: 'Toca la <b>señal de salida de emergencia</b> y sal por ella.', fuente: `${F3}, 5.1`,
+    iniciar() { irV('salida'); },
+    tocar(o) { if (o.userData.tipo !== 'salida') return; W.bien('Salida de emergencia: verde, con silueta que avanza hacia la salida.', `${F3}, 5.1`);
+      caminar([[5.4, yo.position.z > 0.5 ? 0.6 : 0], [6.8, 0], [10, 0]], () => W.siguiente()); } });
+  if (sismoCaso) arr.push({ titulo: '¿Dónde esperas?', texto: 'Ya estás afuera. Hay varios lugares cerca: <b>toca el lugar seguro</b> para esperar.', fuente: FS,
+    iniciar() { irV('exterior'); Object.values(marcas).forEach(m => { m.visible = true; m.userData.etq.visible = true; }); },
+    tocar(o) { const t = o.userData.tipo || '';
+      if (t === 'reunion') { Object.values(marcas).forEach(m => { m.visible = false; m.userData.etq.visible = false; });
+        W.bien('El punto de reunión es la zona de menor riesgo al exterior: alejado de edificios, cables, postes, árboles o cualquier objeto que pueda caer.', FS);
+        caminar([[24, 1.6], [REUNION[0] - 0.8, REUNION[1]]], () => W.siguiente()); }
+      else if (t === 'lugar_fachada') W.mal('Junto al edificio pueden caer vidrios, acabados o partes de la fachada en una réplica.', FS, true);
+      else if (t === 'lugar_arbol') W.mal('Un árbol puede caer o soltar ramas: el punto de reunión debe estar alejado de árboles.', FS);
+      else if (t === 'lugar_poste') W.mal('Postes y cables pueden caer o electrificarse: el punto de reunión debe estar alejado de ellos.', FS, true); } });
+  else arr.push({ titulo: 'Llega al punto de reunión', texto: 'Sigue las flechas verdes y toca el <b>punto de reunión</b> (círculo verde con cuatro flechas).', fuente: `${F3}, 5.1`,
+    iniciar() { irV('exterior'); },
+    tocar(o) { if (o.userData.tipo !== 'reunion') return; W.bien('Punto de reunión: cuatro flechas dirigidas a un punto. Está en zona abierta, lejos del edificio.', `${F3}, 5.1`);
+      caminar([[24, 1.6], [REUNION[0] - 0.8, REUNION[1]]], () => W.siguiente()); } });
+  arr.push({ titulo: 'Censo', texto: 'Ya estás a salvo en el punto de reunión.', fuente: `${F2}, Guía de Referencia II, II.4 j)`,
+    async iniciar() { irV('reunion'); sirena(false); await listos;
+      P.brig && P.brig.caminar([[REUNION[0] + 1.2, REUNION[1] - 1.4]]).then(() => { P.brig.mirarA(...REUNION); P.brig.anim('emote-yes'); });
+      P.ana && P.ana.caminar([enReunion(7)]);
+      elegir('Llegaste al punto de reunión. ¿Qué sigue?', [
+        { t: 'Me reporto con la brigada para el censo y permanezco en el punto de reunión', ok: true, fb: 'Correcto: la brigada hace el censo para saber si falta alguien.' },
+        { t: 'Me voy a mi casa', critico: true, fb: 'Si te vas sin reportarte, la brigada podría arriesgarse buscándote.' },
+        { t: 'Regreso por mi celular', critico: true, fb: 'No regreses al edificio.' }], `${F2}, Guía de Referencia II, II.4 j)`, () => W.siguiente()); } });
+  arr.push({ titulo: 'Regreso', texto: 'Última decisión.', fuente: `${F2}, Guía de Referencia II, II.4 k)`,
+    iniciar() { elegir('¿Cuándo se regresa al edificio?', [
+      { t: sismoCaso ? 'Solo cuando la brigada indique que se revisó el inmueble y ya no existe peligro' : 'Solo cuando la brigada o el coordinador indican que ya no existe peligro', ok: true, fb: sismoCaso ? 'Correcto: después del sismo se evacúa, en caso necesario, para permitir la revisión del inmueble.' : 'Correcto.' },
+      { t: sismoCaso ? 'En cuanto deja de temblar' : 'Cuando deje de sonar la alarma', fb: 'El regreso lo coordina la brigada cuando ya no hay peligro.' },
+      { t: 'Cuando la mayoría decida volver', fb: 'El regreso lo coordina la brigada cuando ya no hay peligro.' }], `${F2}, Guía de Referencia II, II.4 k)${sismoCaso ? '; ' + FS : ''}`, () => W.siguiente()); } });
+  return arr;
+}
+
+// ---- escenario INCENDIO: evacuación total hasta el punto de reunión exterior
+const pasosIncendio = () => [
+  { titulo: '¡Suena la alarma!', texto: 'Alarma audible y luz estroboscópica: emergencia de incendio en el edificio.', fuente: `${F2}, 4.2 y 8.1 c)`,
+    iniciar() { sirena(true); irV('oficina'); elegir('Suena la alarma de incendio. ¿Qué haces?', [
+      { t: 'Suspendo lo que hago y sigo el procedimiento de evacuación y las indicaciones de la brigada', ok: true, fb: 'Correcto: la brigada da la señal de evacuación y conduce a las personas fuera del edificio.' },
       { t: 'Termino el correo que estaba escribiendo', fb: 'Cada segundo cuenta: deja lo que haces.' },
-      { t: 'Regreso a mi lugar por mis cosas', fb: 'No regreses por pertenencias.' }], `${F2}, 8.1 e) y Guía de Referencia II, II.4 c) y h)`, () => W.siguiente()); } },
+      { t: 'Regreso a mi lugar por mis cosas', fb: 'No regreses por pertenencias.' }], `${F2}, 8.1 e) y Guía de Referencia II, II.4 c) y h)`, () => { evacuarCompaneros(true, 3500); W.siguiente(); }); } },
   { titulo: 'Elige por dónde salir', texto: 'Toca la señal que te indica la <b>ruta de evacuación</b>.', fuente: `${F3}, 5.1 · NOM-026-STPS-2008, A.3`,
-    iniciar() { W.irVista(1); W.resaltar([]); },
-    tocar(o) { const t = o.userData.tipo; if (t === 'ruta') { W.bien('La señal verde con flecha indica la ruta de evacuación.', `${F3}, 5.1`); caminar([[-5, -0.2], [0.5, -0.2]], () => W.siguiente()); }
+    iniciar() { irV('oficina'); },
+    tocar(o) { const t = o.userData.tipo; if (t === 'ruta') { W.bien('La señal verde con flecha indica la ruta de evacuación.', `${F3}, 5.1`); caminar([[-5.3, -5.0], [-5.3, -2.2], [-5.3, -0.2], [0.5, -0.2]], () => W.siguiente()); }
       else if (t === 'no_paso') W.mal('Esa puerta dice "Prohibido el paso": no es salida.', 'NOM-026-STPS-2008, Apéndice A, A.3'); } },
   { titulo: 'La ruta está obstruida', texto: 'Hay cajas bloqueando el pasillo hacia la salida.', fuente: `${F2}, Guía de Referencia II, II.4 i) y 6.8`,
-    iniciar() { W.irVista(0); elegir('El pasillo está bloqueado con cajas. La brigadista te señala otra ruta. ¿Qué haces?', [
+    iniciar() { irV('edificio'); elegir('El pasillo está bloqueado con cajas. La brigadista te señala otra ruta. ¿Qué haces?', [
       { t: 'Sigo la ruta alterna que indica la brigada', ok: true, fb: 'Correcto. Y recuerda: las rutas nunca deben bloquearse.' },
       { t: 'Me pongo a mover las cajas en plena emergencia', fb: 'Pierdes tiempo y puedes lesionarte: usa la ruta alterna.' },
-      { t: 'Me quedo a esperar a que alguien las quite', critico: true, fb: 'Quedarte en el área en emergencia te pone en riesgo.' }], `${F2}, Guía de Referencia II, II.4 i); 6.8 no bloquear rutas`, () => caminar([[0.3, 2.8], [5, 2.8], [6.8, 0.2]], () => W.siguiente())); } },
-  { titulo: 'Una compañera necesita apoyo', texto: 'Ana usa silla de ruedas y está en el pasillo.', fuente: `${F2}, 8.1 e)`,
-    iniciar() { W.irVista(0); elegir('Ana usa silla de ruedas y no puede usar la ruta con cajas. ¿Qué haces?', [
+      { t: 'Me quedo a esperar a que alguien las quite', critico: true, fb: 'Quedarte en el edificio en emergencia te pone en riesgo.' }], `${F2}, Guía de Referencia II, II.4 i); 6.8 no bloquear rutas`, () => caminar([[0.3, 0], [0.3, 2.8], [4.5, 2.8], [4.5, 0.9]], () => W.siguiente())); } },
+  { titulo: 'Una compañera necesita apoyo', texto: 'Ana usa silla de ruedas y sigue en el pasillo.', fuente: `${F2}, 8.1 e)`,
+    async iniciar() { irV('edificio'); await listos; elegir('Ana usa silla de ruedas y no puede pasar por las cajas. ¿Qué haces?', [
       { t: 'Aviso a la brigada para que la acompañe por la ruta accesible, como prevé el plan de emergencia', ok: true, fb: 'Correcto: la evacuación debe considerar a las personas con discapacidad.' },
       { t: 'La dejo: la brigada la verá después', critico: true, fb: 'Nadie debe quedarse atrás: avisa a la brigada de inmediato.' },
-      { t: 'Intento cargarla yo sola con todo y silla', fb: 'Sin entrenamiento puedes lastimarla o lastimarte: apóyate en la brigada.' }], `${F2}, 8.1 e) evacuación considerando a personas con discapacidad`, () => {
-        caminar([[7.2, 0.2]], () => W.siguiente()); ana.g.position.set(5.5, 0, 2.6); brig.g.position.set(6, 0, 2.2); }); } },
-  { titulo: 'Sal por la salida de emergencia', texto: 'Toca la <b>señal de salida de emergencia</b>.', fuente: `${F3}, 5.1`,
-    iniciar() { W.irVista(2); W.resaltar([]); },
-    tocar(o) { if (o.userData.tipo !== 'salida') return; W.bien('Salida de emergencia: verde, con silueta que avanza hacia la salida.', `${F3}, 5.1`); caminar([[9, 0.2], [9.5, 4.2]], () => W.siguiente()); } },
-  { titulo: 'Llega al punto de reunión', texto: 'Toca el <b>punto de reunión</b> (círculo verde).', fuente: `${F3}, 5.1`,
-    iniciar() { W.irVista(3); },
-    tocar(o) { if (o.userData.tipo !== 'reunion') return; W.bien('Punto de reunión: cuatro flechas dirigidas a un punto.', `${F3}, 5.1`); sirena(false); caminar([[10, 6]], () => { ana.g.position.set(9.2, 0, 6.6); brig.g.position.set(11, 0, 6.2); W.siguiente(); }); } },
-  { titulo: 'Censo', texto: 'Ya estás a salvo.', fuente: `${F2}, Guía de Referencia II, II.4 j)`,
-    iniciar() { elegir('Llegaste al punto de reunión. ¿Qué sigue?', [
-      { t: 'Me reporto con la brigada para el censo y permanezco en el punto de reunión', ok: true, fb: 'Correcto: la brigada hace el censo para saber si falta alguien.' },
-      { t: 'Me voy a mi casa', critico: true, fb: 'Si te vas sin reportarte, la brigada podría arriesgarse buscándote.' },
-      { t: 'Regreso por mi celular', critico: true, fb: 'No regreses al edificio.' }], `${F2}, Guía de Referencia II, II.4 j)`, () => W.siguiente()); } },
-  { titulo: 'Regreso', texto: 'Última decisión.', fuente: `${F2}, Guía de Referencia II, II.4 k)`,
-    iniciar() { elegir('¿Cuándo se regresa al edificio?', [
-      { t: 'Solo cuando la brigada o el coordinador indican que ya no existe peligro', ok: true, fb: 'Correcto.' },
-      { t: 'Cuando deje de sonar la alarma', fb: 'El regreso lo coordina la brigada cuando ya no hay peligro.' },
-      { t: 'Cuando la mayoría decida volver', fb: 'El regreso lo coordina la brigada cuando ya no hay peligro.' }], `${F2}, Guía de Referencia II, II.4 k)`, () => W.siguiente()); } },
+      { t: 'Intento cargarla yo solo con todo y silla', fb: 'Sin entrenamiento puedes lastimarla o lastimarte: apóyate en la brigada.' }], `${F2}, 8.1 e) evacuación considerando a personas con discapacidad`, () => {
+        P.brig && P.brig.caminar([[-3.8, 0.3]]).then(() => { P.brig.caminar([[0.3, 0.3], [0.3, 2.8], [4.5, 2.8], [4.5, 0.4], [6.8, 0.4], ...RUTA_EXT.slice(1), enReunion(8)]); });
+        P.ana && setTimeout(() => P.ana.caminar([[0.3, 0.6], [0.3, 2.8], [4.5, 2.8], [4.5, 0.6], [6.8, 0.6], ...RUTA_EXT.slice(1), enReunion(7)], { vel: 1.3 }), 1600);
+        W.siguiente(); }); } },
+  ...pasosExterior(false),
 ];
-W.inicio([{ id: 'oficina', txt: '🏢 <b>Oficina:</b> incendio en el piso, ruta obstruida y una compañera en silla de ruedas' }], () => { yo.position.set(-5, 0, -2.6); ana.g.position.set(-4.5, 0, 1.0); brig.g.position.set(0.4, 0, 2.6); return pasos(); },
-  'Basado en la NOM-002-STPS-2010 (8.1 y Guía de Referencia II), la NOM-003-SEGOB-2011 (5.1) y la NOM-026-STPS-2008. Escenario y personas ficticios.');
-if (location.search.includes('qa')) window.__qa = { tocar: W.tocar, estado: W.qa, obj: { sRuta, sNo, sAlt, sSalida, reunion }, yo };
+
+// ---- escenario SISMO: repliegue en la zona de menor riesgo y, al terminar, evacuación para revisar el inmueble
+const pasosSismo = () => [
+  { titulo: '¡Está temblando!', texto: 'Se siente un sismo fuerte <b>sin que haya sonado la alerta sísmica</b>.', fuente: FS,
+    iniciar() { cajas.visible = false; irV('oficina'); sismo = 1; tSismo = 0; retumbo(true);
+      listos.then(() => COMP.forEach(id => P[id] && P[id].anim('crouch')));
+      elegir('Se percibe un sismo y no sonó la alerta sísmica. ¿Qué haces?', [
+        { t: 'Me repliego: voy a la zona de menor riesgo del interior y permanezco ahí hasta que el sismo termine', ok: true, fb: 'Correcto: cuando se percibe el sismo sin alerta, se hace repliegue a la zona de menor riesgo.' },
+        { t: 'Corro hacia la salida empujando a los demás', critico: true, fb: 'Sin alerta no hay tiempo de salir con seguridad: correr en pleno movimiento provoca caídas y lesiones. Repliégate.' },
+        { t: 'Me quedo junto a la ventana para ver qué pasa', critico: true, fb: 'Los vidrios pueden romperse y caer: aléjate de ellos.' }], FS, () => W.siguiente()); } },
+  { titulo: 'Zona de menor riesgo', texto: 'Toca el lugar al que te replegarías dentro de la oficina.', fuente: `${F3}, 4.30 y 5.1; ${FS}`,
+    iniciar() { irV('oficina'); },
+    tocar(o) { const t = o.userData.tipo;
+      if (t === 'menor') { W.bien('Zona de menor riesgo: junto a columnas y trabes, lejos de vidrios y de muebles que puedan caer.', `${F3}, 4.30; ${FS}`);
+        caminar([[-3.4, -2.9]], () => { listos.then(() => COMP.slice(0, 4).forEach((id, i) => P[id] && P[id].caminar([[-3.9 + i * 0.5, -3.3 - (i % 2) * 0.3]]).then(() => P[id].anim('crouch')))); W.siguiente(); }); }
+      else if (t === 'ventana') W.mal('Junto a las ventanas los vidrios pueden romperse y caer.', FS, true);
+      else if (t === 'librero') W.mal('Un librero alto puede volcarse o tirar objetos: aléjate de muebles altos.', FS);
+      else if (t === 'salida' || t === 'ruta') W.mal('Mientras tiembla no corras a la salida: primero repliégate.', FS); } },
+  { titulo: 'Espera a que termine', texto: 'El movimiento continúa unos segundos más…', fuente: FS, sinPuntos: true,
+    iniciar() { setTimeout(() => { sismo = 0.4; }, 2500); setTimeout(() => { sismo = 0; retumbo(false); W.aviso('<h2>El sismo terminó</h2><p>La brigada revisa la situación y da la indicación de <b>evacuar</b> el inmueble por la ruta de evacuación hacia el punto de reunión, para que se pueda revisar el edificio.</p>', () => W.siguiente(), 'Continuar'); }, 5000); } },
+  { titulo: 'Después del sismo', texto: 'La brigada indica evacuar.', fuente: FS,
+    iniciar() { listos.then(() => COMP.forEach(id => P[id] && P[id].anim('idle')));
+      elegir('Terminó el sismo y la brigada indica evacuar. ¿Por qué se evacúa?', [
+        { t: 'Para permitir la revisión del inmueble antes de volver a ocuparlo', ok: true, fb: 'Correcto: después del sismo, en caso de ser necesario, se evacúa para permitir la revisión del inmueble.' },
+        { t: 'No hace falta salir: ya dejó de temblar', fb: 'El edificio pudo dañarse: sigue la indicación de la brigada y evacúa para que se revise.' },
+        { t: 'Para irme a mi casa en cuanto salga', critico: true, fb: 'Debes llegar al punto de reunión y reportarte con la brigada.' }], FS, () => { evacuarCompaneros(false, 600); caminar([[-3.4, -0.2], [0.5, -0.2]], () => W.siguiente()); }); } },
+  { titulo: 'Ayuda en la evacuación', texto: 'Ana usa silla de ruedas.', fuente: `${F2}, 8.1 e)`,
+    async iniciar() { irV('edificio'); await listos; elegir('Ana usa silla de ruedas. ¿Qué haces?', [
+      { t: 'Aviso a la brigada para que la acompañe por la ruta accesible, como prevé el plan de emergencia', ok: true, fb: 'Correcto: la evacuación debe considerar a las personas con discapacidad.' },
+      { t: 'Me voy sin avisar: alguien más la ayudará', critico: true, fb: 'Nadie debe quedarse atrás: avisa a la brigada.' }], `${F2}, 8.1 e)`, () => {
+        P.brig && P.brig.caminar([[-3.8, 0.3]]).then(() => P.brig.caminar([[5.4, 0.3], [6.8, 0.3], ...RUTA_EXT.slice(1), enReunion(8)]));
+        P.ana && setTimeout(() => P.ana.caminar([[5.4, 0.6], [6.8, 0.6], ...RUTA_EXT.slice(1), enReunion(7)], { vel: 1.3 }), 1600);
+        W.siguiente(); }); } },
+  ...pasosExterior(true),
+];
+
+const reinicio = () => { yo.position.set(-4.2, 0, -5.2); ruta = []; sismo = 0; cajas.visible = true; };
+W.inicio([
+  { id: 'incendio', txt: '🔥 <b>Incendio:</b> evacuación total del edificio hasta el punto de reunión (ruta obstruida y una compañera en silla de ruedas)' },
+  { id: 'sismo', txt: '🌎 <b>Sismo sin alerta:</b> repliegue en la zona de menor riesgo y, al terminar, evacuación para revisar el inmueble' }],
+  id => { reinicio(); return id === 'sismo' ? pasosSismo() : pasosIncendio(); },
+  'Basado en la NOM-002-STPS-2010 (8.1 y Guía de Referencia II), la NOM-003-SEGOB-2011 (4.30 y 5.1), la NOM-026-STPS-2008 y el tríptico de evacuación y repliegue en caso de sismos de la SGIRPC CDMX (2022). Edificio y personas ficticios. Modelos 3D: Kenney (CC0).');
+exterior.then(e => W.activarXR({ inicio: [-4.2, -4.6], piso: e.pasto, entorno: [] }));
+if (location.search.includes('qa')) window.__qa = { W, tocar: W.tocar, estado: W.qa, obj: { sRuta, sNo, sAlt, sSalida, sMenor, zonaMR, marcas, vidrios }, yo, P, exterior, libreros };
 </script>
 </body>
 </html>
