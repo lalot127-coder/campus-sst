@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Simulador Hidrocarburos CERS</title>
+<script src="../../../motor/vendor/aframe-1.7.1.min.js"></script>
+<script src="../../../motor/realismo.js"></script>
+<style>
+:root{--bg:#0f1720;--fg:#f2f5f7;--acc:#f5b400;--ok:#2fbf71;--bad:#e5484d;--panel:rgba(15,23,32,.92)}
+html,body{margin:0;height:100%;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--fg)}
+#hud{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 12px;background:var(--panel);font-size:13px}
+#hud .t{font-weight:700;color:var(--acc);margin-right:auto}
+#hud .st{opacity:.9}
+#hud button,#ov button{background:#24313d;color:var(--fg);border:1px solid #3a4b5a;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
+#hud button:active{background:#33475a}
+#pad{position:fixed;left:14px;bottom:18px;z-index:10;display:none;grid-template-columns:repeat(3,52px);gap:6px}
+#pad button{width:52px;height:52px;border-radius:12px;border:1px solid #3a4b5a;background:rgba(36,49,61,.85);color:#fff;font-size:20px;touch-action:none}
+#pad .e{visibility:hidden}
+#ov{position:fixed;inset:0;z-index:20;background:rgba(10,15,20,.96);display:none;overflow:auto;padding:16px}
+#ov .box{max-width:760px;margin:40px auto;line-height:1.5;font-size:14px}
+#ov h2{color:var(--acc);margin-top:0}
+#ov a{color:#8fc7ff}
+#ov li{margin-bottom:6px}
+#help{font-size:13px}
+</style>
+</head>
+<body>
+<div id="hud">
+  <span class="t">Zona de Simulación · Hidrocarburos · CERS</span>
+  <span class="st" id="hudState">Menú principal</span>
+  <span class="st" id="hudScore"></span>
+  <button id="bCampus">⬅ Campus</button>
+  <button id="bMenu">Menú</button>
+  <button id="bPanel">Traer panel</button>
+  <button id="bRefs">Fuentes</button>
+  <button id="bHelp">Ayuda</button>
+</div>
+<div id="pad">
+  <button class="e"></button><button data-m="f">▲</button><button class="e"></button>
+  <button data-m="l">◀</button><button data-m="b">▼</button><button data-m="r">▶</button>
+</div>
+<div id="ov"><div class="box" id="ovBox"></div></div>
+
+<a-scene renderer="antialias:true; colorManagement:true; toneMapping:ACESFilmic; exposure:1.05" shadow="type:pcfsoft" background="color:#bcd6ea" fog="type:linear;color:#cfe0ec;near:70;far:260"
+         cursor="rayOrigin: mouse" raycaster="objects: .clickable, .clickable *">
+  <a-entity id="hemi" light="type:hemisphere;color:#eaf4ff;groundColor:#7a8a5a;intensity:1.1"></a-entity>
+  <a-entity id="sunTarget" position="0 0 0"></a-entity>
+  <a-entity id="sun" light="type:directional;intensity:2.2;color:#fff4e0;castShadow:true;shadowMapWidth:2048;shadowMapHeight:2048;shadowCameraLeft:-24;shadowCameraRight:24;shadowCameraTop:24;shadowCameraBottom:-24;shadowCameraNear:1;shadowCameraFar:140;shadowBias:-0.0004;target:#sunTarget" position="-18 36 22"></a-entity>
+
+  <a-entity id="rig" position="0 0 22">
+    <a-entity id="cam" camera position="0 1.6 0" look-controls="pointerLockEnabled:false" wasd-controls="acceleration:28"></a-entity>
+    <a-entity id="hl" laser-controls="hand: left" raycaster="objects: .clickable, .clickable *; far: 60" thumb-move></a-entity>
+    <a-entity id="hr" laser-controls="hand: right" raycaster="objects: .clickable, .clickable *; far: 60" snap-turn></a-entity>
+  </a-entity>
+
+  <a-entity id="world"></a-entity>
+  <a-entity id="panel" visible="false"></a-entity>
+</a-scene>
+
+<script>
+/* =========================================================
+   Simulador de Hidrocarburos · Campus de Simulación SST · CERS
+   Contenido técnico tomado de: GRE 2024 (guías 115 y 128),
+   CAMEO Chemicals (NOAA), NOM-ASEA y NOM-STPS citadas en "Fuentes".
+   Nombres genéricos: sin marcas ni logos de terceros.
+   ========================================================= */
+
+// ---------- Utilidades ----------
+const $ = s => document.querySelector(s);
+const T = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g,'')
+  .replace(/[¿¡]/g,'').replace(/ñ/g,'n').replace(/Ñ/g,'N').replace(/[–—]/g,'-').replace(/°/g,' grados');
+function el(tag, attrs={}, parent){
+  const e=document.createElement(tag);
+  for(const k0 in attrs){ const k=k0.replace(/[A-Z]/g,m=>'-'+m.toLowerCase()); e.setAttribute(k, typeof attrs[k0]==='object'? AFRAME.utils.styleParser.stringify(attrs[k0]) : attrs[k0]); }
+  (parent||$('#world')).appendChild(e); return e;
+}
+const P=(x,y,z)=>`${x} ${y} ${z}`;
+function box(p,pos,w,h,d,color,extra={}){return el('a-box',Object.assign({position:pos,width:w,height:h,depth:d,color},extra),p);}
+function cyl(p,pos,r,h,color,extra={}){return el('a-cylinder',Object.assign({position:pos,radius:r,height:h,color},extra),p);}
+function sph(p,pos,r,color,extra={}){return el('a-sphere',Object.assign({position:pos,radius:r,color},extra),p);}
+function txt(p,pos,value,extra={}){return el('a-text',Object.assign({position:pos,value:T(value),align:'center',color:'#111',width:4},extra),p);}
+// Material PBR en texto para A-Frame: color, rugosidad, metalicidad y extras.
+const M=(c,r=0.8,m=0,x='')=>`color:${c};roughness:${r};metalness:${m}${x?';'+x:''}`;
+const VIDRIO=M('#6d97b3',0.08,0.7,'opacity:0.82;transparent:true');
+function bx(p,pos,w,h,d,c,r=0.8,m=0,extra={}){return el('a-box',Object.assign({position:pos,width:w,height:h,depth:d,material:M(c,r,m)},extra),p);}
+function cy(p,pos,r,h,c,ro=0.8,me=0,extra={}){return el('a-cylinder',Object.assign({position:pos,radius:r,height:h,material:M(c,ro,me)},extra),p);}
+function sign(p,pos,label,bg='#ffffff',fg='#111',w=2.4,rotY=0){
+  const g=el('a-entity',{position:pos,rotation:P(0,rotY,0)},p);
+  [-w/2+0.15,w/2-0.15].forEach(x=>cy(g,P(x,1.0,-0.04),0.045,2.0,'#7b858d',0.4,0.7));
+  bx(g,P(0,2.05,-0.03),w+0.08,0.68,0.05,'#5d666e',0.5,0.6);
+  el('a-plane',{position:P(0,2.05,0),width:w,height:0.6,material:M(bg,0.6)},g);
+  txt(g,P(0,2.05,0.01),label,{color:fg,width:w*1.6});
+  return g;
+}
+// Persona con piernas, brazos articulados, casco y chaleco opcionales. Frente = +z.
+// o: {casco:'#f2c230', chaleco:'#c6f13a', pant, piel, pose:'normal'|'fumar'|'frente'|'pala'}
+function person(p,pos,shirt='#2b6cb0',rotY=0,o={}){
+  const g=el('a-entity',{position:pos,rotation:P(0,rotY,0)},p);
+  const piel=o.piel||'#c99a6e', pant=o.pant||'#2d3a4f';
+  [-0.095,0.095].forEach(x=>{ cy(g,P(x,0.45,0),0.075,0.82,pant,0.9); bx(g,P(x,0.05,0.04),0.13,0.1,0.27,'#1e1e1e',0.6); });
+  bx(g,P(0,0.88,0),0.34,0.14,0.21,pant,0.9);
+  el('a-entity',{position:P(0,1.18,0),geometry:'primitive:cone;radiusTop:0.2;radiusBottom:0.165;height:0.56;segmentsRadial:16',material:M(shirt,0.85)},g);
+  if(o.chaleco){
+    el('a-entity',{position:P(0,1.16,0),geometry:'primitive:cone;radiusTop:0.208;radiusBottom:0.175;height:0.46;segmentsRadial:16',material:M(o.chaleco,0.6)},g);
+    [1.05,1.25].forEach(y=>el('a-entity',{position:P(0,y,0),geometry:'primitive:cone;radiusTop:0.212;radiusBottom:0.205;height:0.035;segmentsRadial:16',material:M('#e6e9ec',0.25,0.6)},g));
+  }
+  cy(g,P(0,1.5,0),0.06,0.1,piel,0.7);
+  sph(g,P(0,1.65,0),0.13,piel,{material:M(piel,0.7)});
+  [-0.045,0.045].forEach(x=>sph(g,P(x,1.68,0.118),0.016,'#1b1b1b'));
+  if(o.casco){
+    el('a-entity',{position:P(0,1.7,0),geometry:'primitive:sphere;radius:0.15;thetaLength:90;segmentsWidth:18;segmentsHeight:8',material:M(o.casco,0.35,0.05)},g);
+    el('a-entity',{position:P(0,1.705,0.03),geometry:'primitive:cylinder;radius:0.185;height:0.018;segmentsRadial:18',material:M(o.casco,0.35,0.05)},g);
+  } else {
+    el('a-entity',{position:P(0,1.68,-0.01),geometry:'primitive:sphere;radius:0.137;thetaLength:80;segmentsWidth:16;segmentsHeight:8',material:M('#2a1d14',0.9)},g);
+  }
+  // brazos: [hombro x, codo x, giro z] en grados
+  const poses={normal:[[8,-8,6],[8,-8,-6]], fumar:[[-55,-118,10],[6,-6,-6]], frente:[[-72,-18,4],[-72,-18,-4]], pala:[[-35,-45,8],[-50,-30,-8]]};
+  const pz=poses[o.pose||'normal'];
+  [-1,1].forEach((s,i)=>{ const [hx,cx,zz]=pz[i];
+    const h=el('a-entity',{position:P(s*0.235,1.4,0),rotation:P(hx,0,zz*-s)},g);
+    cy(h,P(0,-0.15,0),0.058,0.3,shirt,0.85);
+    const c=el('a-entity',{position:P(0,-0.3,0),rotation:P(cx,0,0)},h);
+    cy(c,P(0,-0.14,0),0.05,0.28,shirt,0.85); sph(c,P(0,-0.3,0),0.055,piel,{material:M(piel,0.7)});
+    if(i===0) g.mano=c;   // mano derecha para objetos (cigarro, herramienta)
+  });
+  return g;
+}
+// Árbol simple de bajo costo (tronco + copa en dos niveles)
+function arbol(p,pos,s=1,tono='#4f7d3a'){
+  const g=el('a-entity',{position:pos,scale:P(s,s,s)},p);
+  cy(g,P(0,1.1,0),0.16,2.2,'#6b4a2f',0.95);
+  el('a-entity',{position:P(0,2.9,0),geometry:'primitive:sphere;radius:1.35;segmentsWidth:9;segmentsHeight:6',material:M(tono,0.95,0,'flatShading:true')},g);
+  el('a-entity',{position:P(0.35,3.8,0.2),geometry:'primitive:sphere;radius:0.95;segmentsWidth:8;segmentsHeight:5',material:M('#5e9046',0.95,0,'flatShading:true')},g);
+  return g;
+}
+function extintor(p,pos,rotY=0){
+  const g=el('a-entity',{position:pos,rotation:P(0,rotY,0)},p);
+  cy(g,P(0,0.36,0),0.11,0.6,'#c62828',0.35,0.2);
+  sph(g,P(0,0.66,0),0.11,'#c62828',{scale:'1 0.5 1',material:M('#c62828',0.35,0.2)});
+  cy(g,P(0,0.75,0),0.03,0.08,'#2b2b2b',0.5,0.6); bx(g,P(0.05,0.8,0),0.14,0.025,0.04,'#2b2b2b',0.5,0.6);
+  el('a-torus',{position:P(0.1,0.55,0),rotation:'0 90 0',radius:0.13,radiusTubular:0.012,arc:200,material:M('#1a1a1a',0.6)},g);
+  cy(g,P(0.32,0.9,-0.08),0.035,1.8,'#7b858d',0.4,0.7);
+  bx(g,P(0.32,1.6,-0.04),0.34,0.34,0.02,'#c62828',0.6); txt(g,P(0.32,1.6,-0.025),'EXTINTOR',{color:'#fff',width:0.9});
+  return g;
+}
+// Textura procedural en <canvas> (malla ciclónica, lámina acanalada) usable como src de material
+function canvasTex(id,draw,w=128,h=128){ if(document.getElementById(id)) return '#'+id;
+  const c=document.createElement('canvas'); c.id=id; c.width=w; c.height=h; c.style.display='none'; draw(c.getContext('2d'),w,h); document.body.appendChild(c); return '#'+id; }
+const MALLA=()=>canvasTex('texMalla',(g,w,h)=>{ g.clearRect(0,0,w,h); g.strokeStyle='#c3c9ce'; g.lineWidth=5;
+  for(let i=-w;i<=w*2;i+=32){ g.beginPath(); g.moveTo(i,0); g.lineTo(i+h,h); g.stroke(); g.beginPath(); g.moveTo(i,h); g.lineTo(i+h,0); g.stroke(); } });
+const LAMINA=()=>canvasTex('texLamina',(g,w,h)=>{ for(let x=0;x<w;x++){ const v=170+Math.round(45*Math.sin(x/w*Math.PI*8)); g.fillStyle=`rgb(${v},${v+6},${v+12})`; g.fillRect(x,0,1,h); } });
+function malla(p,pos,w,h=1.8,rotY=0){
+  const g=el('a-entity',{position:pos,rotation:P(0,rotY,0)},p);
+  el('a-plane',{position:P(0,h/2,0),width:w,height:h,material:`src:${MALLA()};repeat:${Math.round(w*3)} ${Math.round(h*3)};transparent:true;alphaTest:0.4;side:double;roughness:0.5;metalness:0.6`},g);
+  for(let x=-w/2;x<=w/2+0.01;x+=2.5) cy(g,P(x,h/2+0.05,0),0.035,h+0.1,'#9aa2a8',0.4,0.7);
+  cy(g,P(0,h,0),0.022,w,'#9aa2a8',0.4,0.7,{rotation:'0 0 90'});
+  return g;
+}
+function clickableTree(e){ e.classList.add('clickable'); }
+
+// ---------- Componentes VR (movimiento) ----------
+AFRAME.registerComponent('thumb-move',{
+  init(){ this.ax={x:0,y:0}; this.el.addEventListener('thumbstickmoved',e=>{this.ax=e.detail;}); this.el.addEventListener('axismove',e=>{const a=e.detail.axis; if(a&&a.length>=4){this.ax={x:a[2],y:a[3]};}}); },
+  tick(t,dt){ if(!dt) return; const {x,y}=this.ax; if(Math.abs(x)<0.15&&Math.abs(y)<0.15) return; moveRig(-y, x, dt); }
+});
+AFRAME.registerComponent('snap-turn',{
+  init(){ this.ready=true; this.el.addEventListener('thumbstickmoved',e=>{const x=e.detail.x;
+    if(Math.abs(x)>0.7&&this.ready){ this.ready=false; const r=$('#rig').object3D; r.rotation.y += (x>0?-1:1)*Math.PI/6; }
+    if(Math.abs(x)<0.3) this.ready=true; }); }
+});
+function moveRig(fwd, side, dt){
+  const cam=$('#cam').object3D, rig=$('#rig').object3D, sp=0.0045*dt;
+  const dir=new THREE.Vector3(); cam.getWorldDirection(dir); dir.y=0; dir.normalize(); dir.negate();
+  const right=new THREE.Vector3(-dir.z,0,dir.x);
+  rig.position.addScaledVector(dir, fwd*sp).addScaledVector(right, side*sp);
+}
+
+// ---------- Fuentes (verificadas) ----------
+const REFS=[
+ {k:'G128',t:'GRE 2024 (Guía de Respuesta en Caso de Emergencia), Guía 128 - Líquidos inflamables (no miscibles con agua). PHMSA/Transport Canada/SICT/CIQUIME.',u:'https://cameochemicals.noaa.gov/erg_guides/es/Guide_128.pdf'},
+ {k:'G115',t:'GRE 2024, Guía 115 - Gases inflamables (incluye líquidos refrigerados).',u:'https://cameochemicals.noaa.gov/erg_guides/es/Guide_115.pdf'},
+ {k:'UN1203',t:'CAMEO Chemicals (NOAA) - UN1203 Gasolina, clase 3, Guía 128. Nota: la GRE está diseñada para la fase inicial de incidentes de transporte, no para derrames en instalaciones.',u:'https://cameochemicals.noaa.gov/unna/1203'},
+ {k:'N005',t:'NOM-005-ASEA-2016, Diseño, construcción, operación y mantenimiento de Estaciones de Servicio para almacenamiento y expendio de diésel y gasolinas (DOF 07/11/2016). Vigente según PLATIICA (consulta 11/10/2026). El PROY-NOM-023-ASEA-2025 (aviso de consulta pública, DOF 24/12/2025) propone cancelarla; a la fecha de consulta no se encontró publicación definitiva.',u:'https://sidof.segob.gob.mx/notas/docFuente/5459927'},
+ {k:'CTR004',t:'ASEA-CTR-004-2019, Criterios para el monitoreo de la integridad mecánica de tanques de almacenamiento subterráneos en estaciones de servicio para expendio al público de gasolinas y/o diésel.',u:'https://www.gob.mx/cms/uploads/attachment/file/517655/VF_web_Criterio_Tanques_de_Almacenamiento_de_Gasolinas_17.dic.2019.pdf'},
+ {k:'N020',t:'NOM-020-ASEA-2024, Transporte de gas natural por medio de ductos terrestres (DOF 01/09/2025; en vigor 28/02/2026); cancela la NOM-007-ASEA-2016.',u:'https://dof.gob.mx/nota_detalle.php?codigo=5767026&fecha=01/09/2025'},
+ {k:'N009',t:'NOM-009-ASEA-2017, Administración de la integridad de ductos de recolección, transporte y distribución de hidrocarburos, petrolíferos y petroquímicos (DOF 25/01/2019).',u:'https://platiica.economia.gob.mx/normalizacion/nom-009-asea-2017/'},
+ {k:'N011',t:'NOM-011-ASEA-2019, Bodegas de guarda para distribución y bodegas de expendio de gas licuado de petróleo, mediante recipientes portátiles y transportables sujetos a presión (vigente).',u:'https://platiica.economia.gob.mx/normalizacion/nom-011-asea-2019/'},
+ {k:'N026',t:'NOM-026-STPS-2008, Colores y señales de seguridad e higiene, e identificación de riesgos por fluidos conducidos en tuberías.',u:'https://www.gob.mx/cms/uploads/attachment/file/807422/GUIA_INFORMATIVA_NOM-026.pdf'},
+ {k:'N002',t:'NOM-002-STPS-2010, Condiciones de seguridad - Prevención y protección contra incendios en los centros de trabajo (DOF 09/12/2010).',u:'https://dof.gob.mx/normasOficiales/4228/stps/stps.htm'},
+ {k:'N022',t:'NOM-022-STPS-2015, Electricidad estática en los centros de trabajo - Condiciones de seguridad (DOF 01/04/2016).',u:'https://dof.gob.mx/nota_detalle.php?codigo=5435581&fecha=01/04/2016'}
+];
+
+// ---------- Escenarios ----------
+// Coordenadas locales respecto al centro de cada escenario.
+const SC=[
+{
+ id:'gasolinera', name:'Estación de servicio (gasolina)', center:[-50,0,-8], view:[-2,0,12], yaw:0,
+ material:'Gasolina · UN1203 · Clase 3 · GRE Guía 128', leak:[-2.5,0.05,3],
+ info:[
+  {at:[-2.5,2.6,0],title:'Zona de despacho',text:'Los vapores de gasolina son en su mayoría más pesados que el aire: se extienden a ras de suelo y se acumulan en zonas bajas o confinadas (alcantarillas, sótanos, tanques). Pueden viajar hasta una fuente de ignición y regresar en llamarada.',ref:'G128'},
+  {at:[8,1.2,6],title:'Tanques subterráneos',text:'La NOM-005-ASEA-2016 regula diseño, construcción, operación y mantenimiento de estaciones de servicio. ASEA emitió un criterio para el monitoreo de integridad, fugas y sustitución de tanques subterráneos (ASEA-CTR-004-2019).',ref:'CTR004'},
+  {at:[0,6.2,0],title:'Material y normativa',text:'Gasolina: UN1203, clase 3 (líquido inflamable), GRE Guía 128. Norma de la instalación: NOM-005-ASEA-2016. Sigue vigente (consulta del 11/10/2026); el PROY-NOM-023-ASEA-2025, publicado a consulta pública en el DOF el 24/12/2025, propone cancelarla.',ref:'N005'}
+ ],
+ hazards:[
+  {id:'g_spill',title:'Derrame avanzando hacia la coladera',text:'Debe evitarse que el derrame entre a alcantarillas, drenajes o espacios confinados: el escurrimiento al drenaje puede crear peligro de incendio o explosión.',ref:'G128'},
+  {id:'g_smoker',title:'Persona fumando en la zona de despacho',text:'Se deben eliminar todas las fuentes de ignición del área inmediata: no fumar, sin bengalas, chispas ni llamas.',ref:'G128'},
+  {id:'g_truck',title:'Autotanque descargando sin conexión a tierra',text:'Todo el equipo utilizado al manejar el producto debe estar conectado a tierra. La electricidad estática en centros de trabajo se regula en la NOM-022-STPS-2015.',ref:'N022'}
+ ],
+ decoys:[
+  {id:'g_ext',title:'Extintor visible e identificado en rojo',text:'No es un peligro. El rojo identifica el equipo contra incendio (NOM-026-STPS-2008); la prevención y protección contra incendios se regula en la NOM-002-STPS-2010.',ref:'N026'},
+  {id:'g_sand',title:'Material absorbente disponible',text:'No es un peligro, es un control. La GRE indica absorber o cubrir el derrame con tierra seca, arena u otro material no combustible y transferirlo a contenedores.',ref:'G128'}
+ ],
+ inspect:[
+  {target:'g_ext',q:'¿Hay un extintor visible e identificado en color rojo?',a:true,exp:'Sí. El rojo identifica el equipo contra incendio (NOM-026-STPS-2008).',ref:'N026'},
+  {target:'g_truck',q:'¿El autotanque está conectado a tierra durante la descarga?',a:false,exp:'No. El carrete de tierra está sin conectar. Todo equipo usado al manejar el producto debe estar conectado a tierra.',ref:'G128'},
+  {target:'g_sand',q:'¿Hay material absorbente no combustible disponible (arena)?',a:true,exp:'Sí. Arena o tierra seca son materiales no combustibles indicados para absorber o cubrir el derrame.',ref:'G128'},
+  {target:'g_smoker',q:'¿La zona de despacho está libre de fuentes de ignición?',a:false,exp:'No. Hay una persona fumando. Se deben eliminar todas las fuentes de ignición del área inmediata.',ref:'G128'},
+  {target:'g_spill',q:'¿La coladera está protegida contra la entrada del derrame?',a:false,exp:'No. El derrame avanza hacia ella. Se debe prevenir su entrada a alcantarillas y drenajes.',ref:'G128'}
+ ],
+ emergency:{fx:'spill', intro:'Derrame grande de gasolina en la zona de despacho (UN1203, GRE Guía 128). Toma las decisiones en orden.', steps:[
+  {q:'¿Cuál es tu primera acción?',o:['Llamar al 911 y mantener alejado al personal no autorizado','Lavar el derrame con agua hacia la coladera','Acercarte sin protección a revisar el origen'],c:0,exp:'La sección de Seguridad Pública indica llamar al 911 y mantener alejado al personal no autorizado.',ref:'G128'},
+  {q:'Distancia de aislamiento inicial (medida precautoria inmediata):',o:['10 m alrededor del dispensario','50 m en todas direcciones','No es necesario aislar'],c:1,ring:50,exp:'Aislar el área del derrame o fuga por lo menos 50 m en todas direcciones. En derrame grande, considerar evacuación inicial de al menos 300 m en la dirección del viento.',ref:'G128'},
+  {q:'¿Dónde debes colocarte?',o:['Viento arriba, cuesta arriba y/o aguas arriba','Viento abajo para observar los vapores','En la fosa cercana, a cubierto'],c:0,exp:'Mantenerse viento arriba, cuesta arriba y/o aguas arriba. Los vapores se acumulan en zonas bajas.',ref:'G128'},
+  {q:'¿Cómo controlas el derrame?',o:['Eliminar fuentes de ignición, contener con tierra seca o arena y evitar su entrada al drenaje','Juntarlo con escoba y pala metálicas','Diluirlo con chorro de agua a presión'],c:0,exp:'Eliminar fuentes de ignición, evitar entrada a drenajes, absorber con material no combustible y usar herramientas limpias que no produzcan chispas.',ref:'G128'},
+  {q:'Si un tanque o autotanque se involucra en el incendio:',o:['Aislar 800 m en todas direcciones y considerar evacuación inicial de 800 m','Mantener el aislamiento de 50 m','Acercarte a cerrar la válvula manualmente'],c:0,exp:'Aislar 800 m en todas direcciones y considerar evacuación inicial de 800 m. Retirarse de inmediato si aumenta el sonido de los dispositivos de alivio o el tanque se decolora.',ref:'G128'}
+ ]}
+},
+{
+ id:'galera', name:'Galera de gas LP (cilindros)', center:[-18,0,-8], view:[0,0,9], yaw:0,
+ material:'Gas LP · UN1075 · Gas inflamable · GRE Guía 115', leak:[3,0.3,1.5],
+ info:[
+  {at:[0,4.8,0],title:'Galera de almacenamiento',text:'Las bodegas de guarda para distribución y de expendio de gas LP en recipientes portátiles y transportables se regulan en la NOM-011-ASEA-2019 (vigente).',ref:'N011'},
+  {at:[-3,2.2,-1],title:'Comportamiento del gas LP',text:'Los vapores del gas licuado inicialmente son más pesados que el aire y se extienden a ras de suelo. Los contenedores pueden explotar si se calientan y los cilindros rotos pueden salir proyectados.',ref:'G115'},
+  {at:[4,2.2,-1],title:'Material',text:'Gas licuado de petróleo: UN1075, GRE Guía 115. En incendios con gas LP, la GRE remite además a la sección BLEVE - precauciones de seguridad.',ref:'G115'}
+ ],
+ hazards:[
+  {id:'l_heat',title:'Cilindros junto a una fuente de calor',text:'Los contenedores pueden explotar cuando se calientan y los cilindros rotos pueden salir proyectados.',ref:'G115'},
+  {id:'l_leak',title:'Cilindro con fuga junto a un registro',text:'Los vapores del gas licuado inicialmente son más pesados que el aire, se extienden a ras de suelo y se acumulan en zonas bajas o confinadas (alcantarillas, sótanos, tanques).',ref:'G115'},
+  {id:'l_sparks',title:'Trabajo con chispas dentro del área',text:'Se deben eliminar todas las fuentes de ignición del área inmediata (no fumar, sin bengalas, chispas ni llamas).',ref:'G115'}
+ ],
+ decoys:[
+  {id:'l_ext',title:'Extintor identificado en rojo',text:'No es un peligro. Equipo contra incendio identificado en rojo (NOM-026-STPS-2008).',ref:'N026'},
+  {id:'l_sign',title:'Señal de prohibido fumar',text:'No es un peligro. Las señales de prohibición usan círculo rojo con banda diagonal (NOM-026-STPS-2008).',ref:'N026'}
+ ],
+ inspect:[
+  {target:'l_ext',q:'¿Hay extintor visible e identificado en rojo?',a:true,exp:'Sí. Equipo contra incendio identificado en rojo.',ref:'N026'},
+  {target:'l_heat',q:'¿Los cilindros están alejados de fuentes de calor?',a:false,exp:'No. Hay un calefactor junto a los cilindros; los contenedores pueden explotar si se calientan.',ref:'G115'},
+  {target:'l_sparks',q:'¿El área está libre de chispas y llamas?',a:false,exp:'No. Hay un trabajo con esmeril generando chispas; deben eliminarse las fuentes de ignición.',ref:'G115'},
+  {target:'l_sign',q:'¿Hay señal de prohibido fumar visible?',a:true,exp:'Sí. Círculo rojo con banda diagonal (señal de prohibición).',ref:'N026'},
+  {target:'l_leak',q:'¿Los registros y zonas bajas están libres de acumulación de gas?',a:false,exp:'No. Hay una fuga junto a un registro; el gas se acumula en zonas bajas.',ref:'G115'}
+ ],
+ emergency:{fx:'lpfire', intro:'Cilindro de gas LP con fuga incendiada dentro de la galera (UN1075, GRE Guía 115). Toma las decisiones en orden.', steps:[
+  {q:'¿Apagas la llama del cilindro que fuga?',o:['No, a menos que se pueda detener la fuga','Sí, de inmediato con el extintor','Sí, con chorro de agua directo a la válvula'],c:0,exp:'No extinguir un incendio de gas que fuga a menos que la fuga pueda detenerse.',ref:'G115'},
+  {q:'Distancia de aislamiento inicial (medida precautoria inmediata):',o:['50 m','100 m en todas direcciones','10 m'],c:1,ring:100,exp:'Aislar el área por lo menos 100 m en todas direcciones. En fuga grande, considerar evacuación inicial de al menos 800 m en la dirección del viento.',ref:'G115'},
+  {q:'Si el fuego involucra tanques o recipientes:',o:['Aislar 1600 m en todas direcciones y considerar evacuación inicial de 1600 m','Mantener 100 m','No hace falta aislar más'],c:0,exp:'Aislar 1600 m en todas direcciones y considerar evacuación inicial de 1600 m. Consultar la sección BLEVE - precauciones de seguridad.',ref:'G115'},
+  {q:'¿Qué haces con los cilindros expuestos al fuego?',o:['Enfriarlos con abundante agua desde la máxima distancia, sin dirigir agua a la fuga ni a los dispositivos de seguridad','Rociar agua directo a la válvula de alivio','Cargar el cilindro caliente hacia la salida'],c:0,exp:'Combatir desde la máxima distancia y enfriar con abundante agua; no dirigir agua a la fuente de la fuga ni a los dispositivos de seguridad porque puede congelarse. Mover contenedores no dañados solo si es seguro.',ref:'G115'},
+  {q:'Escuchas que aumenta el sonido de la válvula de alivio:',o:['Retirarte de inmediato','Acercarte a cerrarla','Seguir enfriando desde el mismo punto'],c:0,exp:'Retirarse de inmediato si aumenta el sonido de los dispositivos de alivio o el tanque se decolora. Mantenerse siempre lejos de tanques envueltos en llamas.',ref:'G115'}
+ ]}
+},
+{
+ id:'ducto_gn', name:'Ducto de gas natural', center:[14,0,-10], view:[0,0,7], yaw:0,
+ material:'Gas natural (metano) · UN1971 · GRE Guía 115', leak:[2,0.9,-6],
+ info:[
+  {at:[2,2.2,-2],title:'Ducto de transporte',text:'El transporte de gas natural por ductos terrestres se regula en la NOM-020-ASEA-2024 (DOF 01/09/2025), que cancela la NOM-007-ASEA-2016. La integridad del ducto se administra conforme a la NOM-009-ASEA-2017.',ref:'N020'},
+  {at:[2,3.4,-6],title:'Comportamiento del metano',text:'El metano (UN1971) es más ligero que el aire y se eleva, a diferencia del gas LP. Es extremadamente inflamable y forma mezclas explosivas con el aire.',ref:'G115'},
+  {at:[-3,2.8,-4.8],title:'Identificación de la tubería',text:'El amarillo es el color de seguridad para identificar tuberías que conducen fluidos peligrosos, como los inflamables (NOM-026-STPS-2008).',ref:'N026'}
+ ],
+ hazards:[
+  {id:'n_down',title:'Persona viento abajo de la fuga',text:'Hay que mantenerse viento arriba, cuesta arriba y/o aguas arriba. Observa la manga de viento: esta persona está en la dirección hacia donde va el gas.',ref:'G115'},
+  {id:'n_fire',title:'Fogata junto al ducto con fuga',text:'Se deben eliminar todas las fuentes de ignición del área inmediata (sin bengalas, chispas ni llamas).',ref:'G115'},
+  {id:'n_hut',title:'Caseta cerrada con ventila junto a la fuga',text:'Se debe prevenir la dispersión de vapores a través de alcantarillas, sistemas de ventilación y áreas confinadas.',ref:'G115'}
+ ],
+ decoys:[
+  {id:'n_sock',title:'Manga de viento',text:'No es un peligro. Te permite saber la dirección del viento para ubicarte viento arriba.',ref:'G115'},
+  {id:'n_pipe',title:'Tubería identificada en amarillo',text:'No es un peligro. El amarillo identifica tuberías con fluidos peligrosos (NOM-026-STPS-2008).',ref:'N026'}
+ ],
+ inspect:[
+  {target:'n_pipe',q:'¿La tubería está identificada en amarillo (fluido peligroso)?',a:true,exp:'Sí. Amarillo para fluidos peligrosos (NOM-026-STPS-2008).',ref:'N026'},
+  {target:'n_fire',q:'¿La zona está libre de llamas abiertas?',a:false,exp:'No. Hay una fogata cerca de la fuga; deben eliminarse las fuentes de ignición.',ref:'G115'},
+  {target:'n_down',q:'¿Todo el personal está viento arriba?',a:false,exp:'No. Hay una persona en la dirección del viento respecto a la fuga.',ref:'G115'},
+  {target:'n_sock',q:'¿Hay un indicador de dirección del viento visible?',a:true,exp:'Sí. La manga de viento permite decidir dónde colocarse.',ref:'G115'}
+ ],
+ emergency:{fx:'gnfire', intro:'Fuga de gas natural incendiada en el ducto (UN1971, GRE Guía 115). Toma las decisiones en orden.', steps:[
+  {q:'¿Cuál es tu primera acción?',o:['Llamar al 911 y mantener alejado al personal no autorizado','Ir a apagar la flama con extintor','Tapar la fuga con trapos'],c:0,exp:'Llamar al 911 y mantener alejado al personal no autorizado.',ref:'G115'},
+  {q:'Distancia de aislamiento inicial:',o:['100 m en todas direcciones','20 m','No se aísla, el gas sube'],c:0,ring:100,exp:'Aislar el área por lo menos 100 m en todas direcciones.',ref:'G115'},
+  {q:'¿Dónde te colocas?',o:['Viento arriba, cuesta arriba y/o aguas arriba','Viento abajo','Junto a la caseta, a cubierto'],c:0,exp:'Mantenerse viento arriba, cuesta arriba y/o aguas arriba.',ref:'G115'},
+  {q:'¿Apagas la flama?',o:['No, a menos que se pueda detener la fuga','Sí, siempre','Sí, con chorro de agua directo a la fuga'],c:0,exp:'No extinguir un incendio de gas que fuga a menos que la fuga pueda detenerse. No dirigir agua a la fuente de la fuga.',ref:'G115'},
+  {q:'Si la fuga es grande:',o:['Considerar evacuación inicial de al menos 800 m en la dirección del viento','Evacuar solo 10 m','No se requiere nada adicional'],c:0,exp:'En fuga grande, considerar evacuación inicial de al menos 800 m en la dirección del viento.',ref:'G115'}
+ ]}
+},
+{
+ id:'ducto_crudo', name:'Ducto de petróleo crudo', center:[36,0,-10], view:[0,0,7], yaw:0,
+ material:'Petróleo crudo · UN1267 · GRE Guía 128', leak:[2,0.05,-4.5],
+ info:[
+  {at:[2,2.2,-2],title:'Ducto de transporte de crudo',text:'La administración de la integridad de ductos de recolección, transporte y distribución de hidrocarburos se regula en la NOM-009-ASEA-2017. ASEA también emitió disposiciones administrativas para el transporte terrestre por ductos de petróleo, petrolíferos y petroquímicos.',ref:'N009'},
+  {at:[-1,2.6,-3],title:'Peligro a la salud',text:'El petróleo crudo (UN1267) puede contener sulfuro de hidrógeno (H2S), gas tóxico. Se indica usar equipo de respiración autónomo de presión positiva (SCBA).',ref:'G128'},
+  {at:[8,1.8,-2],title:'Agua y medio ambiente',text:'Muchos líquidos de la Guía 128 flotan en el agua. El escurrimiento del control de incendio o de la dilución puede contaminar el ambiente.',ref:'G128'}
+ ],
+ hazards:[
+  {id:'c_stream',title:'Derrame avanzando hacia el arroyo',text:'Se debe prevenir la entrada del derrame a cuerpos de agua, alcantarillas, sótanos o áreas confinadas. Muchos de estos líquidos flotan en el agua.',ref:'G128'},
+  {id:'c_noscba',title:'Trabajador sin protección respiratoria junto al derrame',text:'El crudo puede contener H2S tóxico. Se indica equipo de respiración autónomo de presión positiva (SCBA).',ref:'G128'},
+  {id:'c_walk',title:'Persona caminando sobre el derrame',text:'No tocar ni caminar sobre el material derramado.',ref:'G128'}
+ ],
+ decoys:[
+  {id:'c_dike',title:'Material para dique de contención',text:'No es un peligro, es un control. En derrame grande, la GRE indica construir un dique muy por delante del derrame para su posterior disposición.',ref:'G128'},
+  {id:'c_sock',title:'Manga de viento',text:'No es un peligro. Te permite ubicarte viento arriba.',ref:'G128'}
+ ],
+ inspect:[
+  {target:'c_stream',q:'¿El derrame está contenido antes de llegar al arroyo?',a:false,exp:'No. Avanza hacia el agua; debe prevenirse su entrada a cuerpos de agua.',ref:'G128'},
+  {target:'c_noscba',q:'¿El personal junto al derrame usa protección respiratoria (SCBA)?',a:false,exp:'No. El crudo puede contener H2S tóxico.',ref:'G128'},
+  {target:'c_dike',q:'¿Hay material para dique de contención en el sitio?',a:true,exp:'Sí. Sirve para construir el dique por delante del derrame.',ref:'G128'},
+  {target:'c_walk',q:'¿Nadie camina sobre el material derramado?',a:false,exp:'No. Hay una persona sobre el derrame; no se debe tocar ni caminar sobre él.',ref:'G128'}
+ ],
+ emergency:{fx:'crude', intro:'Derrame grande de crudo por ruptura del ducto (UN1267, GRE Guía 128). Toma las decisiones en orden.', steps:[
+  {q:'¿Cuál es tu primera acción?',o:['Llamar al 911 y mantener alejado al personal no autorizado','Ir a ver el origen sin equipo','Esperar a que el derrame se detenga solo'],c:0,exp:'Llamar al 911 y mantener alejado al personal no autorizado.',ref:'G128'},
+  {q:'Distancia de aislamiento inicial:',o:['50 m en todas direcciones','5 m','1600 m'],c:0,ring:50,exp:'Aislar por lo menos 50 m en todas direcciones. En derrame grande, considerar evacuación inicial de al menos 300 m en la dirección del viento.',ref:'G128'},
+  {q:'¿Qué protección respiratoria se indica?',o:['Equipo de respiración autónomo de presión positiva (SCBA)','Cubrebocas de tela','Ninguna, es al aire libre'],c:0,exp:'Usar SCBA de presión positiva. El crudo puede contener H2S tóxico. El traje estructural de bombero da protección térmica pero solo limitada protección química.',ref:'G128'},
+  {q:'¿Cómo controlas el derrame?',o:['Eliminar ignición, dique muy por delante del derrame y evitar entrada a cuerpos de agua','Dirigirlo con agua hacia el arroyo para diluirlo','Prenderle fuego para eliminarlo'],c:0,exp:'Eliminar fuentes de ignición, prevenir entrada a cuerpos de agua y alcantarillas, y construir un dique muy por delante del derrame.',ref:'G128'},
+  {q:'Si se incendia un tanque de crudo dañado:',o:['Combatir desde la máxima distancia o con monitores no tripulados; si es masivo y no es posible, retirarse','Rociar agua directamente en el carro tanque dañado','Aplicar chorro directo sobre el producto'],c:0,exp:'Combatir desde la máxima distancia o con monitores no tripulados. Para el petróleo crudo, la GRE indica no rociar agua directamente en un carro tanque dañado: puede provocar un peligroso rebosamiento por ebullición.',ref:'G128'}
+ ]}
+},
+{
+ id:'ducto_gasolina', name:'Ducto de gasolina (poliducto)', center:[58,0,-10], view:[0,0,7], yaw:0,
+ material:'Gasolina · UN1203 · GRE Guía 128', leak:[2,0.05,-4.5],
+ info:[
+  {at:[2,2.2,-2],title:'Ducto de petrolíferos',text:'La integridad de ductos de transporte y distribución de petrolíferos se administra conforme a la NOM-009-ASEA-2017.',ref:'N009'},
+  {at:[-5,1.8,-3],title:'Zanjas y zonas bajas',text:'La mayoría de los vapores son más pesados que el aire: se acumulan en zonas bajas o confinadas. Existe peligro de explosión de vapores en interiores, exteriores o alcantarillas.',ref:'G128'},
+  {at:[6,1.8,-2],title:'Material',text:'Gasolina: UN1203, clase 3, GRE Guía 128. La GRE está diseñada para la fase inicial de incidentes de transporte; en instalaciones rige su Plan de Respuesta a Emergencias.',ref:'UN1203'}
+ ],
+ hazards:[
+  {id:'p_sewer',title:'Derrame entrando a la alcantarilla',text:'El escurrimiento a la alcantarilla puede crear peligro de incendio o explosión. Debe prevenirse su entrada.',ref:'G128'},
+  {id:'p_tool',title:'Recogiendo el derrame con pala metálica',text:'Para recoger el material absorbido se deben usar herramientas limpias que no produzcan chispas.',ref:'G128'},
+  {id:'p_trench',title:'Trabajador dentro de la zanja junto a la fuga',text:'Los vapores son más pesados que el aire y se acumulan en zonas bajas; también pueden causar mareo o asfixia, sobre todo en áreas cerradas o confinadas.',ref:'G128'}
+ ],
+ decoys:[
+  {id:'p_sand',title:'Material absorbente disponible',text:'No es un peligro, es un control: absorber o cubrir con tierra seca, arena u otro material no combustible.',ref:'G128'},
+  {id:'p_sock',title:'Manga de viento',text:'No es un peligro. Te permite ubicarte viento arriba.',ref:'G128'}
+ ],
+ inspect:[
+  {target:'p_sewer',q:'¿La alcantarilla está protegida contra la entrada del derrame?',a:false,exp:'No. El derrame entra a ella; debe prevenirse.',ref:'G128'},
+  {target:'p_tool',q:'¿Se usan herramientas que no producen chispas?',a:false,exp:'No. Se usa una pala metálica; deben usarse herramientas limpias antichispa.',ref:'G128'},
+  {target:'p_trench',q:'¿La zanja está libre de personal?',a:false,exp:'No. Hay un trabajador dentro de una zona baja donde se acumulan vapores.',ref:'G128'},
+  {target:'p_sand',q:'¿Hay material absorbente no combustible disponible?',a:true,exp:'Sí. Arena o tierra seca.',ref:'G128'}
+ ],
+ emergency:{fx:'spill', intro:'Fuga en poliducto de gasolina cerca de una alcantarilla (UN1203, GRE Guía 128). Toma las decisiones en orden.', steps:[
+  {q:'¿Cuál es tu primera acción?',o:['Llamar al 911 y mantener alejado al personal no autorizado','Bajar a la zanja a revisar la fuga','Encender el vehículo y acercarlo'],c:0,exp:'Llamar al 911 y mantener alejado al personal no autorizado.',ref:'G128'},
+  {q:'Distancia de aislamiento inicial:',o:['50 m en todas direcciones','15 m','No es necesario'],c:0,ring:50,exp:'Aislar por lo menos 50 m en todas direcciones; en derrame grande, considerar evacuación inicial de 300 m en la dirección del viento.',ref:'G128'},
+  {q:'¿Cómo evitas que los vapores se propaguen?',o:['Evitar la entrada a alcantarillas y zonas confinadas; la espuma supresora de vapores puede reducirlos','Lavar la alcantarilla con agua','Ventilar la alcantarilla con un ventilador eléctrico común'],c:0,exp:'Prevenir la entrada a alcantarillas, sótanos o áreas confinadas. Se puede usar espuma supresora de vapores para reducirlos.',ref:'G128'},
+  {q:'Incendio pequeño. Agente adecuado:',o:['Polvo químico seco, CO2, agua en forma de rocío o espuma regular','Chorro directo de agua sobre el producto','Ninguno, dejar que arda siempre'],c:0,exp:'Incendio pequeño: polvo químico seco, CO2, agua en forma de rocío o espuma regular. Evitar chorros directos sobre el producto.',ref:'G128'},
+  {q:'Para recoger el material absorbido:',o:['Herramientas limpias que no produzcan chispas','Pala metálica','Escoba y recogedor de acero'],c:0,exp:'Usar herramientas limpias que no produzcan chispas y transferir a contenedores.',ref:'G128'}
+ ]}
+}];
+
+// ---------- Construcción del mundo ----------
+const OBJ={};     // id -> entidad clicable
+const INFO={};    // scenarioId -> [entidades info]
+const ROOT={};    // scenarioId -> entidad raíz
+
+const TEX={ok:false, base:'../../../assets/texturas/'};
+function buildBase(){
+  const w=$('#world');
+  el('a-plane',{id:'suelo',rotation:'-90 0 0',width:320,height:320,material:M('#86ad6c',1)},w);
+  el('a-plane',{id:'camino',rotation:'-90 0 0',position:P(4,0.01,7),width:150,height:7,material:M('#3d4247',0.95)},w);
+  [3.62,10.38].forEach(z=>el('a-plane',{rotation:'-90 0 0',position:P(4,0.012,z),width:150,height:0.25,material:M('#9a9d9f',0.9)},w));   // acotamientos
+  for(let x=-70;x<80;x+=6) el('a-plane',{rotation:'-90 0 0',position:P(x,0.02,7),width:2.4,height:0.18,material:M('#f2c94c',0.6)},w);
+  // Hub de bienvenida
+  const hub=el('a-entity',{position:P(0,0,24)},w);
+  el('a-circle',{rotation:'-90 0 0',position:P(0,0.02,0),radius:5,material:M('#c9ced3',0.9)},hub);
+  const b=el('a-entity',{position:P(0,0,-4)},hub);
+  [-2.3,2.3].forEach(x=>cy(b,P(x,1.25,-0.05),0.07,2.5,'#7b858d',0.4,0.7));
+  bx(b,P(0,1.6,0),5.2,2.2,0.2,'#1d2a36',0.5,0.3);
+  bx(b,P(0,2.72,0),5.2,0.08,0.22,'#f5b400',0.5);
+  txt(b,P(0,2.2,0.12),'Zona de Simulacion de Hidrocarburos',{color:'#f5b400',width:6});
+  txt(b,P(0,1.65,0.12),'Campus de Simulacion SST - CERS',{color:'#ffffff',width:4.5});
+  txt(b,P(0,1.15,0.12),'Abre el MENU para elegir escenario y modo',{color:'#cfd8e0',width:4});
+  const labels=[['Estacion de servicio',-50],['Galera gas LP',-18],['Ducto gas natural',14],['Ducto crudo',36],['Ducto gasolina',58]];
+  labels.forEach(([l,x])=>sign(w,P(x,0,10.8),l,'#1d2a36','#ffffff',3.2));
+  // arbolado de fondo y entre escenarios (profundidad visual)
+  for(let x=-78;x<=86;x+=7.5){ const k=Math.abs(Math.round(x*7))%5; arbol(w,P(x+(k-2)*0.8,0,-34-(k%3)*3),0.9+k*0.08,k%2?'#4f7d3a':'#5b8a3f'); }
+  [-34,-2,25,47].forEach((x,i)=>{ arbol(w,P(x,0,-16-(i%2)*4),1.05); arbol(w,P(x+1.5,0,-26),0.85,'#5b8a3f'); });
+  [[-8,30],[9,31],[-14,22],[14,20],[-30,16],[30,15],[-64,16],[72,15]].forEach(([x,z],i)=>arbol(w,P(x,0,z),0.8+(i%3)*0.15));
+  // postes de luz a lo largo del camino
+  for(let x=-62;x<=74;x+=22){ const l=el('a-entity',{position:P(x,0,11.6)},w); cy(l,P(0,3,0),0.07,6,'#8a939a',0.4,0.7); bx(l,P(0,5.95,-0.6),0.14,0.08,1.3,'#8a939a',0.4,0.7); bx(l,P(0,5.88,-1.15),0.4,0.08,0.22,'#eef2f5',0.3,0,{material:M('#fff8e6',0.3,0,'emissive:#fff2cc;emissiveIntensity:0.5')}); }
+}
+// Texturas reales (CC0, ver assets/INVENTARIO_ASSETS.csv) solo si existen: las copias parciales del simulador no las traen
+function probarTex(){ if(window.Realismo && Realismo.calidad()==='baja') return Promise.resolve(false);
+  return fetch(TEX.base+'pbr/pasto_color.webp',{method:'HEAD'}).then(r=>TEX.ok=r.ok).catch(()=>false); }
+function texturizar(){
+  if(!TEX.ok) return; {
+    const pon=(sel,n,rep,tinte)=>{ const e=$(sel); if(e) e.setAttribute('material',`src:url(${TEX.base}pbr/${n}_color.webp);normalMap:url(${TEX.base}pbr/${n}_normal.webp);repeat:${rep};normalTextureRepeat:${rep};roughness:1;metalness:0;color:${tinte}`); };
+    pon('#suelo','pasto','90 90','#d9e8c8'); pon('#camino','asfalto','40 2','#c8c8c8');
+    document.querySelectorAll('.piso-concreto').forEach(e=>{ const w=+e.getAttribute('width')||10, d=+e.getAttribute('depth')||+e.getAttribute('height')||10;
+      e.setAttribute('material',`src:url(${TEX.base}concreto.webp);repeat:${Math.round(w/3)} ${Math.round(d/3)};roughness:0.95;color:#e2e4e6`); });
+  }
+}
+// Sombras: solo mallas opacas con material estándar (no textos ni paneles)
+function sombras(){
+  if(window.Realismo && Realismo.calidad()==='baja') return;
+  const sc=$('a-scene'), r=sc.renderer, nuevo=!r.shadowMap.enabled;
+  if(nuevo){ r.shadowMap.enabled=true; r.shadowMap.type=THREE.PCFSoftShadowMap;
+    if(window.Realismo && Realismo.calidad()!=='alta'){ const l=$('#sun').getObject3D('light'); l.shadow.mapSize.set(1024,1024); if(l.shadow.map){ l.shadow.map.dispose(); l.shadow.map=null; } } }
+  sc.object3D.traverse(o=>{ if(!o.isMesh) return; const m=o.material; if(!m||Array.isArray(m)||m.transparent||!m.isMeshStandardMaterial) return;
+    if(nuevo) m.needsUpdate=true;
+    o.receiveShadow=true; o.castShadow=!(o.el&&(o.el.id==='suelo'||o.el.id==='camino'||o.el.classList.contains('piso-concreto'))); });
+}
+function solSobre(c){ const [x,,z]=c||[0,0,22]; $('#sun').object3D.position.set(x-18,36,z+22); $('#sunTarget').object3D.position.set(x,0,z); }
+
+function windsock(p,pos,id){
+  const g=el('a-entity',{position:pos},p);
+  cy(g,P(0,0.06,0),0.25,0.12,'#9aa2a8',0.8);
+  cy(g,P(0,2.05,0),0.05,4.1,'#9aa2a8',0.4,0.7);
+  const s=el('a-entity',{position:P(0,3.8,0),animation:'property:rotation;from:0 -6 -3;to:0 6 3;dir:alternate;loop:true;dur:1300;easing:easeInOutSine'},g);
+  el('a-torus',{position:P(0.06,0,0),rotation:'0 90 0',radius:0.27,radiusTubular:0.018,material:M('#9aa2a8',0.4,0.7)},s);
+  for(let i=0;i<5;i++){ const r0=0.26-i*0.032, r1=r0-0.032;
+    el('a-entity',{position:P(0.2+i*0.28,-i*0.02,0),rotation:'0 0 -90',geometry:`primitive:cone;radiusTop:${r1};radiusBottom:${r0};height:0.28;openEnded:true;segmentsRadial:16`,material:M(i%2?'#ffffff':'#ff6a13',0.85,0,'side:double')},s); }
+  if(id){ clickableTree(g); OBJ[id]=g; }
+  return g;
+}
+function cloud(p,pos,color,rising){
+  const g=el('a-entity',{position:pos},p);
+  for(let i=0;i<5;i++){
+    const s=sph(g,P((Math.random()-.5)*0.8,0.1+i*0.15,(Math.random()-.5)*0.8),0.35+Math.random()*0.25,color,{material:'transparent:true;opacity:0.45'});
+    s.setAttribute('animation',rising?`property:position;to:${(Math.random()-.5)*1.5} ${3+i} ${(Math.random()-.5)*1.5};dur:${3000+i*500};loop:true;easing:linear`
+      :`property:scale;from:1 1 1;to:2.4 0.6 2.4;dur:${2600+i*400};loop:true;dir:alternate;easing:easeInOutSine`);
+  }
+  return g;
+}
+// El plano siempre mira a la cámara (llamas y humo con textura)
+AFRAME.registerComponent('cara-camara',{tick(){ const c=this.el.sceneEl.camera; if(!c) return; const q=new THREE.Quaternion(); c.getWorldQuaternion(q);
+  const pq=new THREE.Quaternion(); this.el.object3D.parent.getWorldQuaternion(pq); this.el.object3D.quaternion.copy(pq.invert().multiply(q)); }});
+function flame(p,pos,scale=1){
+  const g=el('a-entity',{position:pos,scale:P(scale,scale,scale)},p);
+  el('a-cone',{position:P(0,0.6,0),radiusBottom:0.35,radiusTop:0,height:1.3,material:'color:#ff6a00;shader:flat;transparent:true;opacity:0.75',
+    animation:'property:scale;from:1 0.85 1;to:0.9 1.15 0.9;dur:180;loop:true;dir:alternate'},g);
+  el('a-cone',{position:P(0,0.5,0),radiusBottom:0.2,radiusTop:0,height:0.9,material:'color:#ffd23f;shader:flat;transparent:true;opacity:0.9',
+    animation:'property:scale;from:1 0.9 1;to:0.85 1.2 0.85;dur:140;loop:true;dir:alternate'},g);
+  if(TEX.ok){   // llamas y humo con textura (CC0, Kenney Particle Pack)
+    ['flame_02','fire_01','flame_04'].forEach((n,i)=>el('a-plane',{position:P((i-1)*0.12,0.75+i*0.08,0),width:1.1-i*0.15,height:1.6-i*0.2,'cara-camara':'',
+      material:`shader:flat;src:url(${TEX.base}particulas/${n}.webp);transparent:true;blending:additive;depthWrite:false;color:#ffb060`,
+      animation:`property:scale;from:1 0.9 1;to:0.92 1.18 1;dur:${160+i*50};loop:true;dir:alternate`},g));
+    for(let i=0;i<3;i++) el('a-plane',{position:P(0,1.6,0),width:1.2,height:1.2,'cara-camara':'',
+      material:`shader:flat;src:url(${TEX.base}particulas/smoke_04.webp);transparent:true;opacity:0.35;depthWrite:false;color:#555`,
+      animation:`property:position;from:0 1.4 0;to:${(i-1)*0.6} ${3.6+i} 0;dur:${2600+i*700};loop:true;easing:linear`},g);
+  }
+  el('a-entity',{position:P(0,1,0),light:'type:point;color:#ff8a30;intensity:6;distance:12;decay:1.5'},g);
+  return g;
+}
+// Válvula de compuerta con volante (estación de válvulas del ducto)
+function valvula(p,pos,r){
+  const g=el('a-entity',{position:pos},p);
+  bx(g,P(0,0,0),0.55,r*2.4,r*2.2,'#d4a21e',0.45,0.4);
+  [-0.32,0.32].forEach(x=>cy(g,P(x,0,0),r+0.14,0.07,'#b88a12',0.45,0.5,{rotation:'0 0 90'}));
+  cy(g,P(0,r*1.2+0.35,0),0.05,0.7,'#5a6168',0.4,0.7);
+  const v=el('a-entity',{position:P(0,r*1.2+0.72,0),rotation:'90 0 0'},g);
+  el('a-torus',{radius:0.3,radiusTubular:0.035,material:M('#c0392b',0.5,0.3)},v);
+  [0,45,90,135].forEach(a=>bx(v,P(0,0,0),0.6,0.03,0.03,'#c0392b',0.5,0.3,{rotation:`0 0 ${a}`}));
+  return g;
+}
+function pipe(p, z, x1, x2, y=0.9, r=0.35, fluido=''){
+  const len=Math.abs(x2-x1), xc=(x1+x2)/2, xa=Math.min(x1,x2), xb=Math.max(x1,x2);
+  const g=el('a-entity',{},p);
+  el('a-cylinder',{position:P(xc,y,z),rotation:'0 0 90',radius:r,height:len,segmentsRadial:24,material:M('#f2c230',0.38,0.25)},g);
+  // bridas cada tramo y tapas
+  for(let x=xa+3;x<xb-0.5;x+=6) cy(g,P(x,y,z),r+0.07,0.12,'#d9ab1f',0.4,0.4,{rotation:'0 0 90'});
+  [xa,xb].forEach(x=>cy(g,P(x,y,z),r+0.05,0.1,'#d9ab1f',0.4,0.4,{rotation:'0 0 90'}));
+  // soportes: dado de concreto + silleta metálica + abrazadera
+  for(let x=xa+1;x<xb;x+=4){ bx(g,P(x,0.18,z),0.7,0.36,0.8,'#b9bcbe',0.95);
+    bx(g,P(x,(y-r)/2+0.18,z),0.12,y-r-0.36,0.5,'#6f777e',0.5,0.7);
+    el('a-torus',{position:P(x,y,z),rotation:'0 90 0',radius:r+0.02,radiusTubular:0.03,arc:180,material:M('#6f777e',0.5,0.7)},g); }
+  valvula(g,P(xc-4,y,z),r);
+  // flechas de sentido de flujo y nombre del fluido (identificación de tuberías)
+  for(let x=xa+2;x<xb;x+=5) el('a-cone',{position:P(x,y+r+0.1,z),rotation:'0 0 -90',radiusBottom:0.12,radiusTop:0,height:0.3,material:M('#111',0.6)},g);
+  if(fluido) [xa+5.5,xb-2.5].forEach(x=>{ const e=el('a-entity',{position:P(x,y,z+r+0.01)},g);
+    el('a-plane',{width:1.9,height:r*1.1,material:M('#f2c230',0.5)},e); txt(e,P(0,0,0.005),fluido,{width:3.2,color:'#111'}); });
+  // postes de señalamiento del ducto enterrado
+  [x1-1.5, x2+1.5].forEach(x=>{ const s=el('a-entity',{position:P(x,0,z+1.2)},g);
+    cy(s,P(0,0.75,0),0.06,1.5,'#f2c230',0.5); bx(s,P(0,1.45,0.04),0.7,0.38,0.04,'#f2c230',0.5); bx(s,P(0,1.45,0.015),0.74,0.42,0.02,'#111',0.6);
+    txt(s,P(0,1.45,0.065),'DUCTO',{width:1.3}); });
+  return g;
+}
+function hazardGroup(p,id,pos){ const g=el('a-entity',{position:pos},p); clickableTree(g); OBJ[id]=g; return g; }
+
+// ---- piezas de la estación de servicio (genéricas, sin marca)
+function dispensario(p,pos){
+  const g=el('a-entity',{position:pos},p);
+  bx(g,P(0,0.15,0),0.95,0.3,0.6,'#7d8790',0.6,0.4);
+  bx(g,P(0,0.95,0),0.82,1.3,0.52,'#f2f4f6',0.3,0.15);
+  bx(g,P(0,1.75,0),0.9,0.32,0.58,'#2e9e4f',0.45,0.1);
+  bx(g,P(0,1.93,0),0.9,0.04,0.58,'#ffffff',0.4);
+  [-1,1].forEach(s=>{ const ry=s>0?0:180, zf=s*0.262;
+    el('a-plane',{position:P(0,1.28,zf),rotation:P(0,ry,0),width:0.52,height:0.3,material:'color:#0f2231;roughness:0.15;metalness:0.2;emissive:#1f5f86;emissiveIntensity:0.55'},g);
+    ['#2fbf71','#e5484d','#2b2b2b'].forEach((c,i)=>{ const x=(i-1)*0.24*s;
+      bx(g,P(x,0.72,s*0.29),0.15,0.22,0.06,'#1a1a1a',0.5,0.3);
+      el('a-plane',{position:P(x,0.98,zf),rotation:P(0,ry,0),width:0.17,height:0.06,material:M(c,0.5)},g); });
+    el('a-torus',{position:P(0.3*s,1.12,s*0.27),rotation:P(0,90,-90),radius:0.32,radiusTubular:0.02,arc:170,material:M('#151515',0.55)},g);
+  });
+  return g;
+}
+function isla(p,pos){
+  const g=el('a-entity',{position:pos},p);
+  bx(g,P(0,0.11,0),7.6,0.22,1.25,'#d6d8da',0.9);
+  [-1,1].forEach(s=>{ el('a-entity',{position:P(s*3.8,0.11,0),geometry:'primitive:cylinder;radius:0.625;height:0.22;thetaStart:'+(s>0?0:180)+';thetaLength:180',rotation:'0 0 0',material:M('#d6d8da',0.9)},g);
+    const b=el('a-entity',{position:P(s*4.25,0,0)},g);   // bolardo de protección amarillo/negro
+    cy(b,P(0,0.55,0),0.11,1.1,'#f2c230',0.5,0.2); [0.35,0.75].forEach(y=>cy(b,P(0,y,0),0.115,0.1,'#1a1a1a',0.6)); });
+  [-2.5,2.5].forEach(x=>dispensario(g,P(x,0.22,0)));
+  return g;
+}
+function autotanque(h3){
+  bx(h3,P(0,0.78,0),8.4,0.22,1.0,'#26292c',0.7,0.5);   // chasis
+  // cabina
+  bx(h3,P(-3.45,1.45,0),1.75,1.55,2.25,'#e9ecef',0.3,0.35); bx(h3,P(-3.3,2.5,0),1.45,0.6,2.15,'#e9ecef',0.3,0.35);
+  el('a-plane',{position:P(-4.33,2.05,0),rotation:'0 -90 0',width:2.0,height:0.85,material:VIDRIO},h3);
+  [-1,1].forEach(s=>{ el('a-plane',{position:P(-3.35,2.35,s*1.08),rotation:P(0,s>0?0:180,0),width:1.0,height:0.6,material:VIDRIO},h3);
+    bx(h3,P(-4.42,1.15,s*0.8),0.04,0.18,0.36,'#fff8e1',0.2,0,{material:'color:#fff8e1;emissive:#fff1c2;emissiveIntensity:0.6'});
+    bx(h3,P(-4.05,2.4,s*1.2),0.06,0.32,0.1,'#2b2b2b',0.4,0.6); });
+  bx(h3,P(-4.42,0.78,0),0.16,0.32,2.3,'#a8b0b7',0.25,0.85);   // defensa
+  bx(h3,P(-4.36,1.35,0),0.04,0.5,1.2,'#3a3f44',0.5,0.6);     // parrilla
+  // tanque pulido con tapas semiesféricas
+  el('a-cylinder',{position:P(0.55,1.95,0),rotation:'0 0 90',radius:1.05,height:5.3,segmentsRadial:28,material:M('#e8edf1',0.18,0.75)},h3);
+  [-2.1,3.2].forEach((x,i)=>sph(h3,P(x,1.95,0),1.05,'#e8edf1',{scale:`${0.35} 1 1`,material:M('#e8edf1',0.18,0.75)}));
+  [-1.2,0.6,2.4].forEach(x=>el('a-torus',{position:P(x,1.95,0),rotation:'0 90 0',radius:1.06,radiusTubular:0.035,material:M('#b9c2c9',0.3,0.8)},h3));
+  bx(h3,P(0.55,3.05,0),4.6,0.05,0.6,'#9aa3aa',0.4,0.7);   // pasarela
+  [-1.6,0.6,2.7].forEach(x=>cy(h3,P(x,3.06,0),0.2,0.12,'#7f8890',0.4,0.7));   // domos
+  // placa de identificación del material
+  bx(h3,P(0.55,1.85,1.06),1.6,0.55,0.02,'#ff9800',0.5); txt(h3,P(0.55,1.85,1.075),'INFLAMABLE 3',{width:2});
+  // ruedas con rin
+  [-3.4,-1,1.6,2.8].forEach(x=>[-1,1].forEach(s=>{ el('a-cylinder',{position:P(x,0.48,s*1.12),rotation:'90 0 0',radius:0.48,height:0.32,segmentsRadial:20,material:M('#1d1d1d',0.85)},h3);
+    el('a-cylinder',{position:P(x,0.48,s*1.29),rotation:'90 0 0',radius:0.24,height:0.02,material:M('#b9c0c6',0.3,0.85)},h3); }));
+  [-1,1].forEach(s=>bx(h3,P(2.2,0.95,s*1.15),1.9,0.06,0.36,'#2b2b2b',0.6,0.4));   // salpicaderas
+}
+
+function buildGasolinera(sc,R){
+  bx(R,P(0,0.01,2),30,0.02,22,'#b9bec3',0.95,0,{class:'piso-concreto'});
+  // techumbre genérica (sin marca): losa blanca, faldón verde y luminarias
+  bx(R,P(0,5.05,0),14,0.42,8,'#f4f6f7',0.6);
+  [[0,4.05,14.2,0.08],[0,-4.05,14.2,0.08]].forEach(([x,z,w,d])=>bx(R,P(x,5.05,z),w,0.7,d,'#2e9e4f',0.45));
+  [-7.05,7.05].forEach(x=>bx(R,P(x,5.05,0),0.08,0.7,8.2,'#2e9e4f',0.45));
+  [[0,4.1],[0,-4.1]].forEach(([x,z])=>bx(R,P(x,4.72,z),14.2,0.06,0.04,'#ffffff',0.4));
+  for(let x=-5;x<=5;x+=2.5) [-2,2].forEach(z=>el('a-plane',{position:P(x,4.83,z),rotation:'90 0 0',width:1.1,height:0.5,material:'color:#ffffff;shader:flat'},R));
+  [[-5,-2.5],[5,-2.5],[-5,2.5],[5,2.5]].forEach(([x,z])=>{ bx(R,P(x,2.42,z),0.42,4.84,0.42,'#e9ecee',0.5,0.1); bx(R,P(x,0.3,z),0.5,0.6,0.5,'#2e9e4f',0.5); });
+  [-2.5,2.5].forEach(z=>isla(R,P(0,0,z)));
+  // bocatomas de tanques subterráneos (registro de concreto, tapas de color)
+  bx(R,P(8.5,0.03,6),4.2,0.04,1.3,'#9ea3a7',0.95);
+  [[7,'#2fbf71'],[8.5,'#e5484d'],[10,'#2b2b2b']].forEach(([x,c])=>{ cy(R,P(x,0.07,6),0.36,0.05,'#5d646a',0.4,0.7); cy(R,P(x,0.1,6),0.28,0.03,c,0.5,0.2); });
+  // coladera con rejilla
+  bx(R,P(-6,0.025,5),1.3,0.03,0.6,'#3b3f43',0.6,0.5);
+  for(let i=-5;i<=5;i++) bx(R,P(-6+i*0.11,0.045,5),0.05,0.02,0.52,'#1c1e20',0.5,0.7);
+  // tienda: muros, vidrios, puerta y faldón
+  bx(R,P(-9,1.6,-7),8,3.2,4,'#ece6d6',0.85);
+  bx(R,P(-9,3.35,-7),8.4,0.3,4.4,'#2e9e4f',0.45); bx(R,P(-9,3.52,-7),8.4,0.05,4.4,'#ffffff',0.4);
+  el('a-plane',{position:P(-10.4,1.45,-4.99),width:4.4,height:1.7,material:VIDRIO},R);
+  bx(R,P(-10.4,0.55,-4.98),4.6,0.1,0.04,'#5d666e',0.4,0.7); bx(R,P(-10.4,2.33,-4.98),4.6,0.08,0.04,'#5d666e',0.4,0.7);
+  el('a-plane',{position:P(-6.8,1.15,-4.99),width:1.4,height:2.3,material:VIDRIO},R); bx(R,P(-6.8,1.15,-4.985),0.04,2.3,0.03,'#5d666e',0.4,0.7);
+  txt(R,P(-9,2.75,-4.97),'TIENDA',{color:'#1d2a36',width:4});
+  sign(R,P(4,0,9),'PROHIBIDO FUMAR','#ffffff','#c62828',2.6);
+  sign(R,P(-12.5,0,8.5),'APAGUE SU MOTOR','#ffffff','#1d2a36',2.6,20);
+  // cubetas de arena y extintores en cada isla (además del distractor)
+  extintor(R,P(-4.4,0.22,2.5),0); arbol(R,P(-14,0,-10),1.1); arbol(R,P(13.5,0,-9),0.95);
+  // Peligro 1: derrame hacia coladera
+  const h1=hazardGroup(R,'g_spill',P(-2.5,0.03,3.2));
+  el('a-circle',{rotation:'-90 0 0',radius:1.1,segments:40,material:'color:#4a3a1e;transparent:true;opacity:0.88;metalness:0.4;roughness:0.06'},h1);
+  el('a-circle',{rotation:'-90 0 0',position:P(0.5,0.002,-0.3),radius:0.6,segments:24,material:'color:#4a3a1e;transparent:true;opacity:0.88;metalness:0.4;roughness:0.06'},h1);
+  el('a-plane',{rotation:'-90 0 25',position:P(-1.8,0.004,1),width:0.6,height:3,material:'color:#4a3a1e;transparent:true;opacity:0.85;metalness:0.4;roughness:0.06'},h1);
+  // Peligro 2: persona fumando
+  const h2=hazardGroup(R,'g_smoker',P(1.2,0,4.2)); const fum=person(h2,P(0,0,0),'#8e44ad',200,{pose:'fumar'});
+  cy(fum.mano,P(0,-0.34,0.03),0.008,0.08,'#f5f5f5',0.6,0,{rotation:'90 0 0'}); sph(fum.mano,P(0,-0.34,0.075),0.012,'#ff5500',{material:'color:#ff5500;emissive:#ff3300;emissiveIntensity:2'});
+  // Peligro 3: autotanque descargando sin conexión a tierra
+  const h3=hazardGroup(R,'g_truck',P(9,0,8.5)); autotanque(h3);
+  el('a-cylinder',{position:P(-0.4,0.12,-1.65),rotation:'90 -15 0',radius:0.06,height:1.6,material:M('#1a1a1a',0.6)},h3);   // manguera de descarga a la bocatoma
+  const reel=el('a-entity',{position:P(-1,0,-2.4)},h3); bx(reel,P(0,0.5,0),0.4,1,0.3,'#f2c230',0.5,0.2);
+  el('a-torus',{position:P(0,0.8,0.17),radius:0.15,radiusTubular:0.03,material:M('#2e7d32',0.5)},reel);
+  el('a-torus',{position:P(0.35,0.03,0.25),rotation:'-90 0 0',radius:0.22,radiusTubular:0.015,material:M('#2e7d32',0.5)},reel);   // cable suelto, sin conectar
+  bx(reel,P(0.62,0.03,0.25),0.1,0.04,0.05,'#c9a227',0.4,0.7);   // pinza sin conectar
+  // Distractores
+  const d1=hazardGroup(R,'g_ext',P(5.4,0,-2.2)); extintor(d1,P(0,0,0),0);
+  const d2=hazardGroup(R,'g_sand',P(-7,0,-2));
+  cy(d2,P(0,0.45,0),0.3,0.9,'#c49a3a',0.6,0.3); cy(d2,P(0,0.91,0),0.31,0.03,'#8a6a24',0.5,0.4); txt(d2,P(0,0.6,0.31),'ARENA',{width:1.4});
+  bx(d2,P(0.45,0.55,0),0.04,1.1,0.04,'#8d6e63',0.8,0,{rotation:'0 0 -12'}); bx(d2,P(0.55,0.08,0),0.22,0.03,0.28,'#9e9e9e',0.4,0.6);
+}
+
+function cilindroLP(p,pos,c='#dfe3e6'){
+  const g=el('a-entity',{position:pos},p);
+  cy(g,P(0,0.07,0),0.165,0.14,'#8a9096',0.5,0.6);
+  cy(g,P(0,0.62,0),0.18,0.96,c,0.38,0.35,{segmentsRadial:18});
+  sph(g,P(0,1.1,0),0.18,c,{scale:'1 0.55 1',material:M(c,0.38,0.35)});
+  el('a-cylinder',{position:P(0,1.27,0),radius:0.115,height:0.17,openEnded:true,segmentsRadial:14,material:M('#9aa0a6',0.45,0.6,'side:double')},g);
+  cy(g,P(0,1.22,0),0.03,0.09,'#c9a227',0.35,0.8);
+  return g;
+}
+function buildGalera(sc,R){
+  bx(R,P(0,0.01,1),16,0.02,12,'#a7a9ac',0.95,0,{class:'piso-concreto'});
+  bx(R,P(0,0.1,-0.4),12.4,0.18,8.4,'#bfc2c5',0.9);   // plataforma elevada
+  // techo de lámina acanalada sobre estructura metálica
+  el('a-box',{position:P(0,4.25,0),width:12.4,height:0.08,depth:8.4,rotation:'4 0 0',material:`src:${LAMINA()};repeat:10 1;roughness:0.45;metalness:0.6`},R);
+  [[-5.8,-3.8],[5.8,-3.8],[-5.8,3.8],[5.8,3.8],[0,-3.8],[0,3.8]].forEach(([x,z])=>bx(R,P(x,2.1,z),0.2,4.2,0.2,'#5f666c',0.45,0.7));
+  [-3.8,3.8].forEach(z=>bx(R,P(0,4.1,z),12,0.22,0.12,'#5f666c',0.45,0.7));
+  // malla ciclónica perimetral (atrás y costados)
+  malla(R,P(0,0.19,-3.95),11.6); malla(R,P(-5.95,0.19,0),7.8,1.8,90); malla(R,P(5.95,0.19,0),7.8,1.8,90);
+  // cilindros
+  for(let i=0;i<6;i++) for(let j=0;j<3;j++) cilindroLP(R,P(-4.5+i*0.6,0.19,-2.5+j*0.6));
+  for(let i=0;i<4;i++) cilindroLP(R,P(1+i*0.6,0.19,-2.5));
+  bx(R,P(0,2.6,3.9),3.4,0.5,0.05,'#f2c230',0.5); txt(R,P(0,2.6,3.93),'GALERA DE GAS LP',{width:4});
+  arbol(R,P(-9,0,-6),1.0); arbol(R,P(8.5,0,-7),1.15);
+  // Peligro 1: calefactor junto a cilindros
+  const h1=hazardGroup(R,'l_heat',P(-1.2,0,-1.5)); bx(h1,P(0,0.5,0),0.6,1,0.4,'#b03a2e',0.5,0.3);
+  el('a-plane',{position:P(0,0.6,0.21),width:0.45,height:0.5,material:'color:#ff7b00;emissive:#ff5a00;emissiveIntensity:1.6'},h1);
+  for(let i=0;i<4;i++) bx(h1,P(0,0.4+i*0.13,0.215),0.42,0.02,0.01,'#5a1a12',0.5,0.5);
+  el('a-entity',{position:P(0,0.7,0.5),light:'type:point;color:#ff7a2a;intensity:2;distance:3'},h1);
+  // Peligro 2: fuga junto a registro
+  const h2=hazardGroup(R,'l_leak',P(3,0,1.5)); cilindroLP(h2,P(0,0,0));
+  bx(h2,P(1,0.02,0),0.8,0.03,0.8,'#2a2d30',0.6,0.5); for(let i=-3;i<=3;i++) bx(h2,P(1+i*0.1,0.04,0),0.04,0.02,0.72,'#151515',0.5,0.6);
+  cloud(h2,P(0.5,0,0),'#f3f6f8',false);
+  // Peligro 3: esmerilado con chispas
+  const h3=hazardGroup(R,'l_sparks',P(4.6,0,-1)); const esm=person(h3,P(0,0,0),'#2b6cb0',-60,{pose:'frente',casco:'#f2c230'});
+  bx(h3,P(0,1.22,0.55),0.35,0.12,0.12,'#555',0.4,0.7); cy(h3,P(-0.2,1.22,0.6),0.1,0.03,'#9aa0a6',0.3,0.8,{rotation:'0 0 90'});
+  for(let i=0;i<8;i++) sph(h3,P(-0.25,1.2,0.62),0.025,'#ffd54f',{material:'color:#ffd54f;emissive:#ffc107;emissiveIntensity:2',
+    animation:`property:position;to:${-0.6-Math.random()*0.8} ${0.2+Math.random()*0.7} ${0.6+Math.random()*0.9};dur:${380+i*80};loop:true;easing:easeOutQuad`});
+  // Distractores
+  const d1=hazardGroup(R,'l_ext',P(-5.4,0,3.4)); extintor(d1,P(0,0.19,0),0);
+  const d2=hazardGroup(R,'l_sign',P(2,0,5));
+  cy(d2,P(0,0.9,-0.03),0.05,1.8,'#7b858d',0.4,0.7); el('a-circle',{position:P(0,2.1,0),radius:0.42,material:M('#c62828',0.6)},d2); el('a-circle',{position:P(0,2.1,0.01),radius:0.34,material:M('#ffffff',0.6)},d2);
+  bx(d2,P(0,2.1,0.02),0.18,0.04,0.01,'#333'); box(d2,P(0,2.1,0.03),0.7,0.07,0.01,'#c62828',{rotation:'0 0 -45'});
+  txt(d2,P(0,1.55,0.02),'PROHIBIDO FUMAR',{width:2,color:'#c62828'});
+}
+
+function costal(p,pos,ry=0){ return el('a-sphere',{position:pos,radius:0.3,scale:'0.95 0.42 0.62',rotation:P(0,ry,0),segmentsWidth:12,segmentsHeight:8,material:M('#b39b72',0.95)},p); }
+function buildDucto(sc,R,kind){
+  bx(R,P(0,0.005,-8),20,0.01,28,'#8fb07a',1);
+  bx(R,P(0,0.012,-6),19,0.01,3,'#a59675',1);   // derecho de vía (franja de terracería)
+  const fl={gn:'GAS NATURAL',cr:'PETROLEO CRUDO',ga:'GASOLINA'}[kind];
+  pipe(R,-6,-9,9,0.9,0.35,fl);
+  const id={gn:'n',cr:'c',ga:'p'}[kind];
+  windsock(R,P(-6,0,-4),`${id}_sock`);
+  sign(R,P(-7.5,0,2.5),sc.name.toUpperCase(),'#1d2a36','#ffffff',3.6,15);
+  arbol(R,P(-9,0,-16),1.1); arbol(R,P(7,0,-18),0.95,'#5b8a3f'); arbol(R,P(-3,0,-20),1.2);
+  if(kind==='gn'){
+    const pp=hazardGroup(R,'n_pipe',P(-3,0,-4.8)); bx(pp,P(0,1.9,0),0.9,0.35,0.05,'#f2c230',0.5); txt(pp,P(0,1.9,0.03),'GAS NATURAL',{width:1.6}); cy(pp,P(0,1.25,0),0.03,0.9,'#7b858d',0.4,0.7);
+    cloud(R,P(2,1.2,-6),'#eef3f7',true);
+    const h1=hazardGroup(R,'n_down',P(8,0,-4)); person(h1,P(0,0,0),'#2b6cb0',-90,{casco:'#ffffff',chaleco:'#c6f13a'});
+    const h2=hazardGroup(R,'n_fire',P(-6,0,-1.5));
+    for(let i=0;i<7;i++){ const a=i/7*Math.PI*2; sph(h2,P(Math.cos(a)*0.55,0.08,Math.sin(a)*0.55),0.13,'#7d7d7d',{scale:'1 0.7 1',material:M('#7d7d7d',0.95)}); }
+    for(let i=0;i<4;i++) el('a-cylinder',{position:P(0,0.12,0),rotation:`80 ${i*45} 0`,radius:0.06,height:0.9,material:M('#5d4037',0.95)},h2); flame(h2,P(0,0,0),0.6);
+    const h3=hazardGroup(R,'n_hut',P(5,0,-10));
+    bx(h3,P(0,1.2,0),2.2,2.4,2,'#cfd8dc',0.8); bx(h3,P(0,2.5,0),2.6,0.12,2.4,'#78909c',0.5,0.5);
+    for(let i=0;i<4;i++) bx(h3,P(-1.115,1.65+i*0.1,0),0.02,0.05,0.8,'#455a64',0.5,0.6);   // ventila con rejillas
+    bx(h3,P(0.3,1.0,1.005),0.85,1.9,0.04,'#90a4ae',0.6,0.3); cy(h3,P(0.6,1.0,1.04),0.03,0.05,'#c9a227',0.3,0.8,{rotation:'90 0 0'});
+  }
+  if(kind==='cr'){
+    // arroyo con márgenes
+    [6.5,9.5].forEach(x=>bx(R,P(x,0.03,-8),0.6,0.05,28,'#8b7a5a',1));
+    el('a-plane',{rotation:'-90 0 0',position:P(8,0.02,-8),width:2.5,height:28,material:'color:#3f86b8;transparent:true;opacity:0.86;roughness:0.05;metalness:0.3'},R);
+    const h1=hazardGroup(R,'c_stream',P(2,0.02,-4.5));
+    el('a-circle',{rotation:'-90 0 0',radius:1.6,segments:40,material:'color:#0b0b0b;roughness:0.05;metalness:0.5'},h1);
+    el('a-circle',{rotation:'-90 0 0',position:P(-0.8,0.002,0.8),radius:0.8,segments:24,material:'color:#0b0b0b;roughness:0.05;metalness:0.5'},h1);
+    el('a-plane',{rotation:'-90 0 -90',position:P(3,0.004,0),width:0.9,height:3.6,material:'color:#0b0b0b;roughness:0.05;metalness:0.5'},h1);
+    const h2=hazardGroup(R,'c_noscba',P(-0.6,0,-3)); person(h2,P(0,0,0),'#ef6c00',160,{casco:'#ffffff'});
+    const h3=hazardGroup(R,'c_walk',P(2.4,0,-4.2)); person(h3,P(0,0,0),'#6d4c41',90);
+    const d1=hazardGroup(R,'c_dike',P(-6,0,-2));
+    for(let i=0;i<5;i++) costal(d1,P(i*0.55,0.13,0),i*7); for(let i=0;i<4;i++) costal(d1,P(0.27+i*0.55,0.36,0),-i*9);
+    txt(d1,P(1.1,0.85,0.25),'COSTALES DIQUE',{width:2});
+  }
+  if(kind==='ga'){
+    // zanja con paredes de tierra, bordo de material excavado y tablones
+    el('a-plane',{rotation:'-90 0 0',position:P(-5,0.03,-3),width:4,height:1.4,material:M('#2e2219',1)},R);
+    [-3.68,-2.32].forEach(z=>bx(R,P(-5,0.05,z),4.1,0.04,0.12,'#4a3828',1));
+    el('a-entity',{position:P(-5,0,-4.25),geometry:'primitive:cylinder;radius:0.45;height:4.4;segmentsRadial:10;thetaStart:0;thetaLength:180',rotation:'0 0 90',scale:'1 1 0.8',material:M('#7a5f43',1,0,'flatShading:true')},R);
+    [[-7.1,-3],[-2.9,-3]].forEach(([x,z])=>bx(R,P(x,0.04,z),0.25,0.08,1.8,'#9a7b52',0.9));
+    const h1=hazardGroup(R,'p_sewer',P(2,0.02,-4.5));
+    el('a-circle',{rotation:'-90 0 0',radius:1.2,segments:40,material:'color:#4a3a1e;transparent:true;opacity:0.88;metalness:0.4;roughness:0.06'},h1);
+    el('a-plane',{rotation:'-90 0 -90',position:P(1.8,0.004,0),width:0.6,height:2.2,material:'color:#4a3a1e;transparent:true;opacity:0.85;metalness:0.4;roughness:0.06'},h1);
+    cy(h1,P(3.2,0.012,0),0.47,0.02,'#2b2e31',0.5,0.6); el('a-circle',{rotation:'-90 0 0',position:P(3.2,0.025,0),radius:0.42,material:M('#151617',0.6,0.5)},h1);
+    const h2=hazardGroup(R,'p_tool',P(0.3,0,-2.8)); person(h2,P(0,0,0),'#2b6cb0',60,{pose:'pala',casco:'#f2c230',chaleco:'#ff8f1f'});
+    bx(h2,P(0.05,0.72,0.42),0.05,1.25,0.05,'#8d6e63',0.8,0,{rotation:'35 0 0'}); bx(h2,P(0.05,0.14,0.82),0.3,0.03,0.36,'#a9adb1',0.3,0.85,{rotation:'15 0 0'});
+    const h3=hazardGroup(R,'p_trench',P(-5,-0.6,-3)); person(h3,P(0,0,0),'#455a64',90,{casco:'#ffffff'});
+    const d1=hazardGroup(R,'p_sand',P(-7.5,0,-1)); cy(d1,P(0,0.45,0),0.3,0.9,'#c49a3a',0.6,0.3); cy(d1,P(0,0.91,0),0.31,0.03,'#8a6a24',0.5,0.4); txt(d1,P(0,0.6,0.31),'ARENA',{width:1.4});
+  }
+}
+
+function buildInfo(sc,R){
+  INFO[sc.id]=sc.info.map((inf,i)=>{
+    const g=el('a-entity',{position:P(...inf.at),visible:false},R);
+    sph(g,P(0,0,0),0.28,'#1e88e5',{material:'emissive:#1565c0;emissiveIntensity:0.5'});
+    txt(g,P(0,0,0.3),'i',{color:'#fff',width:4});
+    g.setAttribute('animation','property:position;to:'+P(inf.at[0],inf.at[1]+0.25,inf.at[2])+';dir:alternate;loop:true;dur:1200;easing:easeInOutSine');
+    g.dataset.info=i; g.addEventListener('click',()=>{ if(STATE.mode==='recorrido'&&STATE.sc===sc) showInfo(sc,i); });
+    return g;
+  });
+}
+
+function buildWorld(){
+  buildBase();
+  SC.forEach(sc=>{
+    const R=el('a-entity',{position:P(...sc.center)});
+    ROOT[sc.id]=R;
+    if(sc.id==='gasolinera') buildGasolinera(sc,R);
+    if(sc.id==='galera') buildGalera(sc,R);
+    if(sc.id==='ducto_gn') buildDucto(sc,R,'gn');
+    if(sc.id==='ducto_crudo') buildDucto(sc,R,'cr');
+    if(sc.id==='ducto_gasolina') buildDucto(sc,R,'ga');
+    buildInfo(sc,R);
+    [...sc.hazards,...sc.decoys].forEach(h=>{
+      const o=OBJ[h.id]; if(!o) return;
+      o.addEventListener('click',ev=>{ ev.stopPropagation(); onObjectClick(sc,h); });
+    });
+  });
+}
+
+// ---------- Panel 3D (funciona en PC, celular y visor) ----------
+function placePanel(){
+  const cam=$('#cam').object3D, pan=$('#panel').object3D;
+  const cp=new THREE.Vector3(); cam.getWorldPosition(cp);
+  const dir=new THREE.Vector3(); cam.getWorldDirection(dir); dir.y=0;
+  if(dir.lengthSq()<1e-4) dir.set(0,0,1); dir.normalize();
+  pan.position.copy(cp).addScaledVector(dir,-2.9); pan.position.y=cp.y-0.1;
+  pan.lookAt(cp.x, pan.position.y, cp.z);
+}
+function showPanel({title,body='',options=[],tone='#1d2a36'}){
+  const p=$('#panel'); while(p.firstChild) p.removeChild(p.firstChild);
+  const W=2.9,H=2.6;
+  el('a-plane',{width:W,height:H,color:tone,material:'transparent:true;opacity:0.96;shader:flat'},p);
+  el('a-plane',{position:P(0,H/2-0.03,0.001),width:W,height:0.06,color:'#f5b400',material:'shader:flat'},p);
+  el('a-text',{value:T(title),position:P(0,1.08,0.01),align:'center',color:'#f5b400',width:3.2,wrapCount:34},p);
+  el('a-text',{value:T(body),position:P(0,0.88,0.01),align:'center',anchor:'center',baseline:'top',color:'#ffffff',width:2.7,wrapCount:50},p);
+  const two=options.length>4, cols=two?2:1, bw=two?1.35:2.6, bh=0.26;
+  options.forEach((o,i)=>{
+    const col=two?(i%2):0, row=two?Math.floor(i/2):i;
+    const x=two?(col===0?-0.7:0.7):0, y=-0.18-row*0.3;
+    const b=el('a-entity',{position:P(x,y,0.02),class:'clickable'},p);
+    el('a-plane',{width:bw,height:bh,color:o.color||'#2f4558',material:'shader:flat',class:'clickable'},b);
+    el('a-text',{value:T(o.label),align:'center',color:'#ffffff',width:two?1.6:2.5,wrapCount:two?30:56,position:P(0,0,0.01)},b);
+    b.addEventListener('mouseenter',()=>b.firstChild.setAttribute('color','#3f6a8a'));
+    b.addEventListener('mouseleave',()=>b.firstChild.setAttribute('color',o.color||'#2f4558'));
+    b.addEventListener('click',ev=>{ ev.stopPropagation(); setTimeout(o.onClick,10); });
+  });
+  placePanel(); p.setAttribute('visible',true);
+  p.object3D.traverse(()=>{});
+}
+function hidePanel(){ const p=$('#panel'); p.setAttribute('visible',false); while(p.firstChild) p.removeChild(p.firstChild); }
+
+// ---------- Estado y modos ----------
+const STATE={sc:null,mode:null,found:new Set(),errors:0,qi:0,ok:0,fx:[],ring:null,arrow:null};
+const RESULTS={};
+function hud(){
+  $('#hudState').textContent = STATE.sc? `${STATE.sc.name} · ${({recorrido:'Recorrido libre',peligros:'Identificar peligros',inspeccion:'Inspección',emergencia:'Respuesta a emergencia'})[STATE.mode]||'Elige modo'}` : 'Menú principal';
+  let s='';
+  if(STATE.mode==='peligros') s=`Peligros: ${STATE.found.size}/${STATE.sc.hazards.length} · Errores: ${STATE.errors}`;
+  if(STATE.mode==='inspeccion'||STATE.mode==='emergencia') s=`Aciertos: ${STATE.ok}`;
+  $('#hudScore').textContent=s;
+}
+function teleport(sc){
+  const rig=$('#rig').object3D, cam=$('#cam');
+  const [cx,cy,cz]=sc?sc.center:[0,0,0]; const v=sc?sc.view:[0,0,22];
+  rig.position.set(cx+v[0],0,cz+v[2]); rig.rotation.set(0,0,0); solSobre(sc?sc.center:null);
+  cam.object3D.position.set(0,1.6,0);
+  const lc=cam.components['look-controls']; if(lc){ lc.yawObject.rotation.y=0; lc.pitchObject.rotation.x=0; }
+}
+function clearFX(){
+  STATE.fx.forEach(e=>e.parentNode&&e.parentNode.removeChild(e)); STATE.fx=[];
+  if(STATE.ring){ STATE.ring.parentNode.removeChild(STATE.ring); STATE.ring=null; }
+  if(STATE.arrow){ STATE.arrow.parentNode.removeChild(STATE.arrow); STATE.arrow=null; }
+  document.querySelectorAll('.foundmark').forEach(e=>e.parentNode.removeChild(e));
+  Object.values(INFO).flat().forEach(g=>g.setAttribute('visible',false));
+}
+function mainMenu(){
+  clearFX(); STATE.sc=null; STATE.mode=null; hud();
+  showPanel({title:'Zona de Simulacion de Hidrocarburos',body:'Elige un escenario. Todos los nombres son genericos. Contenido basado en la GRE 2024 y normas oficiales mexicanas (ver Fuentes).',
+    options:[...SC.map(sc=>({label:sc.name,onClick:()=>openScenario(sc)})),
+      {label:'Resultados',onClick:showResults,color:'#3b5a2f'},{label:'Fuentes',onClick:refsPanel,color:'#5a4a2f'}]});
+}
+function openScenario(sc){
+  clearFX(); STATE.sc=sc; STATE.mode=null; teleport(sc); hud();
+  setTimeout(()=>modeMenu(sc),60);
+}
+function modeMenu(sc){
+  clearFX(); STATE.mode=null; hud();
+  showPanel({title:sc.name,body:sc.material+'\n\nElige que quieres realizar:',options:[
+    {label:'Recorrido libre (fichas informativas)',onClick:()=>startMode('recorrido')},
+    {label:'Identificar peligros',onClick:()=>startMode('peligros')},
+    {label:'Inspeccion con lista de verificacion',onClick:()=>startMode('inspeccion')},
+    {label:'Respuesta a emergencia',onClick:()=>startMode('emergencia')},
+    {label:'Volver al menu principal',onClick:()=>{teleport(null);mainMenu();},color:'#4a3b3b'}]});
+}
+function startMode(m){
+  const sc=STATE.sc; clearFX(); STATE.mode=m; STATE.found=new Set(); STATE.errors=0; STATE.qi=0; STATE.ok=0; hud();
+  if(m==='recorrido'){
+    INFO[sc.id].forEach(g=>g.setAttribute('visible',true));
+    showPanel({title:'Recorrido libre',body:'Toca o apunta a las esferas azules (i) para ver cada ficha. Muevete con WASD (PC), los botones de flechas (celular) o el joystick izquierdo (visor).',
+      options:[{label:'Comenzar',onClick:hidePanel},{label:'Terminar recorrido',onClick:()=>modeMenu(sc),color:'#4a3b3b'}]});
+  }
+  if(m==='peligros'){
+    showPanel({title:'Identificar peligros',body:`Encuentra los ${sc.hazards.length} peligros del escenario y tocalos. Cuidado: tambien hay elementos que NO son peligros; seleccionarlos cuenta como error.`,
+      options:[{label:'Comenzar',onClick:hidePanel},{label:'Volver',onClick:()=>modeMenu(sc),color:'#4a3b3b'}]});
+  }
+  if(m==='inspeccion') nextInspect();
+  if(m==='emergencia'){
+    startFX(sc);
+    showPanel({title:'Respuesta a emergencia',body:sc.emergency.intro,tone:'#3a1d1d',options:[{label:'Iniciar',onClick:nextEmergency}]});
+  }
+}
+function showInfo(sc,i){
+  const inf=sc.info[i], r=REFS.find(x=>x.k===inf.ref);
+  showPanel({title:inf.title,body:inf.text+'\n\nFuente: '+r.t.split(',')[0].split(' - ')[0],options:[{label:'Cerrar',onClick:hidePanel},{label:'Terminar recorrido',onClick:()=>modeMenu(sc),color:'#4a3b3b'}]});
+}
+function markFound(obj,color){
+  const m=el('a-ring',{class:'foundmark',rotation:'-90 0 0',position:P(0,2.4,0),radiusInner:0.35,radiusOuter:0.5,color,material:'shader:flat;side:double',
+    animation:'property:rotation;to:-90 360 0;loop:true;dur:3000;easing:linear'},obj);
+  return m;
+}
+function onObjectClick(sc,h){
+  if(STATE.sc!==sc||STATE.mode!=='peligros') return;
+  const isHaz=sc.hazards.includes(h), r=REFS.find(x=>x.k===h.ref);
+  if(isHaz){
+    if(!STATE.found.has(h.id)){ STATE.found.add(h.id); markFound(OBJ[h.id],'#2fbf71'); }
+    hud();
+    const done=STATE.found.size===sc.hazards.length;
+    showPanel({title:'Peligro identificado: '+h.title,body:h.text+'\n\nFuente: '+shortRef(r),tone:'#1d3a2a',
+      options: done?[{label:'Ver resultado',onClick:finishPeligros}]:[{label:'Seguir buscando',onClick:hidePanel},{label:'Terminar',onClick:finishPeligros,color:'#4a3b3b'}]});
+  } else {
+    STATE.errors++; hud();
+    showPanel({title:'No es un peligro: '+h.title,body:h.text+'\n\nFuente: '+shortRef(r),tone:'#3a321d',options:[{label:'Seguir buscando',onClick:hidePanel}]});
+  }
+}
+function finishPeligros(){
+  const sc=STATE.sc, n=sc.hazards.length, f=STATE.found.size;
+  const missing=sc.hazards.filter(h=>!STATE.found.has(h.id)).map(h=>'- '+h.title).join('\n');
+  saveResult(sc,'Identificar peligros',`${f}/${n} peligros, ${STATE.errors} errores`);
+  showPanel({title:'Resultado: identificar peligros',body:`Peligros encontrados: ${f} de ${n}\nSelecciones erroneas: ${STATE.errors}`+(missing?'\n\nNo identificados:\n'+missing:''),
+    options:[{label:'Repetir',onClick:()=>startMode('peligros')},{label:'Otro modo',onClick:()=>modeMenu(sc)},{label:'Menu principal',onClick:()=>{teleport(null);mainMenu();},color:'#4a3b3b'}]});
+}
+function pointAt(id){
+  if(STATE.arrow){ STATE.arrow.parentNode.removeChild(STATE.arrow); STATE.arrow=null; }
+  const o=OBJ[id]; if(!o) return;
+  STATE.arrow=el('a-cone',{position:P(0,3,0),rotation:'180 0 0',radiusBottom:0.25,radiusTop:0,height:0.6,color:'#f5b400',material:'shader:flat',
+    animation:'property:position;to:0 2.6 0;dir:alternate;loop:true;dur:600'},o);
+}
+function nextInspect(){
+  const sc=STATE.sc, list=sc.inspect;
+  if(STATE.qi>=list.length){
+    saveResult(sc,'Inspeccion',`${STATE.ok}/${list.length} correctas`);
+    if(STATE.arrow){ STATE.arrow.parentNode.removeChild(STATE.arrow); STATE.arrow=null; }
+    return showPanel({title:'Resultado: inspeccion',body:`Respuestas correctas: ${STATE.ok} de ${list.length}`,
+      options:[{label:'Repetir',onClick:()=>startMode('inspeccion')},{label:'Otro modo',onClick:()=>modeMenu(sc)},{label:'Menu principal',onClick:()=>{teleport(null);mainMenu();},color:'#4a3b3b'}]});
+  }
+  const it=list[STATE.qi]; pointAt(it.target);
+  const answer=v=>{ const good=(v===it.a); if(good) STATE.ok++; hud(); STATE.qi++;
+    const r=REFS.find(x=>x.k===it.ref);
+    showPanel({title:good?'Correcto':'Incorrecto',body:it.exp+'\n\nFuente: '+shortRef(r),tone:good?'#1d3a2a':'#3a1d1d',options:[{label:'Siguiente',onClick:nextInspect}]}); };
+  showPanel({title:`Inspeccion ${STATE.qi+1}/${list.length}`,body:it.q+'\n\n(Observa el elemento senalado con la flecha amarilla.)',
+    options:[{label:'Si cumple',onClick:()=>answer(true),color:'#2e5a3e'},{label:'No cumple',onClick:()=>answer(false),color:'#5a2e2e'},{label:'Ocultar panel para observar',onClick:()=>{hidePanel();}}]});
+}
+function startFX(sc){
+  const R=ROOT[sc.id], [x,y,z]=sc.leak, fx=sc.emergency.fx;
+  if(fx==='spill'||fx==='crude'){
+    const c=el('a-circle',{rotation:'-90 0 0',position:P(x,0.04,z),radius:0.5,color:fx==='crude'?'#0d0d0d':'#5b4a2a',material:'transparent:true;opacity:0.9;metalness:0.5;roughness:0.2',
+      animation:'property:radius;to:3.2;dur:8000;easing:easeOutQuad'},R); STATE.fx.push(c);
+  }
+  if(fx==='lpfire'){ STATE.fx.push(flame(R,P(x,1.25,z),0.7)); }
+  if(fx==='gnfire'){ STATE.fx.push(flame(R,P(x,y+0.3,z),1.6)); }
+  setTimeout(sombras,100);
+}
+function showRing(sc,r){
+  const R=ROOT[sc.id], [x,,z]=sc.leak;
+  if(STATE.ring) STATE.ring.parentNode.removeChild(STATE.ring);
+  const g=el('a-entity',{position:P(x,0.06,z)},R);
+  el('a-ring',{rotation:'-90 0 0',radiusInner:r-0.6,radiusOuter:r,color:'#e5484d',material:'shader:flat;side:double',segmentsTheta:96},g);
+  for(let a=0;a<360;a+=45){ const rad=a*Math.PI/180; const s=el('a-entity',{position:P(Math.cos(rad)*r,0,Math.sin(rad)*r),rotation:P(0,-a+90,0)},g);
+    cyl(s,P(0,0.6,0),0.05,1.2,'#e5484d'); box(s,P(0,1.3,0),1.6,0.35,0.04,'#ffffff'); txt(s,P(0,1.3,0.03),`AISLAMIENTO ${r} m`,{color:'#c62828',width:2.4}); }
+  STATE.ring=g;
+}
+function nextEmergency(){
+  const sc=STATE.sc, st=sc.emergency.steps;
+  if(STATE.qi>=st.length){
+    saveResult(sc,'Respuesta a emergencia',`${STATE.ok}/${st.length} decisiones correctas`);
+    return showPanel({title:'Resultado: respuesta a emergencia',body:`Decisiones correctas: ${STATE.ok} de ${st.length}\n\nRecuerda: la GRE orienta la fase inicial de incidentes de transporte. En una instalacion rige su Plan de Respuesta a Emergencias.`,
+      options:[{label:'Repetir',onClick:()=>startMode('emergencia')},{label:'Otro modo',onClick:()=>modeMenu(sc)},{label:'Menu principal',onClick:()=>{teleport(null);mainMenu();},color:'#4a3b3b'}]});
+  }
+  const s=st[STATE.qi];
+  // barajar opciones conservando la correcta
+  const idx=s.o.map((_,i)=>i).sort(()=>Math.random()-0.5);
+  showPanel({title:`Decision ${STATE.qi+1}/${st.length}`,body:s.q,tone:'#3a1d1d',options:idx.map(i=>({label:s.o[i],onClick:()=>{
+    const good=i===s.c; if(good) STATE.ok++; hud(); STATE.qi++;
+    if(s.ring) showRing(sc,s.ring);
+    const r=REFS.find(x=>x.k===s.ref);
+    showPanel({title:good?'Correcto':'Incorrecto',body:(good?'':'Respuesta correcta: '+s.o[s.c]+'\n\n')+s.exp+'\n\nFuente: '+shortRef(r),tone:good?'#1d3a2a':'#3a1d1d',options:[{label:'Siguiente',onClick:nextEmergency}]});
+  }}))});
+}
+function shortRef(r){ return r? r.t.split(' - ')[0].split(',')[0] : ''; }
+function saveResult(sc,m,v){ RESULTS[sc.name]=RESULTS[sc.name]||{}; RESULTS[sc.name][m]=v; }
+function showResults(){
+  const lines=Object.keys(RESULTS).map(k=>k+':\n'+Object.entries(RESULTS[k]).map(([m,v])=>'  '+m+': '+v).join('\n')).join('\n');
+  showPanel({title:'Resultados de la sesion',body:lines||'Aun no hay resultados en esta sesion.',options:[{label:'Volver',onClick:mainMenu}]});
+}
+function refsPanel(){
+  showPanel({title:'Fuentes',body:REFS.slice(0,6).map(r=>'- '+shortRef(r)).join('\n')+'\n'+REFS.slice(6).map(r=>'- '+shortRef(r)).join('\n')+'\n\nEnlaces completos: boton Fuentes de la barra superior.',
+    options:[{label:'Volver',onClick:mainMenu}]});
+}
+
+// ---------- HUD DOM ----------
+function overlay(html){ $('#ovBox').innerHTML=html+'<p><button id="ovClose">Cerrar</button></p>'; $('#ov').style.display='block'; $('#ovClose').onclick=()=>$('#ov').style.display='none'; }
+$('#bCampus').onclick=()=>{ location.href='../../../index.html?zona=practicas'; };
+$('#bMenu').onclick=()=>{ if(STATE.sc) modeMenu(STATE.sc); else mainMenu(); };
+$('#bPanel').onclick=()=>{ const p=$('#panel'); if(p.children.length){ placePanel(); p.setAttribute('visible',true);} else (STATE.sc?modeMenu(STATE.sc):mainMenu()); };
+$('#bRefs').onclick=()=>overlay('<h2>Fuentes y bibliografía</h2><ol>'+REFS.map(r=>`<li>${r.t} <a href="${r.u}" target="_blank" rel="noopener">Ver fuente</a></li>`).join('')+'</ol><p><b>Aviso:</b> simulador de capacitación. La GRE está diseñada para la fase inicial de incidentes de transporte, no para derrames en instalaciones; en una instalación rige su Plan de Respuesta a Emergencias y la normativa aplicable vigente. Verifica en el DOF el estatus de las normas antes de usarlas como requisito.</p>');
+$('#bHelp').onclick=()=>overlay(`<h2>Cómo usar</h2><div id="help"><ul>
+<li><b>PC:</b> arrastra con el mouse para mirar, WASD o flechas para caminar, clic para seleccionar.</li>
+<li><b>Celular/tablet:</b> arrastra para mirar, botones de flechas para caminar, toca para seleccionar.</li>
+<li><b>Visor (Meta Quest):</b> botón VR de la esquina inferior derecha; joystick izquierdo para caminar, derecho para girar, gatillo para seleccionar con el láser.</li>
+<li><b>Traer panel</b> coloca el panel frente a ti si lo perdiste de vista.</li>
+<li>Cada escenario tiene 4 modos: recorrido libre, identificar peligros, inspección y respuesta a emergencia.</li></ul></div>`);
+
+// Pad táctil
+const PAD={f:0,b:0,l:0,r:0};
+if('ontouchstart' in window || navigator.maxTouchPoints>0){ $('#pad').style.display='grid'; }
+document.querySelectorAll('#pad button[data-m]').forEach(b=>{
+  const m=b.dataset.m; const on=e=>{e.preventDefault();PAD[m]=1;}, off=e=>{e.preventDefault();PAD[m]=0;};
+  b.addEventListener('touchstart',on,{passive:false}); b.addEventListener('touchend',off,{passive:false}); b.addEventListener('touchcancel',off,{passive:false});
+  b.addEventListener('mousedown',on); b.addEventListener('mouseup',off); b.addEventListener('mouseleave',off);
+});
+AFRAME.registerComponent('pad-move',{tick(t,dt){ if(!dt) return; const f=PAD.f-PAD.b, s=PAD.r-PAD.l; if(f||s) moveRig(f,s,dt); }});
+
+// ---------- Inicio ----------
+const scene=document.querySelector('a-scene');
+async function boot(){ await probarTex(); buildWorld(); texturizar(); scene.setAttribute('pad-move','');
+  if(window.Realismo){ scene.object3D.background=Realismo.cielo(THREE,'#5d9bd1','#d7e9f3','#d7e9f3'); }
+  setTimeout(sombras,300); setTimeout(sombras,1500);
+  const pedido=new URLSearchParams(location.search).get('e'), sc=SC.find(x=>x.id===pedido);
+  if(sc){ setTimeout(()=>openScenario(sc),200); } else { teleport(null); setTimeout(mainMenu,200); } }
+// Acceso con código (mismo sistema que el resto del campus)
+(function(){ const s=document.createElement('script'); s.src='../../../motor/acceso.js';
+  s.onload=()=>{ if(window.Acceso){ Acceso.sesionUnica&&Acceso.sesionUnica(); Acceso.proteger('🛢️ Prácticas: hidrocarburos','../../../index.html?zona=practicas'); } };
+  document.head.appendChild(s); })();
+if(scene.hasLoaded) boot(); else scene.addEventListener('loaded',boot);
+</script>
+</body>
+</html>
