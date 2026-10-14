@@ -42,6 +42,42 @@ table{width:100%;border-collapse:collapse;font-size:.93rem} td,th{padding:6px;bo
 .cron{font-size:2.2rem;font-weight:800;color:var(--navy);text-align:center}
 @media print{#barra,#panel,canvas,#toast{display:none!important}.modal{position:static;background:none}.tarjeta{max-height:none}}`;
 
+
+// ---------------------------------------------------------------- caras (12/10/2026)
+// Todas las figuras humanas llevan cara (ojos, cejas, nariz, boca y orejas) para distinguir el frente de la espalda.
+//   MotorSim.cara(THREE, cabeza, { dir: [0,0,1], arriba: [0,1,0] })   dir/arriba en el espacio local de la cabeza.
+// Además, crearMundo() agrega cara sola a toda esfera con color de piel (r 0.08-0.2 m) que no la tenga; el frente es el +z
+// local de la figura. Para personas acostadas se llama cara() a mano con su dirección (p. ej. dir:[0,1,0], arriba:[-1,0,0]).
+function cara(THREE, cabeza, o = {}) {
+  if (!cabeza || cabeza.userData.conCara || cabeza.userData.sinCara) return; cabeza.userData.conCara = true;
+  const p = cabeza.geometry && cabeza.geometry.parameters || {}, r = p.radius || 0.14;
+  const z = new THREE.Vector3(...(o.dir || [0, 0, 1])).normalize(), y0 = new THREE.Vector3(...(o.arriba || [0, 1, 0]));
+  const x = new THREE.Vector3().crossVectors(y0, z).normalize(), y = new THREE.Vector3().crossVectors(z, x).normalize();
+  const f = new THREE.Group(); f.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z)); cabeza.add(f);
+  const piel = cabeza.material && cabeza.material.color ? cabeza.material.color.clone() : new THREE.Color(0xE0B48F);
+  const mat = c => new THREE.MeshStandardMaterial({ color: c, roughness: .6 });
+  const oscuro = mat(0x1B2633), blanco = mat(0xFFFFFF), pielO = mat(piel.clone().multiplyScalar(0.86)), labio = mat(0x9A4B3C);
+  const esf = (rad, m, px, py, pz) => { const e = new THREE.Mesh(new THREE.SphereGeometry(rad, 12, 10), m); e.position.set(px, py, pz); e.userData.sinCara = true; f.add(e); return e; };
+  for (const s of [-1, 1]) {
+    esf(r * 0.17, blanco, s * 0.36 * r, 0.12 * r, 0.83 * r).scale.z = 0.6;                       // ojo
+    esf(r * 0.095, oscuro, s * 0.36 * r, 0.12 * r, 0.95 * r);                                     // pupila
+    const ceja = new THREE.Mesh(new THREE.BoxGeometry(0.3 * r, 0.06 * r, 0.06 * r), oscuro); ceja.position.set(s * 0.36 * r, 0.38 * r, 0.9 * r); ceja.rotation.z = -s * 0.12; f.add(ceja);
+    esf(r * 0.2, pielO, s * 0.98 * r, 0.02 * r, -0.05 * r).scale.set(0.5, 1, 0.8);               // oreja
+  }
+  esf(r * 0.14, pielO, 0, -0.1 * r, 1.0 * r).scale.set(0.85, 1.1, 1);                            // nariz
+  const boca = new THREE.Mesh(new THREE.TorusGeometry(0.24 * r, 0.04 * r, 6, 16, Math.PI), labio); boca.position.set(0, -0.36 * r, 0.9 * r); boca.rotation.z = Math.PI; f.add(boca);
+  return f;
+}
+function esPiel(THREE, c) { const h = {}; c.getHSL(h, THREE.SRGBColorSpace); return h.h > 0.02 && h.h < 0.12 && h.s > 0.18 && h.s < 0.8 && h.l > 0.28 && h.l < 0.86; }
+function autoCaras(THREE, raiz) {
+  let n = 0; raiz.updateMatrixWorld(true);
+  raiz.traverse(m => { const p = m.geometry && m.geometry.parameters;
+    if (!m.isMesh || m.geometry.type !== 'SphereGeometry' || !p || p.radius < 0.075 || p.radius > 0.2 || m.userData.conCara || m.userData.sinCara) return;
+    if ((p.phiLength || 6.3) < 6.2 || (p.thetaLength || 3.2) < 3.1 || !m.material || !m.material.color || !esPiel(THREE, m.material.color)) return;
+    if (m.userData.tipo && !m.parent) return; cara(THREE, m); n++; });
+  return n;
+}
+
 function crearMundo(THREE, OrbitControls, cfg) {
   // cfg: {titulo, icono, clave, criterio:{pct, sinCriticos}, fuentesInicio, vistas:[[pos,target],...], fondo}
   document.head.insertAdjacentHTML('beforeend', `<style>${CSS}</style>`);
@@ -137,13 +173,63 @@ function crearMundo(THREE, OrbitControls, cfg) {
   renderer.domElement.addEventListener('pointerup', e => {
     if (!abajo || Math.hypot(e.clientX - abajo[0], e.clientY - abajo[1]) > 10) return;
     ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ptr, camera);
-    const hit = ray.intersectObjects(scene.children, true).find(h => h.object.userData.tipo && visible(h.object));
-    if (hit) tocar(hit.object.userData.ref || hit.object);
+    const hits = ray.intersectObjects(scene.children, true), hit = hits.find(h => h.object.userData.tipo && visible(h.object));
+    if (hit) { const o = hit.object.userData.ref || hit.object; if (REC.activo && REC.acercar(o)) return; tocar(o); }
+    else if (REC.activo) REC.piso(ray);
   });
   const visible = o => { for (let p = o; p; p = p.parent) if (p.visible === false) return false; return true; };
 
   // ---------------------------------------------------------------- estado, pasos y puntaje
   let S = { nombre: '', caso: '', pts: 0, errores: [], criticos: 0, t0: 0 }, paso = null, nPaso = 0, pasos = [];
+  // ---------------------------------------------------------------- recorrido a pie (12/10/2026)
+  // api.recorrido({ piso, limites:{x0,x1,z0,z1}, obstaculos:[objetos], muros:[mallas], inicio:[x,z], ry, camara:[dy,dz] })
+  // Avatar del campus que camina al tocar el piso (ruta A* que rodea muebles, personas y muros: no pasa sobre ellos).
+  // Al tocar un objeto lejano, primero camina hasta él y luego lo inspecciona. Los muros entre la cámara y el avatar
+  // se vuelven transparentes para que siempre se vea lo que hay dentro de las salas.
+  const REC = { activo: false };
+  const recorrido = async (o = {}) => {
+    const Nav = (await import(new URL('navegacion.js', BASE_MOTOR).href)).Navegacion;
+    if (!window.Avatar) await new Promise(ok => { const sc = document.createElement('script'); sc.src = new URL('avatar.js', BASE_MOTOR).href; sc.onload = ok; sc.onerror = ok; document.head.appendChild(sc); });
+    const L = o.limites, nav = new Nav({ x0: L.x0, z0: L.z0, x1: L.x1, z1: L.z1, celda: 0.25 }), V = THREE.Vector3;
+    const b = new THREE.Box3(), c = new V(), t = new V(), margen = o.margen ?? 0.32;
+    const bloquear = ob => { ob.updateMatrixWorld(true); b.setFromObject(ob); if (b.isEmpty() || b.min.y > 1.7) return; b.getCenter(c); b.getSize(t);
+      if (t.x * t.z > 40) return;   // pisos y tapetes no estorban
+      nav.bloquearRect(c.x, c.z, t.x + margen * 2, t.z + margen * 2, 0); };
+    (o.obstaculos || []).forEach(bloquear); (o.muros || []).forEach(m => { m.updateMatrixWorld(true); b.setFromObject(m); b.getCenter(c); b.getSize(t); nav.bloquearRect(c.x, c.z, t.x + 0.3, t.z + 0.3, 0); });
+    (o.libres || []).forEach(([x, z, w, d]) => nav.liberarRect(x, z, w, d, 0));
+    let perfil = {}; try { perfil = JSON.parse(localStorage.getItem('campus_perfil') || '{}'); } catch (e) { }
+    const av = window.Avatar ? Avatar.construir(THREE, perfil) : null; const yo = av ? av.grupo : new THREE.Group(); scene.add(yo);
+    yo.position.set(...(o.inicio ? [o.inicio[0], 0, o.inicio[1]] : [0, 0, 0])); yo.rotation.y = o.ry || Math.PI; yo.traverse(m => { m.userData.sinCara = true; });
+    const pisos = [].concat(o.piso || []); let ruta = [], alLlegar = null, fase = 0, seguir = true;
+    const off = new V(...(o.camara ? [0, o.camara[0], o.camara[1]] : [0, 3.6, 6.8]));   // cámara baja y atrás: se ve hacia el frente, no solo el piso
+    camera.position.copy(yo.position).add(new V(0, 1.2, 0)).add(off); controls.target.copy(yo.position).add(new V(0, 1.2, 0));
+    const ir = (x, z, cb) => { const r = nav.ruta({ x: yo.position.x, z: yo.position.z }, { x, z }); if (!r.length) { toast('info', 'No hay paso libre hasta ahí.'); return false; }
+      ruta = r.map(p => new V(p.x, 0, p.z)); alLlegar = cb || null; seguir = true; marca.position.set(r[r.length - 1].x, 0.02, r[r.length - 1].z); marca.visible = true; return true; };
+    const marca = new THREE.Mesh(new THREE.RingGeometry(0.16, 0.24, 24), new THREE.MeshBasicMaterial({ color: 0x3FA7C6, side: THREE.DoubleSide })); marca.rotation.x = -Math.PI / 2; marca.visible = false; scene.add(marca);
+    REC.piso = ray => { const h = ray.intersectObjects(pisos, false)[0]; if (h) ir(h.point.x, h.point.z); };
+    REC.acercar = obj => { obj.updateMatrixWorld(true); b.setFromObject(obj); if (b.isEmpty()) return false; b.getCenter(c); b.getSize(t);
+      const r = Math.max(t.x, t.z) / 2, d = Math.hypot(c.x - yo.position.x, c.z - yo.position.z); if (d < r + (o.alcance || 1.6)) return false;
+      const dir = new V(yo.position.x - c.x, 0, yo.position.z - c.z).normalize(), dest = c.clone().addScaledVector(dir, r + 0.8);
+      return ir(dest.x, dest.z, () => { yo.rotation.y = Math.atan2(c.x - yo.position.x, c.z - yo.position.z); tocar(obj); }); };
+    // muros transparentes entre la cámara y el avatar
+    const muros = (o.muros || []).filter(m => m.isMesh), ray2 = new THREE.Raycaster(), cab = new V();
+    muros.forEach(m => { m.material = m.material.clone(); m.material.transparent = true; m.userData.op = 1; });
+    controls.addEventListener('start', () => { seguir = false; });
+    let tPrev = performance.now();
+    cuadro.push(() => { const ahora = performance.now(), dt = Math.min(0.05, (ahora - tPrev) / 1000); tPrev = ahora;
+      if (ruta.length) { const d = ruta[0].clone().sub(yo.position); d.y = 0; const Ld = d.length();
+        if (Ld < 0.06) { ruta.shift(); if (!ruta.length) { marca.visible = false; const f = alLlegar; alLlegar = null; f && f(); } }
+        else { d.normalize(); const paso = Math.min(Ld, (o.vel || 2.4) * dt), antes = yo.position.clone(); yo.position.addScaledVector(d, paso); yo.rotation.y = Math.atan2(d.x, d.z); fase += dt * 10; av && av.animar(fase, true);
+          const mov = yo.position.clone().sub(antes); camera.position.add(mov); controls.target.add(mov); } }
+      else av && av.animar(0, false);
+      if (seguir) { const obj = yo.position.clone().add(new V(0, 1.2, 0)); controls.target.lerp(obj, Math.min(1, dt * 3)); }
+      if (muros.length) { const tapan = new Set();   // rayos de la cámara al avatar y a su alrededor (lo que hay junto a él también se ve)
+        for (const [dx, dz] of [[0, 0], [1.8, 0], [-1.8, 0], [0, -1.8], [0, 1.8]]) { cab.copy(yo.position).add(new V(dx, 1.0, dz)); const dv = cab.clone().sub(camera.position), Ld = dv.length();
+          ray2.set(camera.position, dv.normalize()); ray2.far = Ld; ray2.intersectObjects(muros, false).forEach(h => tapan.add(h.object)); }
+        muros.forEach(m => { const meta = tapan.has(m) ? 0.16 : 1; m.userData.op += (meta - m.userData.op) * Math.min(1, dt * 8); m.material.opacity = m.userData.op; m.material.depthWrite = m.userData.op > 0.9; }); } });
+    REC.activo = true; REC.ir = ir; REC.yo = yo; REC.nav = nav;
+    return { yo, ir, nav, detener: () => { ruta = []; marca.visible = false; }, seguir: (v = true) => { seguir = v; } };
+  };
   function toast(tipo, txt, fuente = '', ms) { const t = $('toast'); t.className = tipo; t.innerHTML = txt + (fuente ? `<small>Fuente: ${fuente}</small>` : ''); t.style.display = 'block';
     clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', ms || (tipo === 'no' ? 5200 : 2600)); }
   function bien(txt, f) { S.pts += 10; toast('ok', '✅ ' + txt, f); marcador(); }
@@ -219,11 +305,26 @@ function crearMundo(THREE, OrbitControls, cfg) {
 
   const api = { THREE, scene, camera, controls, renderer, M, caja, cil, esfera, capsula, tocable, letrero, mover, resaltar, irVista, cuadro,
     toast, bien, mal, botones, pregunta, aviso, siguiente, inicio, qa, tocar, $, estado: () => S };
+  // Animaciones para que la escena «haga lo que dice la respuesta» (12/10/2026)
+  //   await api.animar(ms, k => {...})  k de 0 a 1 · api.globo(texto, objeto, ms) globo de diálogo · api.cara(cabeza, opc)
+  api.cara = (cab, o) => cara(THREE, cab, o); api.recorrido = recorrido;
+  api.animar = (ms, fn) => new Promise(ok => { const t0 = performance.now(); const f = () => { const k = Math.min(1, (performance.now() - t0) / ms); fn(k); if (k < 1) requestAnimationFrame(f); else ok(); }; requestAnimationFrame(f); });
+  api.esperar = ms => new Promise(ok => setTimeout(ok, ms));
+  api.globo = (texto, obj, ms = 2600, alto = 0.55) => {
+    const cv = document.createElement('canvas'), g = cv.getContext('2d'); g.font = 'bold 44px Calibri, sans-serif';
+    const w = Math.min(1000, Math.ceil(g.measureText(texto).width) + 60); cv.width = w; cv.height = 110;
+    g.fillStyle = '#ffffff'; g.strokeStyle = '#0E3A6B'; g.lineWidth = 6; g.beginPath(); g.roundRect(4, 4, w - 8, 80, 22); g.fill(); g.stroke();
+    g.beginPath(); g.moveTo(w / 2 - 16, 82); g.lineTo(w / 2, 106); g.lineTo(w / 2 + 16, 82); g.fill(); g.font = 'bold 44px Calibri, sans-serif'; g.fillStyle = '#0E3A6B'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(texto, w / 2, 45);
+    const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tx, depthTest: false })); sp.renderOrder = 10; const h = 0.32; sp.scale.set(h * w / 110, h, 1);
+    const pos = new THREE.Vector3(); (obj || scene).getWorldPosition(pos); sp.position.copy(pos).add(new THREE.Vector3(0, alto, 0)); scene.add(sp);
+    if (ms) setTimeout(() => { scene.remove(sp); tx.dispose(); }, ms); return sp; };
+  setTimeout(() => autoCaras(THREE, scene), 900); setTimeout(() => autoCaras(THREE, scene), 3500);
   // Modo inmersivo (WebXR) opcional: cfg.xr = { inicio:[x,z], piso, entorno } (ver motor/xr.js). Se puede llamar
   // también después con api.activarXR({...}) cuando el piso y el entorno ya existen.
   api.activarXR = (opc) => { api._xrPedido = true; const go = () => { api.xr = MotorXR.activar(api, opc || {}); };
     if (window.MotorXR) go(); else { const s = document.createElement('script'); s.src = new URL('xr.js', BASE_MOTOR).href; s.onload = go; document.head.appendChild(s); } };
-  if (/[?&]qa/.test(location.search)) window.__mundo = api;   // pruebas
+  if (/[?&]qa\b/.test(location.search)) window.__mundo = api;   // pruebas
   if (cfg.xr) api.activarXR(cfg.xr);
   // Sub-mundos sin configuración propia de VR (07/10/2026): se activa solo. Piso = el plano horizontal más grande (para
   // teletransportarse); la persona aparece entre la cámara inicial y el punto al que mira. cfg.xr = false lo desactiva.
@@ -234,5 +335,5 @@ function crearMundo(THREE, OrbitControls, cfg) {
   return api;
 }
 
-window.MotorSim = { crearMundo };
+window.MotorSim = { crearMundo, cara, autoCaras };
 })();

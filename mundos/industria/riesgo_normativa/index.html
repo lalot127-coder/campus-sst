@@ -22,8 +22,9 @@ const { caja, scene, letrero } = W;
 const { sala, prop, persona, situacion, encuentra, tocaYDecide, decide, intro, PALETA } = window.Riesgo;
 
 // ------------------------------------------------------------------ Metalmecánica del Centro [FICTICIO]: archivo de SST
-const { piso, entorno, z0 } = sala(W, { rotulo: 'METALMECÁNICA DEL CENTRO · ARCHIVO DE SEGURIDAD Y SALUD' });
+const { piso, entorno, z0 } = sala(W, { ancho: 16, fondo: 12, rotulo: 'METALMECÁNICA DEL CENTRO · ARCHIVO DE SEGURIDAD Y SALUD' });
 W.activarXR({ inicio: [0, 0.6], piso, entorno });
+setTimeout(() => W.recorrido({ piso, limites: { x0: -8, x1: 8, z0: -10, z1: 2.4 }, obstaculos: OBST, muros: entorno.filter(m => m.geometry && m.geometry.type === 'BoxGeometry' && m.geometry.parameters.height > 1), inicio: [0, 0.9] }), 300);
 // Archiveros con carpetas (cada carpeta es un tocable)
 const CARPETAS = [
   { tipo: 'rfsst', txt: 'RFSST', col: '#14213D', x: -3.6, y: 1.55 },
@@ -36,14 +37,15 @@ const CARPETAS = [
   { tipo: 'vacaciones', txt: 'Calendario de vacaciones', col: '#8D6E63', x: -0.6, y: 0.75 },
   { tipo: 'menu', txt: 'Menú del comedor', col: '#8D6E63', x: 1.8, y: 0.75 },
 ];
-caja(8.4, 2.2, 0.5, 0x90A4AE, -0.6, 1.1, z0 + 0.4);   // estantería
+const OBST = [caja(8.4, 2.2, 0.5, 0x90A4AE, -0.6, 1.1, z0 + 0.4)];   // estantería
 const S = {};
 CARPETAS.forEach(c => { caja(0.9, 0.6, 0.12, new THREE.Color(c.col).getHex(), c.x, c.y, z0 + 0.72);
   const l = letrero(c.txt, 0.9, 0.18, c.col); l.position.set(c.x, c.y + 0.42, z0 + 0.8); scene.add(l);
   S[c.tipo] = situacion(W, { x: c.x, z: z0 + 1.2, y: c.y, tipo: c.tipo, icono: '📁' }); });
 // La planta, a la vista por la ventana: prensa, soldadura, cisterna, tablero y tambos
-prop(W, 'prensa', -3.5, -1.0, 0.4); prop(W, 'soldadura', -3.4, 0.6, 0.8); prop(W, 'tanque', 3.6, -1.2); prop(W, 'tablero', 4.6, 0.2, -1.57); prop(W, 'tambo', 3.4, 0.7);
-persona(W, { x: 0.6, z: -1.3, ry: Math.PI, ropa: 0x37474F, casco: null });
+OBST.push(prop(W, 'prensa', -5.5, -3.0, 0.4), prop(W, 'soldadura', -5.6, -0.6, 0.8), prop(W, 'tanque', 5.6, -3.2), prop(W, 'tablero', 7.6, -1.0, -1.57), prop(W, 'tambo', 5.4, -0.4),
+  prop(W, 'anaquel', -7.5, -6.5, Math.PI / 2), prop(W, 'escritorio', 3.5, -6.8, 0), prop(W, 'silla', 3.5, -6.1, Math.PI));
+OBST.push(persona(W, { x: 0.6, z: -1.3, ry: Math.PI, ropa: 0x37474F, casco: null }).g);
 const insp = letrero('🧑‍💼 Inspector(a) STPS', 1.6, 0.22, PALETA.noche); insp.position.set(0.6, 2.0, -1.3); scene.add(insp);
 
 const N = (t, n, fb, f) => ({ tipo: t, nombre: n, fb, f, obj: S[t] });

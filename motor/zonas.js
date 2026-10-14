@@ -52,7 +52,18 @@ export const DEF_ZONAS = [
       { titulo: 'Ducto de petróleo crudo', icono: '🛢️', nom: 'NOM-009-ASEA-2017 · GRE 128', tipo: '3d', url: 'mundos/practicas/hidrocarburos/index.html?e=ducto_crudo', color: 'amarillo', senal: 'inflamable' },
       { titulo: 'Ducto de gasolina (poliducto)', icono: '⛓️', nom: 'NOM-009-ASEA-2017 · GRE 128', tipo: '3d', url: 'mundos/practicas/hidrocarburos/index.html?e=ducto_gasolina', color: 'amarillo', senal: 'inflamable' },
       { titulo: 'Análisis de riesgo de las prácticas', icono: '🔎', nom: 'GRE 2024 · matriz de riesgo', tipo: '3d', url: 'mundos/riesgo/analisis/index.html?e=practicas', puerta: 'riesgo/analisis', color: 'amarillo', senal: 'prec_general' }] },
+  { id: 'puerto', nombre: 'Puerto', icono: '⚓', color: 0x1565C0, kit: null, centro: [-132, 120], entrada: [-104, 94], caseta: [-110, 100, Math.PI * 0.75], salida: 300, piso: 'concreto',
+    desc: 'Muelle con barco, grúa pórtico, estibas de contenedores y montacargas', senales: ['casco', 'montacargas', 'prec_general'], modulos: [] },
+  { id: 'carretera', nombre: 'Carretera en construcción', icono: '🛣️', color: 0xF57C00, kit: null, centro: [-150, -84], entrada: [-122, -64], caseta: [-128, -70, Math.PI / 4], salida: 240, piso: 'grava',
+    desc: 'Tramo en reparación con carril cerrado, banderero, zanja de drenaje y maquinaria', senales: ['casco', 'prec_general', 'obstaculos'], modulos: [] },
 ];
+const NOM_PRACTICA = { mina_abierta: 'NOM-023-STPS-2012 · NOM-006-STPS-2023', mina_subterranea: 'NOM-023-STPS-2012', construccion: 'NOM-031-STPS-2011', aserradero: 'NOM-008-STPS-2013',
+  ferrocarril: 'NOM-016-STPS-2001', agricola: 'NOM-003-STPS-2023', puerto: 'NOM-006-STPS-2023', carretera: 'NOM-086-SCT2-2015 · NOM-031-STPS-2011' };
+// 12/10/2026: cada zona de trabajo tiene sus prácticas (recorrido, peligros, inspección, emergencia) y su análisis de riesgo
+// en mundos/practicas/zona/ (datos y fuentes en datos.js). Se agregan al inicio de la lista de puertas de la caseta.
+DEF_ZONAS.forEach(z => { if (!NOM_PRACTICA[z.id]) return; const u = `mundos/practicas/zona/index.html?z=${z.id}`;
+  z.modulos.unshift({ titulo: 'Práctica: recorrido, peligros, inspección y emergencia', icono: '🎯', nom: NOM_PRACTICA[z.id], tipo: '3d', url: u, puerta: 'practicas/zona', color: 'amarillo', senal: 'prec_general' },
+    { titulo: 'Análisis de riesgo de la zona', icono: '🔎', nom: 'NOM-031-STPS-2011, 8.3 · ' + NOM_PRACTICA[z.id], tipo: '3d', url: u + '&modo=analisis', puerta: 'practicas/zona', color: 'amarillo', senal: 'prec_general' }); });
 // Marcadores numerados (como en un recorrido de inspección). Textos generales; el detalle normativo se verifica al crear cada curso.
 const PINES = {
   mina_abierta: [
@@ -82,6 +93,14 @@ const PINES = {
     [3, 123.5, 'Galera de gas LP', 'Gas LP: UN1075, Guía 115 de la GRE 2024. Bodegas de gas LP en recipientes portátiles y transportables: NOM-011-ASEA-2019.'],
     [-6, 136.6, 'Ductos', 'Las tuberías con fluidos peligrosos se identifican en amarillo (NOM-026-STPS-2008). Integridad de ductos: NOM-009-ASEA-2017; gas natural por ductos terrestres: NOM-020-ASEA-2024.'],
     [12.5, 134, 'Manga de viento', 'Ante una fuga o derrame, la GRE 2024 indica mantenerse viento arriba, cuesta arriba y/o aguas arriba.'] ],
+  puerto: [
+    [-124, 112, 'Grúa pórtico', 'El operador mantiene a la vista la carga suspendida y el ayudante usa el código de señales con máxima visibilidad (NOM-006-STPS-2023, 8.4.2 e) y k)).'],
+    [-120, 126, 'Montacargas', 'Alarma automática de reversa, claxon y luz centellante ámbar en movimiento (NOM-006-STPS-2023, 8.5.1 b) y d)).'],
+    [-140, 108, 'Muelle', 'Las áreas de operación de la maquinaria se delimitan y se evita el acceso de personas ajenas (NOM-006-STPS-2023, 8.1 d)).'] ],
+  carretera: [
+    [-146, -64, 'Señal preventiva', 'Fondo naranja reflejante; se coloca antes de la zona de transición previa a la zona de trabajo (NOM-086-SCT2-2015, cap. 6).'],
+    [-144, -84, 'Canalización', 'Conos de 70 cm con franja blanca reflejante; prohibidos los mecheros de flama (NOM-086-SCT2-2015, 7.5.1 y 7.7).'],
+    [-156, -96, 'Zanja de drenaje', 'Más de 1.5 m de profundidad: barandal rígido de 90 cm; acopio de tierra a 2 m o más del borde (NOM-031-STPS-2011, 11.2 n) y r)).'] ],
   agricola: [[60, 66, 'Maquinaria agrícola', 'Tractor en operación: mantener distancia y no viajar en el implemento.'], [76, 80, 'Cultivo', 'Aplicación de agroquímicos con equipo de protección (NOM-003-STPS-2023).']],
 };
 
@@ -305,6 +324,25 @@ export function construirZonas(ctx) {
     const letrero = ctx.cartel('PRÁCTICAS · HIDROCARBUROS', 8, .7, '#ffffff', '#2E9E4F', .55); letrero.position.set(0, 2.8, .01); lt.add(letrero);
     obst(qx - 3.7, qz - 15, .3); obst(qx + 3.7, qz - 15, .3); }
 
+  // ---- PUERTO (12/10/2026): muelle, agua, barco, grúa pórtico y estibas de contenedores (geometría propia)
+  const PU = ZONAS.find(z => z.id === 'puerto'), [ux, uz] = PU.def.centro;
+  { const agua = new THREE.Mesh(new THREE.PlaneGeometry(40, 70), new THREE.MeshStandardMaterial({ color: 0x2E6E9E, roughness: .15, metalness: .2 })); agua.rotation.x = -Math.PI / 2; agua.position.set(ux - 26, -0.3, uz); escena.add(agua);
+    const muelle = caja(28, 0.6, 50, 0xB8BCC0, ux, -0.28, uz, escena, { map: concreto }); muelle.userData.piso = true; pisos.push(muelle);
+    caja(0.6, 1.4, 50, 0x8A9096, ux - 14.2, -0.3, uz); nav.bloquearRect(ux - 30, uz, 30, 70);
+    caja(6, 4, 30, 0x263238, ux - 20, 1, uz); caja(6.2, 0.8, 30.2, 0xC62828, ux - 20, -0.4, uz); caja(5, 5, 6, 0xECEFF1, ux - 20, 5.5, uz + 9);   // barco
+    [[-10, -6], [-10, 6], [-4, -6], [-4, 6]].forEach(([dx, dz]) => caja(0.6, 12, 0.6, 0xF2B705, ux + dx, 6, uz + dz)); caja(14, 1, 1.4, 0xF2B705, ux - 9, 12.3, uz - 6); caja(14, 1, 1.4, 0xF2B705, ux - 9, 12.3, uz + 6);
+    nav.bloquearRect(ux - 7, uz, 7, 13);
+    const cols = [0xC62828, 0x1565C0, 0x2E7D32, 0xF57C00]; for (let i = 0; i < 6; i++) for (let k = 0; k < 2; k++) caja(6, 2.6, 2.4, cols[(i + k) % 4], ux + 7, 1.3 + k * 2.65, uz - 10 + i * 2.6);
+    nav.bloquearRect(ux + 7, uz - 3.5, 6.5, 16); }
+  // ---- CARRETERA EN CONSTRUCCIÓN: tramo con carril cerrado, conos, zanja y señal preventiva
+  const CA = ZONAS.find(z => z.id === 'carretera'), [rx, rz] = CA.def.centro;
+  { const asf = new THREE.Mesh(new THREE.PlaneGeometry(9, 70), new THREE.MeshStandardMaterial({ color: 0x3D4247, roughness: .95 })); asf.rotation.x = -Math.PI / 2; asf.position.set(rx + 6, 0.012, rz); asf.userData.piso = true; escena.add(asf); pisos.push(asf);
+    for (let k = -34; k < 34; k += 5) caja(0.15, 0.01, 2.4, 0xF2C94C, rx + 6, 0.02, rz + k);
+    for (let k = -18; k <= 18; k += 3) { const c = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.75, 14), M(0xF57C00)); c.position.set(rx + 4.2, 0.38, rz + k); escena.add(c); }
+    caja(1.6, 0.02, 14, 0x2B2018, rx - 2, 0.015, rz - 8); nav.bloquearRect(rx - 2, rz - 8, 2.4, 15);   // zanja de drenaje
+    const s = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), M(0xF57C00)); s.rotation.set(0, Math.PI / 2, Math.PI / 4); s.position.set(rx + 1.5, 2.6, rz + 22); escena.add(s); caja(0.1, 2.4, 0.1, 0x7B858D, rx + 1.5, 1.2, rz + 22);
+    const pila = new THREE.Mesh(new THREE.ConeGeometry(2.4, 2, 16), M(0x9C7A55, { flatShading: true })); pila.position.set(rx - 6, 1, rz - 8); escena.add(pila); nav.bloquearCirculo(rx - 6, rz - 8, 2.6); }
+
   // ================= contenido con modelos (carga diferida por zona)
   const CARGA = {
     async mina_abierta(z) { const p = [];
@@ -353,7 +391,8 @@ export function construirZonas(ctx) {
       for (const n of piezas) { const o = await kit.pieza(z.kit, n); const w = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()); o.rotation.y = w.z > w.x ? Math.PI / 2 : 0; const L = Math.max(w.x, w.z); o.position.x = x - L / 2; tren.add(o); x -= L + .3; }
       tren.position.set(-150, .3, fz); z.grupo.add(tren); z.anim.push({ o: tren, tipo: 'tren', v: 7, x: -150, pausa: 0 });
       await Promise.all(p); },
-    async practicas(z) { },   // por ahora solo geometría propia; kit .glb pendiente (ver CREDITOS)
+    async practicas(z) { },
+    async puerto(z) { }, async carretera(z) { },   // solo geometría propia (12/10/2026)   // por ahora solo geometría propia; kit .glb pendiente (ver CREDITOS)
     async agricola(z) { const p = [];
       for (let i = 0; i < 9; i++) for (let k = 0; k < 6; k++) p.push(poner(z, i < 5 ? 'maiz' : 'trigo', gx - 11 + i * 3.6, gz + k * 3.2, 0));
       p.push(poner(z, 'bodega', gx + 26, gz - 2, -Math.PI / 2), poner(z, 'tambo', gx + 20, gz - 8, 0), poner(z, 'tambo', gx + 21, gz - 8.3, 0));

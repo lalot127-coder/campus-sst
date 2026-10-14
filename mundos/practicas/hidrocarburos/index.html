@@ -6,6 +6,7 @@
 <title>Simulador Hidrocarburos CERS</title>
 <script src="../../../motor/vendor/aframe-1.7.1.min.js"></script>
 <script src="../../../motor/realismo.js"></script>
+<script src="../../../motor/senales.js"></script>
 <style>
 :root{--bg:#0f1720;--fg:#f2f5f7;--acc:#f5b400;--ok:#2fbf71;--bad:#e5484d;--panel:rgba(15,23,32,.92)}
 html,body{margin:0;height:100%;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--fg)}
@@ -30,7 +31,9 @@ html,body{margin:0;height:100%;background:var(--bg);font-family:system-ui,-apple
   <span class="t">Zona de Simulación · Hidrocarburos · CERS</span>
   <span class="st" id="hudState">Menú principal</span>
   <span class="st" id="hudScore"></span>
-  <button id="bCampus">⬅ Campus</button>
+  <button id="bRegresar" title="Regresar a la caseta de Prácticas">⬅ Regresar</button>
+  <button id="bCampus" title="Ir a la plaza del campus">🏙️ Campus</button>
+  <button id="bSalir" title="Salir a la pantalla de inicio" style="background:#8e2a2a">🚪 Salir</button>
   <button id="bMenu">Menú</button>
   <button id="bPanel">Traer panel</button>
   <button id="bRefs">Fuentes</button>
@@ -49,13 +52,13 @@ html,body{margin:0;height:100%;background:var(--bg);font-family:system-ui,-apple
   <a-entity id="sun" light="type:directional;intensity:2.2;color:#fff4e0;castShadow:true;shadowMapWidth:2048;shadowMapHeight:2048;shadowCameraLeft:-24;shadowCameraRight:24;shadowCameraTop:24;shadowCameraBottom:-24;shadowCameraNear:1;shadowCameraFar:140;shadowBias:-0.0004;target:#sunTarget" position="-18 36 22"></a-entity>
 
   <a-entity id="rig" position="0 0 22">
-    <a-entity id="cam" camera position="0 1.6 0" look-controls="pointerLockEnabled:false" wasd-controls="acceleration:28"></a-entity>
+    <a-entity id="cam" camera position="0 1.6 0" look-controls="pointerLockEnabled:false"></a-entity>
     <a-entity id="hl" laser-controls="hand: left" raycaster="objects: .clickable, .clickable *; far: 60" thumb-move></a-entity>
     <a-entity id="hr" laser-controls="hand: right" raycaster="objects: .clickable, .clickable *; far: 60" snap-turn></a-entity>
   </a-entity>
 
   <a-entity id="world"></a-entity>
-  <a-entity id="panel" visible="false"></a-entity>
+  <a-entity id="panel" visible="false" encima></a-entity>
 </a-scene>
 
 <script>
@@ -173,7 +176,11 @@ function moveRig(fwd, side, dt){
   const cam=$('#cam').object3D, rig=$('#rig').object3D, sp=0.0045*dt;
   const dir=new THREE.Vector3(); cam.getWorldDirection(dir); dir.y=0; dir.normalize(); dir.negate();
   const right=new THREE.Vector3(-dir.z,0,dir.x);
-  rig.position.addScaledVector(dir, fwd*sp).addScaledVector(right, side*sp);
+  const d=new THREE.Vector3().addScaledVector(dir, fwd*sp).addScaledVector(right, side*sp);
+  if(!NAV){ rig.position.add(d); return; }
+  const p=rig.position;   // se desliza a lo largo de los obstáculos: no los atraviesa
+  if(NAV.libre(p.x+d.x,p.z+d.z)) p.add(d); else if(NAV.libre(p.x+d.x,p.z)) p.x+=d.x; else if(NAV.libre(p.x,p.z+d.z)) p.z+=d.z;
+  if(d.lengthSq()>0) RUTA.length=0;
 }
 
 // ---------- Fuentes (verificadas) ----------
@@ -898,7 +905,11 @@ function refsPanel(){
 
 // ---------- HUD DOM ----------
 function overlay(html){ $('#ovBox').innerHTML=html+'<p><button id="ovClose">Cerrar</button></p>'; $('#ov').style.display='block'; $('#ovClose').onclick=()=>$('#ov').style.display='none'; }
-$('#bCampus').onclick=()=>{ location.href='../../../index.html?zona=practicas'; };
+const VOLVER=(()=>{ try{ return new URLSearchParams(location.search).get('volver'); }catch(e){ return null; } })();
+const BASE_CAMPUS=VOLVER?VOLVER.split('?')[0]:'../../../index.html';
+$('#bRegresar').onclick=()=>{ location.href=VOLVER||'../../../index.html?mundo=practicas'; };
+$('#bCampus').onclick=()=>{ location.href=BASE_CAMPUS+'?plaza'; };
+$('#bSalir').onclick=()=>{ location.href=BASE_CAMPUS+'?salir'; };
 $('#bMenu').onclick=()=>{ if(STATE.sc) modeMenu(STATE.sc); else mainMenu(); };
 $('#bPanel').onclick=()=>{ const p=$('#panel'); if(p.children.length){ placePanel(); p.setAttribute('visible',true);} else (STATE.sc?modeMenu(STATE.sc):mainMenu()); };
 $('#bRefs').onclick=()=>overlay('<h2>Fuentes y bibliografía</h2><ol>'+REFS.map(r=>`<li>${r.t} <a href="${r.u}" target="_blank" rel="noopener">Ver fuente</a></li>`).join('')+'</ol><p><b>Aviso:</b> simulador de capacitación. La GRE está diseñada para la fase inicial de incidentes de transporte, no para derrames en instalaciones; en una instalación rige su Plan de Respuesta a Emergencias y la normativa aplicable vigente. Verifica en el DOF el estatus de las normas antes de usarlas como requisito.</p>');
@@ -919,9 +930,77 @@ document.querySelectorAll('#pad button[data-m]').forEach(b=>{
 });
 AFRAME.registerComponent('pad-move',{tick(t,dt){ if(!dt) return; const f=PAD.f-PAD.b, s=PAD.r-PAD.l; if(f||s) moveRig(f,s,dt); }});
 
+
+// ---------- Caminar con clic y respetar objetos (12/10/2026) ----------
+// Toca/clic en el piso: se calcula una ruta A* (motor/navegacion.js) que rodea dispensarios, cilindros, ductos, personas y
+// vehículos. Teclado (WASD/flechas), botones y joystick también chocan con los objetos en lugar de atravesarlos.
+let NAV=null; const RUTA=[]; let MARCA=null;
+AFRAME.registerComponent('encima',{tick(){ this.el.object3D.traverse(o=>{ if(!o.material) return; o.renderOrder=999;
+  (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ if(m.depthTest){ m.depthTest=false; m.depthWrite=false; m.transparent=true; m.needsUpdate=true; } }); }); }});
+async function construirNav(){
+  const {Navegacion}=await import('../../../motor/navegacion.js');
+  const nav=new Navegacion({x0:-90,z0:-50,x1:100,z1:50,celda:0.3});
+  const b=new THREE.Box3(), c=new THREE.Vector3(), t=new THREE.Vector3();
+  const w=$('#world').object3D; w.updateMatrixWorld(true);
+  const bloquear=o=>{ b.setFromObject(o); if(b.isEmpty()) return; b.getSize(t); b.getCenter(c);
+    if(t.y<0.15||b.min.y>1.9||t.x*t.z>150) return; nav.bloquearRect(c.x,c.z,t.x+0.45,t.z+0.45,0); };
+  const visitar=(ent)=>{ for(const ch of ent.children){ if(!ch.object3D||ch.id==='suelo'||ch.id==='camino') continue;
+    // grupos grandes (techumbres, patios) se recorren por partes; los objetos se bloquean completos
+    b.setFromObject(ch.object3D); if(!b.isEmpty()){ b.getSize(t); if(t.x*t.z>60 && ch.children.length) { visitar(ch); continue; } }
+    bloquear(ch.object3D); } };
+  visitar($('#world'));
+  NAV=nav; return nav;
+}
+function caminarA(x,z){ if(!NAV) return; const rig=$('#rig').object3D, cam=$('#cam').object3D, cp=new THREE.Vector3(); cam.getWorldPosition(cp);
+  const r=NAV.ruta({x:cp.x,z:cp.z},{x,z}); RUTA.length=0; if(!r.length){ aviso2('No hay paso libre hasta ahí'); return; }
+  const off=new THREE.Vector3(cp.x-rig.position.x,0,cp.z-rig.position.z);   // en el visor la cabeza no está en el centro del rig
+  r.forEach(p=>RUTA.push(new THREE.Vector3(p.x-off.x,0,p.z-off.z)));
+  if(!MARCA){ MARCA=el('a-ring',{rotation:'-90 0 0',radiusInner:0.18,radiusOuter:0.28,color:'#3FA7C6',material:'shader:flat;side:double'}); }
+  const u=r[r.length-1]; MARCA.setAttribute('position',P(u.x,0.03,u.z)); MARCA.setAttribute('visible',true); }
+function aviso2(t){ const h=$('#hudScore'); const o=h.textContent; h.textContent='⚠ '+t; setTimeout(()=>{ if(h.textContent==='⚠ '+t) h.textContent=o; },1800); }
+AFRAME.registerComponent('seguir-ruta',{tick(t,dt){ if(!RUTA.length||!dt) return; const rig=$('#rig').object3D, d=RUTA[0].clone().sub(rig.position); d.y=0; const L=d.length();
+  if(L<0.08){ RUTA.shift(); if(!RUTA.length&&MARCA) MARCA.setAttribute('visible',false); return; }
+  rig.position.addScaledVector(d.normalize(),Math.min(L,2.4*dt/1000)); }});
+// clic/toque en el piso (no cuenta si fue un arrastre para mirar)
+let abajo=null;
+addEventListener('pointerdown',e=>{ if(e.target.tagName==='CANVAS') abajo=[e.clientX,e.clientY]; },true);
+addEventListener('pointerup',e=>{ if(e.target.tagName!=='CANVAS'||!abajo) return; const mov=Math.hypot(e.clientX-abajo[0],e.clientY-abajo[1]); abajo=null; if(mov>8) return;
+  const cam=scene.camera; if(!cam) return; const ray=new THREE.Raycaster(), v=new THREE.Vector2(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1); ray.setFromCamera(v,cam);
+  const objs=[]; document.querySelectorAll('.clickable').forEach(n=>{ if(n.object3D&&n.object3D.visible) objs.push(n.object3D); });
+  const hitObj=ray.intersectObjects(objs,true)[0], piso=new THREE.Plane(new THREE.Vector3(0,1,0),0), p=new THREE.Vector3();
+  if(!ray.ray.intersectPlane(piso,p)) return; if(hitObj && hitObj.distance < ray.ray.origin.distanceTo(p)) return;   // tocó un objeto o el panel
+  if($('#panel').getAttribute('visible')===true||$('#panel').object3D.visible) return;
+  caminarA(p.x,p.z); },true);
+// en el visor: gatillo apuntando al piso
+['#hl','#hr'].forEach(id=>{ const c=$(id); c.addEventListener('triggerdown',()=>{ const rc=c.components.raycaster; if(!rc) return; if(rc.intersectedEls&&rc.intersectedEls.length) return;
+  const o=new THREE.Vector3(), d=new THREE.Vector3(); c.object3D.getWorldPosition(o); c.object3D.getWorldDirection(d); d.negate();
+  if(d.y>-0.05) return; const k=-o.y/d.y, x=o.x+d.x*k, z=o.z+d.z*k; caminarA(x,z); }); });
+// teclado con colisiones
+const TECLAS={KeyW:'f',ArrowUp:'f',KeyS:'b',ArrowDown:'b',KeyA:'l',ArrowLeft:'l',KeyD:'r',ArrowRight:'r'};
+addEventListener('keydown',e=>{ const m=TECLAS[e.code]; if(m&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){ PAD[m]=1; } });
+addEventListener('keyup',e=>{ const m=TECLAS[e.code]; if(m) PAD[m]=0; });
+
+// ---------- Señalética de seguridad (pictogramas de motor/senales.js: NOM-026-STPS-2008 y NOM-003-SEGOB-2011) ----------
+function senal(p,pos,id,rotY=0,alto=2.0){ if(!window.Senales) return null; const cv=Senales.canvas(id,256); cv.id='sen_'+id+'_'+Math.random().toString(36).slice(2,7); cv.style.display='none'; document.body.appendChild(cv);
+  const info=(Senales.LISTA||[]).find(x=>x.id===id)||{nombre:id};
+  const g=el('a-entity',{position:pos,rotation:P(0,rotY,0)},p);
+  cy(g,P(0,alto/2,-0.03),0.04,alto,'#7b858d',0.4,0.7);
+  el('a-plane',{position:P(0,alto+0.3,0),width:0.6,height:0.6,material:`src:#${cv.id};shader:flat;transparent:true;side:double`},g);
+  bx(g,P(0,alto+0.3,-0.02),0.64,0.64,0.02,'#5d666e',0.5,0.6);
+  txt(g,P(0,alto-0.08,0.01),info.nombre.toUpperCase(),{width:1.6,color:'#111'}); bx(g,P(0,alto-0.08,-0.005),0.95,0.16,0.01,'#ffffff',0.8);
+  return g; }
+const SENALES={
+  gasolinera:[['no_fumar',[-13,0,11],15],['no_llama',[13,0,11],-15],['inflamable',[12,0,4],-90],['extintor',[6.2,0,-3.2],0],['salida',[-14.2,0,-7],90],['reunion',[16,0,13],-30]],
+  galera:[['no_fumar',[-7.2,0,6.3],15],['no_llama',[7.2,0,6.3],-15],['inflamable',[-7.6,0,-4.6],90],['extintor',[-6.6,0,4.2],0],['reunion',[10,0,9],-30]],
+  ducto_gn:[['inflamable',[-2.5,0,-1.5],0],['no_llama',[6,0,-1.5],0],['no_paso',[-9,0,-12],60],['reunion',[-8,0,4],20]],
+  ducto_crudo:[['inflamable',[-2.5,0,-1.5],0],['no_fumar',[5.5,0,-1.5],0],['no_paso',[-9,0,-12],60],['reunion',[-8,0,4],20]],
+  ducto_gasolina:[['inflamable',[-1.2,0,-1.5],0],['no_fumar',[6,0,-1.5],0],['no_paso',[-9,0,-12],60],['reunion',[-8,0,4],20]]};
+function ponerSenales(){ Object.entries(SENALES).forEach(([id,lista])=>{ const R=ROOT[id]; if(!R) return; lista.forEach(([s,pos,ry])=>senal(R,P(...pos),s,ry)); }); }
+
 // ---------- Inicio ----------
 const scene=document.querySelector('a-scene');
-async function boot(){ await probarTex(); buildWorld(); texturizar(); scene.setAttribute('pad-move','');
+async function boot(){ await probarTex(); buildWorld(); ponerSenales(); texturizar(); scene.setAttribute('pad-move',''); scene.setAttribute('seguir-ruta','');
+  setTimeout(()=>construirNav().catch(e=>console.warn('nav',e)),1500);
   if(window.Realismo){ scene.object3D.background=Realismo.cielo(THREE,'#5d9bd1','#d7e9f3','#d7e9f3'); }
   setTimeout(sombras,300); setTimeout(sombras,1500);
   const pedido=new URLSearchParams(location.search).get('e'), sc=SC.find(x=>x.id===pedido);

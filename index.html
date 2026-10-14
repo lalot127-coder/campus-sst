@@ -481,7 +481,10 @@ function entrar(m) {
   if (m.estado === 'pronto') return avisoVR(m.titulo, `🚧 "${m.titulo}"${m.nom ? ' (' + m.nom + ')' : ''} estará disponible cuando se imparta su curso.`);
   if (m.estado === 'pendiente') return avisoVR(m.titulo, `📌 Puerta pendiente: ${m.nom || ''} · ${m.titulo}. Se habilitará cuando se cree su curso.`);
   if (!Acceso.puede(m.puerta)) { if (xr.activo()) return xr.panel('Contenido con acceso', `"${m.titulo}" se abre con un código de acceso. Solicítalo por WhatsApp al +52 241 179 4542.`); return Acceso.bloquear({ titulo: `${m.icono} ${m.titulo}`, puerta: m.puerta }); }
-  $('#fundido').style.opacity = 1; setTimeout(() => location.href = m.url, 450);
+  $('#fundido').style.opacity = 1;
+  const destino = new URL(m.url, location.href), aqui = new URL(location.href.split('#')[0]); ['salir', 'plaza', 'zona', 'mundo'].forEach(k => aqui.searchParams.delete(k)); aqui.searchParams.set('mundo', dentro || '');
+  if (!destino.searchParams.has('volver')) destino.searchParams.set('volver', aqui.href);
+  setTimeout(() => location.href = destino.href, 450);
 }
 // puertas, sillas y señales del interior
 function irAPuerta(k) { const p = I && I.puertas[k]; if (!p) return; caminarA(p.frente, () => { yo.lookAt(p.g.position.x, 0, p.g.position.z); const m = p.m;
@@ -502,7 +505,7 @@ $('#bSalirEdif').onclick = () => salirEdificio();
 $('#bAtras').onclick = atras; $('#bReiniciar').onclick = reiniciar;
 $('#bInfo').onclick = abrirInfo;
 $('#bAyuda').onclick = () => modal(`<h2>❔ Cómo moverte</h2><p>• Toca el piso para caminar (el avatar sigue los caminos y rodea obstáculos); toca un edificio para ir y <b>entrar caminando</b>; adentro, toca una puerta.<br>• Toca una <b>silla</b> para sentarte y una <b>señal</b> para pararte frente a ella.<br>• En computadora: flechas o W A S D; arrastra para girar la vista y usa la rueda para acercar.<br>
-  • <b>🗺️ Mapa</b>: viaja (teletransporte) a cualquier edificio o zona: mina a cielo abierto, mina subterránea, obra, aserradero, ferrocarril, campo agrícola y prácticas (hidrocarburos).<br>
+  • <b>🗺️ Mapa</b>: viaja (teletransporte) a cualquier edificio o zona: mina a cielo abierto, mina subterránea, obra, aserradero, ferrocarril, campo agrícola, prácticas (hidrocarburos), puerto y carretera en construcción. Cada zona tiene en su caseta la <b>práctica</b> (recorrido, peligros, inspección y emergencia) y su <b>análisis de riesgo</b>.<br>
   • <b>⬅ Atrás</b> regresa al lugar anterior (o sale del edificio). <b>↺ Inicio</b> te lleva a la entrada. <b>🚪 Salir</b> vuelve a la pantalla de inicio.<br>• <b>🥽 VR</b> (visor Meta Quest): apunta al piso y aprieta el gatillo para teletransportarte; apunta a puertas y objetos para tocarlos; joystick para girar.<br>
   • Sigue las flechas verdes del piso: llevan al <b>punto de reunión</b>.<br>• <b>🔗 Compartir</b> genera el enlace y el QR de este edificio o del campus.</p>`);
 $('#bComp').onclick = () => dentro ? compartirEdif() : Compartir.abrir(Compartir.url('index.html'), 'Campus de Simulación SST');

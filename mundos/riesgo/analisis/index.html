@@ -37,7 +37,8 @@ const CAT = window.CATALOGO_RIESGOS.edificios;
 const E = CAT[Q.get('e')] ? Q.get('e') : 'industria';
 const ED = CAT[E], Z = ED.zonas, n = Z.length, R = window.Riesgo;
 // ------------------------------------------------------------------ plano: pasillo a lo largo de x, salas al norte y al sur
-const SX = 7.6, SZ = 6, PZ = 1.3, cols = Math.max(1, Math.ceil(n / 2)), L = cols * SX, X0 = -L / 2;
+const SX = 10.5, SZ = 8.5, PZ = 1.8,   // 12/10/2026: salas más amplias (antes 7.6 × 6) para ver bien cada detalle
+      cols = Math.max(1, Math.ceil(n / 2)), L = cols * SX, X0 = -L / 2;
 const sala = i => { const lado = i % 2 === 0 ? -1 : 1, col = Math.floor(i / 2), xc = X0 + SX / 2 + col * SX; return { i, lado, xc, zc: lado * (PZ + SZ / 2), zPuerta: lado * PZ }; };
 const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: `Análisis de riesgo · ${ED.nombre}`, icono: '🔎',
   clave: 'riesgo_analisis_' + E, criterio: { pct: 80, sinCriticos: true }, fondo: 0xC9DDEA, xr: false, radioSombra: Math.max(14, L * 0.7),
@@ -59,7 +60,7 @@ const suelo = new THREE.Mesh(new THREE.PlaneGeometry(L + 1, 2 * (PZ + SZ) + 1), 
 const TINTES = [0xD9D4CA, 0xCBD6DD, 0xD6D9CC, 0xDCCFCB, 0xCFD3DC, 0xD8D2C4];
 for (let i = 0; i < cols * 2; i++) { const s = sala(i); const p = new THREE.Mesh(new THREE.PlaneGeometry(SX, SZ), M(i < n ? TINTES[i % TINTES.length] : 0xD0D0D0)); p.rotation.x = -Math.PI / 2; p.position.set(s.xc, 0.005, s.zc); scene.add(p); }
 // muros: exteriores, divisiones entre salas y muros del pasillo con una puerta por sala
-const mX = (x0, x1, z) => caja(x1 - x0, AL, 0.14, MURO, (x0 + x1) / 2, AL / 2, z), mZ = (z0, z1, x) => caja(0.14, AL, z1 - z0, MURO, x, AL / 2, (z0 + z1) / 2);
+const MUROS = [], mX = (x0, x1, z) => { const m = caja(x1 - x0, AL, 0.14, MURO, (x0 + x1) / 2, AL / 2, z); MUROS.push(m); return m; }, mZ = (z0, z1, x) => { const m = caja(0.14, AL, z1 - z0, MURO, x, AL / 2, (z0 + z1) / 2); MUROS.push(m); return m; };
 mX(X0, -X0, -(PZ + SZ)); mX(X0, -X0, PZ + SZ); mZ(-(PZ + SZ), -PZ, X0); mZ(PZ, PZ + SZ, X0); mZ(-(PZ + SZ), PZ + SZ, -X0);
 for (let c = 1; c < cols; c++) { mZ(-(PZ + SZ), -PZ, X0 + c * SX); mZ(PZ, PZ + SZ, X0 + c * SX); }
 for (const lado of [-1, 1]) { let x = X0; for (let c = 0; c < cols; c++) { const i = c * 2 + (lado < 0 ? 0 : 1), s = sala(i);
@@ -81,8 +82,9 @@ const PARED = ['anaquel', 'escalera_guardada', 'tablero', 'botiquin', 'dea', 'pu
   'regadera', 'lavamanos', 'estufa', 'cuchillos', 'contenedor_rojo', 'punzo', 'contenedor_cerrado', 'dispensador', 'soldadura', 'prensa', 'guarda', 'compresora', 'tanque', 'cilindro',
   'cilindro_encadenado', 'azotea', 'extintor', 'extintor_obstruido', 'tambo'];
 // lugares en coordenadas de la sala: u (a lo largo del muro del pasillo) y v (profundidad desde la puerta)
-const SLOT_PARED = [[-2.25, 5.4, 0], [0, 5.4, 0], [2.25, 5.4, 0], [-3.4, 2.0, 1], [3.4, 2.0, -1], [-3.4, 4.0, 1], [3.4, 4.0, -1], [-1.15, 5.4, 0], [1.15, 5.4, 0]];
-const SLOT_CENTRO = [[-1.5, 2.7, 0], [1.6, 3.0, 0], [0, 4.0, 0], [-2.2, 1.0, 0], [2.3, 1.1, 0], [-1.8, 4.3, 0], [1.9, 4.4, 0]];
+const KU = SX / 7.6, KV = SZ / 6;   // los lugares se reparten en proporción al tamaño de la sala
+const SLOT_PARED = [[-2.25, 5.4, 0], [0, 5.4, 0], [2.25, 5.4, 0], [-3.4, 2.0, 1], [3.4, 2.0, -1], [-3.4, 4.0, 1], [3.4, 4.0, -1], [-1.15, 5.4, 0], [1.15, 5.4, 0]].map(([u, v, l]) => [u * KU, v * KV, l]);
+const SLOT_CENTRO = [[-1.5, 2.7, 0], [1.6, 3.0, 0], [0, 4.0, 0], [-2.2, 1.0, 0], [2.3, 1.1, 0], [-1.8, 4.3, 0], [1.9, 4.4, 0]].map(([u, v, l]) => [u * KU, v * KV, l]);
 const KITS = {
   escritorio: [['oficina', 'escritorio'], ['oficina', 'monitor', 0, 0.76, -0.18], ['oficina', 'teclado', 0, 0.76, 0.12], ['oficina', 'silla', 0, 0, 0.75, Math.PI]],
   silla: [['oficina', 'silla']], planta: [['oficina', 'planta']], basurero: [['oficina', 'bote']], mesa: [['oficina', 'mesa', 0, 0, 0, 0, 0.7]],
@@ -101,7 +103,7 @@ const DETALLE = {
 };
 const mezclar = (lista, semilla) => { let h = 0; for (const ch of semilla) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const a = [...lista]; for (let i = a.length - 1; i > 0; i--) { h = (h * 1103515245 + 12345) >>> 0; const j = h % (i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-const S = {}, ITEMS = [];
+const S = {}, ITEMS = [], OBST = [];
 // marcador sobre el objeto (aparece al inspeccionarlo): aro + ícono + nombre (sprites: siempre de frente a la cámara)
 const sprite = (dibujar, w, h, px = 256) => { const cv = document.createElement('canvas'); cv.width = px; cv.height = Math.round(px * h / w); dibujar(cv.getContext('2d'), cv.width, cv.height);
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: false })); s.scale.set(w, h, 1); s.renderOrder = 6; return s; };
@@ -129,7 +131,7 @@ Z.forEach((zona, i) => {
   asig.forEach(([r, slot]) => { if (!slot) return; const [u, v, lateral] = slot;
     const x = s.xc + u, z = s.zPuerta + s.lado * v;
     const ry = lateral ? lateral * Math.PI / 2 : (s.lado < 0 ? 0 : Math.PI);   // de frente a la puerta / al centro de la sala
-    const g = R.prop(W, r.prop, x, z, ry); g.scale.setScalar(0.9);
+    const g = R.prop(W, r.prop, x, z, ry); g.scale.setScalar(1.12); OBST.push(g);
     const b = new THREE.Box3().setFromObject(g), tam = b.getSize(new THREE.Vector3()), cen = b.getCenter(new THREE.Vector3());
     const hit = new THREE.Mesh(new THREE.BoxGeometry(Math.max(0.7, tam.x + 0.2), Math.max(0.7, tam.y + 0.2), Math.max(0.7, tam.z + 0.2)), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
     hit.position.copy(cen); scene.add(hit); const tipo = zona.id + ':' + r.id; hit.userData = { tipo, ref: hit }; hit.userData.sinSombra = true;
@@ -143,48 +145,20 @@ Z.forEach((zona, i) => {
 const DECOR = { cafeteria: ['refri', 'gabinete'], biblioteca: ['librero_abierto', 'perchero'], hospital: ['lavabo', 'cajonera'], industria: ['cajonera', 'perchero'],
   proteccion: ['perchero', 'cajonera'], laboral: ['librero_abierto', 'perchero'], empresa: ['librero_abierto', 'cajonera'], practicas: ['cajonera', 'perchero'] };
 Z.forEach((zona, i) => { const s = sala(i), usados = new Set(zona.riesgos.map(r => r.prop)), lista = (DECOR[E] || ['cajonera', 'perchero']).filter(k => !usados.has(k));
-  lista.slice(0, 2).forEach((k, j) => kit.poner({ kit: 'oficina', clave: k, x: s.xc + (j ? 3.3 : -3.3), z: s.zPuerta + s.lado * 5.45, ry: s.lado < 0 ? 0 : Math.PI, padre: scene }).catch(() => { })); });
+  lista.slice(0, 2).forEach((k, j) => kit.poner({ kit: 'oficina', clave: k, x: s.xc + (j ? 3.3 : -3.3) * KU, z: s.zPuerta + s.lado * 5.45 * KV, ry: s.lado < 0 ? 0 : Math.PI, padre: scene }).catch(() => { })); });
 // algunos muebles neutros en las salas sin zona (cuando hay número impar de zonas)
 for (let i = n; i < cols * 2; i++) { const s = sala(i); kit.poner({ kit: 'oficina', clave: 'sillon', x: s.xc, z: s.zPuerta + s.lado * 4.8, ry: s.lado < 0 ? 0 : Math.PI, padre: scene }).catch(() => { });
   kit.poner({ kit: 'oficina', clave: 'planta', x: s.xc - 2.8, z: s.zPuerta + s.lado * 5.2, padre: scene }).catch(() => { }); }
 
 // ------------------------------------------------------------------ avatar: toca el piso para caminar; toca un objeto para acercarte a inspeccionarlo
-let perfil = {}; try { perfil = JSON.parse(localStorage.getItem('campus_perfil') || '{}'); } catch (e) { }
-const av = Avatar.construir(THREE, perfil), yo = av.grupo; yo.position.set(X0 + 1.2, 0, 0); yo.rotation.y = Math.PI / 2; scene.add(yo);
-let ruta = [], fase = 0, alLlegar = null, seguir = true;
+const RC = await W.recorrido({ piso: suelo, limites: { x0: X0 - 1, x1: -X0 + 1, z0: -(PZ + SZ) - 1, z1: PZ + SZ + 1 }, obstaculos: OBST, muros: MUROS,
+  inicio: [X0 + 1.2, 0], ry: Math.PI / 2, camara: [5.2, 5.0], alcance: 1.7 });
+const yo = RC.yo;
 const celda = (x, z) => { if (Math.abs(z) <= PZ) return -1; const col = Math.floor((x - X0) / SX), i = col * 2 + (z < 0 ? 0 : 1); return i; };
-const limitar = (x, z) => { const c = celda(x, z); if (c === -1) return [Math.max(X0 + 0.4, Math.min(-X0 - 0.4, x)), Math.max(-PZ + 0.35, Math.min(PZ - 0.35, z))];
-  const s = sala(c); return [Math.max(s.xc - SX / 2 + 0.45, Math.min(s.xc + SX / 2 - 0.45, x)), s.lado < 0 ? Math.max(-(PZ + SZ) + 0.45, Math.min(-PZ - 0.35, z)) : Math.min(PZ + SZ - 0.45, Math.max(PZ + 0.35, z))]; };
-function caminarA(x, z, cb) {
-  [x, z] = limitar(x, z); const c0 = celda(yo.position.x, yo.position.z), c1 = celda(x, z), pts = [];
-  if (c1 >= n) return;   // salas sin puerta
-  if (c0 !== c1) { if (c0 >= 0) { const s = sala(c0); pts.push([s.xc, s.zPuerta + s.lado * 0.9], [s.xc, 0]); }
-    if (c1 >= 0) { const s = sala(c1); pts.push([s.xc, 0], [s.xc, s.zPuerta + s.lado * 0.9]); } }
-  pts.push([x, z]); ruta = pts.map(p => new THREE.Vector3(p[0], 0, p[1])); alLlegar = cb || null; seguir = true;
-}
+function caminarA(x, z, cb) { if (!RC.ir(x, z, cb)) cb && cb(); }
 const salaDe = () => celda(yo.position.x, yo.position.z);
-function irASala(zid) { const i = Z.findIndex(z => z.id === zid), s = sala(i); return new Promise(ok => { if (salaDe() === i) { ok(); return; } caminarA(s.xc, s.zPuerta + s.lado * 2.2, ok); }); }
-let tPrev = 0; const OFF = new THREE.Vector3(0, 9.5, 3.6);   // cámara alta y empinada: ve dentro de las salas por encima de los muros
-W.cuadro.push(t => {
-  const dt = Math.min(0.05, t - tPrev || 0.016); tPrev = t; gente.actualizar(dt);
-  if (ruta.length) { const d = ruta[0].clone().sub(yo.position); d.y = 0; const Ld = d.length();
-    if (Ld < 0.05) { ruta.shift(); if (!ruta.length && alLlegar) { const c = alLlegar; alLlegar = null; c(); } }
-    else { d.normalize(); yo.position.addScaledVector(d, Math.min(Ld, 2.6 * dt)); yo.rotation.y = Math.atan2(d.x, d.z); fase += dt * 10; av.animar(fase, true); } }
-  else av.animar(0, false);
-  if (seguir) { const k = Math.min(1, dt * 2.2), obj = yo.position.clone().add(new THREE.Vector3(0, 0.6, yo.position.z < -PZ ? -1.2 : yo.position.z > PZ ? 1.2 : 0));
-    controls.target.lerp(obj, k); camera.position.lerp(obj.clone().add(OFF), k); if (camera.position.distanceTo(obj.clone().add(OFF)) < 0.05 && !ruta.length) seguir = false; }
-});
-// toques en el piso (los objetos los atiende el motor)
-const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let abajo = null;
-renderer().domElement.addEventListener('pointerdown', e => { abajo = [e.clientX, e.clientY]; });
-renderer().domElement.addEventListener('pointerup', e => {
-  if (!abajo || Math.hypot(e.clientX - abajo[0], e.clientY - abajo[1]) > 10) return;
-  ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ptr, camera);
-  const hits = ray.intersectObjects(scene.children, true); if (hits.find(h => h.object.userData.tipo && h.object.visible)) return;
-  const h = ray.intersectObject(suelo)[0]; if (h) caminarA(h.point.x, h.point.z);
-});
-function renderer() { return W.renderer; }
-controls.addEventListener('start', () => { seguir = false; });
+function irASala(zid) { const i = Z.findIndex(z => z.id === zid), s = sala(i); return new Promise(ok => { if (salaDe() === i) { ok(); return; } caminarA(s.xc, s.zPuerta + s.lado * 2.6, ok); }); }
+W.cuadro.push((t) => gente.actualizar(0.016));
 
 // ------------------------------------------------------------------ HUD: avance por sala, pista y plano
 const $ = s => document.getElementById(s);
@@ -199,7 +173,7 @@ function hud(buenas) {
     g.fillStyle = '#fff'; g.font = `bold ${Math.round(cv.height * 0.55)}px Calibri, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(`${ok === tot ? '✓ ' : ''}${ok} / ${tot} riesgos`, cv.width / 2, cv.height / 2); t.material.map.needsUpdate = true; });
 }
 $('bHud').onclick = () => { $('hud').classList.toggle('mini'); $('bHud').textContent = $('hud').classList.contains('mini') ? '▴' : '▾'; };
-$('bGeneral').onclick = () => { seguir = false; W.irVista(1); };
+$('bGeneral').onclick = () => { RC.seguir(false); W.irVista(1); };
 $('bPista').onclick = () => { const i = salaDe(); const lista = ITEMS.filter(it => it.mk.sala === i && !it.mk.marco.visible);
   if (!lista.length) { W.toast('info', i < 0 ? 'Entra a una sala para usar la pista.' : 'Ya inspeccionaste todo en esta sala.'); return; }
   lista.forEach(it => { it.mk.marco.material.color.set(0x7FB3D5); it.mk.marco.visible = true; }); W.toast('info', `🔍 En esta sala hay ${lista.length} objeto(s) por inspeccionar: decide cuáles son riesgos sin control.`);

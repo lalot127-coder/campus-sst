@@ -20,11 +20,16 @@
     const { THREE, scene, caja, M, letrero } = W;
     const p = new THREE.Mesh(new THREE.PlaneGeometry(ancho, fondo), M(piso)); p.rotation.x = -Math.PI / 2; p.position.z = -fondo / 2 + 2; scene.add(p);
     const z0 = -fondo + 2, entorno = [p];
+    { const ext = new THREE.Mesh(new THREE.PlaneGeometry(ancho + 30, fondo + 30), M(0xB9B3A8)); ext.rotation.x = -Math.PI / 2; ext.position.set(0, -0.012, -fondo / 2 + 2); ext.userData.sinTextura = true; scene.add(ext); }   // explanada: la cámara nunca ve el vacío
     entorno.push(caja(ancho, 3, 0.1, muro, 0, 1.5, z0), caja(0.1, 3, fondo, muro, -ancho / 2, 1.5, z0 + fondo / 2), caja(0.1, 3, fondo, muro, ancho / 2, 1.5, z0 + fondo / 2));
     // franja de seguridad en el piso (NOM-026: delimitación de áreas)
     for (const x of [-ancho / 2 + 0.6, ancho / 2 - 0.6]) { const f = caja(0.08, 0.005, fondo - 1, 0xF2C94C, x, 0.004, z0 + fondo / 2); entorno.push(f); }
     if (rotulo) { const r = letrero(rotulo, Math.min(ancho - 1, 0.13 * rotulo.length + 1), 0.4, color); r.position.set(0, 2.7, z0 + 0.07); scene.add(r); entorno.push(r); }
-    const luz = new THREE.PointLight(0xFFF4E0, 0.7, 16); luz.position.set(0, 2.8, -2); scene.add(luz);
+    // luminarias repartidas (salas grandes: una cada ~6 m) con su lámpara visible en el techo
+    const nx = Math.max(1, Math.round(ancho / 6)), nz = Math.max(1, Math.round(fondo / 6));
+    for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) { const x = -ancho / 2 + ancho * (i + 0.5) / nx, z = z0 + fondo * (k + 0.5) / nz;
+      const luz = new THREE.PointLight(0xFFF4E0, nx * nz > 1 ? 0.45 : 0.7, 14); luz.position.set(x, 2.8, z); scene.add(luz);
+      const lam = caja(1.2, 0.05, 0.3, 0xFFFDF5, x, 2.98, z); lam.material = lam.material.clone(); lam.material.emissive.set(0xFFF2CC); lam.material.emissiveIntensity = 0.6; }
     return { piso: p, entorno, z0 };
   }
 

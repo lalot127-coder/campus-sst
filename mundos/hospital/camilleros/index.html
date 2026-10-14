@@ -41,7 +41,7 @@
   @media print{#barra,#panel,canvas,#toast{display:none!important}.modal{position:static;background:none}.tarjeta{max-height:none}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
-<script src="../../../motor/acceso.js"></script><script>addEventListener('load', () => Acceso.proteger('🛏️ Camilleros: traslado seguro', '../../../index.html?mundo=hospital'));</script>
+<script src="../../../motor/motor.js"></script><script src="../../../motor/acceso.js"></script><script>addEventListener('load', () => Acceso.proteger('🛏️ Camilleros: traslado seguro', '../../../index.html?mundo=hospital'));</script>
 </head>
 <body>
 <div id="barra">
@@ -128,7 +128,12 @@ pulsera.userData={tipo:'pulsera'};
 const zonaPulsera=new THREE.Mesh(new THREE.SphereGeometry(0.2,12,8), new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
 zonaPulsera.userData={tipo:'pulsera'}; pulsera.add(zonaPulsera);
 [torso,cabeza,muslos,piernas,brazo,pulsera].forEach(p=>pac.add(p));
+// cara del paciente (12/10/2026): acostado mira hacia arriba; sentado mira hacia el frente de la silla (-z)
+MotorSim.cara(THREE, cabeza);
+const _qAcostado = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0,0,-1), new THREE.Vector3(-1,0,0), new THREE.Vector3(0,1,0)));
+const _qSentado = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(-1,0,0), new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,-1)));
 function pose(tipo){
+  cabeza.quaternion.copy(tipo==='acostado' ? _qAcostado : _qSentado);
   if(tipo==='acostado'){torso.rotation.set(0,0,Math.PI/2); torso.position.set(-0.25,0,0); cabeza.position.set(-0.78,0.02,0);
     muslos.rotation.set(0,0,Math.PI/2); muslos.position.set(0.3,-0.02,0); piernas.rotation.set(0,0,Math.PI/2); piernas.position.set(0.78,-0.03,0);
     brazo.rotation.set(0,0,Math.PI/2); brazo.position.set(-0.15,0.02,0.24); pulsera.rotation.set(0,Math.PI/2,0); pulsera.position.set(0.1,0.02,0.24);}
@@ -142,7 +147,7 @@ function persona(c, x, z, nombre){const g=new THREE.Group(); const b=capsula(0.2
   const h=new THREE.Mesh(new THREE.SphereGeometry(0.14,16,12),M(piel)); h.position.y=1.42; g.add(h);
   const s=letrero(nombre,0.9,0.2,'#13457A'); s.position.y=1.8; g.add(s); g.position.set(x,0,z); scene.add(g); return g;}
 const enf = persona(0x2E8B8B,-4.3,0.9,'Enfermería'), cam2 = persona(0x1F6FB2,-4.3,-0.6,'Camillero 2');
-const familiar = persona(0x9C7A5B, 2.5, 1.6, 'Familiar'); familiar.visible=false;
+const familiar = persona(0x9C7A5B, 2.5, 1.6, 'Familiar'); setTimeout(() => MotorSim.autoCaras(THREE, scene), 500); familiar.visible=false;
 const tecnico = persona(0x5E6B7A, 5.3, 1.4, 'Personal del servicio'); tecnico.visible=false;
 
 // ------------------------------------------------------------------ animación y toques

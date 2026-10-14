@@ -42,6 +42,11 @@ function construir(THREE, perfil) {
   const cab = mk(new THREE.SphereGeometry(0.24, 22, 18), p.piel, 0, 1.7, 0);
   [-0.08, 0.08].forEach(x => mk(new THREE.SphereGeometry(0.028, 10, 8), '#1B2633', x, 1.72, 0.215));
   mk(new THREE.BoxGeometry(0.09, 0.018, 0.02), '#9A4B3C', 0, 1.62, 0.225);
+  // nariz, cejas, brillo de ojos y orejas (12/10/2026): el frente se distingue claramente de la espalda
+  mk(new THREE.SphereGeometry(0.032, 10, 8), p.piel, 0, 1.67, 0.238).scale.set(0.9, 1.1, 1);
+  [-0.08, 0.08].forEach(x => { mk(new THREE.BoxGeometry(0.075, 0.014, 0.014), p.cabello, x, 1.765, 0.218).rotation.z = x > 0 ? -0.12 : 0.12;
+    mk(new THREE.SphereGeometry(0.009, 6, 6), '#FFFFFF', x + 0.01, 1.73, 0.24); });
+  [-1, 1].forEach(s => mk(new THREE.SphereGeometry(0.045, 10, 8), p.piel, s * 0.235, 1.69, 0).scale.set(0.5, 1, 0.8));
   if (!p.casco && !p.gorra) mk(new THREE.SphereGeometry(0.255, 22, 12, 0, Math.PI * 2, 0, Math.PI / 2), p.cabello, 0, 1.73, -0.02);
   else mk(new THREE.SphereGeometry(0.25, 22, 12, 0, Math.PI * 2, Math.PI * 0.35, Math.PI * 0.3), p.cabello, 0, 1.7, -0.03);   // patillas/nuca
   if (f) { mk(new THREE.CapsuleGeometry(0.17, 0.3, 6, 12), p.cabello, 0, 1.53, -0.13);   // cabello largo
