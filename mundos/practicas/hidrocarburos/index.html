@@ -173,7 +173,9 @@ AFRAME.registerComponent('snap-turn',{
     if(Math.abs(x)>0.7&&this.ready){ this.ready=false; const r=$('#rig').object3D; r.rotation.y += (x>0?-1:1)*Math.PI/6; }
     if(Math.abs(x)<0.3) this.ready=true; }); }
 });
+let ULT_MOV=0; setInterval(()=>{ if(window.Sonido) Sonido.andar(performance.now()-ULT_MOV<150); },100);   // pasos al caminar
 function moveRig(fwd, side, dt){
+  ULT_MOV=performance.now();
   const cam=$('#cam').object3D, rig=$('#rig').object3D, sp=0.0045*dt;
   const dir=new THREE.Vector3(); cam.getWorldDirection(dir); dir.y=0; dir.normalize(); dir.negate();
   const right=new THREE.Vector3(-dir.z,0,dir.x);
@@ -359,6 +361,75 @@ const SC=[
   {q:'Para recoger el material absorbido:',o:['Herramientas limpias que no produzcan chispas','Pala metálica','Escoba y recogedor de acero'],c:0,exp:'Usar herramientas limpias que no produzcan chispas y transferir a contenedores.',ref:'G128'}
  ]}
 }];
+
+// ---------- Ampliación (14/10/2026): más peligros, distractores, inspección, decisiones y fichas por escenario ----------
+// Fuentes: GRE 2024 Guías 115 y 128 (PDF oficial guardado en 02_fuentes_verificadas/hidrocarburos), NOM-002-STPS-2010 7.14,
+// NOM-005-STPS-1998 9.8 y LFT art. 504 fr. I (textos oficiales en 02_fuentes_verificadas). Escenas [FICTICIO – ejercicio didáctico].
+REFS.push({k:'N005',t:'NOM-005-STPS-1998, Condiciones de seguridad e higiene en los centros de trabajo para el manejo, transporte y almacenamiento de sustancias químicas peligrosas (DOF 02/02/1999).',u:'https://dof.gob.mx/'},
+  {k:'LFT504',t:'Ley Federal del Trabajo, art. 504 fr. I: medicamentos y material de curación para primeros auxilios.',u:'https://www.diputados.gob.mx/LeyesBiblio/pdf/LFT.pdf'});
+const AMPLIA={
+ gasolinera:{info:[{at:[3,2.6,-4],title:'Incendio pequeño',text:'Agentes para incendio pequeño: polvos químicos secos, CO2, rocío de agua o espuma regular. Evite apuntar chorros directos o sólidos directamente al producto.',ref:'G128'}],
+  hazards:[{id:'g_extblk',title:'Extintor de la isla tapado con cajas de aceite',text:'Se prohíbe almacenar materiales u objetos que obstruyan el acceso al equipo contra incendio (NOM-002-STPS-2010, 7.14).',ref:'N002'},
+   {id:'g_drums',title:'Bidones de lubricante destapados junto a la isla',text:'Los recipientes con sustancias químicas peligrosas deben permanecer cerrados mientras no estén en uso (NOM-005-STPS-1998, 9.8).',ref:'N005'}],
+  decoys:[{id:'g_kit',title:'Botiquín de primeros auxilios',text:'No es un peligro: el patrón mantiene medicamentos y material de curación para primeros auxilios (LFT art. 504 fr. I).',ref:'LFT504'}],
+  inspect:[{target:'g_extblk',q:'¿El acceso a todos los extintores está libre de obstáculos?',a:false,exp:'No. Hay cajas frente al extintor de la isla.',ref:'N002'},
+   {target:'g_drums',q:'¿Los recipientes de lubricante están cerrados?',a:false,exp:'No. Hay bidones destapados.',ref:'N005'},
+   {target:'g_kit',q:'¿Hay botiquín de primeros auxilios?',a:true,exp:'Sí, en la tienda.',ref:'LFT504'}],
+  steps:[{q:'Un despachador se salpicó gasolina en la piel:',o:['Lavar la piel con agua y jabón','Limpiarla con un trapo con más gasolina','No hacer nada'],c:0,exp:'Primeros auxilios específicos de la Guía 128: lavar la piel con agua y jabón.',ref:'G128'},
+   {q:'El derrame es grande y sigue avanzando:',o:['Construir un dique más adelante del derrame para su posterior eliminación','Barrerlo hacia la calle','Diluirlo con agua'],c:0,exp:'Derrame grande: construir un dique más adelante del derrame líquido.',ref:'G128'},
+   {q:'Para recoger la arena con gasolina:',o:['Herramientas limpias a prueba de chispas','Pala metálica','Aspiradora eléctrica'],c:0,exp:'Usar herramientas limpias a prueba de chispas para recolectar el material absorbido.',ref:'G128'}]},
+ galera:{info:[{at:[-1,2.8,2.8],title:'Fuga sin fuego',text:'Detenga la fuga si puede hacerlo sin riesgo; si es posible, voltee los contenedores con fuga para que escape gas en lugar de líquido. No ponga agua directamente al derrame o a la fuente de la fuga.',ref:'G115'}],
+  hazards:[{id:'l_extblk',title:'Extintor tapado con cajas',text:'Se prohíbe almacenar objetos que obstruyan el acceso al equipo contra incendio (NOM-002-STPS-2010, 7.14).',ref:'N002'},
+   {id:'l_touch',title:'Trabajador tapando con la mano la válvula que fuga',text:'El contacto con gas licuado puede causar quemaduras por congelación; no se toca el material derramado.',ref:'G115'}],
+  decoys:[{id:'l_kit',title:'Botiquín de primeros auxilios',text:'No es un peligro (LFT art. 504 fr. I).',ref:'LFT504'}],
+  inspect:[{target:'l_extblk',q:'¿El acceso a los extintores está libre?',a:false,exp:'No. Hay cajas enfrente.',ref:'N002'},
+   {target:'l_touch',q:'¿Nadie toca la fuga con las manos?',a:false,exp:'No. Un trabajador la tapa con la mano: riesgo de congelación.',ref:'G115'},
+   {target:'l_kit',q:'¿Hay botiquín de primeros auxilios?',a:true,exp:'Sí.',ref:'LFT504'}],
+  steps:[{q:'Si se puede hacer de manera segura, ¿qué haces con los cilindros no dañados?',o:['Alejarlos del área alrededor del fuego','Dejarlos donde están','Echarles el gas al fuego'],c:0,exp:'Si se puede hacer de manera segura, aleje los contenedores no dañados del área alrededor del fuego.',ref:'G115'},
+   {q:'Un compañero tiene la ropa congelada a la piel por el gas:',o:['Descongelarla antes de quitarla; solo personal médico descongela las partes heladas','Arrancarla de inmediato','Frotar la piel con nieve'],c:0,exp:'La ropa congelada se descongela antes de quitarla; solo el personal médico debe descongelar las partes heladas.',ref:'G115'}]},
+ ducto_gn:{info:[{at:[-1,2.6,-8],title:'Zonas confinadas',text:'Prevenga la expansión de vapores a través de alcantarillas, sistemas de ventilación y áreas confinadas, y aísle el área hasta que el gas se haya dispersado.',ref:'G115'}],
+  hazards:[{id:'n_smoke',title:'Persona fumando cerca del derecho de vía con fuga',text:'Eliminar todas las fuentes de ignición (no fumar, no usar bengalas, chispas o llamas).',ref:'G115'},
+   {id:'n_noera',title:'Brigadista acercándose a la fuga sin equipo de respiración autónoma',text:'Use el equipo de respiración autónoma (ERA) de presión positiva.',ref:'G115'}],
+  decoys:[{id:'n_ext',title:'Extintor de polvo químico seco',text:'No es un peligro: para incendio pequeño, polvos químicos secos o CO2.',ref:'G115'}],
+  inspect:[{target:'n_smoke',q:'¿Nadie fuma cerca de la fuga?',a:false,exp:'No.',ref:'G115'},{target:'n_noera',q:'¿Quien se acerca usa ERA de presión positiva?',a:false,exp:'No.',ref:'G115'},
+   {target:'n_ext',q:'¿Hay agente para incendio pequeño (PQS o CO2)?',a:true,exp:'Sí.',ref:'G115'}],
+  steps:[{q:'La fuga se detuvo, pero hay vapores:',o:['Aislar el área hasta que el gas se haya dispersado','Reabrir el paso de inmediato','Encender una luz para revisar'],c:0,exp:'Aísle el área hasta que el gas se haya dispersado.',ref:'G115'},
+   {q:'Queda un incendio pequeño y la fuga ya está detenida. Agente:',o:['Polvo químico seco o CO2','Chorro de agua directo a la válvula','Tierra mojada'],c:0,exp:'Incendio pequeño: polvos químicos secos o CO2.',ref:'G115'}]},
+ ducto_crudo:{info:[{at:[4,2.6,-8],title:'Rebosamiento por ebullición',text:'Para el petróleo crudo, no rocíe agua directamente en un carro tanque dañado: puede conducir a un peligroso rebosamiento por ebullición.',ref:'G128'}],
+  hazards:[{id:'c_smoke',title:'Persona fumando junto al derrame',text:'Eliminar todas las fuentes de ignición cercanas al área.',ref:'G128'},
+   {id:'c_hose',title:'Lavando el derrame con manguera hacia el arroyo',text:'Prevenga la entrada hacia vías navegables; el escurrimiento por dilución con agua puede contaminar el ambiente.',ref:'G128'}],
+  decoys:[{id:'c_ext',title:'Extintor de polvo químico seco',text:'No es un peligro: incendio pequeño: polvos químicos secos, CO2, rocío de agua o espuma regular.',ref:'G128'}],
+  inspect:[{target:'c_smoke',q:'¿Nadie fuma cerca del derrame?',a:false,exp:'No.',ref:'G128'},{target:'c_hose',q:'¿Se evita lavar el derrame hacia el arroyo?',a:false,exp:'No.',ref:'G128'},
+   {target:'c_ext',q:'¿Hay agente para incendio pequeño?',a:true,exp:'Sí.',ref:'G128'}],
+  steps:[{q:'Un trabajador se manchó la piel con crudo:',o:['Lavar la piel con agua y jabón','Limpiar con gasolina','Esperar a que se seque'],c:0,exp:'Lave la piel con agua y jabón.',ref:'G128'},
+   {q:'Hay que entrar a la caseta de válvulas cerrada:',o:['Ventilarla antes de ingresar, solo si estás capacitado y equipado','Entrar de inmediato','Encender un ventilador eléctrico dentro sin evaluar'],c:0,exp:'Ventile los espacios cerrados antes de ingresar, pero solo si está adecuadamente capacitado y equipado.',ref:'G128'}]},
+ ducto_gasolina:{info:[{at:[-2,2.6,-8],title:'Incendio pequeño',text:'Polvos químicos secos, CO2, rocío de agua o espuma regular; evite apuntar chorros directos al producto.',ref:'G128'}],
+  hazards:[{id:'p_smoke',title:'Persona fumando cerca del derrame',text:'Eliminar todas las fuentes de ignición cercanas al área.',ref:'G128'},
+   {id:'p_walk',title:'Persona caminando sobre el derrame',text:'No tocar ni caminar sobre el material derramado.',ref:'G128'}],
+  decoys:[{id:'p_ext',title:'Extintor de polvo químico seco',text:'No es un peligro: agente para incendio pequeño.',ref:'G128'}],
+  inspect:[{target:'p_smoke',q:'¿Nadie fuma cerca?',a:false,exp:'No.',ref:'G128'},{target:'p_walk',q:'¿Nadie camina sobre el derrame?',a:false,exp:'No.',ref:'G128'},
+   {target:'p_ext',q:'¿Hay agente para incendio pequeño?',a:true,exp:'Sí.',ref:'G128'}],
+  steps:[{q:'El derrame es grande:',o:['Construir un dique más adelante del derrame','Barrerlo a la alcantarilla','Prenderle fuego'],c:0,exp:'Derrame grande: construir un dique más adelante del derrame.',ref:'G128'},
+   {q:'Salpicadura de gasolina en la piel:',o:['Lavar con agua y jabón','Frotar con tierra','Nada'],c:0,exp:'Lave la piel con agua y jabón.',ref:'G128'}]}};
+SC.forEach(sc=>{ const a=AMPLIA[sc.id]; if(!a) return; sc.info.push(...a.info); sc.hazards.push(...a.hazards); sc.decoys.push(...a.decoys); sc.inspect.push(...a.inspect); sc.emergency.steps.push(...a.steps); });
+function botiquinPoste(p,pos){ const g=el('a-entity',{position:pos},p); cy(g,P(0,0.65,0),0.04,1.3,'#7b858d',0.4,0.7); bx(g,P(0,1.4,0.05),0.5,0.4,0.15,'#ffffff',0.6); bx(g,P(0,1.4,0.13),0.22,0.07,0.01,'#2e7d32',0.5); bx(g,P(0,1.4,0.131),0.07,0.22,0.01,'#2e7d32',0.5); return g; }
+function fumador(R,id,pos,rot){ const h=hazardGroup(R,id,pos); const f=person(h,P(0,0,0),'#8e44ad',rot,{pose:'fumar'});
+  cy(f.mano,P(0,-0.34,0.03),0.008,0.08,'#f5f5f5',0.6,0,{rotation:'90 0 0'}); sph(f.mano,P(0,-0.34,0.075),0.012,'#ff5500',{material:'color:#ff5500;emissive:#ff3300;emissiveIntensity:2'}); return h; }
+function extTapado(R,id,pos){ const h=hazardGroup(R,id,pos); extintor(h,P(0,0,0),0); bx(h,P(-0.15,0.23,0.45),0.55,0.45,0.45,'#c8a27a',0.9); bx(h,P(0.35,0.23,0.5),0.45,0.45,0.45,'#b8916a',0.9); bx(h,P(0.05,0.68,0.47),0.5,0.4,0.45,'#c8a27a',0.9); return h; }
+const EXTRA_BUILD={
+ gasolinera(sc,R){ extTapado(R,'g_extblk',P(4.6,0,1.2));
+  const d=hazardGroup(R,'g_drums',P(-4.4,0,-3.9)); [[0,0],[0.7,0.1]].forEach(([x,z])=>{ cy(d,P(x,0.45,z),0.28,0.9,'#1565c0',0.5,0.3); cy(d,P(x,0.905,z),0.22,0.02,'#111111',0.4,0.2); }); txt(d,P(0.35,0.5,0.4),'ACEITE',{width:1.6});
+  botiquinPoste(hazardGroup(R,'g_kit',P(-12,0,-4.4)),P(0,0,0)); },
+ galera(sc,R){ extTapado(R,'l_extblk',P(5.2,0.19,3.4));
+  const t=hazardGroup(R,'l_touch',P(3.5,0.19,2.4)); person(t,P(0,0,0),'#6d4c41',200,{pose:'frente',casco:'#f2c230'});
+  botiquinPoste(hazardGroup(R,'l_kit',P(-3,0,4.8)),P(0,0,0)); },
+ ducto_gn(sc,R){ fumador(R,'n_smoke',P(-1.5,0,-1.2),160); const b=hazardGroup(R,'n_noera',P(3.4,0,-3.4)); person(b,P(0,0,0),'#c62828',200,{casco:'#ffffff'});
+  const e=hazardGroup(R,'n_ext',P(-8,0,1)); extintor(e,P(0,0,0),0); },
+ ducto_crudo(sc,R){ fumador(R,'c_smoke',P(-2.6,0,-0.6),160); const h=hazardGroup(R,'c_hose',P(4.4,0,-2.2)); person(h,P(0,0,0),'#2e7d32',90,{casco:'#f2c230'});
+  el('a-cylinder',{position:P(0.8,0.9,0),rotation:'0 0 70',radius:0.04,height:1.4,material:M('#212121',0.6)},h); el('a-plane',{rotation:'-90 0 0',position:P(1.9,0.03,0),width:1.6,height:0.3,material:'color:#5fa8d3;transparent:true;opacity:0.7'},h);
+  const e=hazardGroup(R,'c_ext',P(-8,0,1)); extintor(e,P(0,0,0),0); },
+ ducto_gasolina(sc,R){ fumador(R,'p_smoke',P(-1.8,0,-0.6),160); const w=hazardGroup(R,'p_walk',P(2.6,0,-4.6)); person(w,P(0,0,0),'#6d4c41',90);
+  const e=hazardGroup(R,'p_ext',P(-8.5,0,1.2)); extintor(e,P(0,0,0),0); }};
 
 // ---------- Construcción del mundo ----------
 const OBJ={};     // id -> entidad clicable
@@ -706,6 +777,7 @@ function buildWorld(){
     if(sc.id==='ducto_gn') buildDucto(sc,R,'gn');
     if(sc.id==='ducto_crudo') buildDucto(sc,R,'cr');
     if(sc.id==='ducto_gasolina') buildDucto(sc,R,'ga');
+    if(EXTRA_BUILD[sc.id]) EXTRA_BUILD[sc.id](sc,R);
     buildInfo(sc,R);
     [...sc.hazards,...sc.decoys].forEach(h=>{
       const o=OBJ[h.id]; if(!o) return;
@@ -963,7 +1035,7 @@ function caminarA(x,z){ if(!NAV) return; const rig=$('#rig').object3D, cam=$('#c
   if(!MARCA){ MARCA=el('a-ring',{rotation:'-90 0 0',radiusInner:0.18,radiusOuter:0.28,color:'#3FA7C6',material:'shader:flat;side:double'}); }
   const u=r[r.length-1]; MARCA.setAttribute('position',P(u.x,0.03,u.z)); MARCA.setAttribute('visible',true); }
 function aviso2(t){ const h=$('#hudScore'); const o=h.textContent; h.textContent='⚠ '+t; setTimeout(()=>{ if(h.textContent==='⚠ '+t) h.textContent=o; },1800); }
-AFRAME.registerComponent('seguir-ruta',{tick(t,dt){ if(!RUTA.length||!dt) return; const rig=$('#rig').object3D, d=RUTA[0].clone().sub(rig.position); d.y=0; const L=d.length();
+AFRAME.registerComponent('seguir-ruta',{tick(t,dt){ if(!RUTA.length||!dt) return; ULT_MOV=performance.now(); const rig=$('#rig').object3D, d=RUTA[0].clone().sub(rig.position); d.y=0; const L=d.length();
   if(L<0.08){ RUTA.shift(); if(!RUTA.length&&MARCA) MARCA.setAttribute('visible',false); return; }
   rig.position.addScaledVector(d.normalize(),Math.min(L,2.4*dt/1000)); }});
 // clic/toque en el piso (no cuenta si fue un arrastre para mirar)

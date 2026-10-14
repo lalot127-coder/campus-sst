@@ -91,6 +91,18 @@ const AGENTES = {
   co2: { nombre: 'Bióxido de carbono (CO2)', color: 0xC62828, chorro: 0xFFFFFF, clases: ['B', 'C'], alcance: 'de 1 a 2.5 m; no usar al aire libre ni con corrientes de aire', fAlc: `${F26}, Guía VII, VII.3.2`, mano: false, dist: 2 },
   k: { nombre: 'Químico húmedo (clase K)', color: 0xB0BEC5, chorro: 0xE0F7FA, clases: ['A', 'B', 'K'], alcance: 'el que indica su etiqueta', fAlc: `${F26}, 7.2 l) 3)`, mano: true, dist: 2.5 },
 };
+// etiqueta del cuerpo: nombre del agente, código grande y clases de fuego (Guía VII, Tabla VII.1) para distinguir cada extintor
+const BANDA = { agua: ['AGUA', 'AGUA', ['A']], pqs: ['POLVO QUÍMICO SECO', 'PQS', ['A', 'B', 'C']], co2: ['BIÓXIDO DE CARBONO', 'CO₂', ['B', 'C']], k: ['QUÍMICO HÚMEDO', 'K', ['A', 'B', 'K']] };
+const COL_CLASE = { A: '#2E7D32', B: '#C62828', C: '#1565C0', K: '#212121' };
+function etiquetaBanda(tipo, padre) {
+  const [nom, cod, clases] = BANDA[tipo], cv = document.createElement('canvas'); cv.width = 512; cv.height = 384; const g = cv.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, 512, 384); g.fillStyle = '#B71C1C'; g.fillRect(0, 0, 512, 78);
+  const fit = (t, w, fs) => { g.font = `900 ${fs}px Arial, sans-serif`; while (g.measureText(t).width > w && fs > 12) { fs -= 2; g.font = `900 ${fs}px Arial, sans-serif`; } };
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff'; fit(nom, 400, 50); g.fillText(nom, 256, 41); g.fillStyle = '#111'; fit(cod, 470, 128); g.fillText(cod, 256, 160);
+  g.font = '900 34px Arial, sans-serif'; g.fillText('FUEGOS CLASE', 256, 248);
+  const w = 86, x0 = 256 - (clases.length * (w + 12) - 12) / 2; clases.forEach((c, i) => { g.fillStyle = COL_CLASE[c]; g.fillRect(x0 + i * (w + 12), 280, w, 86); g.fillStyle = '#fff'; g.font = '900 70px Arial, sans-serif'; g.fillText(c, x0 + i * (w + 12) + w / 2, 326); });
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(0.1115, 0.1115, 0.3, 28, 1, true, -1.15, 2.3), new THREE.MeshStandardMaterial({ map: t, roughness: .6 })); m.position.y = 0.3; padre.add(m); return m; }
 function modeloExtintor(tipo, conEtiqueta = true) {
   const a = AGENTES[tipo], g = new THREE.Group();
   const cuerpo = cil(0.11, 0.52, a.color, 0, 0.3, 0, g); cil(0.115, 0.04, 0x222222, 0, 0.04, 0, g);
@@ -106,6 +118,7 @@ function modeloExtintor(tipo, conEtiqueta = true) {
   const manguera = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0.66, 0), new THREE.Vector3(0.12, 0.55, 0.02), new THREE.Vector3(0.14, 0.3, 0.05)]), 12, 0.012, 6), M(0x111111)); g.add(manguera);
   boq.position.set(0.14, 0.22, 0.05); boq.rotation.x = Math.PI; g.add(boq);
   if (conEtiqueta) { const e = letrero(a.nombre.split(' (')[0].toUpperCase(), 0.5, 0.11, '#FFFFFF', '#B71C1C'); e.position.set(0, 1.0, 0.0); g.add(e); }
+  etiquetaBanda(tipo, g);   // etiqueta envolvente: agente y clase de fuego (NOM-002-STPS-2010, 7.2 l) 2) y 4))
   return { g, cuerpo, seguro, mano };
 }
 const RACK = {}; const ordenRack = ['agua', 'pqs', 'co2', 'k'];
@@ -184,6 +197,14 @@ const panelXR = (() => { const c = document.createElement('canvas'); c.width = 1
   return { m, pintar(txt1, txt2) { const g = c.getContext('2d'); g.clearRect(0, 0, 1024, 256); g.fillStyle = 'rgba(14,58,107,.88)'; g.fillRect(0, 0, 1024, 256); g.fillStyle = '#fff'; g.font = 'bold 54px Calibri, sans-serif'; g.textAlign = 'center';
     g.fillText(txt1, 512, 100); g.font = '44px Calibri, sans-serif'; g.fillText(txt2, 512, 185); t.needsUpdate = true; } }; })();
 
+// sonidos (motor/sonido.js): alarma mientras está activada, crepitar del fuego junto a las llamas y siseo al descargar
+const SND = { alarma: null, fuego: null, chorro: null };
+W.cuadro.push(() => {
+  const quiere = { alarma: !!F.alarma, fuego: !!(F.activo && F.I > 0.03), chorro: !!F.rociando };
+  if (quiere.alarma && !SND.alarma) SND.alarma = W.sonido('alarma', null, { vol: 0.45 }); if (!quiere.alarma && SND.alarma) { SND.alarma.detener(); SND.alarma = null; }
+  if (quiere.fuego && !SND.fuego) SND.fuego = W.sonido('fuego', luzFuego, { vol: 1, alcance: 14 }); if (!quiere.fuego && SND.fuego) { SND.fuego.detener(); SND.fuego = null; }
+  if (quiere.chorro && !SND.chorro) SND.chorro = W.sonido('fuga', null, { vol: 0.8 }); if (!quiere.chorro && SND.chorro) { SND.chorro.detener(); SND.chorro = null; }
+});
 let tPrev = 0;
 W.cuadro.push(t => {
   const dt = Math.min(0.05, t - tPrev || 0.016); tPrev = t; gente.actualizar(dt);

@@ -22,62 +22,104 @@ function limpiar(p) {   // solo campos conocidos (para multijugador)
 }
 
 function construir(THREE, perfil) {
+  // Figura detallada (14/10/2026): cabeza con ojos (esclerótica, iris, pupila y brillo), cejas, nariz, boca y orejas;
+  // fleco y cabello con volumen; cuello, hombros redondeados, torso aplanado; codos y rodillas articulados; manos con
+  // pulgar; zapatos con suela; cinturón, cuello de la prenda, botones y bolsas. Todo procedural (sin archivos externos).
   const p = limpiar(perfil); const g = new THREE.Group();
-  const mats = {}; const M = c => mats[c] || (mats[c] = new THREE.MeshStandardMaterial({ color: c, roughness: .75, metalness: .02 }));
-  const mk = (geo, c, x, y, z, padre = g) => { const m = new THREE.Mesh(geo, M(c)); m.position.set(x, y, z); padre.add(m); return m; };
-  const f = p.sexo === 'f', hombro = f ? 0.31 : 0.36, sup = p.superior, overol = sup === 'overol';
-  const cSup = p.colorSup, cPant = overol ? p.colorSup : p.pantalon;
-  // torso (en overol: camisa/playera debajo en color claro)
-  const torso = mk(new THREE.CapsuleGeometry(f ? 0.25 : 0.28, 0.48, 6, 14), overol ? '#E8F0F5' : cSup, 0, 1.05, 0);
-  if (f) torso.scale.set(1, 1, 0.92);
-  if (overol) { mk(new THREE.BoxGeometry(0.5, 0.36, 0.5), cSup, 0, 0.98, 0);   // peto del overol
-    [-0.13, 0.13].forEach(x => mk(new THREE.BoxGeometry(0.06, 0.4, 0.04), cSup, x, 1.3, 0.255)); }
-  if (sup === 'camisa') { mk(new THREE.BoxGeometry(0.02, 0.5, 0.02), '#ffffff', 0, 1.1, 0.29); mk(new THREE.TorusGeometry(0.14, 0.035, 6, 16, Math.PI), '#ffffff', 0, 1.36, 0.06).rotation.x = Math.PI / 2; }
-  if (sup === 'chamarra') { mk(new THREE.BoxGeometry(0.025, 0.62, 0.02), '#D0D7DE', 0, 1.06, 0.3); mk(new THREE.CylinderGeometry(0.2, 0.24, 0.1, 16), cSup, 0, 1.38, 0); }
-  if (sup === 'saco') { // camisa blanca en V y corbata
-    const v = mk(new THREE.ConeGeometry(0.12, 0.3, 3), '#ffffff', 0, 1.22, 0.24); v.rotation.x = Math.PI; v.scale.z = 0.25;
-    mk(new THREE.BoxGeometry(0.05, 0.26, 0.02), '#7A1E1E', 0, 1.16, 0.29); }
-  // cabeza, cara y cabello
-  mk(new THREE.CylinderGeometry(0.08, 0.09, 0.12, 12), p.piel, 0, 1.47, 0);
-  const cab = mk(new THREE.SphereGeometry(0.24, 22, 18), p.piel, 0, 1.7, 0);
-  [-0.08, 0.08].forEach(x => mk(new THREE.SphereGeometry(0.028, 10, 8), '#1B2633', x, 1.72, 0.215));
-  mk(new THREE.BoxGeometry(0.09, 0.018, 0.02), '#9A4B3C', 0, 1.62, 0.225);
-  // nariz, cejas, brillo de ojos y orejas (12/10/2026): el frente se distingue claramente de la espalda
-  mk(new THREE.SphereGeometry(0.032, 10, 8), p.piel, 0, 1.67, 0.238).scale.set(0.9, 1.1, 1);
-  [-0.08, 0.08].forEach(x => { mk(new THREE.BoxGeometry(0.075, 0.014, 0.014), p.cabello, x, 1.765, 0.218).rotation.z = x > 0 ? -0.12 : 0.12;
-    mk(new THREE.SphereGeometry(0.009, 6, 6), '#FFFFFF', x + 0.01, 1.73, 0.24); });
-  [-1, 1].forEach(s => mk(new THREE.SphereGeometry(0.045, 10, 8), p.piel, s * 0.235, 1.69, 0).scale.set(0.5, 1, 0.8));
-  if (!p.casco && !p.gorra) mk(new THREE.SphereGeometry(0.255, 22, 12, 0, Math.PI * 2, 0, Math.PI / 2), p.cabello, 0, 1.73, -0.02);
-  else mk(new THREE.SphereGeometry(0.25, 22, 12, 0, Math.PI * 2, Math.PI * 0.35, Math.PI * 0.3), p.cabello, 0, 1.7, -0.03);   // patillas/nuca
-  if (f) { mk(new THREE.CapsuleGeometry(0.17, 0.3, 6, 12), p.cabello, 0, 1.53, -0.13);   // cabello largo
-    if (!p.casco && !p.gorra) mk(new THREE.SphereGeometry(0.1, 12, 10), p.cabello, 0, 1.82, -0.2); }
-  if (p.lentes) { [-0.085, 0.085].forEach(x => mk(new THREE.TorusGeometry(0.055, 0.012, 6, 18), '#111111', x, 1.72, 0.235));
-    mk(new THREE.BoxGeometry(0.06, 0.012, 0.012), '#111111', 0, 1.72, 0.24); }
-  if (p.gorra && !p.casco) { mk(new THREE.SphereGeometry(0.26, 22, 12, 0, Math.PI * 2, 0, Math.PI / 2), p.colorGorra, 0, 1.76, 0);
-    mk(new THREE.BoxGeometry(0.3, 0.025, 0.2), p.colorGorra, 0, 1.77, 0.26); }
-  if (p.casco) { mk(new THREE.SphereGeometry(0.28, 22, 12, 0, Math.PI * 2, 0, Math.PI / 2), '#F2C230', 0, 1.76, 0);
-    mk(new THREE.CylinderGeometry(0.33, 0.33, 0.025, 24), '#F2C230', 0, 1.77, 0.02); }
-  // pecho: logo (lo pone el campus si quiere) → punto de anclaje
-  g.userData.pecho = new THREE.Vector3(0, 1.12, 0.29);
-  // extremidades con pivote (brazo = manga + antebrazo)
-  function brazo(x) { const piv = new THREE.Group(); piv.position.set(x, 1.35, 0); g.add(piv);
-    const corta = sup === 'playera' || overol;
-    mk(new THREE.CapsuleGeometry(0.085, 0.18, 4, 10), overol ? '#E8F0F5' : cSup, 0, -0.16, 0, piv);
-    mk(new THREE.CapsuleGeometry(0.075, 0.2, 4, 10), corta ? p.piel : cSup, 0, -0.42, 0, piv);
-    mk(new THREE.SphereGeometry(0.07, 10, 8), p.piel, 0, -0.6, 0, piv); return piv; }
-  function pierna(x) { const piv = new THREE.Group(); piv.position.set(x, 0.66, 0); g.add(piv);
-    mk(new THREE.CapsuleGeometry(0.1, 0.42, 4, 10), cPant, 0, -0.31, 0, piv);
-    mk(new THREE.BoxGeometry(0.17, 0.1, 0.28), p.zapatos, 0, -0.62, 0.05, piv); return piv; }
-  const bI = brazo(-hombro), bD = brazo(hombro), pI = pierna(-0.13), pD = pierna(0.13);
-  mk(new THREE.BoxGeometry(0.46, 0.16, 0.34), cPant, 0, 0.7, 0);   // cadera
-  // pose: undefined (de pie/caminando) · 'sentado' (piernas al frente; quien llama baja el grupo con ALTO_SENTADO) · 'mirando' (brazos atrás)
-  function animar(fase, andando, pose) { const s = andando ? Math.sin(fase) * 0.6 : 0;
-    if (pose === 'sentado') { pI.rotation.x = pD.rotation.x = -Math.PI / 2; bI.rotation.x = bD.rotation.x = -0.35; torso.position.y = 1.05; return; }
-    if (pose === 'mirando') { pI.rotation.x = pD.rotation.x = 0; bI.rotation.x = bD.rotation.x = 0.25; torso.position.y = 1.05; return; }
-    bI.rotation.x = s; bD.rotation.x = -s; pI.rotation.x = -s; pD.rotation.x = s; torso.position.y = 1.05 + (andando ? Math.abs(Math.sin(fase)) * 0.04 : 0); }
+  const mats = {}; const M = (c, r = 0.75) => { const k = c + '|' + r; return mats[k] || (mats[k] = new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: 0.02 })); };
+  const mk = (geo, c, x, y, z, padre = g, r) => { const m = new THREE.Mesh(geo, M(c, r)); m.position.set(x, y, z); padre.add(m); return m; };
+  const osc = (c, k = 0.72) => '#' + new THREE.Color(c).multiplyScalar(k).getHexString();
+  const cl = (c, k = 0.35) => '#' + new THREE.Color(c).lerp(new THREE.Color('#ffffff'), k).getHexString();
+  const f = p.sexo === 'f', hombro = f ? 0.29 : 0.33, sup = p.superior, overol = sup === 'overol';
+  const cSup = p.colorSup, cPant = overol ? p.colorSup : p.pantalon, cBajo = overol ? '#E8F0F5' : cSup, piel = p.piel;
+  const cap = (r, l) => new THREE.CapsuleGeometry(r, l, 8, 16);
+  // ---- torso (aplanado de frente a espalda), hombros y cadera
+  const torso = mk(cap(f ? 0.235 : 0.265, 0.4), cBajo, 0, 1.06, 0); torso.scale.set(1, 1, f ? 0.74 : 0.7);
+  [-1, 1].forEach(sx => mk(new THREE.SphereGeometry(0.105, 16, 12), cBajo, sx * (hombro - 0.02), 1.32, 0).scale.set(1, 0.85, 0.9));
+  const cadera = mk(new THREE.CylinderGeometry(f ? 0.215 : 0.2, f ? 0.22 : 0.2, 0.2, 20), cPant, 0, 0.75, 0); cadera.scale.z = 0.72;
+  const zf = (f ? 0.235 : 0.265) * (f ? 0.74 : 0.7);   // frente del torso
+  if (!overol) { mk(new THREE.CylinderGeometry(0.205, 0.205, 0.05, 24), '#2A2522', 0, 0.85, 0, g, 0.5).scale.z = 0.74;   // cinturón y hebilla
+    mk(new THREE.BoxGeometry(0.07, 0.045, 0.02), '#C9A227', 0, 0.85, 0.155, g, 0.3); }
+  // prenda superior
+  if (sup === 'playera') mk(new THREE.TorusGeometry(0.095, 0.02, 8, 20), osc(cSup), 0, 1.4, 0.0).rotation.x = Math.PI / 2;
+  if (sup === 'camisa') { mk(new THREE.BoxGeometry(0.03, 0.5, 0.01), cl(cSup, 0.2), 0, 1.1, zf + 0.005);
+    [1.3, 1.18, 1.06, 0.94].forEach(y => mk(new THREE.SphereGeometry(0.012, 8, 6), '#F5F5F5', 0, y, zf + 0.012));
+    [-1, 1].forEach(sx => { const c = mk(new THREE.BoxGeometry(0.11, 0.07, 0.02), '#FFFFFF', sx * 0.06, 1.42, 0.09); c.rotation.set(-0.4, 0, sx * 0.5); });
+    mk(new THREE.BoxGeometry(0.1, 0.11, 0.012), osc(cSup, 0.85), -0.11, 1.2, zf + 0.004); }
+  if (sup === 'chamarra') { mk(new THREE.BoxGeometry(0.02, 0.58, 0.012), '#C7CDD3', 0, 1.06, zf + 0.006, g, 0.3);
+    mk(new THREE.CylinderGeometry(0.13, 0.17, 0.1, 20), cSup, 0, 1.42, 0);
+    [-1, 1].forEach(sx => mk(new THREE.BoxGeometry(0.12, 0.012, 0.012), osc(cSup), sx * 0.12, 0.95, zf - 0.005)); }
+  if (sup === 'saco') { const v = mk(new THREE.ConeGeometry(0.12, 0.32, 3), '#FFFFFF', 0, 1.25, zf - 0.03); v.rotation.x = Math.PI; v.scale.z = 0.25;
+    mk(new THREE.BoxGeometry(0.05, 0.28, 0.012), '#7A1E1E', 0, 1.18, zf + 0.008); mk(new THREE.BoxGeometry(0.06, 0.04, 0.02), '#7A1E1E', 0, 1.34, zf + 0.005);
+    [-1, 1].forEach(sx => { const l = mk(new THREE.BoxGeometry(0.06, 0.3, 0.015), osc(cSup), sx * 0.085, 1.22, zf + 0.004); l.rotation.z = sx * 0.32; });
+    [1.0, 0.92].forEach(y => mk(new THREE.SphereGeometry(0.013, 8, 6), '#1B1B1B', 0.03, y, zf + 0.01)); }
+  if (overol) { mk(new THREE.BoxGeometry(0.42, 0.34, 0.06), cSup, 0, 1.0, zf - 0.015);   // peto
+    [-0.12, 0.12].forEach(x => { mk(new THREE.BoxGeometry(0.06, 0.42, 0.03), cSup, x, 1.3, zf - 0.01); mk(new THREE.SphereGeometry(0.018, 8, 6), '#C9A227', x, 1.15, zf + 0.02, g, 0.3); });
+    mk(new THREE.BoxGeometry(0.16, 0.12, 0.012), osc(cSup, 0.85), 0, 1.03, zf + 0.02); }
+  // ---- cuello y cabeza
+  mk(new THREE.CylinderGeometry(0.075, 0.085, 0.14, 14), piel, 0, 1.47, 0);
+  const H = new THREE.Group(); H.position.set(0, 1.71, 0); g.add(H); g.userData.cabeza = H;
+  mk(new THREE.SphereGeometry(0.23, 32, 24), piel, 0, 0, 0, H).scale.set(0.95, 1.07, 1);
+  mk(new THREE.SphereGeometry(0.15, 20, 14), piel, 0, -0.1, 0.06, H).scale.set(1, 0.8, 0.9);   // mandíbula
+  [-1, 1].forEach(sx => { const x = sx * 0.078;
+    mk(new THREE.SphereGeometry(0.04, 16, 12), '#FFFFFF', x, 0.02, 0.185, H, 0.3).scale.set(1, 0.85, 0.55);   // ojo
+    mk(new THREE.SphereGeometry(0.024, 14, 10), '#4A2F1D', x, 0.02, 0.2, H, 0.3).scale.z = 0.5;               // iris
+    mk(new THREE.SphereGeometry(0.012, 10, 8), '#0B0B0B', x, 0.02, 0.208, H, 0.2).scale.z = 0.5;              // pupila
+    mk(new THREE.SphereGeometry(0.006, 6, 6), '#FFFFFF', x + 0.008, 0.03, 0.214, H, 0.1);                   // brillo
+    mk(new THREE.BoxGeometry(0.075, 0.016, 0.016), osc(p.cabello, 0.9), x, 0.085, 0.2, H).rotation.z = -sx * 0.14;   // ceja
+    mk(new THREE.SphereGeometry(0.045, 12, 10), piel, sx * 0.22, 0, 0, H).scale.set(0.45, 1, 0.75);          // oreja
+    if (f) mk(new THREE.SphereGeometry(0.03, 10, 8), '#E89A8C', sx * 0.12, -0.06, 0.17, H, 0.9).scale.set(1, 0.6, 0.4); });   // mejillas
+  mk(new THREE.SphereGeometry(0.03, 12, 10), osc(piel, 0.95), 0, -0.03, 0.22, H).scale.set(0.8, 1.15, 1);   // nariz
+  const boca = mk(new THREE.TorusGeometry(0.04, 0.009, 6, 16, Math.PI), f ? '#B5483E' : '#9A4B3C', 0, -0.095, 0.19, H, 0.5); boca.rotation.z = Math.PI;
+  // cabello
+  const sinTapa = !p.casco && !p.gorra, cc = p.cabello;
+  if (sinTapa) { mk(new THREE.SphereGeometry(0.245, 28, 16, 0, Math.PI * 2, 0, Math.PI * 0.48), cc, 0, 0.03, -0.015, H, 0.85).scale.set(1, 1.05, 1.03);
+    const fl = mk(cap(0.045, 0.2), cc, 0.02, 0.17, 0.16, H, 0.85); fl.rotation.set(0.5, 0, Math.PI / 2 + 0.15); }   // fleco
+  mk(new THREE.SphereGeometry(0.24, 24, 12, Math.PI * 0.92, Math.PI * 1.16, Math.PI * 0.3, Math.PI * 0.34), cc, 0, 0, -0.01, H, 0.85).scale.set(1.02, 1.04, 1.04);   // nuca y patillas
+  if (f) { mk(cap(0.16, 0.32), cc, 0, -0.2, -0.13, H, 0.85).scale.set(1.1, 1, 0.75);   // cabello largo
+    [-1, 1].forEach(sx => mk(cap(0.05, 0.22), cc, sx * 0.2, -0.12, 0.02, H, 0.85));
+    if (sinTapa) mk(new THREE.SphereGeometry(0.1, 14, 10), cc, 0, 0.12, -0.2, H, 0.85); }
+  if (p.lentes) { [-1, 1].forEach(sx => mk(new THREE.TorusGeometry(0.052, 0.01, 8, 20), '#111111', sx * 0.08, 0.02, 0.222, H, 0.3));
+    mk(new THREE.BoxGeometry(0.05, 0.01, 0.01), '#111111', 0, 0.025, 0.228, H); [-1, 1].forEach(sx => mk(new THREE.BoxGeometry(0.01, 0.01, 0.2), '#111111', sx * 0.2, 0.03, 0.12, H)); }
+  if (p.gorra && !p.casco) { mk(new THREE.SphereGeometry(0.255, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), p.colorGorra, 0, 0.04, 0, H, 0.8);
+    const v = mk(new THREE.CylinderGeometry(0.16, 0.16, 0.02, 20, 1, false, -Math.PI / 2, Math.PI), osc(p.colorGorra, 0.85), 0, 0.05, 0.2, H); v.scale.z = 0.9;
+    mk(new THREE.SphereGeometry(0.02, 8, 6), p.colorGorra, 0, 0.29, 0, H); }
+  if (p.casco) { mk(new THREE.SphereGeometry(0.275, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), '#F2C230', 0, 0.05, 0, H, 0.4);
+    mk(new THREE.CylinderGeometry(0.33, 0.33, 0.022, 28), '#F2C230', 0, 0.06, 0.02, H, 0.4); mk(new THREE.BoxGeometry(0.04, 0.05, 0.5), '#E2B21E', 0, 0.3, 0, H, 0.4); }
+  g.userData.pecho = new THREE.Vector3(0, 1.12, zf + 0.01);
+  // ---- brazos (hombro → codo → mano) y piernas (cadera → rodilla → pie)
+  const corta = sup === 'playera' || overol;
+  function brazo(sx) { const piv = new THREE.Group(); piv.position.set(sx * hombro, 1.33, 0); g.add(piv);
+    mk(cap(0.075, 0.2), cBajo, 0, -0.15, 0, piv);
+    const codo = new THREE.Group(); codo.position.y = -0.31; piv.add(codo);
+    mk(cap(0.065, 0.17), corta ? piel : cBajo, 0, -0.12, 0, codo);
+    if (!corta) mk(new THREE.CylinderGeometry(0.07, 0.07, 0.04, 14), osc(cBajo), 0, -0.22, 0, codo);   // puño
+    const mano = mk(cap(0.05, 0.05), piel, 0, -0.3, 0.01, codo); mano.scale.set(1, 1, 0.62);
+    mk(cap(0.018, 0.04), piel, -sx * 0.045, -0.28, 0.035, codo).rotation.z = -sx * 0.5;   // pulgar
+    piv.userData.codo = codo; return piv; }
+  function pierna(sx) { const piv = new THREE.Group(); piv.position.set(sx * 0.11, 0.66, 0); g.add(piv);
+    mk(cap(0.098, 0.2), cPant, 0, -0.15, 0, piv);
+    const rod = new THREE.Group(); rod.position.y = -0.32; piv.add(rod);
+    mk(cap(0.082, 0.18), cPant, 0, -0.13, 0, rod);
+    const pie = new THREE.Group(); pie.position.y = -0.29; rod.add(pie);
+    const z = mk(cap(0.068, 0.13), p.zapatos, 0, 0.0, 0.05, pie, 0.55); z.rotation.x = Math.PI / 2; z.scale.set(1.15, 1, 0.78);
+    mk(new THREE.BoxGeometry(0.15, 0.025, 0.29), p.zapatos === '#FFFFFF' ? '#9AA5AE' : '#EDEDED', 0, -0.045, 0.05, pie, 0.9);
+    piv.userData.rod = rod; return piv; }
+  const bI = brazo(-1), bD = brazo(1), pI = pierna(-1), pD = pierna(1);
+  const eI = bI.userData.codo, eD = bD.userData.codo, kI = pI.userData.rod, kD = pD.userData.rod;
+  // pose: undefined (de pie/caminando) · 'sentado' (rodillas dobladas; quien llama baja el grupo con ALTO_SENTADO) · 'mirando' (manos atrás)
+  function animar(fase, andando, pose) {
+    if (pose === 'sentado') { pI.rotation.x = pD.rotation.x = -Math.PI / 2; kI.rotation.x = kD.rotation.x = 1.35; bI.rotation.x = bD.rotation.x = -0.35; eI.rotation.x = eD.rotation.x = -0.6; torso.position.y = 1.06; return; }
+    if (pose === 'mirando') { pI.rotation.x = pD.rotation.x = kI.rotation.x = kD.rotation.x = 0; bI.rotation.x = bD.rotation.x = 0.3; eI.rotation.x = eD.rotation.x = -0.25; torso.position.y = 1.06; return; }
+    const s = andando ? Math.sin(fase) * 0.55 : 0;
+    bI.rotation.x = s; bD.rotation.x = -s; pI.rotation.x = -s; pD.rotation.x = s;
+    eI.rotation.x = -0.18 - (andando ? Math.max(0, -Math.sin(fase)) * 0.5 : 0); eD.rotation.x = -0.18 - (andando ? Math.max(0, Math.sin(fase)) * 0.5 : 0);
+    kI.rotation.x = andando ? 0.1 + Math.max(0, Math.sin(fase + 1.3)) * 0.75 : 0.03; kD.rotation.x = andando ? 0.1 + Math.max(0, Math.sin(fase + 1.3 + Math.PI)) * 0.75 : 0.03;
+    bI.rotation.z = -0.06; bD.rotation.z = 0.06;
+    torso.position.y = 1.06 + (andando ? Math.abs(Math.sin(fase)) * 0.03 : Math.sin(performance.now() / 900) * 0.004);
+    H.rotation.y = andando ? Math.sin(fase) * 0.05 : 0; }
   return { grupo: g, animar };
 }
-
 // Editor HTML. alCambiar(perfil) se llama en cada cambio.
 function editor(cont, alCambiar) {
   let p = cargar();

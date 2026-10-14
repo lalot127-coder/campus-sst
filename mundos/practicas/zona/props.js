@@ -26,7 +26,9 @@ function crear(W, tipo, x, z, ry = 0, o = {}) {
     banda() { B(0.9, 0.12, L, 0x263238, 0, 1.0, 0); for (let i = -L / 2 + 0.5; i < L / 2; i += 1.5) { C(0.06, 1.0, 0x9E9E9E, 0, 0.95, i, [0, 0, Math.PI / 2]); B(0.08, 1.0, 0.08, 0x546E7A, 0.5, 0.5, i); B(0.08, 1.0, 0.08, 0x546E7A, -0.5, 0.5, i); } },
     roca() { const m = new THREE.Mesh(new THREE.DodecahedronGeometry(0.8), M(0x8D7B68, { flatShading: true })); m.position.y = 0.55; m.rotation.set(o.r || 0.3, 0.6, 0.2); g.add(m); },
     caseta() { B(4, 2.8, 3, 0xECEFF1, 0, 1.4, 0); B(4.4, 0.2, 3.4, 0x1F6FB2, 0, 2.9, 0); B(1, 2, 0.06, 0x546E7A, 0, 1, 1.52); B(1.2, 0.8, 0.06, 0xBFE3F2, 1.3, 1.7, 1.52); },
-    extintor() { C(0.12, 0.62, 0xC62828, 0, 0.31, 0); S(0.12, 0xC62828, 0, 0.62, 0); C(0.04, 1.6, 0x7B858D, 0.3, 0.8, 0); B(0.3, 0.3, 0.02, 0xC62828, 0.3, 1.5, 0.03); },
+    extintor() { const t = o.tipo || 'pqs'; C(0.12, 0.62, t === 'k' ? 0xC9D1D6 : 0xC62828, 0, 0.31, 0); S(0.12, t === 'k' ? 0xC9D1D6 : 0xC62828, 0, 0.62, 0); C(0.03, 0.08, 0x37474F, 0, 0.78, 0); C(0.04, 1.6, 0x7B858D, 0.3, 0.8, 0); B(0.3, 0.3, 0.02, 0xC62828, 0.3, 1.5, 0.03);
+      // etiqueta con agente y clase de fuego (NOM-002-STPS-2010, 7.2 l) 2) y 4)): se distingue cada tipo de extintor
+      const et = { pqs: 'PQS · ABC', co2: 'CO₂ · BC', agua: 'AGUA · A', k: 'QUÍM. HÚMEDO · K' }[t]; cartel(et, 0.22, 0.09, '#FFFFFF', '#B71C1C', 0, 0.36, 0.125); g.userData.nombre = 'Extintor ' + et; },
     letrero() { C(0.05, 1.6, 0x7B858D, -0.9, 0.8, -0.03); C(0.05, 1.6, 0x7B858D, 0.9, 0.8, -0.03); cartel(o.texto || '', 2.2, 0.5, o.fondo || '#fff', o.color || '#111', 0, 1.75, 0); B(2.26, 0.56, 0.04, 0x5D666E, 0, 1.75, -0.03); },
     bitacora() { B(1.4, 1.0, 0.06, 0x8D6E63, 0, 1.4, 0); cartel(o.texto || 'BITÁCORA', 1.3, 0.24, '#FFFFFF', '#1B5E20', 0, 1.45, 0.04); C(0.04, 1.0, 0x6D4C41, 0, 0.5, -0.05); },
     senal() { if (!window.Senales) return; const cv = Senales.canvas(o.senal || 'prec_general', 256), tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
@@ -77,7 +79,8 @@ function crear(W, tipo, x, z, ry = 0, o = {}) {
     dispensador() { C(0.15, 1.0, 0xECEFF1, 0, 0.5, 0); C(0.14, 0.4, 0x4FC3F7, 0, 1.2, 0); },
     agua() { const p = new THREE.Mesh(new THREE.PlaneGeometry(60, 12), new THREE.MeshStandardMaterial({ color: 0x2E6E9E, roughness: .15, metalness: .2, transparent: true, opacity: .92 })); p.rotation.x = -Math.PI / 2; p.position.y = -0.4; g.add(p);
       B(60, 1.2, 0.6, 0x9E9E9E, 0, -0.2, 5.7); },
-    barco() { B(22, 3, 5, 0x263238, 0, 0.6, 0); B(22, 0.5, 5.2, 0xC62828, 0, -0.7, 0); B(4, 4, 4, 0xECEFF1, 8, 3.8, 0); for (let i = -8; i < 6; i += 2.6) B(2.4, 1.3, 2.4, [0x1565C0, 0xC62828, 0x2E7D32, 0xF57C00][Math.abs(Math.round(i)) % 4], i, 2.7, 0); },
+    barco() { if (window.Barco) { const b = window.Barco.crear(THREE, { largo: o.largo || 26, M: (c, x) => x ? new THREE.MeshStandardMaterial({ color: c, roughness: .6, ...x }) : M(c) }); b.position.y = -0.35; g.add(b); g.userData.nombre = 'Buque de carga'; return; }
+      B(22, 3, 5, 0x263238, 0, 0.6, 0); B(22, 0.5, 5.2, 0xC62828, 0, -0.7, 0); B(4, 4, 4, 0xECEFF1, 8, 3.8, 0); },
     grua() { [[-4, -4], [4, -4], [-4, 4], [4, 4]].forEach(([px, pz]) => B(0.5, 10, 0.5, 0xF2B705, px, 5, pz * 0.5)); B(9, 0.8, 1.2, 0xF2B705, 0, 10.2, 0); B(1.6, 1.4, 1.4, 0x263238, -2.4, 9.2, 0);
       const cab = new THREE.Group(); cab.position.set(0, 9.6, 0); g.add(cab); const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 3.2, 6), M(0x212121)); cable.position.y = -1.6; cab.add(cable);
       const cont = new THREE.Mesh(new THREE.BoxGeometry(6, 2.4, 2.4), M(0x1565C0)); cont.position.y = -4.4; cab.add(cont); g.userData.carga = cab; },

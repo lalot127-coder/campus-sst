@@ -82,6 +82,15 @@ const UNA = {
     e.gain.setValueAtTime(0.7, t); e.gain.exponentialRampToValueAtTime(0.001, t + 0.6); o.frequency.exponentialRampToValueAtTime(35, t + 0.5); n.start(t); o.start(t); n.stop(t + 0.62); o.stop(t + 0.62); },
   bocina() { notas([[311, 0], [370, 0]], 'sawtooth', 0.12, 0.8); },
   claxon() { notas([[440, 0], [554, 0]], 'square', 0.08, 0.45); },
+  paso() { const t = ctx.currentTime, n = ruido(), f = filtro('lowpass', 380 + Math.random() * 160, 0.8), e = ganancia(0), o = osc('sine', 90 + Math.random() * 20); n.connect(f).connect(e); o.connect(ganancia(0.4)).connect(e); e.connect(maestro);
+    e.gain.setValueAtTime(0.0001, t); e.gain.linearRampToValueAtTime(0.16 * volPaso, t + 0.008); e.gain.exponentialRampToValueAtTime(0.001, t + 0.11); n.start(t); o.start(t); n.stop(t + 0.13); o.stop(t + 0.13); },
+  puerta() { const t = ctx.currentTime, o = osc('sawtooth', 190), f = filtro('bandpass', 900, 6), e = ganancia(0); o.connect(f).connect(e).connect(maestro);   // rechinido + golpe del pestillo
+    o.frequency.setValueAtTime(190, t); o.frequency.linearRampToValueAtTime(260, t + 0.25); o.frequency.linearRampToValueAtTime(170, t + 0.5); e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(0.07, t + 0.05); e.gain.linearRampToValueAtTime(0.0001, t + 0.55);
+    o.start(t); o.stop(t + 0.56); notas([[1900, 0], [1300, 0.04]], 'square', 0.05, 0.03); setTimeout(() => UNA.golpeSuave(), 600); },
+  golpeSuave() { const t = ctx.currentTime, n = ruido(), f = filtro('lowpass', 300), e = ganancia(0); n.connect(f).connect(e).connect(maestro); e.gain.setValueAtTime(0.25, t); e.gain.exponentialRampToValueAtTime(0.001, t + 0.18); n.start(t); n.stop(t + 0.2); },
+  mensaje() { notas([[660, 0], [990, 0.07]], 'sine', 0.09, 0.12); },
+  emoji() { notas([[1050, 0], [1400, 0.05], [1750, 0.1]], 'triangle', 0.06, 0.1); },
+  alarma_corta() { notas([[880, 0], [660, 0.35], [880, 0.7], [660, 1.05]], 'square', 0.1, 0.33); },
   silbato() { notas([[2100, 0], [2300, 0.25]], 'sine', 0.1, 0.22); },
 };
 function notas(lista, tipo, vol, dur) { const t0 = ctx.currentTime; lista.forEach(([f, dt]) => { const o = osc(tipo, f), e = ganancia(0); o.connect(e).connect(maestro); e.gain.setValueAtTime(0, t0 + dt); e.gain.linearRampToValueAtTime(vol, t0 + dt + 0.01); e.gain.exponentialRampToValueAtTime(0.001, t0 + dt + dur); o.start(t0 + dt); o.stop(t0 + dt + dur + 0.02); }); }
@@ -123,10 +132,13 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 // se atenúa mientras hay una pregunta o aviso abierto (ventanas .modal del motor)
 setInterval(() => { const m = document.querySelector('.modal, #modal'); const abierto = !!(m && getComputedStyle(m).display !== 'none'); if (abierto !== atenuado) { atenuado = abierto; aplicarMaestro(); } }, 400);
 
+// pasos: Sonido.andar(true/false) mientras el personaje camina (un paso cada ~0.42 s, alternando)
+let andando = false, volPaso = 1, ultPaso = 0;
+setInterval(() => { if (andando && ctx && !silencio && performance.now() - ultPaso > 380) { ultPaso = performance.now(); UNA.paso(); } }, 60);
 window.Sonido = {
   fuente: crearFuente, ambiente: (tipo, vol = 0.6) => crearFuente(tipo, null, { vol }), detener,
   detenerTodo: () => [...vivos].forEach(detener),
   una: tipo => listo(() => { if (UNA[tipo]) UNA[tipo](); }),
-  camara: obj => { oyente = obj; }, silenciar, iniciar, get activo() { return !!ctx && !silencio; },
+  camara: obj => { oyente = obj; }, andar: (v, vol) => { andando = !!v; if (vol) volPaso = vol; }, silenciar, iniciar, get activo() { return !!ctx && !silencio; },
 };
 })();

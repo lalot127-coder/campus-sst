@@ -79,7 +79,7 @@
       camilla() { c(0.7, 0.08, 1.9, 0xECEFF1, 0, 0.75, 0); for (const [a, b] of [[-0.3, -0.85], [0.3, -0.85], [-0.3, 0.85], [0.3, 0.85]]) k(0.025, 0.72, 0x9E9E9E, a, 0.37, b); },
       mesa() { c(1.2, 0.05, 0.7, 0xEEEEEE, 0, 0.8, 0); for (const [a, b] of [[-0.55, -0.3], [0.55, -0.3], [-0.55, 0.3], [0.55, 0.3]]) c(0.04, 0.8, 0.04, 0x9E9E9E, a, 0.4, b); },
       dea() { c(0.3, 0.35, 0.12, 0x43A047, 0, 1.3, 0); c(0.22, 0.12, 0.01, 0xFFFFFF, 0, 1.33, 0.07); },
-      extintor() { k(0.09, 0.5, 0xC62828, 0, 0.3, 0); k(0.03, 0.08, 0x212121, 0, 0.6, 0); },
+      extintor() { k(0.09, 0.5, 0xC62828, 0, 0.3, 0); k(0.03, 0.08, 0x212121, 0, 0.6, 0); const e = W.letrero('PQS · ABC', 0.17, 0.07, '#FFFFFF', '#B71C1C'); e.position.set(0, 0.32, 0.093); g.add(e); },   // etiqueta: agente y clase (NOM-002-STPS-2010, 7.2 l))
       extintor_obstruido() { k(0.09, 0.5, 0xC62828, 0, 0.3, 0); for (let i = 0; i < 3; i++) c(0.5, 0.4, 0.4, 0xC8A27A, (i - 1) * 0.5, 0.2, 0.35); },
       planta() { k(0.18, 0.35, 0x8D6E63, 0, 0.17, 0); esfera(0.3, 0x43A047, 0, 0.6, 0, g); },
       // ---- objetos y condiciones CONTROLADAS (distractores del juego, 07/10/2026)

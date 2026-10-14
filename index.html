@@ -15,10 +15,10 @@ canvas{display:block;touch-action:none}
 button{font-family:inherit;cursor:pointer}.sec{background:var(--hielo);color:var(--navy);border:0;border-radius:11px;padding:7px 10px;font-size:.92rem;font-weight:700;white-space:nowrap}
 .sec.rojo{background:#C62828;color:#fff}.sec.verde{background:#2E7D32;color:#fff}
 .etq{position:fixed;left:0;top:0;transform:translate(-50%,-100%);z-index:4;pointer-events:auto;text-align:center;cursor:pointer;white-space:nowrap}
-.etq.edif{background:#fff;color:var(--navy);border-radius:999px;padding:6px 13px;font-weight:800;font-size:1rem;box-shadow:0 4px 14px rgba(14,58,107,.3);border:3px solid var(--c,#154F90)}
-.etq.jug{pointer-events:none;background:rgba(14,58,107,.88);color:#fff;border-radius:999px;padding:2px 9px;font-size:.8rem;font-weight:700}
-.etq.puerta{white-space:normal;width:var(--w,110px);background:#fff;border-radius:12px;padding:6px 6px 7px;box-shadow:0 4px 14px rgba(14,58,107,.3);border:2px solid var(--azul);font-size:var(--fs,.9rem);line-height:1.12;color:var(--navy);font-weight:800}
-.etq.puerta .i{font-size:1.5em;display:block;line-height:1.1}.etq.puerta .t{display:block;margin-top:3px;font-size:.72em;font-weight:800;border-radius:999px;padding:1px 6px;color:#fff;background:var(--azul)}
+.etq.edif{background:#fff;color:var(--navy);border-radius:999px;padding:6px 13px;font-weight:900;font-size:1.05rem;letter-spacing:.2px;box-shadow:0 4px 14px rgba(14,58,107,.3);border:3px solid var(--c,#154F90)}
+.etq.jug{pointer-events:none;background:rgba(14,58,107,.92);color:#fff;border-radius:999px;padding:3px 10px;font-size:.88rem;font-weight:900}
+.etq.puerta{white-space:normal;width:var(--w,110px);background:#fff;border-radius:12px;padding:6px 6px 7px;box-shadow:0 4px 14px rgba(14,58,107,.3);border:3px solid var(--azul);font-size:var(--fs,.95rem);line-height:1.15;color:#0A2240;font-weight:900;font-family:Arial,Helvetica,sans-serif}
+.etq.puerta .i{font-size:1.5em;display:block;line-height:1.1}.etq.puerta .t{display:block;margin-top:3px;font-size:.76em;font-weight:900;border-radius:999px;padding:1px 6px;color:#fff;background:var(--azul)}
 .etq.puerta.juego{border-color:var(--cian)}.etq.puerta.juego .t{background:var(--cian)}
 .etq.puerta.pronto{opacity:.6;border-color:#9AA9B8}.etq.puerta.pronto .t{background:#9AA9B8}
 .etq.puerta.candado{border-color:#E0A82E;background:#FFFBEF}.etq.puerta.candado .t{background:#B7791F}
@@ -30,6 +30,11 @@ button{font-family:inherit;cursor:pointer}.sec{background:var(--hielo);color:var
 #bCompEdif{background:#fff;color:var(--navy);border:0;border-radius:14px;padding:13px 14px;font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.2)}
 #ayuda{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:5;background:rgba(255,255,255,.96);border-radius:14px;padding:10px 16px;box-shadow:0 4px 14px rgba(0,0,0,.15);color:var(--navy);font-weight:700;text-align:center;width:min(560px,calc(100vw - 24px))}
 #ayuda small{display:block;color:var(--tenue);font-weight:500}
+#chat{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:8;background:#fff;border-radius:16px;box-shadow:0 8px 26px rgba(0,0,0,.3);padding:10px;width:min(460px,94vw);display:none}
+#chat .emos{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}#chat .emos button{font-size:1.45rem;border:0;background:#EEF5F8;border-radius:10px;width:42px;height:42px;cursor:pointer}
+#chat form{display:flex;gap:6px}#chat input{flex:1;font:700 1rem Arial,sans-serif;padding:9px 10px;border:2px solid #8CCDE0;border-radius:10px}
+#chat .hist{max-height:110px;overflow:auto;font:700 .82rem Arial,sans-serif;color:#2F3E4E;margin-bottom:6px}#chat .hist b{color:#0E3A6B}
+#bChat{display:none}
 #aviso{position:fixed;top:64px;left:50%;transform:translateX(-50%);background:var(--azul);color:#fff;padding:10px 16px;border-radius:14px;z-index:7;display:none;max-width:92vw;text-align:center}
 #fundido{position:fixed;inset:0;background:#0E3A6B;opacity:0;pointer-events:none;transition:opacity .45s;z-index:9}
 .modal{position:fixed;inset:0;background:rgba(14,58,107,.72);display:none;align-items:center;justify-content:center;z-index:20;padding:14px}
@@ -54,6 +59,8 @@ button{font-family:inherit;cursor:pointer}.sec{background:var(--hielo);color:var
 <script src="motor/compartir.js"></script>
 <script src="motor/acceso.js"></script>
 <script src="motor/sala_en_linea.js"></script>
+<script src="motor/barco.js"></script>
+<script src="motor/sonido.js"></script>
 <script src="motor/realismo.js"></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
@@ -61,7 +68,7 @@ button{font-family:inherit;cursor:pointer}.sec{background:var(--hielo);color:var
 <div id="barra"><div class="logos"><img src="recursos/logo_CERS.jpeg" alt="CERS"></div>
 <div><b>Campus de Simulación SST</b><small>Aprende haciendo · computadora, tablet, celular y visor</small></div>
 <div class="der"><button class="sec" id="bAtras" title="Regresar al lugar anterior">⬅<span class="txt"> Atrás</span></button><button class="sec" id="bReiniciar" title="Volver al inicio del campus">↺<span class="txt"> Inicio</span></button>
-<button class="sec" id="bAvatar" title="Cambiar mi avatar">👤<span class="txt"> Avatar</span></button><button class="sec" id="bJug" title="Jugadores en el campus">👥 <span id="nJug">1</span></button>
+<button class="sec" id="bAvatar" title="Cambiar mi avatar">👤<span class="txt"> Avatar</span></button><button class="sec" id="bJug" title="Jugadores en el campus">👥 <span id="nJug">1</span></button><button class="sec" id="bChat" title="Mensajes y emojis para los demás jugadores">💬<span class="txt"> Chat</span></button>
 <button class="sec" id="bComp" title="Compartir">🔗<span class="txt"> Compartir</span></button><button class="sec" id="bInfo" title="Información, contacto y guía de uso">ℹ️<span class="txt"> Info</span></button><button class="sec" id="bAyuda" title="Ayuda">❔</button><button class="sec rojo" id="bSalir" title="Salir del campus">🚪<span class="txt"> Salir</span></button></div></div>
 <div id="ayuda">Toca el piso para caminar o toca un edificio para entrar<small>También: flechas o W A S D en computadora · arrastra para girar la vista · toca las señales para saber qué significan</small></div>
 <div id="dentro"><div class="tit" id="dTit"></div><div class="fila"><button id="bCompEdif">🔗 Compartir</button><button id="bSalirEdif">⬅ Salir del edificio</button></div></div>
@@ -210,6 +217,11 @@ const AREAS = [
       { titulo: 'Reto: encuentra la norma', icono: '🔎', tipo: '3d', url: 'mundos/biblioteca/index.html?reto' },
     ] },
 ];
+// Práctica de cada edificio (14/10/2026): recorrido, peligros, inspección, emergencia y análisis (mundos/practicas/zona, datos_edificios.js).
+const NOM_EDIFICIO = { hospital: 'NOM-045-SSA2-2005 · NOM-002-STPS-2010', industria: 'NOM-004 · NOM-027 · NOM-029-STPS', proteccion: 'NOM-002-STPS-2010 · NOM-003-SEGOB-2011',
+  laboral: 'NOM-035-STPS-2018', empresa: 'NOM-001 · NOM-036-1-STPS · AHA 2025', cafeteria: 'NOM-002-STPS-2010 (clase K) · NOM-001-STPS', biblioteca: 'NOM-001-STPS · LGPC (sismo)' };
+AREAS.forEach(a => { if (!NOM_EDIFICIO[a.id]) return; const i = a.modulos.findIndex(m => /^Análisis de riesgo/.test(m.titulo));
+  a.modulos.splice(i + 1, 0, { titulo: 'Práctica del edificio: recorrido, peligros, inspección y emergencia', icono: '🎯', nom: NOM_EDIFICIO[a.id], tipo: '3d', url: `mundos/practicas/zona/index.html?z=${a.id}`, puerta: 'practicas/zona', color: 'amarillo', senal: 'prec_general' }); });
 const POR_PISO = 4, ANCHO_PUERTA = 1.15, PASO_PUERTA = 1.75, ALTO_PISO = 2.7;
 const R_EDIF = 27, R_CAMINA = 23.6, R_PLAZA = 13;
 const INICIO = new THREE.Vector3(0, 0, 17);
@@ -259,7 +271,7 @@ const realPiso = (m, n, rx, ry) => { if (window.Realismo) m.material = Realismo.
 const disco = (r0, r1, c, y, piso) => { const m = new THREE.Mesh(r0 ? new THREE.RingGeometry(r0, r1, 96) : new THREE.CircleGeometry(r1, 96), M(c)); m.rotation.x = -Math.PI / 2; m.position.y = y; m.userData.piso = true; scene.add(m); pisos.push(m); if (piso) realPiso(m, piso, r1 / 1.5); return m; };
 { const forma = new THREE.Shape(); forma.absarc(0, 0, R_MUNDO + 30, 0, Math.PI * 2, false);
   HUECOS.forEach(h => { const q = new THREE.Path(); q.absarc(h.x, -h.z, h.r, 0, Math.PI * 2, true); forma.holes.push(q); });   // -z: el plano se gira -90° en x
-  const suelo = new THREE.Mesh(new THREE.ShapeGeometry(forma, 96), M(0x9CC48E)); suelo.rotation.x = -Math.PI / 2; suelo.userData.piso = true; scene.add(suelo); pisos.push(suelo); realPiso(suelo, 'pasto', 1 / 3); } disco(0, R_PLAZA, 0xE9E4DA, 0.012, 'concreto_pulido'); disco(R_PLAZA - 0.35, R_PLAZA, 0xC9BFAF, 0.016);
+  const suelo = new THREE.Mesh(new THREE.ShapeGeometry(forma, 96), M(0x9CC48E, { roughness: 1, metalness: 0 })); suelo.rotation.x = -Math.PI / 2; suelo.userData.piso = true; scene.add(suelo); pisos.push(suelo); realPiso(suelo, 'pasto', 1 / 3); } disco(0, R_PLAZA, 0xE9E4DA, 0.012, 'concreto_pulido'); disco(R_PLAZA - 0.35, R_PLAZA, 0xC9BFAF, 0.016);
 disco(20.5, 24.9, 0xE2DDD3, 0.012, 'concreto_pulido');
 for (let r = 3.5; r < R_PLAZA; r += 3) disco(r - 0.05, r, 0xD6CFC2, 0.014);   // juntas del adoquín
 function camino(a, r0, r1, ancho = 3) { const c = polar(a, (r0 + r1) / 2); const m = new THREE.Mesh(new THREE.PlaneGeometry(ancho, r1 - r0), M(0xE2DDD3));
@@ -455,7 +467,7 @@ function irAZona(id, entrarTambien) { const z = Z.ZONAS.find(q => q.id === id); 
   const dest = entrarTambien ? z.puertaMundo : z.entrada, cb = entrarTambien ? () => entrarEdificio(id) : () => aviso(`${z.icono} ${z.nombre}: toca los marcadores numerados y la caseta de acceso.`);
   if (yo.position.distanceTo(dest) > 40) teletransportar(dest, cb, Math.atan2(z.centro.x - dest.x, z.centro.z - dest.z)); else caminarA(dest, cb); }
 function entrarEdificio(id) {
-  const a = areaDe(id); if (!a) return; $('#fundido').style.opacity = 1;
+  const a = areaDe(id); if (!a) return; $('#fundido').style.opacity = 1; window.Sonido && Sonido.una('puerta');
   setTimeout(() => {
     if (!INTERIORES[id]) INTERIORES[id] = construirInterior({ ...a, modulos: a.modulos.map(m => ({ ...m, senal: m.senal || SENAL_AREA[a.id] || 'informacion', puerta: m.puerta || `${a.id}/pendiente` })) },
       { THREE, kit: KIT, props: PROPS, logo: logoCERS, piso: a.piso || PISO_AREA[a.id] || 'concreto', base: '' });
@@ -476,6 +488,10 @@ function salirEdificio(rapido) {
 function reiniciar() { salirEdificio(true); tweens.length = 0; ruta = []; marca.visible = false; pila.length = 0; controls.enabled = !xr.activo(); camModo = 'seguir'; levantar();
   yo.position.copy(INICIO); yo.rotation.y = Math.PI; colocarCamara(); if (xr.activo()) xr.colocar(yo.position, 0); $('#ayuda').style.display = 'block'; aviso('Regresaste al inicio del campus.'); }
 function atras() { if (dentro) return salirEdificio(); const p = pila.pop(); if (!p) return aviso('Ya estás en el punto de partida. Usa ↺ Inicio para reiniciar.'); caminarA(p, null, false); aviso('Regresando al lugar anterior…'); }
+// la puerta de entrada ya no saca del edificio con un toque accidental: pide confirmación
+function confirmarSalida() { if (xr.activo()) return xr.panel('Salida del edificio', 'Para salir usa el botón 🚪 Salir del edificio.');
+  modal(`<h2>🚪 ¿Salir del edificio?</h2><p>Tocaste la puerta de entrada. Si quieres seguir adentro, cierra este aviso.</p><button class="prim" id="mSiSalir">Sí, salir al campus</button>`);
+  $('#mSiSalir').onclick = () => { $('#modal').style.display = 'none'; caminarA(I.salida.frente, () => salirEdificio()); }; }
 function avisoVR(t, msg) { if (xr.activo()) xr.panel(t, msg); else aviso(msg); }
 function entrar(m) {
   if (m.estado === 'pronto') return avisoVR(m.titulo, `🚧 "${m.titulo}"${m.nom ? ' (' + m.nom + ')' : ''} estará disponible cuando se imparta su curso.`);
@@ -488,7 +504,7 @@ function entrar(m) {
 }
 // puertas, sillas y señales del interior
 function irAPuerta(k) { const p = I && I.puertas[k]; if (!p) return; caminarA(p.frente, () => { yo.lookAt(p.g.position.x, 0, p.g.position.z); const m = p.m;
-  if (m.estado === 'pronto' || m.estado === 'pendiente' || !Acceso.puede(m.puerta)) return entrar(m); p.abrir(); setTimeout(() => entrar(m), 650); }); }
+  if (m.estado === 'pronto' || m.estado === 'pendiente' || !Acceso.puede(m.puerta)) return entrar(m); p.abrir(); window.Sonido && Sonido.una('puerta'); setTimeout(() => entrar(m), 650); }); }
 function sentar(k) { const s = I && I.sillas[k]; if (!s) return; caminarA(s.frente, () => { yo.position.set(s.pos.x, Avatar.ALTO_SENTADO(s.asiento), s.pos.z); yo.rotation.y = s.ry; pose = 'sentado'; sentadoEn = k; }); }
 function verSenal(id, obj) { const wp = obj.getWorldPosition(new THREE.Vector3()), n = obj.getWorldDirection(new THREE.Vector3()); n.y = 0; n.normalize();
   const de = wp.clone().addScaledVector(n, 1.7); de.y = 0; if (!navAct().libre(de.x, de.z)) return fichaSenal(id);
@@ -505,7 +521,7 @@ $('#bSalirEdif').onclick = () => salirEdificio();
 $('#bAtras').onclick = atras; $('#bReiniciar').onclick = reiniciar;
 $('#bInfo').onclick = abrirInfo;
 $('#bAyuda').onclick = () => modal(`<h2>❔ Cómo moverte</h2><p>• Toca el piso para caminar (el avatar sigue los caminos y rodea obstáculos); toca un edificio para ir y <b>entrar caminando</b>; adentro, toca una puerta.<br>• Toca una <b>silla</b> para sentarte y una <b>señal</b> para pararte frente a ella.<br>• En computadora: flechas o W A S D; arrastra para girar la vista y usa la rueda para acercar.<br>
-  • <b>🗺️ Mapa</b>: viaja (teletransporte) a cualquier edificio o zona: mina a cielo abierto, mina subterránea, obra, aserradero, ferrocarril, campo agrícola, prácticas (hidrocarburos), puerto y carretera en construcción. Cada zona tiene en su caseta la <b>práctica</b> (recorrido, peligros, inspección y emergencia) y su <b>análisis de riesgo</b>.<br>
+  • <b>🗺️ Mapa</b>: viaja (teletransporte) a cualquier edificio o zona: mina a cielo abierto, mina subterránea, obra, aserradero, ferrocarril, campo agrícola, prácticas (hidrocarburos), puerto y carretera en construcción. Cada zona tiene en su caseta la <b>práctica</b> (recorrido, peligros, inspección y emergencia) y su <b>análisis de riesgo</b>; cada edificio también tiene su puerta <b>🎯 Práctica del edificio</b>.<br>  • <b>💬 Chat</b> (con sala en línea o aula): escribe mensajes o manda emojis; aparecen en una nube sobre tu cabeza.<br>
   • <b>⬅ Atrás</b> regresa al lugar anterior (o sale del edificio). <b>↺ Inicio</b> te lleva a la entrada. <b>🚪 Salir</b> vuelve a la pantalla de inicio.<br>• <b>🥽 VR</b> (visor Meta Quest): apunta al piso y aprieta el gatillo para teletransportarte; apunta a puertas y objetos para tocarlos; joystick para girar.<br>
   • Sigue las flechas verdes del piso: llevan al <b>punto de reunión</b>.<br>• <b>🔗 Compartir</b> genera el enlace y el QR de este edificio o del campus.</p>`);
 $('#bComp').onclick = () => dentro ? compartirEdif() : Compartir.abrir(Compartir.url('index.html'), 'Campus de Simulación SST');
@@ -539,9 +555,12 @@ function actualizarEtiquetas() {
   const vr = xr.activo(), fuera = !dentro && !vr;
   AREAS.forEach(a => { const el = etqEd[a.id]; el.style.display = fuera ? 'block' : 'none'; if (fuera) proyectar(ED[a.id].techo.clone().applyMatrix4(ED[a.id].g.matrixWorld), el); });
   Z.ZONAS.forEach(z => { const el = etqZo[z.id], d = yo.position.distanceTo(z.centro); el.style.display = fuera ? 'block' : 'none'; el.style.opacity = d < 60 ? 1 : .85; if (fuera) proyectar(z.puertaMundo.clone().setY(6), el); });
-  const anchoPx = 118; etqPu.forEach(({ el, p }) => { const on = !!dentro && !vr && p.ancla.distanceTo(yo.position) < 14; el.style.display = on ? 'block' : 'none';
-    if (on) { el.style.setProperty('--w', anchoPx + 'px'); el.style.setProperty('--fs', '.8rem'); proyectar(p.ancla, el, anchoPx + 16); } });
+  const anchoPx = 150; etqPu.forEach(({ el, p }) => { const on = !!dentro && !vr && p.ancla.distanceTo(yo.position) < 14; el.style.display = on ? 'block' : 'none';
+    if (on) { el.style.setProperty('--w', anchoPx + 'px'); el.style.setProperty('--fs', '.95rem'); proyectar(p.ancla, el, anchoPx + 16); } });
   OTROS.forEach(o => { const on = o.g.visible && !vr; o.el.style.display = on ? 'block' : 'none'; if (on) proyectar(o.g.position.clone().setY(2.25), o.el); });
+  const ahora = Date.now(); [YO_NUBE, ...OTROS.values()].forEach(o => { const n = o.nube; if (!n) return;
+    if (ahora > o.nubeHasta) { n.parent && n.parent.remove(n); n.material.map.dispose(); o.nube = null; return; }
+    const q = o.nubeDe.position; n.position.set(q.x, q.y + o.nubeDy, q.z); n.quaternion.copy(camera.quaternion); });
 }
 
 // Toques y clic (y rayo del visor): piso = caminar; edificio = ir y entrar; puerta = abrir; silla = sentarse; señal = pararse a verla
@@ -550,7 +569,7 @@ function tocar(u, punto, obj) {
   if (u.tipo === 'info') return abrirInfo();
   if (u.tipo === 'imagen') return modal(`<h2>${u.titulo}</h2><img src="${u.src}" style="width:100%;max-width:420px;display:block;margin:auto;border-radius:12px">`);
   if (u.tipo === 'pin') return modal(`<h2>${u.titulo}</h2><p>${u.texto}</p><p class="fuente">Marcador del recorrido. Los requisitos detallados se revisan en el curso correspondiente.</p>`);
-  if (dentro) { if (u.tipo === 'puerta') return irAPuerta(u.i); if (u.tipo === 'silla') return sentar(u.i); if (u.tipo === 'salir') return caminarA(I.salida.frente, () => salirEdificio());
+  if (dentro) { if (u.tipo === 'puerta') return irAPuerta(u.i); if (u.tipo === 'silla') return sentar(u.i); if (u.tipo === 'salir') return confirmarSalida();
     if (u.piso && punto) caminarA(punto); return; }
   if (u.tipo === 'zona') return irAZona(u.zona, true);
   if (u.tipo === 'edificio' || u.tipo === 'puerta') return irAEdificio(u.area);
@@ -575,16 +594,17 @@ const xr = crearXR({ THREE, renderer, camera, controls, contenedor: $('#barra .d
 // (SalaLinea, WebRTC con PeerJS: gratis y sin cuentas; la persona que crea la sala la mantiene abierta).
 const MP = { activo: false, modo: '', id: sessionStorage.getItem('mp_id') || Math.random().toString(36).slice(2, 10) }; sessionStorage.setItem('mp_id', MP.id);
 const OTROS = new Map();
-const miEstado = () => ({ id: MP.id, perfil: Avatar.limpiar(perfil), x: +yo.position.x.toFixed(2), z: +yo.position.z.toFixed(2), ry: +yo.rotation.y.toFixed(2), lugar: dentro || 'plaza', andando: ruta.length > 0 || teclas.size > 0 });
+const miEstado = () => ({ id: MP.id, perfil: Avatar.limpiar(perfil), x: +yo.position.x.toFixed(2), z: +yo.position.z.toFixed(2), ry: +yo.rotation.y.toFixed(2), lugar: dentro || 'plaza', andando: ruta.length > 0 || teclas.size > 0, ...(CHAT.yo && Date.now() - CHAT.yo.t < 9000 ? { msg: CHAT.yo.msg, msgT: CHAT.yo.t } : {}) });
 function procesarJugadores(lista) {
   const vistos = new Set();
   lista.filter(j => j && j.id && j.id !== MP.id).forEach(j => { vistos.add(j.id); let o = OTROS.get(j.id); const firma = JSON.stringify(j.perfil);
     if (!o || o.firma !== firma) { if (o) { scene.remove(o.g); o.el.remove(); } const a = Avatar.construir(THREE, j.perfil || {}); const el = document.createElement('div'); el.className = 'etq jug'; capa.appendChild(el);
       o = { g: a.grupo, animar: a.animar, el, firma, fase: 0 }; o.g.position.set(+j.x || 0, 0, +j.z || 0); scene.add(o.g); OTROS.set(j.id, o); }
     o.meta = new THREE.Vector3(+j.x || 0, 0, +j.z || 0); o.ry = +j.ry || 0; o.andando = j.andando; o.lugar = String(j.lugar || 'plaza'); o.nombre = String((j.perfil || {}).nombre || 'Participante').slice(0, 30);
-    o.el.textContent = o.nombre + (o.lugar !== 'plaza' ? ` · en ${(AREAS.find(a => a.id === o.lugar) || {}).nombre || o.lugar}` : ''); });
+    o.el.textContent = o.nombre + (o.lugar !== 'plaza' ? ` · en ${(AREAS.find(a => a.id === o.lugar) || {}).nombre || o.lugar}` : '');
+    const mt = +j.msgT || 0; if (j.msg && mt && mt !== o.msgT) { o.msgT = mt; mostrarNube(o, String(j.msg).slice(0, 80), o.nombre, o.lugar === (dentro || 'plaza')); } });
   OTROS.forEach((o, id) => { if (!vistos.has(id)) { scene.remove(o.g); o.el.remove(); OTROS.delete(id); } });
-  $('#nJug').textContent = OTROS.size + 1;
+  $('#nJug').textContent = OTROS.size + 1; $('#bChat').style.display = MP.activo ? 'inline-block' : 'none';
 }
 async function mpTick() {
   if (window.SalaLinea && SalaLinea.activa()) { SalaLinea.enviar(miEstado()); procesarJugadores(SalaLinea.jugadores()); if (!MP.activo || MP.modo !== 'linea') { MP.activo = true; MP.modo = 'linea'; estadoMP(); } return; }
@@ -596,6 +616,35 @@ async function mpTick() {
   } catch (e) { MP.fallas = (MP.fallas || 0) + 1;   // sin servidor de aula: deja de preguntar (modo individual)
     if (!MP.activo || MP.fallas > 6) { MP.sinAula = true; if (MP.activo) { MP.activo = false; estadoMP(); } } }
 }
+// ---------------------------------------------------------------------------- CHAT: mensajes y emojis en nube sobre la cabeza
+// Solo con multijugador activo (sala en línea o servidor de aula). El texto se muestra como texto plano (sin HTML) y dura 6 s.
+const CHAT = { yo: null, hist: [], EMOS: ['👋', '👍', '👏', '😀', '😮', '❤️', '✅', '❓', '⚠️', '🔥', '🆘', '🚑'] };
+const esEmoji = t => /^\p{Extended_Pictographic}[\uFE0F\u200D\p{Extended_Pictographic}]*$/u.test(t);
+// la nube es un sprite 3D sobre la cabeza (se ve igual en pantalla y en el visor), con letra gruesa y borde
+function spriteNube(txt) { const emo = esEmoji(txt), cv = document.createElement('canvas'), g = cv.getContext('2d'), fs = emo ? 96 : 44, f = `900 ${fs}px Arial, Helvetica, sans-serif`;
+  g.font = f; const pal = txt.split(' '), lin = ['']; pal.forEach(w => { const t = (lin[lin.length - 1] + ' ' + w).trim(); if (g.measureText(t).width > 420 && lin[lin.length - 1]) lin.push(w); else lin[lin.length - 1] = t; });
+  const L = lin.slice(0, 3), w = Math.max(...L.map(l => g.measureText(l).width)) + 56, h = L.length * (fs + 10) + 34; cv.width = Math.ceil(w); cv.height = Math.ceil(h + 26);
+  g.fillStyle = '#fff'; g.strokeStyle = '#0E3A6B'; g.lineWidth = 7; g.beginPath(); g.roundRect(4, 4, w - 8, h - 8, 28); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(w / 2 - 18, h - 6); g.lineTo(w / 2, h + 20); g.lineTo(w / 2 + 18, h - 6); g.closePath(); g.fill(); g.stroke(); g.fillRect(w / 2 - 15, h - 12, 30, 8);
+  g.font = f; g.fillStyle = '#0A2240'; g.textAlign = 'center'; g.textBaseline = 'middle'; L.forEach((l, i) => g.fillText(l, w / 2, 17 + (fs + 10) * (i + 0.5)));
+  const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; const sp = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: tx, depthTest: false, depthWrite: false, transparent: true, toneMapped: false }));   // plano que mira a la cámara
+  sp.renderOrder = 20; const k = (emo ? 0.5 : 0.3) / 100; sp.scale.set(cv.width * k * (emo ? 0.55 : 1), cv.height * k * (emo ? 0.55 : 1), 1); return sp; }
+function mostrarNube(o, txt, nombre, cerca) {
+  const grupo = o === YO_NUBE ? yo : o.g; if (o.nube) { o.nube.parent && o.nube.parent.remove(o.nube); o.nube.material.map.dispose(); }
+  o.nube = spriteNube(txt); o.nubeDe = grupo; o.nubeDy = 2.25 + o.nube.scale.y / 2; o.nube.position.copy(grupo.position).setY(o.nubeDy); o.nube.quaternion.copy(camera.quaternion); escena.add(o.nube); o.nubeHasta = Date.now() + (window.__nubeMs || 8000);
+  CHAT.hist.push([nombre, txt]); if (CHAT.hist.length > 30) CHAT.hist.shift(); pintarHist();
+  if (cerca && window.Sonido) Sonido.una(esEmoji(txt) ? 'emoji' : 'mensaje'); }
+function enviarChat(txt) { txt = String(txt || '').replace(/\s+/g, ' ').trim().slice(0, 80); if (!txt) return;
+  CHAT.yo = { msg: txt, t: Date.now() }; mostrarNube(YO_NUBE, txt, (perfil.nombre || 'Yo') + ' (tú)', true); mpTick(); }
+const YO_NUBE = {};
+function pintarHist() { const h = $('#chatHist'); if (!h) return; h.innerHTML = ''; CHAT.hist.slice(-12).forEach(([n, t]) => { const d = document.createElement('div'); const bb = document.createElement('b'); bb.textContent = n + ': '; d.append(bb, document.createTextNode(t)); h.appendChild(d); }); h.scrollTop = 1e6; }
+document.body.insertAdjacentHTML('beforeend', `<div id="chat"><div class="hist" id="chatHist"></div><div class="emos">${CHAT.EMOS.map(e => `<button type="button" data-emo="${e}">${e}</button>`).join('')}</div>
+  <form id="chatF"><input id="chatT" maxlength="80" placeholder="Escribe un mensaje (máx. 80)…" autocomplete="off"><button class="prim" type="submit">Enviar</button><button class="sec" type="button" id="chatX">✕</button></form></div>`);
+$('#bChat').onclick = () => { const c = $('#chat'); c.style.display = c.style.display === 'block' ? 'none' : 'block'; if (c.style.display === 'block') { pintarHist(); $('#chatT').focus(); } };
+$('#chatX').onclick = () => $('#chat').style.display = 'none';
+$('#chatF').onsubmit = e => { e.preventDefault(); enviarChat($('#chatT').value); $('#chatT').value = ''; };
+document.querySelectorAll('#chat [data-emo]').forEach(x => x.onclick = () => enviarChat(x.dataset.emo));
+['pointerdown', 'pointerup', 'keydown'].forEach(ev => $('#chat').addEventListener(ev, e => e.stopPropagation()));
 function estadoMP() { $('#mpEstado').innerHTML = MP.activo ? (MP.modo === 'linea' ? `🌐 <b>Sala en línea ${SalaLinea.codigo()}</b>: los demás verán tu nombre y avatar.` : `👥 <b>Multijugador del aula activo</b>: los demás verán tu nombre y avatar.`)
   : `👤 <b>Modo individual.</b> Para jugar en grupo usa 👥: sala en línea con código, o el servidor de aula en el mismo wifi.`; }
 setTimeout(() => { estadoMP(); }, 1500); mpTick(); MP.timer = setInterval(mpTick, 700);
@@ -658,7 +707,7 @@ function cuadro() {
     if (L < 0.08) { ruta.shift(); if (!ruta.length) { marca.visible = false; const cb = alLlegar; alLlegar = null; cb && cb(); } }
     else { const s = Math.min(L, (dentro ? 3.6 : 5) * dt); yo.position.x += dx / L * s; yo.position.z += dz / L * s; yo.rotation.y = Math.atan2(dx, dz); } }
   if (vr) xr.actualizar();
-  const andando = yo.position.distanceToSquared(prev) > 1e-6; fase += andando ? dt * 10 : 0; animYo(fase, andando, pose);
+  const andando = yo.position.distanceToSquared(prev) > 1e-6; fase += andando ? dt * 10 : 0; animYo(fase, andando, pose); if (window.Sonido) Sonido.andar(andando && pose !== 'sentado');
   const lugar = dentro || 'plaza';
   OTROS.forEach(o => { if (!o.meta) return; const d = o.meta.clone().sub(o.g.position); const mov = d.length() > 0.02; o.g.position.lerp(o.meta, Math.min(1, dt * 6)); o.g.rotation.y = o.ry;
     o.g.visible = o.lugar === lugar; if (o.g.visible && o.g.parent !== escena) escena.add(o.g); o.fase += mov ? dt * 10 : 0; o.animar(o.fase, mov); });
@@ -681,7 +730,7 @@ if (P.get('zona')) { const z = Z.ZONAS.find(q => q.id === P.get('zona')); if (z)
 if (P.has('salir') || (!pedido && !P.has('plaza') && !sessionStorage.getItem('campus_entro') && !QA) || (!perfil.nombre && !QA)) abrirInicio();
 if (P.has('salir') || P.has('plaza')) history.replaceState(null, '', location.pathname + (QA ? '?qa' : ''));
 if (QA) window.__qa = { AREAS, ED, Z, NAV, KIT, camera, controls, irAEdificio, irAZona, entrarEdificio, salirEdificio, atras, reiniciar, abrirInicio, cerrarInicio, fichaSenal, teletransportar, sentar, irAPuerta,
-  entrar: (a, i) => entrar(AREAS.find(x => x.id === a).modulos[i]), yo: () => yo, I: () => I, caminarA: (x, z, cb) => caminarA(new THREE.Vector3(x, 0, z), cb), tocar,
+  entrar: (a, i) => entrar(AREAS.find(x => x.id === a).modulos[i]), yo: () => yo, I: () => I, procesarJugadores, enviarChat, MP, YO_NUBE: () => YO_NUBE, tocarSalida: () => confirmarSalida(), caminarA: (x, z, cb) => caminarA(new THREE.Vector3(x, 0, z), cb), tocar,
   avanzar: async seg => { for (let i = 0; i < seg * 30; i++) { dtForzado = 1 / 30; cuadro(); if (i % 30 === 29) await new Promise(r => setTimeout(r, 0)); } dtForzado = null; cuadro.extra = 0; },
   estado: () => ({ dentro, pose, ruta: ruta.length, camModo, pila: pila.length, mp: MP.activo, otros: OTROS.size, pos: yo.position.toArray().map(n => +n.toFixed(2)), fps: window.__fps,
     zonas: Object.fromEntries(Z.ZONAS.map(z => [z.id, z.estado + (z.ms ? ' ' + z.ms + ' ms' : '')])), kits: KIT.tiempos }) };

@@ -326,10 +326,11 @@ export function construirZonas(ctx) {
 
   // ---- PUERTO (12/10/2026): muelle, agua, barco, grúa pórtico y estibas de contenedores (geometría propia)
   const PU = ZONAS.find(z => z.id === 'puerto'), [ux, uz] = PU.def.centro;
-  { const agua = new THREE.Mesh(new THREE.PlaneGeometry(40, 70), new THREE.MeshStandardMaterial({ color: 0x2E6E9E, roughness: .15, metalness: .2 })); agua.rotation.x = -Math.PI / 2; agua.position.set(ux - 26, -0.3, uz); escena.add(agua);
+  { const agua = new THREE.Mesh(new THREE.PlaneGeometry(40, 70), new THREE.MeshStandardMaterial({ color: 0x2E6E9E, roughness: .15, metalness: .2 })); agua.rotation.x = -Math.PI / 2; agua.position.set(ux - 34.2, 0.03, uz); escena.add(agua);   // sobre el pasto (antes quedaba debajo y no se veía)
     const muelle = caja(28, 0.6, 50, 0xB8BCC0, ux, -0.28, uz, escena, { map: concreto }); muelle.userData.piso = true; pisos.push(muelle);
     caja(0.6, 1.4, 50, 0x8A9096, ux - 14.2, -0.3, uz); nav.bloquearRect(ux - 30, uz, 30, 70);
-    caja(6, 4, 30, 0x263238, ux - 20, 1, uz); caja(6.2, 0.8, 30.2, 0xC62828, ux - 20, -0.4, uz); caja(5, 5, 6, 0xECEFF1, ux - 20, 5.5, uz + 9);   // barco
+    if (window.Barco) { const b = window.Barco.crear(THREE, { largo: 34, M: (c, x) => M(c, x) }); b.rotation.y = Math.PI / 2; b.position.set(ux - 21.5, 0.03, uz); escena.add(b); }   // buque atracado (motor/barco.js)
+    caja(0.4, 0.5, 0.4, 0x212121, ux - 14.6, 0.5, uz - 6); caja(0.4, 0.5, 0.4, 0x212121, ux - 14.6, 0.5, uz + 6);   // bolardos
     [[-10, -6], [-10, 6], [-4, -6], [-4, 6]].forEach(([dx, dz]) => caja(0.6, 12, 0.6, 0xF2B705, ux + dx, 6, uz + dz)); caja(14, 1, 1.4, 0xF2B705, ux - 9, 12.3, uz - 6); caja(14, 1, 1.4, 0xF2B705, ux - 9, 12.3, uz + 6);
     nav.bloquearRect(ux - 7, uz, 7, 13);
     const cols = [0xC62828, 0x1565C0, 0x2E7D32, 0xF57C00]; for (let i = 0; i < 6; i++) for (let k = 0; k < 2; k++) caja(6, 2.6, 2.4, cols[(i + k) % 4], ux + 7, 1.3 + k * 2.65, uz - 10 + i * 2.6);

@@ -147,10 +147,13 @@ function crearMundo(THREE, OrbitControls, cfg) {
     z.userData = { tipo, ref: obj }; obj.add(z); return obj;
   }
   function letrero(texto, w = 1.6, h = 0.4, fondo = '#154F90', color = '#fff') {
-    const cv = document.createElement('canvas'); cv.width = 512; cv.height = Math.round(512 * h / w); const g = cv.getContext('2d');
-    g.fillStyle = fondo; g.fillRect(0, 0, cv.width, cv.height); g.fillStyle = color; g.font = `bold ${Math.round(cv.height * 0.46)}px Calibri, sans-serif`;
-    g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(texto, cv.width / 2, cv.height / 2);
-    const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
+    // resolución según el tamaño real (antes 512 px de ancho: los letreros alargados quedaban borrosos) y letra gruesa
+    const cv = document.createElement('canvas'); cv.height = 128; cv.width = Math.max(256, Math.min(2048, Math.round(128 * w / h))); const g = cv.getContext('2d');
+    g.fillStyle = fondo; g.fillRect(0, 0, cv.width, cv.height); let fs = Math.round(cv.height * 0.66); g.font = `900 ${fs}px Arial, Helvetica, sans-serif`;
+    while (g.measureText(texto).width > cv.width * 0.94 && fs > 14) { fs -= 2; g.font = `900 ${fs}px Arial, Helvetica, sans-serif`; }
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = Math.max(2, fs * 0.08); g.strokeStyle = color; g.strokeText(texto, cv.width / 2, cv.height / 2 + 2);
+    g.fillStyle = color; g.fillText(texto, cv.width / 2, cv.height / 2 + 2);
+    const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 8;
     return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tx, side: THREE.DoubleSide }));
   }
 
@@ -225,6 +228,7 @@ function crearMundo(THREE, OrbitControls, cfg) {
         else { d.normalize(); const paso = Math.min(Ld, (o.vel || 2.4) * dt), antes = yo.position.clone(); yo.position.addScaledVector(d, paso); yo.rotation.y = Math.atan2(d.x, d.z); fase += dt * 10; av && av.animar(fase, true);
           const mov = yo.position.clone().sub(antes); camera.position.add(mov); controls.target.add(mov); } }
       else av && av.animar(0, false);
+      const anda = ruta.length > 0; if (anda !== recorrido._anda) { recorrido._anda = anda; window.Sonido && Sonido.andar(anda); }
       if (seguir) { const obj = yo.position.clone().add(new V(0, 1.2, 0)); controls.target.lerp(obj, Math.min(1, dt * 3)); }
       if (muros.length) { const tapan = new Set();   // rayos de la cámara al avatar y a su alrededor (lo que hay junto a él también se ve)
         for (const [dx, dz] of [[0, 0], [1.8, 0], [-1.8, 0], [0, -1.8], [0, 1.8]]) { cab.copy(yo.position).add(new V(dx, 1.0, dz)); const dv = cab.clone().sub(camera.position), Ld = dv.length();
@@ -318,10 +322,10 @@ function crearMundo(THREE, OrbitControls, cfg) {
   api.animar = (ms, fn) => new Promise(ok => { const t0 = performance.now(); const f = () => { const k = Math.min(1, (performance.now() - t0) / ms); fn(k); if (k < 1) requestAnimationFrame(f); else ok(); }; requestAnimationFrame(f); });
   api.esperar = ms => new Promise(ok => setTimeout(ok, ms));
   api.globo = (texto, obj, ms = 2600, alto = 0.55) => {
-    const cv = document.createElement('canvas'), g = cv.getContext('2d'); g.font = 'bold 44px Calibri, sans-serif';
+    const cv = document.createElement('canvas'), g = cv.getContext('2d'); g.font = '900 44px Arial, Helvetica, sans-serif';
     const w = Math.min(1000, Math.ceil(g.measureText(texto).width) + 60); cv.width = w; cv.height = 110;
     g.fillStyle = '#ffffff'; g.strokeStyle = '#0E3A6B'; g.lineWidth = 6; g.beginPath(); g.roundRect(4, 4, w - 8, 80, 22); g.fill(); g.stroke();
-    g.beginPath(); g.moveTo(w / 2 - 16, 82); g.lineTo(w / 2, 106); g.lineTo(w / 2 + 16, 82); g.fill(); g.font = 'bold 44px Calibri, sans-serif'; g.fillStyle = '#0E3A6B'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(texto, w / 2, 45);
+    g.beginPath(); g.moveTo(w / 2 - 16, 82); g.lineTo(w / 2, 106); g.lineTo(w / 2 + 16, 82); g.fill(); g.font = '900 44px Arial, Helvetica, sans-serif'; g.fillStyle = '#0E3A6B'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(texto, w / 2, 45);
     const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tx, depthTest: false })); sp.renderOrder = 10; const h = 0.32; sp.scale.set(h * w / 110, h, 1);
     const pos = new THREE.Vector3(); (obj || scene).getWorldPosition(pos); sp.position.copy(pos).add(new THREE.Vector3(0, alto, 0)); scene.add(sp);

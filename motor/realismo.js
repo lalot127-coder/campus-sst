@@ -60,7 +60,9 @@
     const rep = t => { const c = t.clone(); c.needsUpdate = true; c.repeat.set(rx, ry); return c; };
     if (conColor) { m.map = rep(cargar(THREE, nombre, 'color')); m.color.lerp(new THREE.Color(0xffffff), 0.55); }
     m.normalMap = rep(cargar(THREE, nombre, 'normal')); m.normalScale = new THREE.Vector2(0.8, 0.8);
-    m.roughnessMap = rep(cargar(THREE, nombre, 'rugosidad')); m.roughness = 1; m.metalness = Math.min(m.metalness, 0.05);
+    // pasto y tierra: totalmente mates (con mapa de rugosidad y reflejos del entorno se veían brillosos desde arriba)
+    if (/pasto|tierra/.test(nombre)) { m.roughness = 1; m.metalness = 0; m.envMapIntensity = 0.25; m.normalScale = new THREE.Vector2(0.6, 0.6); }
+    else { m.roughnessMap = rep(cargar(THREE, nombre, 'rugosidad')); m.roughness = 1; m.metalness = Math.min(m.metalness, 0.05); }
     m.needsUpdate = true; return m;
   }
   // texturizar(THREE, scene, {piso: 'azulejo'|'concreto_pulido'|'madera'|'alfombra'|'pasto'|'asfalto', muro: 'yeso'})

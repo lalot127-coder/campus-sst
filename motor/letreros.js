@@ -11,20 +11,20 @@ function partir(t, max) { const pal = String(t).split(' '), l = ['']; pal.forEac
 export function letreroSVG({ titulo, sub = '', estado = '3d', color = 'marino', senal = null, W = 640, H = 300 }) {
   const [fondo, tinta] = COLORES[color] || COLORES.marino, gris = estado === 'pronto' || estado === 'pendiente';
   const banda = gris ? COLORES.gris[0] : fondo, tBanda = gris ? '#fff' : tinta, x0 = senal ? 210 : 30;
-  const lineas = partir(titulo, senal ? 18 : 24), fs = lineas.length > 2 ? 40 : 48;
+  const lineas = partir(titulo, senal ? 18 : 24), fs = lineas.length > 2 ? 44 : 52;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <rect x="4" y="4" width="${W - 8}" height="${H - 8}" rx="22" fill="#FFFFFF" stroke="${banda}" stroke-width="8"/>
   <rect x="4" y="${H - 74}" width="${W - 8}" height="70" rx="0" fill="${banda}"/><rect x="4" y="${H - 30}" width="${W - 8}" height="26" rx="22" fill="${banda}"/>
   ${senal ? `<rect x="24" y="24" width="168" height="168" rx="16" fill="#F4F7FA"/>` : ''}
-  ${lineas.map((l, i) => `<text x="${x0}" y="${70 + i * (fs + 6)}" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="${fs}" fill="#0E3A6B">${esc(l)}</text>`).join('')}
-  ${sub ? `<text x="${x0}" y="${H - 92}" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="28" fill="#5B6B7C">${esc(sub)}</text>` : ''}
-  <text x="${W / 2}" y="${H - 26}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="38" fill="${tBanda}" letter-spacing="2">${esc(ESTADOS[estado] || estado)}</text>
+  ${lineas.map((l, i) => `<text x="${x0}" y="${70 + i * (fs + 6)}" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="${fs}" fill="#0E3A6B" stroke="#0E3A6B" stroke-width="1.6" paint-order="stroke">${esc(l)}</text>`).join('')}
+  ${sub ? `<text x="${x0}" y="${H - 92}" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="30" fill="#2F3E4E">${esc(sub)}</text>` : ''}
+  <text x="${W / 2}" y="${H - 26}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="38" fill="${tBanda}" letter-spacing="2">${esc(estado in ESTADOS ? ESTADOS[estado] : estado)}</text>
 </svg>`;
 }
 export function letreroTextura(THREE, op, alListo) {
-  const W = op.W || 640, H = op.H || 300, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
+  const W = op.W || 640, H = op.H || 300, K = 2, cv = document.createElement('canvas'); cv.width = W * K; cv.height = H * K; const g = cv.getContext('2d'); g.scale(K, K);   // doble resolución: letra nítida
   g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
-  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
   const img = new Image(); img.onload = () => { g.drawImage(img, 0, 0, W, H);
     if (op.senal && window.Senales) { const s = Senales.canvas(op.senal, 256); const k = 150 / Math.max(s.width, s.height); g.drawImage(s, 33 + (150 - s.width * k) / 2, 33 + (150 - s.height * k) / 2, s.width * k, s.height * k); }
     t.needsUpdate = true; alListo && alListo(t); };
