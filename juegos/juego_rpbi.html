@@ -182,6 +182,12 @@ const RES = [
   {ico:'🧪', n:'Muestra patológica líquida', ok:'ha', f:'Residuo patológico líquido → recipiente hermético amarillo (NOM-087, 6.2).'},
   {ico:'📄', n:'Envoltura de papel de una jeringa nueva (sin contacto con el paciente)', ok:'mu', f:'No contiene agentes biológico-infecciosos: no cumple la definición de RPBI (NOM-087, 3 y 4).'},
   {ico:'🥤', n:'Vaso desechable del comedor', ok:'mu', f:'No es residuo de la atención médica: no es RPBI (NOM-087, 3 y 4).'},
+  {ico:'🩸', n:'Lanceta usada para medir glucosa capilar', ok:'pc', f:'Objeto punzocortante (lancetas) → recipiente rígido rojo (NOM-087, 4.5.1 y 6.2.1).'},
+  {ico:'🧪', n:'Tubo capilar usado con sangre', ok:'pc', f:'Los tubos capilares son punzocortantes → recipiente rígido rojo (NOM-087, 4.5.1 y 6.2.1).'},
+  {ico:'🩹', n:'Apósito empapado de líquido pleural', ok:'br', f:'Residuo no anatómico sólido → bolsa roja (NOM-087, 4.4.2 y 6.2.1).'},
+  {ico:'🤧', n:'Pañuelo desechable con esputo de un paciente con tuberculosis', ok:'br', f:'Residuo no anatómico sólido → bolsa roja (NOM-087, 4.4.3 y 6.2.1).'},
+  {ico:'🧫', n:'Asa desechable usada para inocular un cultivo', ok:'br', f:'Utensilio desechable de cultivos y cepas → bolsa roja (NOM-087, 4.2.2 y 6.2.1).'},
+  {ico:'🫙', n:'Vidrio roto de laboratorio, ya lavado y desinfectado', ok:'mu', f:'El vidrio roto de laboratorio no es punzocortante RPBI; se desinfecta o esteriliza antes de desecharlo como residuo municipal (NOM-087, 4.5.1).'},
 ];
 const $ = s => document.querySelector(s);
 let sel=null, pts=0, hechos=0, errores=[], t0=0, timer=null, nombre='';
