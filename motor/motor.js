@@ -103,6 +103,9 @@ function crearMundo(THREE, OrbitControls, cfg) {
     if (window.Compartir) Compartir.abrir(u.href, `${cfg.icono} ${cfg.titulo} · Campus SST`); else { navigator.clipboard && navigator.clipboard.writeText(u.href); toast('info', '🔗 Enlace copiado: ' + u.href); } };
   if (!window.Compartir) { const s = document.createElement('script'); s.src = new URL('compartir.js', BASE_MOTOR).href; document.head.appendChild(s); }
   if (!window.EnviarRes) { const s = document.createElement('script'); s.src = new URL('enviar_resultados.js', BASE_MOTOR).href; document.head.appendChild(s); }
+  // sonidos generados por código (12/10/2026): motor/sonido.js; la cámara es el oyente
+  const conSonido = f => { if (window.Sonido) return f(window.Sonido); const ex = document.querySelector('script[data-sonido]'); if (ex) { ex.addEventListener('load', () => f(window.Sonido)); return; }
+    const s = document.createElement('script'); s.src = new URL('sonido.js', BASE_MOTOR).href; s.dataset.sonido = '1'; s.onload = () => f(window.Sonido); document.head.appendChild(s); };
   // Control de acceso: si se abre con enlace directo sin código vigente para esta puerta, muestra el candado + WhatsApp
   const proteger = () => { Acceso.sesionUnica && Acceso.sesionUnica(); Acceso.proteger(`${cfg.icono} ${cfg.titulo}`, new URL('../index.html' + (area ? '?mundo=' + area : ''), BASE_MOTOR).href); };
   if (window.Acceso) proteger(); else { const s = document.createElement('script'); s.src = new URL('acceso.js', BASE_MOTOR).href; s.onload = proteger; document.head.appendChild(s); }
@@ -232,8 +235,8 @@ function crearMundo(THREE, OrbitControls, cfg) {
   };
   function toast(tipo, txt, fuente = '', ms) { const t = $('toast'); t.className = tipo; t.innerHTML = txt + (fuente ? `<small>Fuente: ${fuente}</small>` : ''); t.style.display = 'block';
     clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', ms || (tipo === 'no' ? 5200 : 2600)); }
-  function bien(txt, f) { S.pts += 10; toast('ok', '✅ ' + txt, f); marcador(); }
-  function mal(txt, f, critico = false) { S.pts -= 5; if (critico) S.criticos++; S.errores.push({ paso: nPaso + 1, txt, f, critico }); toast('no', (critico ? '⛔ ERROR CRÍTICO: ' : '❌ ') + txt, f); marcador(); }
+  function bien(txt, f) { S.pts += 10; toast('ok', '✅ ' + txt, f); marcador(); window.Sonido && Sonido.una('bien'); }
+  function mal(txt, f, critico = false) { window.Sonido && Sonido.una('mal'); S.pts -= 5; if (critico) S.criticos++; S.errores.push({ paso: nPaso + 1, txt, f, critico }); toast('no', (critico ? '⛔ ERROR CRÍTICO: ' : '❌ ') + txt, f); marcador(); }
   function marcador() { $('cPts').textContent = Math.max(0, S.pts) + ' pts'; $('cPaso').textContent = `Paso ${Math.min(nPaso + 1, pasos.length)}/${pasos.length}`; }
   setInterval(() => { if (S.t0) { const s = Math.floor((Date.now() - S.t0) / 1000); $('cTiempo').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; } }, 1000);
   function botones(lista) { const a = $('acciones'); a.innerHTML = ''; lista.forEach(([txt, fn, cls]) => { const b = document.createElement('button'); b.className = cls || 'prim'; b.textContent = txt; b.onclick = fn; a.appendChild(b); }); }
@@ -308,6 +311,10 @@ function crearMundo(THREE, OrbitControls, cfg) {
   // Animaciones para que la escena «haga lo que dice la respuesta» (12/10/2026)
   //   await api.animar(ms, k => {...})  k de 0 a 1 · api.globo(texto, objeto, ms) globo de diálogo · api.cara(cabeza, opc)
   api.cara = (cab, o) => cara(THREE, cab, o); api.recorrido = recorrido;
+  conSonido(S => S && S.camara(camera));
+  // api.sonido(tipo, objeto, opc) → fuente continua (se oye más fuerte al acercarse); api.efecto(tipo) → sonido corto
+  api.sonido = (tipo, obj, o) => { let h = null; const pend = { detener: () => { if (h) Sonido.detener(h); else pend.cancel = true; } }; conSonido(S => { if (!pend.cancel && S) h = obj ? S.fuente(tipo, obj, o) : S.ambiente(tipo, o && o.vol); }); return pend; };
+  api.efecto = tipo => conSonido(S => S && S.una(tipo));
   api.animar = (ms, fn) => new Promise(ok => { const t0 = performance.now(); const f = () => { const k = Math.min(1, (performance.now() - t0) / ms); fn(k); if (k < 1) requestAnimationFrame(f); else ok(); }; requestAnimationFrame(f); });
   api.esperar = ms => new Promise(ok => setTimeout(ok, ms));
   api.globo = (texto, obj, ms = 2600, alto = 0.55) => {

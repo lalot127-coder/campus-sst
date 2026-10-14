@@ -93,6 +93,13 @@ W.cuadro.push(t => {
 const RC = await W.recorrido({ piso: [piso, ext], limites: { x0: -AN / 2 - 6, x1: AN / 2 + 6, z0: -FO / 2 - 6, z1: FO / 2 + 6 }, obstaculos: OBST, muros: MUROS,
   inicio: [0, FO / 2 - 1.5], ry: Math.PI, camara: [3.8, 7.8], alcance: 2.2 });
 REG.yo = RC.yo;
+// ------------------------------------------------------------------ sonido (motor/sonido.js, generado por código, sin archivos)
+const SON = { camion: 'motor_grande', cargador: 'motor_grande', excavadora: 'motor_grande', locomotora: 'motor_grande', banda: 'banda', sierra: 'sierra', tractor: 'motor', montacargas: 'motor', tolva: 'maquina', grua: 'maquina' };
+const SND = {}, SNDFX = [];
+Object.entries(REG).forEach(([n, g]) => { const t = SON[n.replace(/\d+$/, '')]; if (t && g !== RC.yo) SND[n] = W.sonido(t, g, { vol: 0.75, alcance: 22 }); });
+W.sonido({ mina_subterranea: 'ventilador', puerto: 'agua' }[ZID] || 'viento', null, { vol: 0.45 });
+if (REG.semaforo) SND.semaforo = W.sonido('campana', REG.semaforo, { vol: 0.5, alcance: 18 });
+if (H.mechero) SND.mechero = W.sonido('fuego', H.mechero.g, { vol: 0.4, alcance: 8 });
 
 // ------------------------------------------------------------------ utilidades de los modos
 const fuente = f => f;
@@ -107,6 +114,8 @@ const mirar = n => { const p = posDe(n); if (!p) return; RC.seguir(false); W.mov
 // efectos de emergencia
 const FX = [];
 function efecto(tipo, foco) { const p = posDe(foco) || new THREE.Vector3(0, 0, 0), g = REG[foco] || (H[foco] && H[foco].g);
+  const fx = { volcar: ['golpe', 'sirena'], humo: [null, 'alarma'], derrumbe: ['golpe', 'alarma'], alarma: [null, 'alarma'], fuga: [null, 'fuga'], derrame: [null, null], caida: ['golpe', 'alarma'], auto: ['claxon', 'alarma'] }[tipo] || [];
+  if (fx[0]) W.efecto(fx[0]); if (fx[1]) SNDFX.push(W.sonido(fx[1], g || REG.yo, { vol: 0.8, alcance: 40 }));
   if (tipo === 'volcar' && g) { W.animar(900, k => { g.rotation.z = -1.3 * k; g.position.y = 0.6 * k; }); }
   if (tipo === 'humo' || tipo === 'fuga' || tipo === 'derrame') { const color = tipo === 'humo' ? 0x9E9E9E : tipo === 'fuga' ? 0xC0CA33 : 0x8BC34A;
     for (let i = 0; i < (tipo === 'humo' ? 14 : 1); i++) { const s = new THREE.Mesh(tipo === 'humo' ? new THREE.SphereGeometry(0.5, 10, 8) : new THREE.CircleGeometry(0.4, 24), new THREE.MeshStandardMaterial({ color, transparent: true, opacity: 0.55 }));
@@ -119,12 +128,12 @@ function efecto(tipo, foco) { const p = posDe(foco) || new THREE.Vector3(0, 0, 0
   if (tipo === 'auto') { const a = PropsZona.crear(W, 'cajas', p.x + 2, p.z - 0.4, 0.4); a.children.forEach(m => m.material = M(0x90A4AE)); FX.push(a); if (REG.conos) REG.conos.children.slice(0, 6).forEach((c, i) => { c.rotation.z = 1.4; c.position.y = 0.15; }); }
 }
 W.cuadro.push(t => FX.forEach(f => { if (f.userData.v) { f.position.y += f.userData.v * 0.02; if (f.position.y > 5) f.position.y = 1; } if (f.userData.alarma) f.intensity = Math.floor(t * 4) % 2 ? 6 : 0; }));
-function limpiarFX() { FX.splice(0).forEach(f => scene.remove(f)); if (REG.camion) { REG.camion.rotation.z = 0; REG.camion.position.y = 0; } if (REG.grua && REG.grua.userData.carga) REG.grua.userData.carga.position.y = 9.6;
+function limpiarFX() { SNDFX.splice(0).forEach(h => h.detener()); FX.splice(0).forEach(f => scene.remove(f)); if (REG.camion) { REG.camion.rotation.z = 0; REG.camion.position.y = 0; } if (REG.grua && REG.grua.userData.carga) REG.grua.userData.carga.position.y = 9.6;
   if (REG.conos) REG.conos.children.forEach(c => { c.rotation.z = 0; }); anim.sierra = true; }
 // animaciones que «hacen lo que dice la respuesta»
 async function animar(a) { if (!a) return; const [t, n, x] = a;
   if (t === 'globo') { W.globo(x, REG[n] || (H[n] && H[n].g), 2400, n === 'yo' ? 2.1 : 2.6); await W.esperar(1300); }
-  if (t === 'detener') { anim.sierra = 'detenido'; FX.forEach(f => { if (f.userData.alarma) f.userData.alarma = false; }); W.globo('Detenido', REG[n] || (H[n] && H[n].g), 2000, 3); await W.esperar(1200); }
+  if (t === 'detener') { anim.sierra = 'detenido'; if (SND[n]) { SND[n].detener(); delete SND[n]; } SNDFX.forEach(h => h.detener()); FX.forEach(f => { if (f.userData.alarma) f.userData.alarma = false; }); W.globo('Detenido', REG[n] || (H[n] && H[n].g), 2000, 3); await W.esperar(1200); }
   if (t === 'delimitar') { const p = posDe(n); if (!p) return; const r = x || 4, cs = [];
     for (let k = 0; k < 12; k++) { const a2 = k / 12 * Math.PI * 2, c = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.7, 12), M(0xF57C00)); c.position.set(p.x + Math.cos(a2) * r, 0.35, p.z + Math.sin(a2) * r); c.scale.setScalar(0.01); scene.add(c); FX.push(c); cs.push(c); }
     await W.animar(900, k => cs.forEach(c => c.scale.setScalar(Math.max(0.01, k)))); W.globo('Área delimitada', REG[n] || (H[n] && H[n].g), 1800, 3); await W.esperar(800); }
@@ -172,7 +181,7 @@ const MODOS = {
       { titulo: 'Severidad', texto: ctx, fuente: R.N31, puntos: 10, iniciar() { R.decidir(W, '¿Qué severidad del daño puede ocasionar?', SV.map(s => ({ t: R.SEV[s], ok: s === A.s, fb: `Severidad ${R.SEV[A.s]}.`, f: 'NOM-031-STPS-2011, 8.3 b) Tabla 3' })), () => W.siguiente(), ctx, false); } },
       { titulo: 'Nivel de riesgo', texto: ctx, fuente: R.N31, puntos: 10, iniciar() { R.decidir(W, `Con ${A.f} × ${A.s}, ¿qué nivel indica la matriz?`, NV.map(x => ({ t: x, ok: x === nv, fb: `${A.f} × ${A.s} = ${nv}.`, f: 'NOM-031-STPS-2011, 8.3 c) Tabla 4' })),
         () => { h.mk.marco.material.color.set(R.NIVEL_COLOR[nv]); W.siguiente(); }, ctx + tablaMatriz(A.f, A.s), false); } },
-      { titulo: 'Control', texto: ctx, fuente: 'NOM-017-STPS-2024, 5.2; NIOSH (referencia)', puntos: 20, iniciar() { R.decidir(W, '¿Cuál es la medida MÁS efectiva?', A.control, () => { W.globo('Control aplicado', h.g, 2200, 2.6); setTimeout(() => W.siguiente(), 900); }, `${ctx}<br>Jerarquía: eliminación → sustitución → ingeniería → administrativos → EPP.`); } }]; },
+      { titulo: 'Control', texto: ctx, fuente: 'NOM-017-STPS-2024, 5.2; NIOSH (referencia)', puntos: 10, iniciar() { R.decidir(W, '¿Cuál es la medida MÁS efectiva?', A.control, () => { W.globo('Control aplicado', h.g, 2200, 2.6); setTimeout(() => W.siguiente(), 900); }, `${ctx}<br>Jerarquía: eliminación → sustitución → ingeniería → administrativos → EPP.`); } }]; },
 };
 const NOMBRES = { recorrido: '🗺️ <b>Recorrido:</b> fichas de la norma en cada punto', peligros: '⚠️ <b>Identificar peligros</b> (riesgos sin control y condiciones controladas)',
   inspeccion: '📋 <b>Inspección</b> con lista de verificación', emergencia: '🚨 <b>Respuesta a emergencia</b> (la escena hace lo que dices)', analisis: '🔎 <b>Análisis de riesgo</b> (matriz NOM-031 y jerarquía de controles)' };

@@ -7,6 +7,7 @@
 <script src="../../../motor/vendor/aframe-1.7.1.min.js"></script>
 <script src="../../../motor/realismo.js"></script>
 <script src="../../../motor/senales.js"></script>
+<script src="../../../motor/sonido.js"></script>
 <style>
 :root{--bg:#0f1720;--fg:#f2f5f7;--acc:#f5b400;--ok:#2fbf71;--bad:#e5484d;--panel:rgba(15,23,32,.92)}
 html,body{margin:0;height:100%;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--fg)}
@@ -763,6 +764,7 @@ function teleport(sc){
   const lc=cam.components['look-controls']; if(lc){ lc.yawObject.rotation.y=0; lc.pitchObject.rotation.x=0; }
 }
 function clearFX(){
+  SFX.splice(0).forEach(h=>window.Sonido&&Sonido.detener(h));
   STATE.fx.forEach(e=>e.parentNode&&e.parentNode.removeChild(e)); STATE.fx=[];
   if(STATE.ring){ STATE.ring.parentNode.removeChild(STATE.ring); STATE.ring=null; }
   if(STATE.arrow){ STATE.arrow.parentNode.removeChild(STATE.arrow); STATE.arrow=null; }
@@ -864,6 +866,9 @@ function startFX(sc){
   }
   if(fx==='lpfire'){ STATE.fx.push(flame(R,P(x,1.25,z),0.7)); }
   if(fx==='gnfire'){ STATE.fx.push(flame(R,P(x,y+0.3,z),1.6)); }
+  // sonido de la emergencia (motor/sonido.js): alarma y, si hay flama, fuego
+  if(window.Sonido){ const pos=R.object3D.localToWorld(new THREE.Vector3(x,1,z)); const o={getWorldPosition:v=>v.copy(pos),position:pos};
+    SFX.push(Sonido.fuente('alarma',o,{vol:0.7,alcance:45})); if(fx==='lpfire'||fx==='gnfire') SFX.push(Sonido.fuente('fuego',o,{vol:0.8,alcance:25})); }
   setTimeout(sombras,100);
 }
 function showRing(sc,r){
@@ -997,9 +1002,18 @@ const SENALES={
   ducto_gasolina:[['inflamable',[-1.2,0,-1.5],0],['no_fumar',[6,0,-1.5],0],['no_paso',[-9,0,-12],60],['reunion',[-8,0,4],20]]};
 function ponerSenales(){ Object.entries(SENALES).forEach(([id,lista])=>{ const R=ROOT[id]; if(!R) return; lista.forEach(([s,pos,ry])=>senal(R,P(...pos),s,ry)); }); }
 
+// ---------- Sonido ambiental y de equipos (generado por código, sin archivos) ----------
+const SFX=[];
+function sonidos(){ if(!window.Sonido) return; Sonido.camara(scene.camera); Sonido.ambiente('viento',0.4);
+  const en=id=>OBJ[id]&&OBJ[id].object3D;
+  if(en('g_truck')) Sonido.fuente('motor',en('g_truck'),{vol:0.6,alcance:20});      // autotanque descargando
+  if(en('l_leak')) Sonido.fuente('fuga',en('l_leak'),{vol:0.6,alcance:10});        // cilindro con fuga
+  if(en('l_sparks')) Sonido.fuente('sierra',en('l_sparks'),{vol:0.35,alcance:12}); // esmeril con chispas
+  const gn=ROOT.ducto_gn; if(gn){ const p=gn.object3D.localToWorld(new THREE.Vector3(2,1.2,-6)); Sonido.fuente('fuga',{getWorldPosition:v=>v.copy(p),position:p},{vol:0.5,alcance:12}); } }
+
 // ---------- Inicio ----------
 const scene=document.querySelector('a-scene');
-async function boot(){ await probarTex(); buildWorld(); ponerSenales(); texturizar(); scene.setAttribute('pad-move',''); scene.setAttribute('seguir-ruta','');
+async function boot(){ await probarTex(); buildWorld(); ponerSenales(); texturizar(); scene.setAttribute('pad-move',''); scene.setAttribute('seguir-ruta',''); setTimeout(sonidos,800);
   setTimeout(()=>construirNav().catch(e=>console.warn('nav',e)),1500);
   if(window.Realismo){ scene.object3D.background=Realismo.cielo(THREE,'#5d9bd1','#d7e9f3','#d7e9f3'); }
   setTimeout(sombras,300); setTimeout(sombras,1500);

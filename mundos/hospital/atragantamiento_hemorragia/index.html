@@ -86,7 +86,7 @@ function seriePaso({ titulo, texto, fuente, objetivo, n = 5, resaltar, errores =
       if (t === objetivo) { k++; anim && anim(); W.$('pTxt').innerHTML = texto + `<br><b>${k}/${n}</b>`; if (k === n) { W.resaltar([]); W.bien(fin || 'Serie completa.', fuente); W.siguiente(); } }
       else if (errores[t]) W.mal(errores[t][0], errores[t][1] || fuente, !!errores[t][2]); } };
 }
-const sacude = (obj, dz = 0.04) => { const z0 = obj.position.z; obj.position.z = z0 + dz; setTimeout(() => obj.position.z = z0, 120); };
+const sacude = (obj, dz = 0.04) => { W.efecto('compresion'); const z0 = obj.position.z; obj.position.z = z0 + dz; setTimeout(() => obj.position.z = z0, 120); };
 
 // ------------------------------------------------------------------ casos [FICTICIO – ejercicio didáctico]
 const ADULTO = () => [

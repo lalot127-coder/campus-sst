@@ -104,7 +104,7 @@ async function manosA(destI, destD, ms = 500, inclina = 0.35) { const i0 = objMa
   await A(ms, k => { lerpV(objMano[0], i0, destI, k); lerpV(objMano[1], d0, destD, k); yoTronco.rotation.x = r0 + (inclina - r0) * k; }); }
 const enAdulto = (x, y, z) => adulto.localToWorld(new THREE.Vector3(x, y, z)), enBebe = (x, y, z) => bebe.localToWorld(new THREE.Vector3(x, y, z));
 async function comprimir(n, cuerpo = 'adulto', ms = 270) { const obj = cuerpo === 'bebe' ? bT : torso, h = cuerpo === 'bebe' ? 0.025 : 0.05;
-  for (let i = 0; i < n; i++) { const a0 = objMano[0].clone(), b0 = objMano[1].clone();
+  for (let i = 0; i < n; i++) { const a0 = objMano[0].clone(), b0 = objMano[1].clone(); W.efecto('compresion');
     await A(ms / 2, k => { objMano[0].y = a0.y - h * k; objMano[1].y = b0.y - h * k; obj.scale.y = 1 - 0.18 * k; yoTronco.position.y = 0.42 - h * k; });
     await A(ms / 2, k => { objMano[0].y = a0.y - h * (1 - k); objMano[1].y = b0.y - h * (1 - k); obj.scale.y = 0.82 + 0.18 * k; yoTronco.position.y = 0.42 - h * (1 - k); }); } }
 async function manosEnPecho() { const c = enAdulto(-0.12, 0.47, 0); await manosA(c.clone().add(new THREE.Vector3(0, 0, -0.03)), c.clone().add(new THREE.Vector3(0, 0.03, 0.03)), 600, 0.55); }
@@ -115,6 +115,7 @@ const parches = new THREE.Group(); scene.add(parches); parches.visible = false;
 const parche = (x, z, ry) => { const p = caja(0.13, 0.008, 0.09, 0xF5F5F5, x, 0.415, z, adulto); p.rotation.y = ry; const c = caja(0.11, 0.009, 0.07, 0xE53935, x, 0.416, z, adulto); c.rotation.y = ry; return [p, c]; };
 const pads = [...parche(-0.36, 0.13, 0.4), ...parche(-0.1, -0.2, -0.3)]; pads.forEach(p => p.visible = false);   // derecho bajo la clavícula · izquierdo al costado
 const padsPed = new THREE.Group(); caja(0.22, 0.03, 0.16, 0x1565C0, 0, 0.015, 0, padsPed); const lp = letrero('PARCHES PEDIÁTRICOS', 0.5, 0.09, '#1565C0'); lp.rotation.x = -Math.PI / 2; lp.position.set(0, 0.035, 0); padsPed.add(lp); padsPed.position.set(-0.55, 0, 0.45); padsPed.visible = false; scene.add(padsPed);
+let sonDea = null;   // pitidos del DEA encendido (motor/sonido.js)
 const respira = t => { if (adulto.visible) torso.scale.y = 1; };
 W.cuadro.push(respira);
 
@@ -134,7 +135,7 @@ function ritmoPaso({ titulo, texto, fuente, cuerpo, bajar = 0.05 }) {
     iniciar() { t = []; manos.visible = false; if (cuerpo === 'bebe') { const c = enBebe(-0.06, 0.25, 0); manosA(c.clone().add(new THREE.Vector3(0, 0, -0.03)), c.clone().add(new THREE.Vector3(0, 0, 0.03)), 400, 0.5); } else manosEnPecho(); manos.position.copy(cuerpo === 'bebe' ? new THREE.Vector3(0.14, 0.27, 0.1) : new THREE.Vector3(-0.12, 0.47, 0)); manos.scale.set(cuerpo === 'bebe' ? 0.5 : 1, 1, cuerpo === 'bebe' ? 0.6 : 1);
       W.botones([['💓 Comprimir', () => {
         t.push(performance.now()); const obj = cuerpo === 'bebe' ? bT : torso; const y0 = manos.position.y;
-        manos.position.y = y0 - bajar; obj.scale.y = 0.82; objMano.forEach(v => v.y -= bajar); yoTronco.position.y = 0.42 - bajar; setTimeout(() => { manos.position.y = y0; obj.scale.y = 1; objMano.forEach(v => v.y += bajar); yoTronco.position.y = 0.42; }, 160);
+        W.efecto('compresion'); manos.position.y = y0 - bajar; obj.scale.y = 0.82; objMano.forEach(v => v.y -= bajar); yoTronco.position.y = 0.42 - bajar; setTimeout(() => { manos.position.y = y0; obj.scale.y = 1; objMano.forEach(v => v.y += bajar); yoTronco.position.y = 0.42; }, 160);
         W.$('pTxt').innerHTML = texto + `<br><b>Compresiones: ${t.length}/12</b>`;
         if (t.length === 12) {
           const iv = t.slice(1).map((x, i) => x - t[i]), prom = iv.reduce((a, b) => a + b, 0) / iv.length, f = Math.round(60000 / prom);
@@ -164,13 +165,13 @@ const ADULTO = () => [
       for (let i = 0; i < 2; i++) { W.globo('Ventilación de 1 segundo', yoCab, 900); await A(1000, k => { torso.scale.x = 1 + 0.06 * Math.sin(k * Math.PI); torso.position.y = 0.2 + 0.02 * Math.sin(k * Math.PI); }); await esperar(250); }
       await A(300, k => { cabeza.rotation.z = -0.35 * (1 - k); }); await manosEnPecho(); await comprimir(3); } }),
   tocarPaso({ titulo: 'Llegó el DEA', texto: 'Tu compañera trae el DEA. Toca el <b>gabinete del DEA</b> para abrirlo y encenderlo.', fuente: F.dea, objetivo: 'dea', resaltar: [gab],
-    alAcertar: 'DEA encendido: sigue sus indicaciones de voz.', anim: async () => { dea.visible = true; dea.position.set(-2.4, 1.1, -2.6); W.globo('¡Aquí está el DEA!', cTor, 1500);
+    alAcertar: 'DEA encendido: sigue sus indicaciones de voz.', anim: async () => { dea.visible = true; dea.position.set(-2.4, 1.1, -2.6); sonDea = W.sonido('dea', dea, { vol: 0.6, alcance: 8 }); W.globo('¡Aquí está el DEA!', cTor, 1500);
       await caminarComp(new THREE.Vector3(-0.9, 0, -0.75)); const o = dea.position.clone(), d = enAdulto(-0.55, 0.06, -0.45); W.cuadro.push(() => {}); await A(500, k => dea.position.lerpVectors(o, d, k)); W.globo('Encendido: siga las instrucciones', dea, 1800, 0.3); await esperar(800); } }),
   preguntaPaso({ titulo: 'Parches', texto: 'El DEA dice: «Coloque los parches en el pecho desnudo del paciente».', fuente: F.dea, p: '¿Dónde van los parches de adulto?', ops: ['Como indica el dibujo: uno bajo la clavícula derecha y otro al costado izquierdo, bajo la axila (o adelante y atrás)', 'Ambos en el abdomen', 'Sobre la ropa, en los brazos'], ok: [0], retro: 'Anterolateral o anteroposterior, sobre el pecho descubierto.', anim: async () => { await manosA(enAdulto(-0.36, 0.46, 0.13), enAdulto(-0.1, 0.46, -0.2), 700, 0.5); pads.forEach(p => p.visible = true);
       W.globo('Parches colocados', pads[0], 1600, 0.3); await esperar(900); reposo(); } }),
   preguntaPaso({ titulo: 'Análisis', texto: 'El DEA: «Analizando el ritmo… Descarga indicada».', fuente: F.dea, p: 'Durante el análisis y la descarga…', ops: ['Sigo comprimiendo para no perder tiempo', 'Nadie toca a la persona; presiono el botón cuando me indique', 'Le quito los parches'], ok: [1], retro: 'Que nadie la toque.', anim: async () => { const i0 = objMano[0].clone(), d0 = objMano[1].clone(); await A(600, k => { yoTronco.rotation.x = 0.4 * (1 - k) - 0.15 * k; objMano[0].y = i0.y + 0.4 * k; objMano[1].y = d0.y + 0.4 * k; });
       W.globo('¡Nadie lo toque!', yoCab, 2200); await esperar(900); const luz = new THREE.PointLight(0xBFE8FF, 0, 4); luz.position.copy(enAdulto(-0.25, 0.8, 0)); scene.add(luz);
-      await A(350, k => { luz.intensity = 8 * Math.sin(k * Math.PI); torso.position.y = 0.2 + 0.04 * Math.sin(k * Math.PI); }); scene.remove(luz); W.globo('Descarga administrada', dea, 1600, 0.3); await esperar(700); } }),
+      W.efecto('descarga'); await A(350, k => { luz.intensity = 8 * Math.sin(k * Math.PI); torso.position.y = 0.2 + 0.04 * Math.sin(k * Math.PI); }); scene.remove(luz); W.globo('Descarga administrada', dea, 1600, 0.3); await esperar(700); } }),
   preguntaPaso({ titulo: 'Después de la descarga', texto: 'El DEA dio la descarga.', fuente: F.dea, p: '¿Qué sigue?', ops: ['Reanudar la RCP de inmediato por 2 minutos, hasta que el DEA vuelva a analizar', 'Buscar el pulso 1 minuto', 'Esperar a la ambulancia sin hacer nada'], ok: [0], retro: 'RCP de inmediato; relevo cada 2 minutos si hay otra persona.', anim: async () => { await manosEnPecho(); W.globo('RCP de inmediato: 2 minutos', yoCab, 2200); await comprimir(6); } }),
 ];
 const LACTANTE = () => [
@@ -188,7 +189,7 @@ const LACTANTE = () => [
 
 W.inicio([{ id: 'adulto', txt: '🏢 <b>Caso 1:</b> Paro en la oficina · adulto, RCP 30:2 y DEA' },
   { id: 'bebe', txt: '👶 <b>Caso 2:</b> Lactante en la guardería · RCP con talón de una mano o dos pulgares' }],
-  id => { manos.visible = false; adulto.visible = id === 'adulto'; bebe.visible = id === 'bebe'; colocarYo(id === 'bebe'); comp.position.copy(COMP0); comp.rotation.y = 2.2; dea.visible = false; pads.forEach(p => p.visible = false); padsPed.visible = false; cabeza.rotation.z = 0; return id === 'adulto' ? ADULTO() : LACTANTE(); },
+  id => { manos.visible = false; adulto.visible = id === 'adulto'; bebe.visible = id === 'bebe'; colocarYo(id === 'bebe'); if (sonDea) { sonDea.detener(); sonDea = null; } comp.position.copy(COMP0); comp.rotation.y = 2.2; dea.visible = false; pads.forEach(p => p.visible = false); padsPed.visible = false; cabeza.rotation.z = 0; return id === 'adulto' ? ADULTO() : LACTANTE(); },
   'Basado en: Guías AHA 2025 (Partes 6 y 7) e IFRC 2025. Casos ficticios con fines didácticos. Curso de Primeros auxilios básicos.');
 
 if (location.search.includes('qa')) window.__qa = { hombros, hombroI, pecho, abdomen, cuello, cel, comp: cTor, gab, pie, bPecho, bAbd, tocar: W.tocar, estado: W.qa };
