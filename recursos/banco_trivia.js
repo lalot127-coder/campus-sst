@@ -503,7 +503,7 @@ window.BANCO_TRIVIA = [
 ]
 },
 {
-"tema": "Enfermería industrial",
+"tema": "Enfermería ocupacional",
 "preguntas": [
 {
 "p": "¿Qué incluyen los servicios preventivos de medicina del trabajo según el RFSST?",

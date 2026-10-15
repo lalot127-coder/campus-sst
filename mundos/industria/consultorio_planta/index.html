@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Simulador · Consultorio de la planta (enfermería industrial)</title>
+<title>Simulador · Consultorio de la planta (enfermería ocupacional)</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script src="../../../motor/motor.js"></script>
 <script src="../../riesgo/comun.js"></script>
@@ -13,7 +13,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// Curso "Enfermería industrial" (UT de Oriental, 19/11/2026). Fuentes verificadas el 10/10/2026
+// Curso "Enfermería ocupacional" (UT de Oriental, 19/11/2026). Fuentes verificadas el 10/10/2026
 // (02_fuentes_verificadas/registro_fuentes.md). Empresa, personas y casos [FICTICIO].
 const C161 = 'Convenio 161 OIT (DOF 13/04/1987)', LFT = 'LFT (últ. ref. DOF 14/05/2026)', RF = 'RFSST (DOF 13/11/2014)';
 const N10 = 'NOM-010-STPS-2014', N35 = 'NOM-035-STPS-2018', N19S = 'NOM-019-SSA3-2013';
@@ -93,7 +93,7 @@ const CASOS = {
     ], `${RF} art. 50`),
   ],
   prev: () => [
-    intro(W, '<h2>📅 Lunes de planeación</h2><p>La médica de la planta te pide armar con ella el <b>programa preventivo</b> del año. Aquí se nota que la enfermería industrial es, sobre todo, <b>prevención</b>.</p>',
+    intro(W, '<h2>📅 Lunes de planeación</h2><p>La médica de la planta te pide armar con ella el <b>programa preventivo</b> del año. Aquí se nota que la enfermería ocupacional es, sobre todo, <b>prevención</b>.</p>',
       'Autopartes del Oriente · 450 trabajadores · área de pintura con solventes.'),
     tocaYDecide(W, 'El programa de salud', 'Toca el <b>programa de salud</b>.', S.programa.marco, 'programa', '¿Qué programas debe instaurar el patrón, con la opinión del servicio médico interno?', [
       { t: 'Programas para promover la salud de los trabajadores y prevenir las adicciones', ok: true, fb: 'El patrón los instaura y les da seguimiento.', f: `${RF} art. 49 fr. II y IV` },

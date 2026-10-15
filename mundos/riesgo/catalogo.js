@@ -136,8 +136,8 @@
       ],
       principal: 'prensa', evalua: { f: 'C', s: 'III', pista: 'Los atrapamientos ocurren pocas veces, pero pueden causar la pérdida de un dedo.' },
       control: [{ t: 'Guarda fija y mando bimanual', ok: true, fb: 'Control de ingeniería.', f: `NOM-004-STPS-1999, 5.3; ${NIOSH}` }, SOLO_EPP, NO_CUIDADO] },
-    // Curso "Enfermería industrial" (UT de Oriental, 19/11/2026) · fuentes verificadas el 10/10/2026
-    { id: 'servicio_medico', titulo: 'Servicio médico de la planta (curso Enfermería industrial)', modulos: ['industria/consultorio_planta', 'industria/juego_ei_mito_realidad', 'industria/juego_ei_maraton'],
+    // Curso "Enfermería ocupacional" (UT de Oriental, 19/11/2026) · fuentes verificadas el 10/10/2026
+    { id: 'servicio_medico', titulo: 'Servicio médico de la planta (curso Enfermería ocupacional)', modulos: ['industria/consultorio_planta', 'industria/juego_ei_mito_realidad', 'industria/juego_ei_maraton'],
       escena: 'Consultorio de la planta de Autopartes del Oriente, 450 trabajadores, a media mañana. [FICTICIO]',
       riesgos: [
         { id: 'aguja', prop: 'punzo', icono: '💉', nombre: 'Agujas usadas sobre la mesa, sin recipiente rígido', real: true, tipo: 'Biológico', fb: 'Piquete accidental y exposición a agentes biológicos.', f: `${N87}, 6.2` },
@@ -149,7 +149,7 @@
       principal: 'aguja', evalua: { f: 'C', s: 'III', pista: 'Los piquetes ocurren pocas veces, pero pueden transmitir una infección grave. (Ejemplo didáctico.)' },
       control: [{ t: 'Desechar las agujas de inmediato en un recipiente rígido de polipropileno rojo', ok: true, fb: 'Es el envasado que la norma fija para punzocortantes.', f: `${N87}, 6.2` },
         SOLO_EPP, NO_CUIDADO] },
-    { id: 'agentes_salud', titulo: 'Nave con agentes de salud (curso Enfermería industrial)', modulos: ['industria/normas_salud', 'industria/juego_ei_que_nom', 'industria/juego_ei_memorama_vigilancia'],
+    { id: 'agentes_salud', titulo: 'Nave con agentes de salud (curso Enfermería ocupacional)', modulos: ['industria/normas_salud', 'industria/juego_ei_que_nom', 'industria/juego_ei_memorama_vigilancia'],
       escena: 'Nave de prensas y pintura de Autopartes del Oriente durante el turno matutino. [FICTICIO]',
       riesgos: [
         { id: 'ruido', prop: 'compresora', icono: '🔊', nombre: 'Prensas a 92 dB(A) sin programa de conservación de la audición', real: true, tipo: 'Físico', fb: 'Exposición a ruido de 85 dB(A) o más.', f: 'NOM-011-STPS-2001, 8.1 y 8.6' },

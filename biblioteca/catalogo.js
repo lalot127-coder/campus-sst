@@ -267,7 +267,7 @@ window.DOCUMENTOS = [
     url: 'https://www.cdc.gov/niosh/hierarchy-of-controls/about/index.html', consulta: '05/10/2026',
     uso: 'Orden de efectividad: eliminación, sustitución, ingeniería, administrativos y EPP. Coherente con NOM-017-STPS-2024 5.2 (EPP transitorio o complementario).',
     apa: { autor: 'National Institute for Occupational Safety and Health', fecha: '2024, 10 de abril', titulo: 'Hierarchy of Controls', nota: '', sitio: 'Centers for Disease Control and Prevention' } },
-  // ---------------------------------------------------------------- curso Enfermería industrial (verificados 10/10/2026)
+  // ---------------------------------------------------------------- curso Enfermería ocupacional (verificados 10/10/2026)
   { id: 'lgs', estante: 'leyes', clave: 'LGS', titulo: 'Ley General de Salud', emisor: 'Congreso de la Unión', publicacion: 'Últimas reformas DOF 15/01/2026', estado: 'Vigente',
     url: 'https://www.diputados.gob.mx/LeyesBiblio/pdf/LGS.pdf', archivo: 'LGS.pdf', consulta: '10/10/2026',
     uso: 'Salud ocupacional como materia de salubridad general (art. 3 fr. XIV); títulos y cédulas para ejercer enfermería (art. 79); Cap. V Salud Ocupacional (art. 128).',
