@@ -449,7 +449,9 @@ function caminarA(p, cb, guardar = true) {
 function teletransportar(p, cb, ry) { levantar(); ruta = []; marca.visible = false; $('#fundido').style.opacity = 1;
   setTimeout(() => { yo.position.set(p.x, 0, p.z); if (ry !== undefined) yo.rotation.y = ry; colocarCamara(); if (xr.activo()) xr.colocar(yo.position, yo.rotation.y + Math.PI);
     $('#fundido').style.opacity = 0; cb && cb(); }, 420); }
-function irAEdificio(id) { if (dentro) return; const e = ED[id]; if (yo.position.distanceTo(e.frente) > 45) return teletransportar(e.frente, () => entrarEdificio(id));
+function irAEdificio(id) { if (dentro) return; const e = ED[id];
+  // En VR caminarA no funciona; siempre teletransportar
+  if (xr.activo() || yo.position.distanceTo(e.frente) > 45) return teletransportar(e.frente, () => entrarEdificio(id));
   caminarA(e.frente, () => entrarEdificio(id)); aviso(`Caminando a ${e.a.icono} ${e.a.nombre}…`); }
 function irAZona(id, entrarTambien) { const z = Z.ZONAS.find(q => q.id === id); if (!z || dentro) return; Z.cargar(id);
   const dest = entrarTambien ? z.puertaMundo : z.entrada, cb = entrarTambien ? () => entrarEdificio(id) : () => aviso(`${z.icono} ${z.nombre}: toca los marcadores numerados y la caseta de acceso.`);
@@ -484,8 +486,15 @@ function entrar(m) {
   $('#fundido').style.opacity = 1; setTimeout(() => location.href = m.url, 450);
 }
 // puertas, sillas y señales del interior
-function irAPuerta(k) { const p = I && I.puertas[k]; if (!p) return; caminarA(p.frente, () => { yo.lookAt(p.g.position.x, 0, p.g.position.z); const m = p.m;
-  if (m.estado === 'pronto' || m.estado === 'pendiente' || !Acceso.puede(m.puerta)) return entrar(m); p.abrir(); setTimeout(() => entrar(m), 650); }); }
+function irAPuerta(k) { const p = I && I.puertas[k]; if (!p) return;
+  const m = p.m;
+  const abrirYentrar = () => { yo.lookAt(p.g.position.x, 0, p.g.position.z);
+    if (m.estado === 'pronto' || m.estado === 'pendiente' || !Acceso.puede(m.puerta)) return entrar(m);
+    p.abrir(); setTimeout(() => entrar(m), 650); };
+  // En VR caminarA() no funciona: el rig sobreescribe yo.position cada cuadro.
+  // Solución: teletransportar directamente frente a la puerta (con fundido).
+  if (xr.activo()) return teletransportar(p.frente, abrirYentrar);
+  caminarA(p.frente, abrirYentrar); }
 function sentar(k) { const s = I && I.sillas[k]; if (!s) return; caminarA(s.frente, () => { yo.position.set(s.pos.x, Avatar.ALTO_SENTADO(s.asiento), s.pos.z); yo.rotation.y = s.ry; pose = 'sentado'; sentadoEn = k; }); }
 function verSenal(id, obj) { const wp = obj.getWorldPosition(new THREE.Vector3()), n = obj.getWorldDirection(new THREE.Vector3()); n.y = 0; n.normalize();
   const de = wp.clone().addScaledVector(n, 1.7); de.y = 0; if (!navAct().libre(de.x, de.z)) return fichaSenal(id);
@@ -503,7 +512,7 @@ $('#bAtras').onclick = atras; $('#bReiniciar').onclick = reiniciar;
 $('#bInfo').onclick = abrirInfo;
 $('#bAyuda').onclick = () => modal(`<h2>❔ Cómo moverte</h2><p>• Toca el piso para caminar (el avatar sigue los caminos y rodea obstáculos); toca un edificio para ir y <b>entrar caminando</b>; adentro, toca una puerta.<br>• Toca una <b>silla</b> para sentarte y una <b>señal</b> para pararte frente a ella.<br>• En computadora: flechas o W A S D; arrastra para girar la vista y usa la rueda para acercar.<br>
   • <b>🗺️ Mapa</b>: viaja (teletransporte) a cualquier edificio o zona: mina a cielo abierto, mina subterránea, obra, aserradero, ferrocarril, campo agrícola y prácticas (hidrocarburos).<br>
-  • <b>⬅ Atrás</b> regresa al lugar anterior (o sale del edificio). <b>↺ Inicio</b> te lleva a la entrada. <b>🚪 Salir</b> vuelve a la pantalla de inicio.<br>• <b>🥽 VR</b> (visor Meta Quest): apunta al piso y aprieta el gatillo para teletransportarte; apunta a puertas y objetos para tocarlos; joystick para girar.<br>
+  • <b>⬅ Atrás</b> regresa al lugar anterior (o sale del edificio). <b>↺ Inicio</b> te lleva a la entrada. <b>🚪 Salir</b> vuelve a la pantalla de inicio.<br>• <b>🥽 VR</b> (visor Meta Quest): apunta al piso + gatillo = teletransporte; apunta a puertas/sillas/señales + gatillo = interactuar; joystick izq/der = girar. Con controles: <b>joystick-press izq = Atrás · joystick-press der = Inicio · B o Y = Menú VR</b>. Con manos: pellizco índice-pulgar = gatillo.<br>
   • Sigue las flechas verdes del piso: llevan al <b>punto de reunión</b>.<br>• <b>🔗 Compartir</b> genera el enlace y el QR de este edificio o del campus.</p>`);
 $('#bComp').onclick = () => dentro ? compartirEdif() : Compartir.abrir(Compartir.url('index.html'), 'Campus de Simulación SST');
 const compartirEdif = () => { const a = areaDe(dentro); Compartir.abrir(Compartir.url('index.html?mundo=' + dentro), `${a.icono} ${a.nombre} · Campus de Simulación SST`); };
@@ -547,7 +556,8 @@ function tocar(u, punto, obj) {
   if (u.tipo === 'info') return abrirInfo();
   if (u.tipo === 'imagen') return modal(`<h2>${u.titulo}</h2><img src="${u.src}" style="width:100%;max-width:420px;display:block;margin:auto;border-radius:12px">`);
   if (u.tipo === 'pin') return modal(`<h2>${u.titulo}</h2><p>${u.texto}</p><p class="fuente">Marcador del recorrido. Los requisitos detallados se revisan en el curso correspondiente.</p>`);
-  if (dentro) { if (u.tipo === 'puerta') return irAPuerta(u.i); if (u.tipo === 'silla') return sentar(u.i); if (u.tipo === 'salir') return caminarA(I.salida.frente, () => salirEdificio());
+  if (dentro) { if (u.tipo === 'puerta') return irAPuerta(u.i); if (u.tipo === 'silla') return sentar(u.i);
+    if (u.tipo === 'salir') return xr.activo() ? teletransportar(I.salida.frente, () => salirEdificio()) : caminarA(I.salida.frente, () => salirEdificio());
     if (u.piso && punto) caminarA(punto); return; }
   if (u.tipo === 'zona') return irAZona(u.zona, true);
   if (u.tipo === 'edificio' || u.tipo === 'puerta') return irAEdificio(u.area);
@@ -562,8 +572,31 @@ renderer.domElement.addEventListener('pointerup', e => {
 const teclas = new Set(); addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; teclas.add(e.key.toLowerCase()); if (e.key === 'Escape') salirEdificio(); }); addEventListener('keyup', e => teclas.delete(e.key.toLowerCase()));
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); ajustarFov(); });
 // realidad virtual del campus (motor/xr_campus.js): teletransporte con el rayo, toques con gatillo o pellizco
+// Menú VR: sustituye la barra HTML (invisible en el visor). Se abre con B o Y.
+function menuVR() {
+  const instrucciones =
+    '🕹️ Joystick izq. = Atrás / salir edificio\n' +
+    '🏠 Joystick der. = Volver al inicio\n' +
+    '🥽 B / Y = Este menú\n\n' +
+    '🎯 Apunta al PISO + gatillo → caminar/teletransportar\n' +
+    '🚪 Apunta a PUERTA + gatillo → entrar al módulo\n' +
+    '🪑 Apunta a SILLA + gatillo → sentarse\n' +
+    '🚨 Apunta a SEÑAL + gatillo → información NOM\n' +
+    '🟢 Puerta verde (salida) + gatillo → salir del edificio\n\n' +
+    '✋ Con manos: pellizco índice-pulgar = gatillo';
+  xr.panel('🗺️ Controles del visor', instrucciones);
+}
 const xr = crearXR({ THREE, renderer, camera, controls, contenedor: $('#barra .der'), escena: () => escena, objetivos: () => [...tocAct(), ...pisAct()], yo: () => yo,
-  alTocar: h => tocar(h.object.userData, h.point, h.object), alTeletransportar: p => { if (navAct().libre(p.x, p.z)) { levantar(); ruta = []; yo.position.set(p.x, 0, p.z); xr.colocar(p); } } });
+  alTocar: h => tocar(h.object.userData, h.point, h.object),
+  alTeletransportar: p => { if (navAct().libre(p.x, p.z)) { levantar(); ruta = []; yo.position.set(p.x, 0, p.z); xr.colocar(p); } },
+  // Botones del gamepad: joystick-press izq (mano=left, btn 3) → Atrás
+  //                      joystick-press der (mano=right, btn 3) → Inicio
+  //                      B (right, btn 5) o Y (left, btn 5) → Menú VR
+  alBoton: (mano, btn) => {
+    if (btn === 3 && mano === 'left')  { atras(); return; }
+    if (btn === 3 && mano === 'right') { reiniciar(); return; }
+    if (btn === 5) menuVR();
+  } });
 
 // ============================================================================ MULTIJUGADOR (servidor de aula en el mismo wifi)
 // Funciona cuando el campus se abre desde `python 05_herramientas/servidor_aula.py <curso>`: cada celular envía su

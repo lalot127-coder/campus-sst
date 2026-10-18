@@ -54,11 +54,27 @@ export function crearXR(o) {
   function cerrarPanel() { if (panelMesh) { panelMesh.parent && panelMesh.parent.remove(panelMesh); panelMesh = null; } }
   // ---------------- cada cuadro: retícula y giro por pasos
   let girando = false;
+  // ---------------- detección de botones del gamepad (controllers y hands)
+  // Meta Quest: btn 0=gatillo, 1=grip, 3=joystick-press, 4=A/X, 5=B/Y
+  // Mapa: joystick-press izq → Atrás  |  joystick-press der → Inicio  |  B/Y → Menú VR
+  const btnPrev = new Map(); // clave: "handedness_idx" → pressed anterior
+  function detectarBotones(fuentes) {
+    fuentes.forEach(f => {
+      const btns = f.gamepad && f.gamepad.buttons; if (!btns) return;
+      const mano = f.handedness || 'none';
+      btns.forEach((b, idx) => {
+        const k = `${mano}_${idx}`, prev = btnPrev.get(k) || false;
+        if (b.pressed && !prev) o.alBoton && o.alBoton(mano, idx);
+        btnPrev.set(k, b.pressed);
+      });
+    });
+  }
   function actualizar() { if (!renderer.xr.isPresenting) return; montar(); retic.visible = false;
     for (const { c, linea } of controles) { const h = lanzar(c); linea.scale.z = h ? h.distance : 6; if (h && h.object.userData.piso && !panelMesh) { retic.visible = true; retic.position.copy(h.point).setY(h.point.y + .02); } }
     const fuentes = sesion ? [...sesion.inputSources] : []; let eje = 0; fuentes.forEach(f => { const ax = f.gamepad && f.gamepad.axes; if (ax && ax.length >= 4 && Math.abs(ax[2]) > Math.abs(eje)) eje = ax[2]; });
     if (Math.abs(eje) > .7 && !girando) { girando = true; const cam = camera.getWorldPosition(new THREE.Vector3()); const d = -Math.sign(eje) * Math.PI / 6;
       rig.position.sub(cam).applyAxisAngle(new THREE.Vector3(0, 1, 0), d).add(cam); rig.rotation.y += d; } if (Math.abs(eje) < .3) girando = false;
+    detectarBotones(fuentes);
     const yo = o.yo(); const cam = camera.getWorldPosition(new THREE.Vector3()); yo.position.set(cam.x, 0, cam.z); }
   return { activo: () => renderer.xr.isPresenting, panel, cerrarPanel, colocar, actualizar, rig, boton: btn };
 }
