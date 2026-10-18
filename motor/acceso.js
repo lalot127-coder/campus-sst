@@ -20,7 +20,8 @@
 const LLAVE_PUBLICA = {"kty":"EC","crv":"P-256","x":"5PRytfcMjnoGTScsqc1MI8jtZM5ab6opAZrnh3Chfyo","y":"5P9ntPXikb96EFdSTipp4xV0QZ6ZcQJKKYP_GV-5QAI"};   // la escribe acceso_semanal.py llaves
 const WHATSAPP = '522411794542';   // +52 241 179 4542 (Carlos Eduardo Roa Sánchez · CERS)
 const SIEMPRE = ['informacion', 'cafeteria', 'biblioteca'];   // gratis para todos, siempre (decisión del propietario 04/10/2026)
-const CONTROL_PUBLICO = 'https://lalot127-coder.github.io/campus-sst/acceso/control.json';
+// las dos plataformas publican el mismo control.json; si una no responde (p. ej. una red que bloquea github.io) se usa la otra
+const CONTROLES_PUBLICOS = ['https://campus-sst.pages.dev/acceso/control.json', 'https://lalot127-coder.github.io/campus-sst/acceso/control.json'];
 const BASE_ACC = document.currentScript ? document.currentScript.src : location.href;
 const K = 'campus_acceso', KC = 'campus_cursos';
 const b64 = s => { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return Uint8Array.from(atob(s), c => c.charCodeAt(0)); };
@@ -54,7 +55,7 @@ async function verificar(cod) {
 // repositorios de github.io, en el campus principal.
 async function leerControl() {
   const urls = [new URL('../acceso/control.json', BASE_ACC).href];
-  if (location.hostname.endsWith('github.io') && urls[0] !== CONTROL_PUBLICO) urls.push(CONTROL_PUBLICO);
+  if (modo() === 'publico') CONTROLES_PUBLICOS.forEach(u => { if (!urls.includes(u)) urls.push(u); });
   for (const u of urls) {
     try {
       const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 5000);

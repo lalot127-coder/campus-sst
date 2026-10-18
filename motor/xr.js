@@ -15,7 +15,17 @@
 window.CampusXR = window.CampusXR || (() => { const ua = navigator.userAgent || '';
   const visor = /OculusBrowser|Quest|Pico|Wolvic|Vive|SamsungBrowser\/.*VR/i.test(ua);
   const movil = !visor && (/Android|iPhone|iPad|iPod|Mobile/i.test(ua) || (navigator.maxTouchPoints > 1 && matchMedia('(pointer: coarse)').matches));
-  return { visor, movil, permitir: visor || !movil || /[?&]xr=1/.test(location.search) }; })();
+  // (18/10/2026) Al cambiar de página el visor sale de VR (así funciona WebXR). Si venías en VR, la página nueva muestra un
+  // botón grande «Continuar en realidad virtual» (el navegador exige un toque para volver a entrar).
+  const marca = () => { try { return sessionStorage.getItem('campus_vr') === '1'; } catch (e) { return false; } };
+  const quitar = () => { try { sessionStorage.removeItem('campus_vr'); } catch (e) { } };
+  function continuar(fn) { if (!marca() || document.getElementById('xrSeguir')) return;
+    const d = document.createElement('div'); d.id = 'xrSeguir';
+    d.style.cssText = 'position:fixed;inset:0;z-index:99;background:rgba(14,58,107,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:Calibri,Arial,sans-serif';
+    d.innerHTML = '<button style="font:900 2rem Arial,sans-serif;padding:26px 40px;border:0;border-radius:22px;background:#3FA7C6;color:#fff">🥽 Continuar en realidad virtual</button><button style="font:700 1.1rem Arial,sans-serif;padding:12px 22px;border:0;border-radius:14px;background:#E8F5F9;color:#0E3A6B">Seguir en pantalla</button>';
+    const [si, no] = d.querySelectorAll('button'); si.onclick = () => { d.remove(); fn(); }; no.onclick = () => { quitar(); d.remove(); };
+    document.body.appendChild(d); }
+  return { visor, movil, permitir: visor || !movil || /[?&]xr=1/.test(location.search), continuar, quitarMarca: quitar }; })();
 (function () {
   const ANCHO = 1024, ALTO = 1280, MW = 0.95, MH = MW * ALTO / ANCHO;
 
@@ -131,15 +141,31 @@ window.CampusXR = window.CampusXR || (() => { const ua = navigator.userAgent || 
           irA(p.x - (cp.x - ofs.x), p.z - (cp.z - ofs.z)); }
       });
       c.addEventListener('squeezestart', alFrente);
+      c.addEventListener('connected', e => { c.userData.fuente = e.data; });
       W.cuadro.push(() => { if (!renderer.xr.isPresenting) return; const r = golpe(c);
         linea.scale.z = r ? r.h.distance : 4; if (i === 0) { mira.visible = !!r && r.tipo === 'piso'; if (mira.visible) { mira.position.copy(r.h.point).y += 0.01; mira.rotation.x = -Math.PI / 2; } } });
     });
+
+    // ---------------------------------------------------------------- joystick y botones del Quest (18/10/2026)
+    // Joystick izq. = caminar · B/Y = Atrás (pregunta si quieres volver al edificio) · A/X = traer el panel al frente
+    const prevB = new Map(), dir = new THREE.Vector3(); let tMov = performance.now();
+    W.cuadro.push(() => { const s = renderer.xr.getSession && renderer.xr.getSession(); if (!s || !renderer.xr.isPresenting) return;
+      const ahora = performance.now(), dt = Math.min(0.05, (ahora - tMov) / 1000); tMov = ahora;
+      for (const f of s.inputSources) { const gp = f.gamepad; if (!gp) continue; const mano = f.handedness;
+        [[4, alFrente], [5, () => { const b = document.getElementById('bAtrasM'); if (b) b.click(); }]].forEach(([i, fn]) => {
+          const k = mano + i, on = !!(gp.buttons[i] && gp.buttons[i].pressed); if (on && !prevB.get(k)) fn(); prevB.set(k, on); });
+        if (mano === 'left' && gp.axes.length >= 4 && Math.hypot(gp.axes[2], gp.axes[3]) > .15) {
+          renderer.xr.getCamera().getWorldDirection(dir); dir.y = 0; dir.normalize(); const v = 2 * dt;
+          if (!base) base = renderer.xr.getReferenceSpace();
+          ofs.x += (dir.x * -gp.axes[3] - dir.z * gp.axes[2]) * v; ofs.z += (dir.z * -gp.axes[3] + dir.x * gp.axes[2]) * v;
+          renderer.xr.setReferenceSpace(base.getOffsetReferenceSpace(new XRRigidTransform({ x: -ofs.x, y: 0, z: -ofs.z, w: 1 }))); } } });
 
     // ---------------------------------------------------------------- entrar / salir
     const fondo = scene.background;
     async function entrar(modo) {
       const s = await navigator.xr.requestSession(modo, { requiredFeatures: ['local-floor'], optionalFeatures: ['hand-tracking'] });
       renderer.xr.setReferenceSpaceType('local-floor'); await renderer.xr.setSession(s); base = null; ofs.x = ofs.z = 0;
+      try { sessionStorage.setItem('campus_vr', '1'); } catch (e) { }
       controls.enabled = false;
       if (modo === 'immersive-ar') { scene.background = null; (opc.entorno || []).forEach(o => o.visible = false); }
       const [x, z] = opc.inicio || [0, 0];
@@ -154,6 +180,7 @@ window.CampusXR = window.CampusXR || (() => { const ua = navigator.userAgent || 
         if (!ok) continue;
         const b = document.createElement('button'); b.className = 'sec peq'; b.textContent = txt; b.title = tit; b.style.fontWeight = '800';
         b.onclick = () => entrar(modo).catch(e => W.toast('no', 'No se pudo iniciar el modo inmersivo: ' + e.message)); der.prepend(b);
+        if (modo === 'immersive-vr' && window.CampusXR.continuar) window.CampusXR.continuar(() => entrar(modo));
       }
     })();
     return { panel, pintar, alFrente, irA };

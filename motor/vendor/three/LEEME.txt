@@ -1,0 +1,1 @@
+﻿three.js 0.160.0 (MIT, ver LICENSE) descargado de npm el 18/10/2026. Copia local para que el campus cargue sin CDN (Quest, red local, APK). three.module.js = build/three.module.min.js.

@@ -25,7 +25,7 @@ button{font-family:inherit;cursor:pointer}.sec{background:var(--hielo);color:var
 <script src="../../motor/senales.js"></script>
 <script src="../../motor/compartir.js"></script>
 <script src="../../motor/acceso.js"></script>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="importmap">{"imports":{"three":"../../motor/vendor/three/build/three.module.js","three/addons/":"../../motor/vendor/three/examples/jsm/"}}</script>
 </head>
 <body>
 <div id="barra"><img src="../../recursos/logo_CERS.jpeg" alt="CERS"><div><b id="tit">Sala de módulo</b><small id="sub">Campus de Simulación SST</small></div>
@@ -146,7 +146,9 @@ renderer.domElement.addEventListener('pointerup', e => { if (!abajo || Math.hypo
 addEventListener('keydown', e => teclas.add(e.key.toLowerCase())); addEventListener('keyup', e => teclas.delete(e.key.toLowerCase()));
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 const xr = crearXR({ THREE, renderer, camera, controls, contenedor: $('#der'), escena: () => scene, objetivos: () => [...tocables, ...pisos], yo: () => yo,
-  alTocar: h => tocar(h.object.userData, h.point), alTeletransportar: p => { if (nav.libre(p.x, p.z)) { xr.colocar(p); pose = undefined; } } });
+  alTocar: h => tocar(h.object.userData, h.point), alTeletransportar: p => { if (nav.libre(p.x, p.z)) { xr.colocar(p); pose = undefined; } },
+  libre: (x, z) => nav.libre(x, z),   // joystick izquierdo: caminar sin atravesar paredes (18/10/2026)
+  alBoton: b => b === 'atras' ? alCampus('?mundo=' + MOD.area) : xr.menu('Sala 3D', [['⬅ Regresar al edificio', () => alCampus('?mundo=' + MOD.area)], ['🏠 Inicio del campus', () => alCampus('?plaza')], ['🥽 Salir de la realidad virtual', () => xr.salir()]]) });
 camera.position.set(0, 5.2, D / 2 + 6.3); controls.target.set(0, 1, D / 2 - .5);
 
 // ---------------------------------------------------------------- carga diferida de los modelos del módulo
