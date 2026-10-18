@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Simulador Hidrocarburos CERS</title>
-<script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe-v1.5.0.min.js"></script>
+<script src="../../../motor/vendor/aframe-1.7.1.min.js"></script>
+<script src="../../../motor/realismo.js"></script>
+<script src="../../../motor/senales.js"></script>
+<script src="../../../motor/sonido.js"></script>
 <style>
 :root{--bg:#0f1720;--fg:#f2f5f7;--acc:#f5b400;--ok:#2fbf71;--bad:#e5484d;--panel:rgba(15,23,32,.92)}
 html,body{margin:0;height:100%;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--fg)}
@@ -29,7 +32,9 @@ html,body{margin:0;height:100%;background:var(--bg);font-family:system-ui,-apple
   <span class="t">Zona de Simulación · Hidrocarburos · CERS</span>
   <span class="st" id="hudState">Menú principal</span>
   <span class="st" id="hudScore"></span>
-  <button id="bCampus">⬅ Campus</button>
+  <button id="bRegresar" title="Regresar a la caseta de Prácticas">⬅ Regresar</button>
+  <button id="bCampus" title="Ir a la plaza del campus">🏙️ Campus</button>
+  <button id="bSalir" title="Salir a la pantalla de inicio" style="background:#8e2a2a">🚪 Salir</button>
   <button id="bMenu">Menú</button>
   <button id="bPanel">Traer panel</button>
   <button id="bRefs">Fuentes</button>
@@ -41,19 +46,20 @@ html,body{margin:0;height:100%;background:var(--bg);font-family:system-ui,-apple
 </div>
 <div id="ov"><div class="box" id="ovBox"></div></div>
 
-<a-scene renderer="antialias:true; colorManagement:true" background="color:#bcd6ea" fog="type:linear;color:#bcd6ea;near:60;far:220"
+<a-scene renderer="antialias:true; colorManagement:true; toneMapping:ACESFilmic; exposure:1.05" shadow="type:pcfsoft" background="color:#bcd6ea" fog="type:linear;color:#cfe0ec;near:70;far:260"
          cursor="rayOrigin: mouse" raycaster="objects: .clickable, .clickable *">
-  <a-entity light="type:ambient;intensity:0.75"></a-entity>
-  <a-entity light="type:directional;intensity:0.8" position="-20 40 25"></a-entity>
+  <a-entity id="hemi" light="type:hemisphere;color:#eaf4ff;groundColor:#7a8a5a;intensity:1.1"></a-entity>
+  <a-entity id="sunTarget" position="0 0 0"></a-entity>
+  <a-entity id="sun" light="type:directional;intensity:2.2;color:#fff4e0;castShadow:true;shadowMapWidth:2048;shadowMapHeight:2048;shadowCameraLeft:-24;shadowCameraRight:24;shadowCameraTop:24;shadowCameraBottom:-24;shadowCameraNear:1;shadowCameraFar:140;shadowBias:-0.0004;target:#sunTarget" position="-18 36 22"></a-entity>
 
   <a-entity id="rig" position="0 0 22">
-    <a-entity id="cam" camera position="0 1.6 0" look-controls="pointerLockEnabled:false" wasd-controls="acceleration:28"></a-entity>
+    <a-entity id="cam" camera position="0 1.6 0" look-controls="pointerLockEnabled:false"></a-entity>
     <a-entity id="hl" laser-controls="hand: left" raycaster="objects: .clickable, .clickable *; far: 60" thumb-move></a-entity>
     <a-entity id="hr" laser-controls="hand: right" raycaster="objects: .clickable, .clickable *; far: 60" snap-turn></a-entity>
   </a-entity>
 
   <a-entity id="world"></a-entity>
-  <a-entity id="panel" visible="false"></a-entity>
+  <a-entity id="panel" visible="false" encima></a-entity>
 </a-scene>
 
 <script>
@@ -78,18 +84,81 @@ function box(p,pos,w,h,d,color,extra={}){return el('a-box',Object.assign({positi
 function cyl(p,pos,r,h,color,extra={}){return el('a-cylinder',Object.assign({position:pos,radius:r,height:h,color},extra),p);}
 function sph(p,pos,r,color,extra={}){return el('a-sphere',Object.assign({position:pos,radius:r,color},extra),p);}
 function txt(p,pos,value,extra={}){return el('a-text',Object.assign({position:pos,value:T(value),align:'center',color:'#111',width:4},extra),p);}
+// Material PBR en texto para A-Frame: color, rugosidad, metalicidad y extras.
+const M=(c,r=0.8,m=0,x='')=>`color:${c};roughness:${r};metalness:${m}${x?';'+x:''}`;
+const VIDRIO=M('#6d97b3',0.08,0.7,'opacity:0.82;transparent:true');
+function bx(p,pos,w,h,d,c,r=0.8,m=0,extra={}){return el('a-box',Object.assign({position:pos,width:w,height:h,depth:d,material:M(c,r,m)},extra),p);}
+function cy(p,pos,r,h,c,ro=0.8,me=0,extra={}){return el('a-cylinder',Object.assign({position:pos,radius:r,height:h,material:M(c,ro,me)},extra),p);}
 function sign(p,pos,label,bg='#ffffff',fg='#111',w=2.4,rotY=0){
   const g=el('a-entity',{position:pos,rotation:P(0,rotY,0)},p);
-  cyl(g,P(0,0.9,0),0.05,1.8,'#666');
-  el('a-plane',{position:P(0,2.05,0),width:w,height:0.6,color:bg},g);
+  [-w/2+0.15,w/2-0.15].forEach(x=>cy(g,P(x,1.0,-0.04),0.045,2.0,'#7b858d',0.4,0.7));
+  bx(g,P(0,2.05,-0.03),w+0.08,0.68,0.05,'#5d666e',0.5,0.6);
+  el('a-plane',{position:P(0,2.05,0),width:w,height:0.6,material:M(bg,0.6)},g);
   txt(g,P(0,2.05,0.01),label,{color:fg,width:w*1.6});
   return g;
 }
-function person(p,pos,shirt='#2b6cb0',rotY=0){
+// Persona con piernas, brazos articulados, casco y chaleco opcionales. Frente = +z.
+// o: {casco:'#f2c230', chaleco:'#c6f13a', pant, piel, pose:'normal'|'fumar'|'frente'|'pala'}
+function person(p,pos,shirt='#2b6cb0',rotY=0,o={}){
   const g=el('a-entity',{position:pos,rotation:P(0,rotY,0)},p);
-  cyl(g,P(0,0.45,0),0.13,0.9,'#2d3748');
-  cyl(g,P(0,1.15,0),0.2,0.6,shirt);
-  sph(g,P(0,1.62,0),0.15,'#d6a77a');
+  const piel=o.piel||'#c99a6e', pant=o.pant||'#2d3a4f';
+  [-0.095,0.095].forEach(x=>{ cy(g,P(x,0.45,0),0.075,0.82,pant,0.9); bx(g,P(x,0.05,0.04),0.13,0.1,0.27,'#1e1e1e',0.6); });
+  bx(g,P(0,0.88,0),0.34,0.14,0.21,pant,0.9);
+  el('a-entity',{position:P(0,1.18,0),geometry:'primitive:cone;radiusTop:0.2;radiusBottom:0.165;height:0.56;segmentsRadial:16',material:M(shirt,0.85)},g);
+  if(o.chaleco){
+    el('a-entity',{position:P(0,1.16,0),geometry:'primitive:cone;radiusTop:0.208;radiusBottom:0.175;height:0.46;segmentsRadial:16',material:M(o.chaleco,0.6)},g);
+    [1.05,1.25].forEach(y=>el('a-entity',{position:P(0,y,0),geometry:'primitive:cone;radiusTop:0.212;radiusBottom:0.205;height:0.035;segmentsRadial:16',material:M('#e6e9ec',0.25,0.6)},g));
+  }
+  cy(g,P(0,1.5,0),0.06,0.1,piel,0.7);
+  sph(g,P(0,1.65,0),0.13,piel,{material:M(piel,0.7)});
+  [-0.045,0.045].forEach(x=>sph(g,P(x,1.68,0.118),0.016,'#1b1b1b'));
+  if(o.casco){
+    el('a-entity',{position:P(0,1.7,0),geometry:'primitive:sphere;radius:0.15;thetaLength:90;segmentsWidth:18;segmentsHeight:8',material:M(o.casco,0.35,0.05)},g);
+    el('a-entity',{position:P(0,1.705,0.03),geometry:'primitive:cylinder;radius:0.185;height:0.018;segmentsRadial:18',material:M(o.casco,0.35,0.05)},g);
+  } else {
+    el('a-entity',{position:P(0,1.68,-0.01),geometry:'primitive:sphere;radius:0.137;thetaLength:80;segmentsWidth:16;segmentsHeight:8',material:M('#2a1d14',0.9)},g);
+  }
+  // brazos: [hombro x, codo x, giro z] en grados
+  const poses={normal:[[8,-8,6],[8,-8,-6]], fumar:[[-55,-118,10],[6,-6,-6]], frente:[[-72,-18,4],[-72,-18,-4]], pala:[[-35,-45,8],[-50,-30,-8]]};
+  const pz=poses[o.pose||'normal'];
+  [-1,1].forEach((s,i)=>{ const [hx,cx,zz]=pz[i];
+    const h=el('a-entity',{position:P(s*0.235,1.4,0),rotation:P(hx,0,zz*-s)},g);
+    cy(h,P(0,-0.15,0),0.058,0.3,shirt,0.85);
+    const c=el('a-entity',{position:P(0,-0.3,0),rotation:P(cx,0,0)},h);
+    cy(c,P(0,-0.14,0),0.05,0.28,shirt,0.85); sph(c,P(0,-0.3,0),0.055,piel,{material:M(piel,0.7)});
+    if(i===0) g.mano=c;   // mano derecha para objetos (cigarro, herramienta)
+  });
+  return g;
+}
+// Árbol simple de bajo costo (tronco + copa en dos niveles)
+function arbol(p,pos,s=1,tono='#4f7d3a'){
+  const g=el('a-entity',{position:pos,scale:P(s,s,s)},p);
+  cy(g,P(0,1.1,0),0.16,2.2,'#6b4a2f',0.95);
+  el('a-entity',{position:P(0,2.9,0),geometry:'primitive:sphere;radius:1.35;segmentsWidth:9;segmentsHeight:6',material:M(tono,0.95,0,'flatShading:true')},g);
+  el('a-entity',{position:P(0.35,3.8,0.2),geometry:'primitive:sphere;radius:0.95;segmentsWidth:8;segmentsHeight:5',material:M('#5e9046',0.95,0,'flatShading:true')},g);
+  return g;
+}
+function extintor(p,pos,rotY=0){
+  const g=el('a-entity',{position:pos,rotation:P(0,rotY,0)},p);
+  cy(g,P(0,0.36,0),0.11,0.6,'#c62828',0.35,0.2);
+  sph(g,P(0,0.66,0),0.11,'#c62828',{scale:'1 0.5 1',material:M('#c62828',0.35,0.2)});
+  cy(g,P(0,0.75,0),0.03,0.08,'#2b2b2b',0.5,0.6); bx(g,P(0.05,0.8,0),0.14,0.025,0.04,'#2b2b2b',0.5,0.6);
+  el('a-torus',{position:P(0.1,0.55,0),rotation:'0 90 0',radius:0.13,radiusTubular:0.012,arc:200,material:M('#1a1a1a',0.6)},g);
+  cy(g,P(0.32,0.9,-0.08),0.035,1.8,'#7b858d',0.4,0.7);
+  bx(g,P(0.32,1.6,-0.04),0.34,0.34,0.02,'#c62828',0.6); txt(g,P(0.32,1.6,-0.025),'EXTINTOR',{color:'#fff',width:0.9});
+  return g;
+}
+// Textura procedural en <canvas> (malla ciclónica, lámina acanalada) usable como src de material
+function canvasTex(id,draw,w=128,h=128){ if(document.getElementById(id)) return '#'+id;
+  const c=document.createElement('canvas'); c.id=id; c.width=w; c.height=h; c.style.display='none'; draw(c.getContext('2d'),w,h); document.body.appendChild(c); return '#'+id; }
+const MALLA=()=>canvasTex('texMalla',(g,w,h)=>{ g.clearRect(0,0,w,h); g.strokeStyle='#c3c9ce'; g.lineWidth=5;
+  for(let i=-w;i<=w*2;i+=32){ g.beginPath(); g.moveTo(i,0); g.lineTo(i+h,h); g.stroke(); g.beginPath(); g.moveTo(i,h); g.lineTo(i+h,0); g.stroke(); } });
+const LAMINA=()=>canvasTex('texLamina',(g,w,h)=>{ for(let x=0;x<w;x++){ const v=170+Math.round(45*Math.sin(x/w*Math.PI*8)); g.fillStyle=`rgb(${v},${v+6},${v+12})`; g.fillRect(x,0,1,h); } });
+function malla(p,pos,w,h=1.8,rotY=0){
+  const g=el('a-entity',{position:pos,rotation:P(0,rotY,0)},p);
+  el('a-plane',{position:P(0,h/2,0),width:w,height:h,material:`src:${MALLA()};repeat:${Math.round(w*3)} ${Math.round(h*3)};transparent:true;alphaTest:0.4;side:double;roughness:0.5;metalness:0.6`},g);
+  for(let x=-w/2;x<=w/2+0.01;x+=2.5) cy(g,P(x,h/2+0.05,0),0.035,h+0.1,'#9aa2a8',0.4,0.7);
+  cy(g,P(0,h,0),0.022,w,'#9aa2a8',0.4,0.7,{rotation:'0 0 90'});
   return g;
 }
 function clickableTree(e){ e.classList.add('clickable'); }
@@ -104,11 +173,17 @@ AFRAME.registerComponent('snap-turn',{
     if(Math.abs(x)>0.7&&this.ready){ this.ready=false; const r=$('#rig').object3D; r.rotation.y += (x>0?-1:1)*Math.PI/6; }
     if(Math.abs(x)<0.3) this.ready=true; }); }
 });
+let ULT_MOV=0; setInterval(()=>{ if(window.Sonido) Sonido.andar(performance.now()-ULT_MOV<150); },100);   // pasos al caminar
 function moveRig(fwd, side, dt){
+  ULT_MOV=performance.now();
   const cam=$('#cam').object3D, rig=$('#rig').object3D, sp=0.0045*dt;
   const dir=new THREE.Vector3(); cam.getWorldDirection(dir); dir.y=0; dir.normalize(); dir.negate();
   const right=new THREE.Vector3(-dir.z,0,dir.x);
-  rig.position.addScaledVector(dir, fwd*sp).addScaledVector(right, side*sp);
+  const d=new THREE.Vector3().addScaledVector(dir, fwd*sp).addScaledVector(right, side*sp);
+  if(!NAV){ rig.position.add(d); return; }
+  const p=rig.position;   // se desliza a lo largo de los obstáculos: no los atraviesa
+  if(NAV.libre(p.x+d.x,p.z+d.z)) p.add(d); else if(NAV.libre(p.x+d.x,p.z)) p.x+=d.x; else if(NAV.libre(p.x,p.z+d.z)) p.z+=d.z;
+  if(d.lengthSq()>0) RUTA.length=0;
 }
 
 // ---------- Fuentes (verificadas) ----------
@@ -116,14 +191,14 @@ const REFS=[
  {k:'G128',t:'GRE 2024 (Guía de Respuesta en Caso de Emergencia), Guía 128 - Líquidos inflamables (no miscibles con agua). PHMSA/Transport Canada/SICT/CIQUIME.',u:'https://cameochemicals.noaa.gov/erg_guides/es/Guide_128.pdf'},
  {k:'G115',t:'GRE 2024, Guía 115 - Gases inflamables (incluye líquidos refrigerados).',u:'https://cameochemicals.noaa.gov/erg_guides/es/Guide_115.pdf'},
  {k:'UN1203',t:'CAMEO Chemicals (NOAA) - UN1203 Gasolina, clase 3, Guía 128. Nota: la GRE está diseñada para la fase inicial de incidentes de transporte, no para derrames en instalaciones.',u:'https://cameochemicals.noaa.gov/unna/1203'},
- {k:'N005',t:'NOM-005-ASEA-2016, Diseño, construcción, operación y mantenimiento de Estaciones de Servicio para almacenamiento y expendio de diésel y gasolinas (DOF 07/11/2016). El PROY-NOM-023-ASEA-2025 propone cancelarla: verificar estatus en el DOF.',u:'https://sidof.segob.gob.mx/notas/docFuente/5459927'},
- {k:'CTR004',t:'ASEA-CTR-004-2019, Criterio sobre tanques de almacenamiento subterráneos en estaciones de servicio (monitoreo de integridad y fugas).',u:'https://www.gob.mx/cms/uploads/attachment/file/517655/VF_web_Criterio_Tanques_de_Almacenamiento_de_Gasolinas_17.dic.2019.pdf'},
- {k:'N020',t:'NOM-020-ASEA-2024, Transporte de gas natural por medio de ductos terrestres (DOF 01/09/2025); cancela la NOM-007-ASEA-2016.',u:'https://vlex.com.mx/vid/convocatoria-dirigida-unidades-inspeccion-1099183960'},
+ {k:'N005',t:'NOM-005-ASEA-2016, Diseño, construcción, operación y mantenimiento de Estaciones de Servicio para almacenamiento y expendio de diésel y gasolinas (DOF 07/11/2016). Vigente según PLATIICA (consulta 11/10/2026). El PROY-NOM-023-ASEA-2025 (aviso de consulta pública, DOF 24/12/2025) propone cancelarla; a la fecha de consulta no se encontró publicación definitiva.',u:'https://sidof.segob.gob.mx/notas/docFuente/5459927'},
+ {k:'CTR004',t:'ASEA-CTR-004-2019, Criterios para el monitoreo de la integridad mecánica de tanques de almacenamiento subterráneos en estaciones de servicio para expendio al público de gasolinas y/o diésel.',u:'https://www.gob.mx/cms/uploads/attachment/file/517655/VF_web_Criterio_Tanques_de_Almacenamiento_de_Gasolinas_17.dic.2019.pdf'},
+ {k:'N020',t:'NOM-020-ASEA-2024, Transporte de gas natural por medio de ductos terrestres (DOF 01/09/2025; en vigor 28/02/2026); cancela la NOM-007-ASEA-2016.',u:'https://dof.gob.mx/nota_detalle.php?codigo=5767026&fecha=01/09/2025'},
  {k:'N009',t:'NOM-009-ASEA-2017, Administración de la integridad de ductos de recolección, transporte y distribución de hidrocarburos, petrolíferos y petroquímicos (DOF 25/01/2019).',u:'https://platiica.economia.gob.mx/normalizacion/nom-009-asea-2017/'},
  {k:'N011',t:'NOM-011-ASEA-2019, Bodegas de guarda para distribución y bodegas de expendio de gas licuado de petróleo, mediante recipientes portátiles y transportables sujetos a presión (vigente).',u:'https://platiica.economia.gob.mx/normalizacion/nom-011-asea-2019/'},
  {k:'N026',t:'NOM-026-STPS-2008, Colores y señales de seguridad e higiene, e identificación de riesgos por fluidos conducidos en tuberías.',u:'https://www.gob.mx/cms/uploads/attachment/file/807422/GUIA_INFORMATIVA_NOM-026.pdf'},
- {k:'N002',t:'NOM-002-STPS-2010, Condiciones de seguridad - Prevención y protección contra incendios en los centros de trabajo.',u:'https://platiica.economia.gob.mx/normalizacion/nom-018-asea-2023/'},
- {k:'N022',t:'NOM-022-STPS-2015, Electricidad estática en los centros de trabajo - Condiciones de seguridad.',u:'https://platiica.economia.gob.mx/normalizacion/nom-018-asea-2023/'}
+ {k:'N002',t:'NOM-002-STPS-2010, Condiciones de seguridad - Prevención y protección contra incendios en los centros de trabajo (DOF 09/12/2010).',u:'https://dof.gob.mx/normasOficiales/4228/stps/stps.htm'},
+ {k:'N022',t:'NOM-022-STPS-2015, Electricidad estática en los centros de trabajo - Condiciones de seguridad (DOF 01/04/2016).',u:'https://dof.gob.mx/nota_detalle.php?codigo=5435581&fecha=01/04/2016'}
 ];
 
 // ---------- Escenarios ----------
@@ -135,7 +210,7 @@ const SC=[
  info:[
   {at:[-2.5,2.6,0],title:'Zona de despacho',text:'Los vapores de gasolina son en su mayoría más pesados que el aire: se extienden a ras de suelo y se acumulan en zonas bajas o confinadas (alcantarillas, sótanos, tanques). Pueden viajar hasta una fuente de ignición y regresar en llamarada.',ref:'G128'},
   {at:[8,1.2,6],title:'Tanques subterráneos',text:'La NOM-005-ASEA-2016 regula diseño, construcción, operación y mantenimiento de estaciones de servicio. ASEA emitió un criterio para el monitoreo de integridad, fugas y sustitución de tanques subterráneos (ASEA-CTR-004-2019).',ref:'CTR004'},
-  {at:[0,6.2,0],title:'Material y normativa',text:'Gasolina: UN1203, clase 3 (líquido inflamable), GRE Guía 128. Norma de la instalación: NOM-005-ASEA-2016. El PROY-NOM-023-ASEA-2025 propone cancelarla; verifica su estatus en el DOF.',ref:'N005'}
+  {at:[0,6.2,0],title:'Material y normativa',text:'Gasolina: UN1203, clase 3 (líquido inflamable), GRE Guía 128. Norma de la instalación: NOM-005-ASEA-2016. Sigue vigente (consulta del 11/10/2026); el PROY-NOM-023-ASEA-2025, publicado a consulta pública en el DOF el 24/12/2025, propone cancelarla.',ref:'N005'}
  ],
  hazards:[
   {id:'g_spill',title:'Derrame avanzando hacia la coladera',text:'Debe evitarse que el derrame entre a alcantarillas, drenajes o espacios confinados: el escurrimiento al drenaje puede crear peligro de incendio o explosión.',ref:'G128'},
@@ -252,7 +327,7 @@ const SC=[
   {q:'Distancia de aislamiento inicial:',o:['50 m en todas direcciones','5 m','1600 m'],c:0,ring:50,exp:'Aislar por lo menos 50 m en todas direcciones. En derrame grande, considerar evacuación inicial de al menos 300 m en la dirección del viento.',ref:'G128'},
   {q:'¿Qué protección respiratoria se indica?',o:['Equipo de respiración autónomo de presión positiva (SCBA)','Cubrebocas de tela','Ninguna, es al aire libre'],c:0,exp:'Usar SCBA de presión positiva. El crudo puede contener H2S tóxico. El traje estructural de bombero da protección térmica pero solo limitada protección química.',ref:'G128'},
   {q:'¿Cómo controlas el derrame?',o:['Eliminar ignición, dique muy por delante del derrame y evitar entrada a cuerpos de agua','Dirigirlo con agua hacia el arroyo para diluirlo','Prenderle fuego para eliminarlo'],c:0,exp:'Eliminar fuentes de ignición, prevenir entrada a cuerpos de agua y alcantarillas, y construir un dique muy por delante del derrame.',ref:'G128'},
-  {q:'Si se incendia un tanque de crudo dañado:',o:['Combatir desde la máxima distancia o con monitores no tripulados; si es masivo y no es posible, retirarse','Rociar agua directo dentro del tanque roto','Aplicar chorro directo sobre el producto'],c:0,exp:'Combatir desde la máxima distancia o con monitores no tripulados. Con crudo, no rociar agua directamente dentro de un tanque roto: puede provocar un peligroso desbordamiento por ebullición (boil over).',ref:'G128'}
+  {q:'Si se incendia un tanque de crudo dañado:',o:['Combatir desde la máxima distancia o con monitores no tripulados; si es masivo y no es posible, retirarse','Rociar agua directamente en el carro tanque dañado','Aplicar chorro directo sobre el producto'],c:0,exp:'Combatir desde la máxima distancia o con monitores no tripulados. Para el petróleo crudo, la GRE indica no rociar agua directamente en un carro tanque dañado: puede provocar un peligroso rebosamiento por ebullición.',ref:'G128'}
  ]}
 },
 {
@@ -287,33 +362,137 @@ const SC=[
  ]}
 }];
 
+// ---------- Ampliación (14/10/2026): más peligros, distractores, inspección, decisiones y fichas por escenario ----------
+// Fuentes: GRE 2024 Guías 115 y 128 (PDF oficial guardado en 02_fuentes_verificadas/hidrocarburos), NOM-002-STPS-2010 7.14,
+// NOM-005-STPS-1998 9.8 y LFT art. 504 fr. I (textos oficiales en 02_fuentes_verificadas). Escenas [FICTICIO – ejercicio didáctico].
+REFS.push({k:'N005',t:'NOM-005-STPS-1998, Condiciones de seguridad e higiene en los centros de trabajo para el manejo, transporte y almacenamiento de sustancias químicas peligrosas (DOF 02/02/1999).',u:'https://dof.gob.mx/'},
+  {k:'LFT504',t:'Ley Federal del Trabajo, art. 504 fr. I: medicamentos y material de curación para primeros auxilios.',u:'https://www.diputados.gob.mx/LeyesBiblio/pdf/LFT.pdf'});
+const AMPLIA={
+ gasolinera:{info:[{at:[3,2.6,-4],title:'Incendio pequeño',text:'Agentes para incendio pequeño: polvos químicos secos, CO2, rocío de agua o espuma regular. Evite apuntar chorros directos o sólidos directamente al producto.',ref:'G128'}],
+  hazards:[{id:'g_extblk',title:'Extintor de la isla tapado con cajas de aceite',text:'Se prohíbe almacenar materiales u objetos que obstruyan el acceso al equipo contra incendio (NOM-002-STPS-2010, 7.14).',ref:'N002'},
+   {id:'g_drums',title:'Bidones de lubricante destapados junto a la isla',text:'Los recipientes con sustancias químicas peligrosas deben permanecer cerrados mientras no estén en uso (NOM-005-STPS-1998, 9.8).',ref:'N005'}],
+  decoys:[{id:'g_kit',title:'Botiquín de primeros auxilios',text:'No es un peligro: el patrón mantiene medicamentos y material de curación para primeros auxilios (LFT art. 504 fr. I).',ref:'LFT504'}],
+  inspect:[{target:'g_extblk',q:'¿El acceso a todos los extintores está libre de obstáculos?',a:false,exp:'No. Hay cajas frente al extintor de la isla.',ref:'N002'},
+   {target:'g_drums',q:'¿Los recipientes de lubricante están cerrados?',a:false,exp:'No. Hay bidones destapados.',ref:'N005'},
+   {target:'g_kit',q:'¿Hay botiquín de primeros auxilios?',a:true,exp:'Sí, en la tienda.',ref:'LFT504'}],
+  steps:[{q:'Un despachador se salpicó gasolina en la piel:',o:['Lavar la piel con agua y jabón','Limpiarla con un trapo con más gasolina','No hacer nada'],c:0,exp:'Primeros auxilios específicos de la Guía 128: lavar la piel con agua y jabón.',ref:'G128'},
+   {q:'El derrame es grande y sigue avanzando:',o:['Construir un dique más adelante del derrame para su posterior eliminación','Barrerlo hacia la calle','Diluirlo con agua'],c:0,exp:'Derrame grande: construir un dique más adelante del derrame líquido.',ref:'G128'},
+   {q:'Para recoger la arena con gasolina:',o:['Herramientas limpias a prueba de chispas','Pala metálica','Aspiradora eléctrica'],c:0,exp:'Usar herramientas limpias a prueba de chispas para recolectar el material absorbido.',ref:'G128'}]},
+ galera:{info:[{at:[-1,2.8,2.8],title:'Fuga sin fuego',text:'Detenga la fuga si puede hacerlo sin riesgo; si es posible, voltee los contenedores con fuga para que escape gas en lugar de líquido. No ponga agua directamente al derrame o a la fuente de la fuga.',ref:'G115'}],
+  hazards:[{id:'l_extblk',title:'Extintor tapado con cajas',text:'Se prohíbe almacenar objetos que obstruyan el acceso al equipo contra incendio (NOM-002-STPS-2010, 7.14).',ref:'N002'},
+   {id:'l_touch',title:'Trabajador tapando con la mano la válvula que fuga',text:'El contacto con gas licuado puede causar quemaduras por congelación; no se toca el material derramado.',ref:'G115'}],
+  decoys:[{id:'l_kit',title:'Botiquín de primeros auxilios',text:'No es un peligro (LFT art. 504 fr. I).',ref:'LFT504'}],
+  inspect:[{target:'l_extblk',q:'¿El acceso a los extintores está libre?',a:false,exp:'No. Hay cajas enfrente.',ref:'N002'},
+   {target:'l_touch',q:'¿Nadie toca la fuga con las manos?',a:false,exp:'No. Un trabajador la tapa con la mano: riesgo de congelación.',ref:'G115'},
+   {target:'l_kit',q:'¿Hay botiquín de primeros auxilios?',a:true,exp:'Sí.',ref:'LFT504'}],
+  steps:[{q:'Si se puede hacer de manera segura, ¿qué haces con los cilindros no dañados?',o:['Alejarlos del área alrededor del fuego','Dejarlos donde están','Echarles el gas al fuego'],c:0,exp:'Si se puede hacer de manera segura, aleje los contenedores no dañados del área alrededor del fuego.',ref:'G115'},
+   {q:'Un compañero tiene la ropa congelada a la piel por el gas:',o:['Descongelarla antes de quitarla; solo personal médico descongela las partes heladas','Arrancarla de inmediato','Frotar la piel con nieve'],c:0,exp:'La ropa congelada se descongela antes de quitarla; solo el personal médico debe descongelar las partes heladas.',ref:'G115'}]},
+ ducto_gn:{info:[{at:[-1,2.6,-8],title:'Zonas confinadas',text:'Prevenga la expansión de vapores a través de alcantarillas, sistemas de ventilación y áreas confinadas, y aísle el área hasta que el gas se haya dispersado.',ref:'G115'}],
+  hazards:[{id:'n_smoke',title:'Persona fumando cerca del derecho de vía con fuga',text:'Eliminar todas las fuentes de ignición (no fumar, no usar bengalas, chispas o llamas).',ref:'G115'},
+   {id:'n_noera',title:'Brigadista acercándose a la fuga sin equipo de respiración autónoma',text:'Use el equipo de respiración autónoma (ERA) de presión positiva.',ref:'G115'}],
+  decoys:[{id:'n_ext',title:'Extintor de polvo químico seco',text:'No es un peligro: para incendio pequeño, polvos químicos secos o CO2.',ref:'G115'}],
+  inspect:[{target:'n_smoke',q:'¿Nadie fuma cerca de la fuga?',a:false,exp:'No.',ref:'G115'},{target:'n_noera',q:'¿Quien se acerca usa ERA de presión positiva?',a:false,exp:'No.',ref:'G115'},
+   {target:'n_ext',q:'¿Hay agente para incendio pequeño (PQS o CO2)?',a:true,exp:'Sí.',ref:'G115'}],
+  steps:[{q:'La fuga se detuvo, pero hay vapores:',o:['Aislar el área hasta que el gas se haya dispersado','Reabrir el paso de inmediato','Encender una luz para revisar'],c:0,exp:'Aísle el área hasta que el gas se haya dispersado.',ref:'G115'},
+   {q:'Queda un incendio pequeño y la fuga ya está detenida. Agente:',o:['Polvo químico seco o CO2','Chorro de agua directo a la válvula','Tierra mojada'],c:0,exp:'Incendio pequeño: polvos químicos secos o CO2.',ref:'G115'}]},
+ ducto_crudo:{info:[{at:[4,2.6,-8],title:'Rebosamiento por ebullición',text:'Para el petróleo crudo, no rocíe agua directamente en un carro tanque dañado: puede conducir a un peligroso rebosamiento por ebullición.',ref:'G128'}],
+  hazards:[{id:'c_smoke',title:'Persona fumando junto al derrame',text:'Eliminar todas las fuentes de ignición cercanas al área.',ref:'G128'},
+   {id:'c_hose',title:'Lavando el derrame con manguera hacia el arroyo',text:'Prevenga la entrada hacia vías navegables; el escurrimiento por dilución con agua puede contaminar el ambiente.',ref:'G128'}],
+  decoys:[{id:'c_ext',title:'Extintor de polvo químico seco',text:'No es un peligro: incendio pequeño: polvos químicos secos, CO2, rocío de agua o espuma regular.',ref:'G128'}],
+  inspect:[{target:'c_smoke',q:'¿Nadie fuma cerca del derrame?',a:false,exp:'No.',ref:'G128'},{target:'c_hose',q:'¿Se evita lavar el derrame hacia el arroyo?',a:false,exp:'No.',ref:'G128'},
+   {target:'c_ext',q:'¿Hay agente para incendio pequeño?',a:true,exp:'Sí.',ref:'G128'}],
+  steps:[{q:'Un trabajador se manchó la piel con crudo:',o:['Lavar la piel con agua y jabón','Limpiar con gasolina','Esperar a que se seque'],c:0,exp:'Lave la piel con agua y jabón.',ref:'G128'},
+   {q:'Hay que entrar a la caseta de válvulas cerrada:',o:['Ventilarla antes de ingresar, solo si estás capacitado y equipado','Entrar de inmediato','Encender un ventilador eléctrico dentro sin evaluar'],c:0,exp:'Ventile los espacios cerrados antes de ingresar, pero solo si está adecuadamente capacitado y equipado.',ref:'G128'}]},
+ ducto_gasolina:{info:[{at:[-2,2.6,-8],title:'Incendio pequeño',text:'Polvos químicos secos, CO2, rocío de agua o espuma regular; evite apuntar chorros directos al producto.',ref:'G128'}],
+  hazards:[{id:'p_smoke',title:'Persona fumando cerca del derrame',text:'Eliminar todas las fuentes de ignición cercanas al área.',ref:'G128'},
+   {id:'p_walk',title:'Persona caminando sobre el derrame',text:'No tocar ni caminar sobre el material derramado.',ref:'G128'}],
+  decoys:[{id:'p_ext',title:'Extintor de polvo químico seco',text:'No es un peligro: agente para incendio pequeño.',ref:'G128'}],
+  inspect:[{target:'p_smoke',q:'¿Nadie fuma cerca?',a:false,exp:'No.',ref:'G128'},{target:'p_walk',q:'¿Nadie camina sobre el derrame?',a:false,exp:'No.',ref:'G128'},
+   {target:'p_ext',q:'¿Hay agente para incendio pequeño?',a:true,exp:'Sí.',ref:'G128'}],
+  steps:[{q:'El derrame es grande:',o:['Construir un dique más adelante del derrame','Barrerlo a la alcantarilla','Prenderle fuego'],c:0,exp:'Derrame grande: construir un dique más adelante del derrame.',ref:'G128'},
+   {q:'Salpicadura de gasolina en la piel:',o:['Lavar con agua y jabón','Frotar con tierra','Nada'],c:0,exp:'Lave la piel con agua y jabón.',ref:'G128'}]}};
+SC.forEach(sc=>{ const a=AMPLIA[sc.id]; if(!a) return; sc.info.push(...a.info); sc.hazards.push(...a.hazards); sc.decoys.push(...a.decoys); sc.inspect.push(...a.inspect); sc.emergency.steps.push(...a.steps); });
+function botiquinPoste(p,pos){ const g=el('a-entity',{position:pos},p); cy(g,P(0,0.65,0),0.04,1.3,'#7b858d',0.4,0.7); bx(g,P(0,1.4,0.05),0.5,0.4,0.15,'#ffffff',0.6); bx(g,P(0,1.4,0.13),0.22,0.07,0.01,'#2e7d32',0.5); bx(g,P(0,1.4,0.131),0.07,0.22,0.01,'#2e7d32',0.5); return g; }
+function fumador(R,id,pos,rot){ const h=hazardGroup(R,id,pos); const f=person(h,P(0,0,0),'#8e44ad',rot,{pose:'fumar'});
+  cy(f.mano,P(0,-0.34,0.03),0.008,0.08,'#f5f5f5',0.6,0,{rotation:'90 0 0'}); sph(f.mano,P(0,-0.34,0.075),0.012,'#ff5500',{material:'color:#ff5500;emissive:#ff3300;emissiveIntensity:2'}); return h; }
+function extTapado(R,id,pos){ const h=hazardGroup(R,id,pos); extintor(h,P(0,0,0),0); bx(h,P(-0.15,0.23,0.45),0.55,0.45,0.45,'#c8a27a',0.9); bx(h,P(0.35,0.23,0.5),0.45,0.45,0.45,'#b8916a',0.9); bx(h,P(0.05,0.68,0.47),0.5,0.4,0.45,'#c8a27a',0.9); return h; }
+const EXTRA_BUILD={
+ gasolinera(sc,R){ extTapado(R,'g_extblk',P(4.6,0,1.2));
+  const d=hazardGroup(R,'g_drums',P(-4.4,0,-3.9)); [[0,0],[0.7,0.1]].forEach(([x,z])=>{ cy(d,P(x,0.45,z),0.28,0.9,'#1565c0',0.5,0.3); cy(d,P(x,0.905,z),0.22,0.02,'#111111',0.4,0.2); }); txt(d,P(0.35,0.5,0.4),'ACEITE',{width:1.6});
+  botiquinPoste(hazardGroup(R,'g_kit',P(-12,0,-4.4)),P(0,0,0)); },
+ galera(sc,R){ extTapado(R,'l_extblk',P(5.2,0.19,3.4));
+  const t=hazardGroup(R,'l_touch',P(3.5,0.19,2.4)); person(t,P(0,0,0),'#6d4c41',200,{pose:'frente',casco:'#f2c230'});
+  botiquinPoste(hazardGroup(R,'l_kit',P(-3,0,4.8)),P(0,0,0)); },
+ ducto_gn(sc,R){ fumador(R,'n_smoke',P(-1.5,0,-1.2),160); const b=hazardGroup(R,'n_noera',P(3.4,0,-3.4)); person(b,P(0,0,0),'#c62828',200,{casco:'#ffffff'});
+  const e=hazardGroup(R,'n_ext',P(-8,0,1)); extintor(e,P(0,0,0),0); },
+ ducto_crudo(sc,R){ fumador(R,'c_smoke',P(-2.6,0,-0.6),160); const h=hazardGroup(R,'c_hose',P(4.4,0,-2.2)); person(h,P(0,0,0),'#2e7d32',90,{casco:'#f2c230'});
+  el('a-cylinder',{position:P(0.8,0.9,0),rotation:'0 0 70',radius:0.04,height:1.4,material:M('#212121',0.6)},h); el('a-plane',{rotation:'-90 0 0',position:P(1.9,0.03,0),width:1.6,height:0.3,material:'color:#5fa8d3;transparent:true;opacity:0.7'},h);
+  const e=hazardGroup(R,'c_ext',P(-8,0,1)); extintor(e,P(0,0,0),0); },
+ ducto_gasolina(sc,R){ fumador(R,'p_smoke',P(-1.8,0,-0.6),160); const w=hazardGroup(R,'p_walk',P(2.6,0,-4.6)); person(w,P(0,0,0),'#6d4c41',90);
+  const e=hazardGroup(R,'p_ext',P(-8.5,0,1.2)); extintor(e,P(0,0,0),0); }};
+
 // ---------- Construcción del mundo ----------
 const OBJ={};     // id -> entidad clicable
 const INFO={};    // scenarioId -> [entidades info]
 const ROOT={};    // scenarioId -> entidad raíz
 
+const TEX={ok:false, base:'../../../assets/texturas/'};
 function buildBase(){
   const w=$('#world');
-  el('a-plane',{rotation:'-90 0 0',width:320,height:320,color:'#7fa667'},w);
-  el('a-plane',{rotation:'-90 0 0',position:P(4,0.01,7),width:150,height:7,color:'#3d4247'},w);
-  for(let x=-70;x<80;x+=6) el('a-plane',{rotation:'-90 0 0',position:P(x,0.02,7),width:2.4,height:0.18,color:'#f2c94c'},w);
+  el('a-plane',{id:'suelo',rotation:'-90 0 0',width:320,height:320,material:M('#86ad6c',1)},w);
+  el('a-plane',{id:'camino',rotation:'-90 0 0',position:P(4,0.01,7),width:150,height:7,material:M('#3d4247',0.95)},w);
+  [3.62,10.38].forEach(z=>el('a-plane',{rotation:'-90 0 0',position:P(4,0.012,z),width:150,height:0.25,material:M('#9a9d9f',0.9)},w));   // acotamientos
+  for(let x=-70;x<80;x+=6) el('a-plane',{rotation:'-90 0 0',position:P(x,0.02,7),width:2.4,height:0.18,material:M('#f2c94c',0.6)},w);
   // Hub de bienvenida
   const hub=el('a-entity',{position:P(0,0,24)},w);
-  el('a-circle',{rotation:'-90 0 0',position:P(0,0.02,0),radius:5,color:'#c9ced3'},hub);
+  el('a-circle',{rotation:'-90 0 0',position:P(0,0.02,0),radius:5,material:M('#c9ced3',0.9)},hub);
   const b=el('a-entity',{position:P(0,0,-4)},hub);
-  box(b,P(0,1.6,0),5.2,2.2,0.2,'#1d2a36');
+  [-2.3,2.3].forEach(x=>cy(b,P(x,1.25,-0.05),0.07,2.5,'#7b858d',0.4,0.7));
+  bx(b,P(0,1.6,0),5.2,2.2,0.2,'#1d2a36',0.5,0.3);
+  bx(b,P(0,2.72,0),5.2,0.08,0.22,'#f5b400',0.5);
   txt(b,P(0,2.2,0.12),'Zona de Simulacion de Hidrocarburos',{color:'#f5b400',width:6});
   txt(b,P(0,1.65,0.12),'Campus de Simulacion SST - CERS',{color:'#ffffff',width:4.5});
   txt(b,P(0,1.15,0.12),'Abre el MENU para elegir escenario y modo',{color:'#cfd8e0',width:4});
   const labels=[['Estacion de servicio',-50],['Galera gas LP',-18],['Ducto gas natural',14],['Ducto crudo',36],['Ducto gasolina',58]];
   labels.forEach(([l,x])=>sign(w,P(x,0,10.8),l,'#1d2a36','#ffffff',3.2));
+  // arbolado de fondo y entre escenarios (profundidad visual)
+  for(let x=-78;x<=86;x+=7.5){ const k=Math.abs(Math.round(x*7))%5; arbol(w,P(x+(k-2)*0.8,0,-34-(k%3)*3),0.9+k*0.08,k%2?'#4f7d3a':'#5b8a3f'); }
+  [-34,-2,25,47].forEach((x,i)=>{ arbol(w,P(x,0,-16-(i%2)*4),1.05); arbol(w,P(x+1.5,0,-26),0.85,'#5b8a3f'); });
+  [[-8,30],[9,31],[-14,22],[14,20],[-30,16],[30,15],[-64,16],[72,15]].forEach(([x,z],i)=>arbol(w,P(x,0,z),0.8+(i%3)*0.15));
+  // postes de luz a lo largo del camino
+  for(let x=-62;x<=74;x+=22){ const l=el('a-entity',{position:P(x,0,11.6)},w); cy(l,P(0,3,0),0.07,6,'#8a939a',0.4,0.7); bx(l,P(0,5.95,-0.6),0.14,0.08,1.3,'#8a939a',0.4,0.7); bx(l,P(0,5.88,-1.15),0.4,0.08,0.22,'#eef2f5',0.3,0,{material:M('#fff8e6',0.3,0,'emissive:#fff2cc;emissiveIntensity:0.5')}); }
 }
+// Texturas reales (CC0, ver assets/INVENTARIO_ASSETS.csv) solo si existen: las copias parciales del simulador no las traen
+function probarTex(){ if(window.Realismo && Realismo.calidad()==='baja') return Promise.resolve(false);
+  return fetch(TEX.base+'pbr/pasto_color.webp',{method:'HEAD'}).then(r=>TEX.ok=r.ok).catch(()=>false); }
+function texturizar(){
+  if(!TEX.ok) return; {
+    const pon=(sel,n,rep,tinte)=>{ const e=$(sel); if(e) e.setAttribute('material',`src:url(${TEX.base}pbr/${n}_color.webp);normalMap:url(${TEX.base}pbr/${n}_normal.webp);repeat:${rep};normalTextureRepeat:${rep};roughness:1;metalness:0;color:${tinte}`); };
+    pon('#suelo','pasto','90 90','#d9e8c8'); pon('#camino','asfalto','40 2','#c8c8c8');
+    document.querySelectorAll('.piso-concreto').forEach(e=>{ const w=+e.getAttribute('width')||10, d=+e.getAttribute('depth')||+e.getAttribute('height')||10;
+      e.setAttribute('material',`src:url(${TEX.base}concreto.webp);repeat:${Math.round(w/3)} ${Math.round(d/3)};roughness:0.95;color:#e2e4e6`); });
+  }
+}
+// Sombras: solo mallas opacas con material estándar (no textos ni paneles)
+function sombras(){
+  if(window.Realismo && Realismo.calidad()==='baja') return;
+  const sc=$('a-scene'), r=sc.renderer, nuevo=!r.shadowMap.enabled;
+  if(nuevo){ r.shadowMap.enabled=true; r.shadowMap.type=THREE.PCFSoftShadowMap;
+    if(window.Realismo && Realismo.calidad()!=='alta'){ const l=$('#sun').getObject3D('light'); l.shadow.mapSize.set(1024,1024); if(l.shadow.map){ l.shadow.map.dispose(); l.shadow.map=null; } } }
+  sc.object3D.traverse(o=>{ if(!o.isMesh) return; const m=o.material; if(!m||Array.isArray(m)||m.transparent||!m.isMeshStandardMaterial) return;
+    if(nuevo) m.needsUpdate=true;
+    o.receiveShadow=true; o.castShadow=!(o.el&&(o.el.id==='suelo'||o.el.id==='camino'||o.el.classList.contains('piso-concreto'))); });
+}
+function solSobre(c){ const [x,,z]=c||[0,0,22]; $('#sun').object3D.position.set(x-18,36,z+22); $('#sunTarget').object3D.position.set(x,0,z); }
 
 function windsock(p,pos,id){
   const g=el('a-entity',{position:pos},p);
-  cyl(g,P(0,2,0),0.05,4,'#888');
-  const s=el('a-cone',{position:P(0.7,3.8,0),rotation:'0 0 -90',radiusBottom:0.25,radiusTop:0.1,height:1.4,color:'#ff7a1a',
-    animation:'property:rotation;from:0 0 -95;to:0 0 -85;dir:alternate;loop:true;dur:900;easing:easeInOutSine'},g);
+  cy(g,P(0,0.06,0),0.25,0.12,'#9aa2a8',0.8);
+  cy(g,P(0,2.05,0),0.05,4.1,'#9aa2a8',0.4,0.7);
+  const s=el('a-entity',{position:P(0,3.8,0),animation:'property:rotation;from:0 -6 -3;to:0 6 3;dir:alternate;loop:true;dur:1300;easing:easeInOutSine'},g);
+  el('a-torus',{position:P(0.06,0,0),rotation:'0 90 0',radius:0.27,radiusTubular:0.018,material:M('#9aa2a8',0.4,0.7)},s);
+  for(let i=0;i<5;i++){ const r0=0.26-i*0.032, r1=r0-0.032;
+    el('a-entity',{position:P(0.2+i*0.28,-i*0.02,0),rotation:'0 0 -90',geometry:`primitive:cone;radiusTop:${r1};radiusBottom:${r0};height:0.28;openEnded:true;segmentsRadial:16`,material:M(i%2?'#ffffff':'#ff6a13',0.85,0,'side:double')},s); }
   if(id){ clickableTree(g); OBJ[id]=g; }
   return g;
 }
@@ -326,130 +505,255 @@ function cloud(p,pos,color,rising){
   }
   return g;
 }
+// El plano siempre mira a la cámara (llamas y humo con textura)
+AFRAME.registerComponent('cara-camara',{tick(){ const c=this.el.sceneEl.camera; if(!c) return; const q=new THREE.Quaternion(); c.getWorldQuaternion(q);
+  const pq=new THREE.Quaternion(); this.el.object3D.parent.getWorldQuaternion(pq); this.el.object3D.quaternion.copy(pq.invert().multiply(q)); }});
 function flame(p,pos,scale=1){
   const g=el('a-entity',{position:pos,scale:P(scale,scale,scale)},p);
-  el('a-cone',{position:P(0,0.6,0),radiusBottom:0.35,radiusTop:0,height:1.3,color:'#ff6a00',material:'emissive:#ff4500;emissiveIntensity:0.9;transparent:true;opacity:0.9',
+  el('a-cone',{position:P(0,0.6,0),radiusBottom:0.35,radiusTop:0,height:1.3,material:'color:#ff6a00;shader:flat;transparent:true;opacity:0.75',
     animation:'property:scale;from:1 0.85 1;to:0.9 1.15 0.9;dur:180;loop:true;dir:alternate'},g);
-  el('a-cone',{position:P(0,0.5,0),radiusBottom:0.2,radiusTop:0,height:0.9,color:'#ffd23f',material:'emissive:#ffb000;emissiveIntensity:1',
+  el('a-cone',{position:P(0,0.5,0),radiusBottom:0.2,radiusTop:0,height:0.9,material:'color:#ffd23f;shader:flat;transparent:true;opacity:0.9',
     animation:'property:scale;from:1 0.9 1;to:0.85 1.2 0.85;dur:140;loop:true;dir:alternate'},g);
-  el('a-entity',{position:P(0,1,0),light:'type:point;color:#ff8a30;intensity:1.2;distance:10'},g);
+  if(TEX.ok){   // llamas y humo con textura (CC0, Kenney Particle Pack)
+    ['flame_02','fire_01','flame_04'].forEach((n,i)=>el('a-plane',{position:P((i-1)*0.12,0.75+i*0.08,0),width:1.1-i*0.15,height:1.6-i*0.2,'cara-camara':'',
+      material:`shader:flat;src:url(${TEX.base}particulas/${n}.webp);transparent:true;blending:additive;depthWrite:false;color:#ffb060`,
+      animation:`property:scale;from:1 0.9 1;to:0.92 1.18 1;dur:${160+i*50};loop:true;dir:alternate`},g));
+    for(let i=0;i<3;i++) el('a-plane',{position:P(0,1.6,0),width:1.2,height:1.2,'cara-camara':'',
+      material:`shader:flat;src:url(${TEX.base}particulas/smoke_04.webp);transparent:true;opacity:0.35;depthWrite:false;color:#555`,
+      animation:`property:position;from:0 1.4 0;to:${(i-1)*0.6} ${3.6+i} 0;dur:${2600+i*700};loop:true;easing:linear`},g);
+  }
+  el('a-entity',{position:P(0,1,0),light:'type:point;color:#ff8a30;intensity:6;distance:12;decay:1.5'},g);
   return g;
 }
-function pipe(p, z, x1, x2, y=0.9, r=0.35){
-  const len=Math.abs(x2-x1), xc=(x1+x2)/2;
+// Válvula de compuerta con volante (estación de válvulas del ducto)
+function valvula(p,pos,r){
+  const g=el('a-entity',{position:pos},p);
+  bx(g,P(0,0,0),0.55,r*2.4,r*2.2,'#d4a21e',0.45,0.4);
+  [-0.32,0.32].forEach(x=>cy(g,P(x,0,0),r+0.14,0.07,'#b88a12',0.45,0.5,{rotation:'0 0 90'}));
+  cy(g,P(0,r*1.2+0.35,0),0.05,0.7,'#5a6168',0.4,0.7);
+  const v=el('a-entity',{position:P(0,r*1.2+0.72,0),rotation:'90 0 0'},g);
+  el('a-torus',{radius:0.3,radiusTubular:0.035,material:M('#c0392b',0.5,0.3)},v);
+  [0,45,90,135].forEach(a=>bx(v,P(0,0,0),0.6,0.03,0.03,'#c0392b',0.5,0.3,{rotation:`0 0 ${a}`}));
+  return g;
+}
+function pipe(p, z, x1, x2, y=0.9, r=0.35, fluido=''){
+  const len=Math.abs(x2-x1), xc=(x1+x2)/2, xa=Math.min(x1,x2), xb=Math.max(x1,x2);
   const g=el('a-entity',{},p);
-  el('a-cylinder',{position:P(xc,y,z),rotation:'0 0 90',radius:r,height:len,color:'#f2c230'},g);
-  for(let x=Math.min(x1,x2)+1;x<Math.max(x1,x2);x+=4){ box(g,P(x,y/2-0.05,z),0.5,y-0.2,0.5,'#8a8f94'); }
-  // brida y válvula
-  el('a-cylinder',{position:P(xc-4,y,z),rotation:'0 0 90',radius:r+0.12,height:0.2,color:'#c9a227'},g);
-  cyl(g,P(xc-4,y+0.7,z),0.06,0.8,'#555');
-  el('a-torus',{position:P(xc-4,y+1.15,z),rotation:'90 0 0',radius:0.3,radiusTubular:0.04,color:'#c0392b'},g);
-  // flechas de sentido de flujo
-  for(let x=Math.min(x1,x2)+2;x<Math.max(x1,x2);x+=5){
-    el('a-cone',{position:P(x,y+r+0.12,z),rotation:'0 0 -90',radiusBottom:0.12,radiusTop:0,height:0.3,color:'#111'},g);
-  }
+  el('a-cylinder',{position:P(xc,y,z),rotation:'0 0 90',radius:r,height:len,segmentsRadial:24,material:M('#f2c230',0.38,0.25)},g);
+  // bridas cada tramo y tapas
+  for(let x=xa+3;x<xb-0.5;x+=6) cy(g,P(x,y,z),r+0.07,0.12,'#d9ab1f',0.4,0.4,{rotation:'0 0 90'});
+  [xa,xb].forEach(x=>cy(g,P(x,y,z),r+0.05,0.1,'#d9ab1f',0.4,0.4,{rotation:'0 0 90'}));
+  // soportes: dado de concreto + silleta metálica + abrazadera
+  for(let x=xa+1;x<xb;x+=4){ bx(g,P(x,0.18,z),0.7,0.36,0.8,'#b9bcbe',0.95);
+    bx(g,P(x,(y-r)/2+0.18,z),0.12,y-r-0.36,0.5,'#6f777e',0.5,0.7);
+    el('a-torus',{position:P(x,y,z),rotation:'0 90 0',radius:r+0.02,radiusTubular:0.03,arc:180,material:M('#6f777e',0.5,0.7)},g); }
+  valvula(g,P(xc-4,y,z),r);
+  // flechas de sentido de flujo y nombre del fluido (identificación de tuberías)
+  for(let x=xa+2;x<xb;x+=5) el('a-cone',{position:P(x,y+r+0.1,z),rotation:'0 0 -90',radiusBottom:0.12,radiusTop:0,height:0.3,material:M('#111',0.6)},g);
+  if(fluido) [xa+5.5,xb-2.5].forEach(x=>{ const e=el('a-entity',{position:P(x,y,z+r+0.01)},g);
+    el('a-plane',{width:1.9,height:r*1.1,material:M('#f2c230',0.5)},e); txt(e,P(0,0,0.005),fluido,{width:3.2,color:'#111'}); });
   // postes de señalamiento del ducto enterrado
-  [x1-1.5, x2+1.5].forEach(x=>{ const s=el('a-entity',{position:P(x,0,z+1.2)},g); cyl(s,P(0,0.6,0),0.06,1.2,'#f2c230'); box(s,P(0,1.25,0),0.6,0.3,0.05,'#f2c230'); txt(s,P(0,1.25,0.03),'DUCTO',{width:1.2}); });
+  [x1-1.5, x2+1.5].forEach(x=>{ const s=el('a-entity',{position:P(x,0,z+1.2)},g);
+    cy(s,P(0,0.75,0),0.06,1.5,'#f2c230',0.5); bx(s,P(0,1.45,0.04),0.7,0.38,0.04,'#f2c230',0.5); bx(s,P(0,1.45,0.015),0.74,0.42,0.02,'#111',0.6);
+    txt(s,P(0,1.45,0.065),'DUCTO',{width:1.3}); });
   return g;
 }
 function hazardGroup(p,id,pos){ const g=el('a-entity',{position:pos},p); clickableTree(g); OBJ[id]=g; return g; }
 
-function buildGasolinera(sc,R){
-  box(R,P(0,0.01,2),30,0.02,22,'#b9bec3');
-  // techumbre genérica (sin marca)
-  box(R,P(0,5,0),14,0.6,8,'#2e9e4f'); box(R,P(0,4.65,0),14.1,0.12,8.1,'#ffffff');
-  [[-5,-2.5],[5,-2.5],[-5,2.5],[5,2.5]].forEach(([x,z])=>cyl(R,P(x,2.35,z),0.22,4.7,'#e8e8e8'));
-  [-2.5,2.5].forEach(z=>{ box(R,P(0,0.1,z),9,0.2,1.2,'#d9d9d9');
-    [-2.5,2.5].forEach(x=>{ box(R,P(x,1.1,z),0.8,1.8,0.5,'#f4f4f4'); box(R,P(x,1.5,z+0.26),0.6,0.4,0.02,'#203040'); }); });
-  // tanques subterráneos (bocatomas)
-  [[7,6],[8.5,6],[10,6]].forEach(([x,z])=>cyl(R,P(x,0.04,z),0.35,0.06,'#555'));
-  // coladera
-  box(R,P(-6,0.03,5),1.2,0.02,0.5,'#222');
-  // edificio
-  box(R,P(-9,1.6,-7),8,3.2,4,'#e9e2d0'); box(R,P(-9,3.3,-7),8.4,0.2,4.4,'#2e9e4f');
-  sign(R,P(4,0,9),'PROHIBIDO FUMAR','#ffffff','#c62828',2.6);
-  // Peligro 1: derrame hacia coladera
-  const h1=hazardGroup(R,'g_spill',P(-2.5,0.03,3.2));
-  el('a-circle',{rotation:'-90 0 0',radius:1.1,color:'#5b4a2a',material:'transparent:true;opacity:0.85;metalness:0.6;roughness:0.2'},h1);
-  el('a-plane',{rotation:'-90 0 25',position:P(-1.8,0.005,1),width:0.6,height:3,color:'#5b4a2a',material:'transparent:true;opacity:0.8'},h1);
-  // Peligro 2: persona fumando
-  const h2=hazardGroup(R,'g_smoker',P(1.2,0,4.2)); person(h2,P(0,0,0),'#8e44ad',200);
-  sph(h2,P(0.18,1.55,0.15),0.035,'#ff5500',{material:'emissive:#ff3300;emissiveIntensity:1'});
-  // Peligro 3: autotanque sin tierra
-  const h3=hazardGroup(R,'g_truck',P(9,0,8.5));
-  box(h3,P(-3.2,1.2,0),1.8,2,2.2,'#d0d4d8'); el('a-cylinder',{position:P(0.4,1.6,0),rotation:'0 0 90',radius:1,height:5.5,color:'#eceff1'},h3);
-  [-3.2,-1,1.5,2.8].forEach(x=>{ el('a-cylinder',{position:P(x,0.45,1.15),rotation:'90 0 0',radius:0.45,height:0.3,color:'#222'},h3); el('a-cylinder',{position:P(x,0.45,-1.15),rotation:'90 0 0',radius:0.45,height:0.3,color:'#222'},h3); });
-  box(h3,P(0.4,1.6,1.02),2,0.5,0.02,'#ff9800'); txt(h3,P(0.4,1.6,1.04),'INFLAMABLE 3',{width:2});
-  const reel=el('a-entity',{position:P(-1,0,-2.4)},h3); box(reel,P(0,0.5,0),0.4,1,0.3,'#f2c230'); el('a-torus',{position:P(0,0.8,0.2),radius:0.15,radiusTubular:0.03,color:'#2e7d32'},reel);
-  // Distractores
-  const d1=hazardGroup(R,'g_ext',P(5.4,0,-2.2)); cyl(d1,P(0,0.4,0),0.12,0.6,'#d32f2f'); box(d1,P(0,1.2,0.05),0.35,0.35,0.02,'#d32f2f'); txt(d1,P(0,1.2,0.07),'EXT',{color:'#fff',width:1.2});
-  const d2=hazardGroup(R,'g_sand',P(-7,0,-2)); cyl(d2,P(0,0.45,0),0.3,0.9,'#c49a3a'); txt(d2,P(0,0.6,0.31),'ARENA',{width:1.4});
+// ---- piezas de la estación de servicio (genéricas, sin marca)
+function dispensario(p,pos){
+  const g=el('a-entity',{position:pos},p);
+  bx(g,P(0,0.15,0),0.95,0.3,0.6,'#7d8790',0.6,0.4);
+  bx(g,P(0,0.95,0),0.82,1.3,0.52,'#f2f4f6',0.3,0.15);
+  bx(g,P(0,1.75,0),0.9,0.32,0.58,'#2e9e4f',0.45,0.1);
+  bx(g,P(0,1.93,0),0.9,0.04,0.58,'#ffffff',0.4);
+  [-1,1].forEach(s=>{ const ry=s>0?0:180, zf=s*0.262;
+    el('a-plane',{position:P(0,1.28,zf),rotation:P(0,ry,0),width:0.52,height:0.3,material:'color:#0f2231;roughness:0.15;metalness:0.2;emissive:#1f5f86;emissiveIntensity:0.55'},g);
+    ['#2fbf71','#e5484d','#2b2b2b'].forEach((c,i)=>{ const x=(i-1)*0.24*s;
+      bx(g,P(x,0.72,s*0.29),0.15,0.22,0.06,'#1a1a1a',0.5,0.3);
+      el('a-plane',{position:P(x,0.98,zf),rotation:P(0,ry,0),width:0.17,height:0.06,material:M(c,0.5)},g); });
+    el('a-torus',{position:P(0.3*s,1.12,s*0.27),rotation:P(0,90,-90),radius:0.32,radiusTubular:0.02,arc:170,material:M('#151515',0.55)},g);
+  });
+  return g;
+}
+function isla(p,pos){
+  const g=el('a-entity',{position:pos},p);
+  bx(g,P(0,0.11,0),7.6,0.22,1.25,'#d6d8da',0.9);
+  [-1,1].forEach(s=>{ el('a-entity',{position:P(s*3.8,0.11,0),geometry:'primitive:cylinder;radius:0.625;height:0.22;thetaStart:'+(s>0?0:180)+';thetaLength:180',rotation:'0 0 0',material:M('#d6d8da',0.9)},g);
+    const b=el('a-entity',{position:P(s*4.25,0,0)},g);   // bolardo de protección amarillo/negro
+    cy(b,P(0,0.55,0),0.11,1.1,'#f2c230',0.5,0.2); [0.35,0.75].forEach(y=>cy(b,P(0,y,0),0.115,0.1,'#1a1a1a',0.6)); });
+  [-2.5,2.5].forEach(x=>dispensario(g,P(x,0.22,0)));
+  return g;
+}
+function autotanque(h3){
+  bx(h3,P(0,0.78,0),8.4,0.22,1.0,'#26292c',0.7,0.5);   // chasis
+  // cabina
+  bx(h3,P(-3.45,1.45,0),1.75,1.55,2.25,'#e9ecef',0.3,0.35); bx(h3,P(-3.3,2.5,0),1.45,0.6,2.15,'#e9ecef',0.3,0.35);
+  el('a-plane',{position:P(-4.33,2.05,0),rotation:'0 -90 0',width:2.0,height:0.85,material:VIDRIO},h3);
+  [-1,1].forEach(s=>{ el('a-plane',{position:P(-3.35,2.35,s*1.08),rotation:P(0,s>0?0:180,0),width:1.0,height:0.6,material:VIDRIO},h3);
+    bx(h3,P(-4.42,1.15,s*0.8),0.04,0.18,0.36,'#fff8e1',0.2,0,{material:'color:#fff8e1;emissive:#fff1c2;emissiveIntensity:0.6'});
+    bx(h3,P(-4.05,2.4,s*1.2),0.06,0.32,0.1,'#2b2b2b',0.4,0.6); });
+  bx(h3,P(-4.42,0.78,0),0.16,0.32,2.3,'#a8b0b7',0.25,0.85);   // defensa
+  bx(h3,P(-4.36,1.35,0),0.04,0.5,1.2,'#3a3f44',0.5,0.6);     // parrilla
+  // tanque pulido con tapas semiesféricas
+  el('a-cylinder',{position:P(0.55,1.95,0),rotation:'0 0 90',radius:1.05,height:5.3,segmentsRadial:28,material:M('#e8edf1',0.18,0.75)},h3);
+  [-2.1,3.2].forEach((x,i)=>sph(h3,P(x,1.95,0),1.05,'#e8edf1',{scale:`${0.35} 1 1`,material:M('#e8edf1',0.18,0.75)}));
+  [-1.2,0.6,2.4].forEach(x=>el('a-torus',{position:P(x,1.95,0),rotation:'0 90 0',radius:1.06,radiusTubular:0.035,material:M('#b9c2c9',0.3,0.8)},h3));
+  bx(h3,P(0.55,3.05,0),4.6,0.05,0.6,'#9aa3aa',0.4,0.7);   // pasarela
+  [-1.6,0.6,2.7].forEach(x=>cy(h3,P(x,3.06,0),0.2,0.12,'#7f8890',0.4,0.7));   // domos
+  // placa de identificación del material
+  bx(h3,P(0.55,1.85,1.06),1.6,0.55,0.02,'#ff9800',0.5); txt(h3,P(0.55,1.85,1.075),'INFLAMABLE 3',{width:2});
+  // ruedas con rin
+  [-3.4,-1,1.6,2.8].forEach(x=>[-1,1].forEach(s=>{ el('a-cylinder',{position:P(x,0.48,s*1.12),rotation:'90 0 0',radius:0.48,height:0.32,segmentsRadial:20,material:M('#1d1d1d',0.85)},h3);
+    el('a-cylinder',{position:P(x,0.48,s*1.29),rotation:'90 0 0',radius:0.24,height:0.02,material:M('#b9c0c6',0.3,0.85)},h3); }));
+  [-1,1].forEach(s=>bx(h3,P(2.2,0.95,s*1.15),1.9,0.06,0.36,'#2b2b2b',0.6,0.4));   // salpicaderas
 }
 
-function buildGalera(sc,R){
-  box(R,P(0,0.01,1),16,0.02,12,'#a7a9ac');
-  box(R,P(0,4.2,0),12,0.25,8,'#9aa5ad');
-  [[-5.8,-3.8],[5.8,-3.8],[-5.8,3.8],[5.8,3.8],[0,-3.8],[0,3.8]].forEach(([x,z])=>box(R,P(x,2.1,z),0.2,4.2,0.2,'#6d7378'));
-  // malla perimetral parcial
-  for(let x=-5.6;x<=5.6;x+=0.8) cyl(R,P(x,0.9,-3.8),0.02,1.8,'#8a9096');
-  box(R,P(0,1.8,-3.8),11.6,0.05,0.05,'#8a9096');
-  // cilindros
-  for(let i=0;i<6;i++) for(let j=0;j<3;j++){ const x=-4.5+i*0.6, z=-2.5+j*0.6;
-    cyl(R,P(x,0.6,z),0.18,1.2,'#e7e7e7'); sph(R,P(x,1.22,z),0.12,'#bdbdbd'); }
-  for(let i=0;i<4;i++) cyl(R,P(1+i*0.6,0.6,-2.5),0.18,1.2,'#e7e7e7');
-  // Peligro 1: calefactor junto a cilindros
-  const h1=hazardGroup(R,'l_heat',P(-1.2,0,-1.5)); box(h1,P(0,0.5,0),0.6,1,0.4,'#b03a2e');
-  el('a-plane',{position:P(0,0.6,0.21),width:0.45,height:0.5,color:'#ff7b00',material:'emissive:#ff5a00;emissiveIntensity:0.9'},h1);
-  // Peligro 2: fuga junto a registro
-  const h2=hazardGroup(R,'l_leak',P(3,0,1.5)); cyl(h2,P(0,0.6,0),0.18,1.2,'#e7e7e7'); sph(h2,P(0,1.22,0),0.12,'#bdbdbd');
-  box(h2,P(1,0.02,0),0.8,0.03,0.8,'#1a1a1a'); cloud(h2,P(0.5,0,0),'#f3f6f8',false);
-  // Peligro 3: esmerilado con chispas
-  const h3=hazardGroup(R,'l_sparks',P(4.6,0,-1)); person(h3,P(0,0,0),'#2b6cb0',-60);
-  box(h3,P(-0.3,1.1,0.25),0.35,0.12,0.12,'#555');
-  for(let i=0;i<6;i++) sph(h3,P(-0.45,1.05,0.3),0.025,'#ffd54f',{material:'emissive:#ffc107;emissiveIntensity:1',
-    animation:`property:position;to:${-0.9-Math.random()*0.6} ${0.3+Math.random()*0.6} ${0.3+Math.random()*0.8};dur:${400+i*90};loop:true;easing:easeOutQuad`});
+function buildGasolinera(sc,R){
+  bx(R,P(0,0.01,2),30,0.02,22,'#b9bec3',0.95,0,{class:'piso-concreto'});
+  // techumbre genérica (sin marca): losa blanca, faldón verde y luminarias
+  bx(R,P(0,5.05,0),14,0.42,8,'#f4f6f7',0.6);
+  [[0,4.05,14.2,0.08],[0,-4.05,14.2,0.08]].forEach(([x,z,w,d])=>bx(R,P(x,5.05,z),w,0.7,d,'#2e9e4f',0.45));
+  [-7.05,7.05].forEach(x=>bx(R,P(x,5.05,0),0.08,0.7,8.2,'#2e9e4f',0.45));
+  [[0,4.1],[0,-4.1]].forEach(([x,z])=>bx(R,P(x,4.72,z),14.2,0.06,0.04,'#ffffff',0.4));
+  for(let x=-5;x<=5;x+=2.5) [-2,2].forEach(z=>el('a-plane',{position:P(x,4.83,z),rotation:'90 0 0',width:1.1,height:0.5,material:'color:#ffffff;shader:flat'},R));
+  [[-5,-2.5],[5,-2.5],[-5,2.5],[5,2.5]].forEach(([x,z])=>{ bx(R,P(x,2.42,z),0.42,4.84,0.42,'#e9ecee',0.5,0.1); bx(R,P(x,0.3,z),0.5,0.6,0.5,'#2e9e4f',0.5); });
+  [-2.5,2.5].forEach(z=>isla(R,P(0,0,z)));
+  // bocatomas de tanques subterráneos (registro de concreto, tapas de color)
+  bx(R,P(8.5,0.03,6),4.2,0.04,1.3,'#9ea3a7',0.95);
+  [[7,'#2fbf71'],[8.5,'#e5484d'],[10,'#2b2b2b']].forEach(([x,c])=>{ cy(R,P(x,0.07,6),0.36,0.05,'#5d646a',0.4,0.7); cy(R,P(x,0.1,6),0.28,0.03,c,0.5,0.2); });
+  // coladera con rejilla
+  bx(R,P(-6,0.025,5),1.3,0.03,0.6,'#3b3f43',0.6,0.5);
+  for(let i=-5;i<=5;i++) bx(R,P(-6+i*0.11,0.045,5),0.05,0.02,0.52,'#1c1e20',0.5,0.7);
+  // tienda: muros, vidrios, puerta y faldón
+  bx(R,P(-9,1.6,-7),8,3.2,4,'#ece6d6',0.85);
+  bx(R,P(-9,3.35,-7),8.4,0.3,4.4,'#2e9e4f',0.45); bx(R,P(-9,3.52,-7),8.4,0.05,4.4,'#ffffff',0.4);
+  el('a-plane',{position:P(-10.4,1.45,-4.99),width:4.4,height:1.7,material:VIDRIO},R);
+  bx(R,P(-10.4,0.55,-4.98),4.6,0.1,0.04,'#5d666e',0.4,0.7); bx(R,P(-10.4,2.33,-4.98),4.6,0.08,0.04,'#5d666e',0.4,0.7);
+  el('a-plane',{position:P(-6.8,1.15,-4.99),width:1.4,height:2.3,material:VIDRIO},R); bx(R,P(-6.8,1.15,-4.985),0.04,2.3,0.03,'#5d666e',0.4,0.7);
+  txt(R,P(-9,2.75,-4.97),'TIENDA',{color:'#1d2a36',width:4});
+  sign(R,P(4,0,9),'PROHIBIDO FUMAR','#ffffff','#c62828',2.6);
+  sign(R,P(-12.5,0,8.5),'APAGUE SU MOTOR','#ffffff','#1d2a36',2.6,20);
+  // cubetas de arena y extintores en cada isla (además del distractor)
+  extintor(R,P(-4.4,0.22,2.5),0); arbol(R,P(-14,0,-10),1.1); arbol(R,P(13.5,0,-9),0.95);
+  // Peligro 1: derrame hacia coladera
+  const h1=hazardGroup(R,'g_spill',P(-2.5,0.03,3.2));
+  el('a-circle',{rotation:'-90 0 0',radius:1.1,segments:40,material:'color:#4a3a1e;transparent:true;opacity:0.88;metalness:0.4;roughness:0.06'},h1);
+  el('a-circle',{rotation:'-90 0 0',position:P(0.5,0.002,-0.3),radius:0.6,segments:24,material:'color:#4a3a1e;transparent:true;opacity:0.88;metalness:0.4;roughness:0.06'},h1);
+  el('a-plane',{rotation:'-90 0 25',position:P(-1.8,0.004,1),width:0.6,height:3,material:'color:#4a3a1e;transparent:true;opacity:0.85;metalness:0.4;roughness:0.06'},h1);
+  // Peligro 2: persona fumando
+  const h2=hazardGroup(R,'g_smoker',P(1.2,0,4.2)); const fum=person(h2,P(0,0,0),'#8e44ad',200,{pose:'fumar'});
+  cy(fum.mano,P(0,-0.34,0.03),0.008,0.08,'#f5f5f5',0.6,0,{rotation:'90 0 0'}); sph(fum.mano,P(0,-0.34,0.075),0.012,'#ff5500',{material:'color:#ff5500;emissive:#ff3300;emissiveIntensity:2'});
+  // Peligro 3: autotanque descargando sin conexión a tierra
+  const h3=hazardGroup(R,'g_truck',P(9,0,8.5)); autotanque(h3);
+  el('a-cylinder',{position:P(-0.4,0.12,-1.65),rotation:'90 -15 0',radius:0.06,height:1.6,material:M('#1a1a1a',0.6)},h3);   // manguera de descarga a la bocatoma
+  const reel=el('a-entity',{position:P(-1,0,-2.4)},h3); bx(reel,P(0,0.5,0),0.4,1,0.3,'#f2c230',0.5,0.2);
+  el('a-torus',{position:P(0,0.8,0.17),radius:0.15,radiusTubular:0.03,material:M('#2e7d32',0.5)},reel);
+  el('a-torus',{position:P(0.35,0.03,0.25),rotation:'-90 0 0',radius:0.22,radiusTubular:0.015,material:M('#2e7d32',0.5)},reel);   // cable suelto, sin conectar
+  bx(reel,P(0.62,0.03,0.25),0.1,0.04,0.05,'#c9a227',0.4,0.7);   // pinza sin conectar
   // Distractores
-  const d1=hazardGroup(R,'l_ext',P(-5.4,0,3.4)); cyl(d1,P(0,0.4,0),0.12,0.6,'#d32f2f'); box(d1,P(0,1.2,0),0.35,0.35,0.02,'#d32f2f'); txt(d1,P(0,1.2,0.02),'EXT',{color:'#fff',width:1.2});
+  const d1=hazardGroup(R,'g_ext',P(5.4,0,-2.2)); extintor(d1,P(0,0,0),0);
+  const d2=hazardGroup(R,'g_sand',P(-7,0,-2));
+  cy(d2,P(0,0.45,0),0.3,0.9,'#c49a3a',0.6,0.3); cy(d2,P(0,0.91,0),0.31,0.03,'#8a6a24',0.5,0.4); txt(d2,P(0,0.6,0.31),'ARENA',{width:1.4});
+  bx(d2,P(0.45,0.55,0),0.04,1.1,0.04,'#8d6e63',0.8,0,{rotation:'0 0 -12'}); bx(d2,P(0.55,0.08,0),0.22,0.03,0.28,'#9e9e9e',0.4,0.6);
+}
+
+function cilindroLP(p,pos,c='#dfe3e6'){
+  const g=el('a-entity',{position:pos},p);
+  cy(g,P(0,0.07,0),0.165,0.14,'#8a9096',0.5,0.6);
+  cy(g,P(0,0.62,0),0.18,0.96,c,0.38,0.35,{segmentsRadial:18});
+  sph(g,P(0,1.1,0),0.18,c,{scale:'1 0.55 1',material:M(c,0.38,0.35)});
+  el('a-cylinder',{position:P(0,1.27,0),radius:0.115,height:0.17,openEnded:true,segmentsRadial:14,material:M('#9aa0a6',0.45,0.6,'side:double')},g);
+  cy(g,P(0,1.22,0),0.03,0.09,'#c9a227',0.35,0.8);
+  return g;
+}
+function buildGalera(sc,R){
+  bx(R,P(0,0.01,1),16,0.02,12,'#a7a9ac',0.95,0,{class:'piso-concreto'});
+  bx(R,P(0,0.1,-0.4),12.4,0.18,8.4,'#bfc2c5',0.9);   // plataforma elevada
+  // techo de lámina acanalada sobre estructura metálica
+  el('a-box',{position:P(0,4.25,0),width:12.4,height:0.08,depth:8.4,rotation:'4 0 0',material:`src:${LAMINA()};repeat:10 1;roughness:0.45;metalness:0.6`},R);
+  [[-5.8,-3.8],[5.8,-3.8],[-5.8,3.8],[5.8,3.8],[0,-3.8],[0,3.8]].forEach(([x,z])=>bx(R,P(x,2.1,z),0.2,4.2,0.2,'#5f666c',0.45,0.7));
+  [-3.8,3.8].forEach(z=>bx(R,P(0,4.1,z),12,0.22,0.12,'#5f666c',0.45,0.7));
+  // malla ciclónica perimetral (atrás y costados)
+  malla(R,P(0,0.19,-3.95),11.6); malla(R,P(-5.95,0.19,0),7.8,1.8,90); malla(R,P(5.95,0.19,0),7.8,1.8,90);
+  // cilindros
+  for(let i=0;i<6;i++) for(let j=0;j<3;j++) cilindroLP(R,P(-4.5+i*0.6,0.19,-2.5+j*0.6));
+  for(let i=0;i<4;i++) cilindroLP(R,P(1+i*0.6,0.19,-2.5));
+  bx(R,P(0,2.6,3.9),3.4,0.5,0.05,'#f2c230',0.5); txt(R,P(0,2.6,3.93),'GALERA DE GAS LP',{width:4});
+  arbol(R,P(-9,0,-6),1.0); arbol(R,P(8.5,0,-7),1.15);
+  // Peligro 1: calefactor junto a cilindros
+  const h1=hazardGroup(R,'l_heat',P(-1.2,0,-1.5)); bx(h1,P(0,0.5,0),0.6,1,0.4,'#b03a2e',0.5,0.3);
+  el('a-plane',{position:P(0,0.6,0.21),width:0.45,height:0.5,material:'color:#ff7b00;emissive:#ff5a00;emissiveIntensity:1.6'},h1);
+  for(let i=0;i<4;i++) bx(h1,P(0,0.4+i*0.13,0.215),0.42,0.02,0.01,'#5a1a12',0.5,0.5);
+  el('a-entity',{position:P(0,0.7,0.5),light:'type:point;color:#ff7a2a;intensity:2;distance:3'},h1);
+  // Peligro 2: fuga junto a registro
+  const h2=hazardGroup(R,'l_leak',P(3,0,1.5)); cilindroLP(h2,P(0,0,0));
+  bx(h2,P(1,0.02,0),0.8,0.03,0.8,'#2a2d30',0.6,0.5); for(let i=-3;i<=3;i++) bx(h2,P(1+i*0.1,0.04,0),0.04,0.02,0.72,'#151515',0.5,0.6);
+  cloud(h2,P(0.5,0,0),'#f3f6f8',false);
+  // Peligro 3: esmerilado con chispas
+  const h3=hazardGroup(R,'l_sparks',P(4.6,0,-1)); const esm=person(h3,P(0,0,0),'#2b6cb0',-60,{pose:'frente',casco:'#f2c230'});
+  bx(h3,P(0,1.22,0.55),0.35,0.12,0.12,'#555',0.4,0.7); cy(h3,P(-0.2,1.22,0.6),0.1,0.03,'#9aa0a6',0.3,0.8,{rotation:'0 0 90'});
+  for(let i=0;i<8;i++) sph(h3,P(-0.25,1.2,0.62),0.025,'#ffd54f',{material:'color:#ffd54f;emissive:#ffc107;emissiveIntensity:2',
+    animation:`property:position;to:${-0.6-Math.random()*0.8} ${0.2+Math.random()*0.7} ${0.6+Math.random()*0.9};dur:${380+i*80};loop:true;easing:easeOutQuad`});
+  // Distractores
+  const d1=hazardGroup(R,'l_ext',P(-5.4,0,3.4)); extintor(d1,P(0,0.19,0),0);
   const d2=hazardGroup(R,'l_sign',P(2,0,5));
-  cyl(d2,P(0,0.9,0),0.05,1.8,'#666'); el('a-circle',{position:P(0,2.1,0),radius:0.42,color:'#c62828'},d2); el('a-circle',{position:P(0,2.1,0.01),radius:0.34,color:'#ffffff'},d2);
-  box(d2,P(0,2.1,0.02),0.18,0.04,0.01,'#333'); box(d2,P(0,2.1,0.03),0.7,0.07,0.01,'#c62828',{rotation:'0 0 -45'});
+  cy(d2,P(0,0.9,-0.03),0.05,1.8,'#7b858d',0.4,0.7); el('a-circle',{position:P(0,2.1,0),radius:0.42,material:M('#c62828',0.6)},d2); el('a-circle',{position:P(0,2.1,0.01),radius:0.34,material:M('#ffffff',0.6)},d2);
+  bx(d2,P(0,2.1,0.02),0.18,0.04,0.01,'#333'); box(d2,P(0,2.1,0.03),0.7,0.07,0.01,'#c62828',{rotation:'0 0 -45'});
   txt(d2,P(0,1.55,0.02),'PROHIBIDO FUMAR',{width:2,color:'#c62828'});
 }
 
+function costal(p,pos,ry=0){ return el('a-sphere',{position:pos,radius:0.3,scale:'0.95 0.42 0.62',rotation:P(0,ry,0),segmentsWidth:12,segmentsHeight:8,material:M('#b39b72',0.95)},p); }
 function buildDucto(sc,R,kind){
-  box(R,P(0,0.005,-8),20,0.01,28,'#8fb07a');
-  pipe(R,-6,-9,9);
+  bx(R,P(0,0.005,-8),20,0.01,28,'#8fb07a',1);
+  bx(R,P(0,0.012,-6),19,0.01,3,'#a59675',1);   // derecho de vía (franja de terracería)
+  const fl={gn:'GAS NATURAL',cr:'PETROLEO CRUDO',ga:'GASOLINA'}[kind];
+  pipe(R,-6,-9,9,0.9,0.35,fl);
   const id={gn:'n',cr:'c',ga:'p'}[kind];
   windsock(R,P(-6,0,-4),`${id}_sock`);
+  sign(R,P(-7.5,0,2.5),sc.name.toUpperCase(),'#1d2a36','#ffffff',3.6,15);
+  arbol(R,P(-9,0,-16),1.1); arbol(R,P(7,0,-18),0.95,'#5b8a3f'); arbol(R,P(-3,0,-20),1.2);
   if(kind==='gn'){
-    const pp=hazardGroup(R,'n_pipe',P(-3,0,-4.8)); box(pp,P(0,1.9,0),0.9,0.35,0.05,'#f2c230'); txt(pp,P(0,1.9,0.03),'GAS NATURAL',{width:1.6}); cyl(pp,P(0,1.25,0),0.03,0.9,'#666');
+    const pp=hazardGroup(R,'n_pipe',P(-3,0,-4.8)); bx(pp,P(0,1.9,0),0.9,0.35,0.05,'#f2c230',0.5); txt(pp,P(0,1.9,0.03),'GAS NATURAL',{width:1.6}); cy(pp,P(0,1.25,0),0.03,0.9,'#7b858d',0.4,0.7);
     cloud(R,P(2,1.2,-6),'#eef3f7',true);
-    const h1=hazardGroup(R,'n_down',P(8,0,-4)); person(h1,P(0,0,0),'#2b6cb0',-90);
-    const h2=hazardGroup(R,'n_fire',P(-6,0,-1.5)); for(let i=0;i<4;i++) el('a-cylinder',{position:P(0,0.1,0),rotation:`90 ${i*45} 0`,radius:0.06,height:0.9,color:'#5d4037'},h2); flame(h2,P(0,0,0),0.6);
-    const h3=hazardGroup(R,'n_hut',P(5,0,-10)); box(h3,P(0,1.2,0),2.2,2.4,2,'#cfd8dc'); box(h3,P(-1.11,1.8,0),0.02,0.5,0.8,'#455a64'); box(h3,P(0,2.5,0),2.4,0.12,2.2,'#78909c');
+    const h1=hazardGroup(R,'n_down',P(8,0,-4)); person(h1,P(0,0,0),'#2b6cb0',-90,{casco:'#ffffff',chaleco:'#c6f13a'});
+    const h2=hazardGroup(R,'n_fire',P(-6,0,-1.5));
+    for(let i=0;i<7;i++){ const a=i/7*Math.PI*2; sph(h2,P(Math.cos(a)*0.55,0.08,Math.sin(a)*0.55),0.13,'#7d7d7d',{scale:'1 0.7 1',material:M('#7d7d7d',0.95)}); }
+    for(let i=0;i<4;i++) el('a-cylinder',{position:P(0,0.12,0),rotation:`80 ${i*45} 0`,radius:0.06,height:0.9,material:M('#5d4037',0.95)},h2); flame(h2,P(0,0,0),0.6);
+    const h3=hazardGroup(R,'n_hut',P(5,0,-10));
+    bx(h3,P(0,1.2,0),2.2,2.4,2,'#cfd8dc',0.8); bx(h3,P(0,2.5,0),2.6,0.12,2.4,'#78909c',0.5,0.5);
+    for(let i=0;i<4;i++) bx(h3,P(-1.115,1.65+i*0.1,0),0.02,0.05,0.8,'#455a64',0.5,0.6);   // ventila con rejillas
+    bx(h3,P(0.3,1.0,1.005),0.85,1.9,0.04,'#90a4ae',0.6,0.3); cy(h3,P(0.6,1.0,1.04),0.03,0.05,'#c9a227',0.3,0.8,{rotation:'90 0 0'});
   }
   if(kind==='cr'){
-    el('a-plane',{rotation:'-90 0 0',position:P(8,0.015,-8),width:2.5,height:28,color:'#4f8fc0',material:'transparent:true;opacity:0.85'},R);
+    // arroyo con márgenes
+    [6.5,9.5].forEach(x=>bx(R,P(x,0.03,-8),0.6,0.05,28,'#8b7a5a',1));
+    el('a-plane',{rotation:'-90 0 0',position:P(8,0.02,-8),width:2.5,height:28,material:'color:#3f86b8;transparent:true;opacity:0.86;roughness:0.05;metalness:0.3'},R);
     const h1=hazardGroup(R,'c_stream',P(2,0.02,-4.5));
-    el('a-circle',{rotation:'-90 0 0',radius:1.6,color:'#111111',material:'metalness:0.5;roughness:0.25'},h1);
-    el('a-plane',{rotation:'-90 0 -90',position:P(3,0.005,0),width:0.9,height:3.6,color:'#111111'},h1);
-    const h2=hazardGroup(R,'c_noscba',P(-0.6,0,-3)); person(h2,P(0,0,0),'#ef6c00',160);
+    el('a-circle',{rotation:'-90 0 0',radius:1.6,segments:40,material:'color:#0b0b0b;roughness:0.05;metalness:0.5'},h1);
+    el('a-circle',{rotation:'-90 0 0',position:P(-0.8,0.002,0.8),radius:0.8,segments:24,material:'color:#0b0b0b;roughness:0.05;metalness:0.5'},h1);
+    el('a-plane',{rotation:'-90 0 -90',position:P(3,0.004,0),width:0.9,height:3.6,material:'color:#0b0b0b;roughness:0.05;metalness:0.5'},h1);
+    const h2=hazardGroup(R,'c_noscba',P(-0.6,0,-3)); person(h2,P(0,0,0),'#ef6c00',160,{casco:'#ffffff'});
     const h3=hazardGroup(R,'c_walk',P(2.4,0,-4.2)); person(h3,P(0,0,0),'#6d4c41',90);
-    const d1=hazardGroup(R,'c_dike',P(-6,0,-2)); for(let i=0;i<5;i++) box(d1,P(i*0.55,0.2,0),0.5,0.4,0.35,'#a1887f'); txt(d1,P(1.1,0.8,0.2),'COSTALES DIQUE',{width:2});
+    const d1=hazardGroup(R,'c_dike',P(-6,0,-2));
+    for(let i=0;i<5;i++) costal(d1,P(i*0.55,0.13,0),i*7); for(let i=0;i<4;i++) costal(d1,P(0.27+i*0.55,0.36,0),-i*9);
+    txt(d1,P(1.1,0.85,0.25),'COSTALES DIQUE',{width:2});
   }
   if(kind==='ga'){
-    box(R,P(-5,-0.1,-3),4,0.25,1.4,'#5b4636');   // zanja (zona baja)
-    el('a-plane',{rotation:'-90 0 0',position:P(-5,0.03,-3),width:4,height:1.4,color:'#3e2f23'},R);
+    // zanja con paredes de tierra, bordo de material excavado y tablones
+    el('a-plane',{rotation:'-90 0 0',position:P(-5,0.03,-3),width:4,height:1.4,material:M('#2e2219',1)},R);
+    [-3.68,-2.32].forEach(z=>bx(R,P(-5,0.05,z),4.1,0.04,0.12,'#4a3828',1));
+    el('a-entity',{position:P(-5,0,-4.25),geometry:'primitive:cylinder;radius:0.45;height:4.4;segmentsRadial:10;thetaStart:0;thetaLength:180',rotation:'0 0 90',scale:'1 1 0.8',material:M('#7a5f43',1,0,'flatShading:true')},R);
+    [[-7.1,-3],[-2.9,-3]].forEach(([x,z])=>bx(R,P(x,0.04,z),0.25,0.08,1.8,'#9a7b52',0.9));
     const h1=hazardGroup(R,'p_sewer',P(2,0.02,-4.5));
-    el('a-circle',{rotation:'-90 0 0',radius:1.2,color:'#5b4a2a',material:'transparent:true;opacity:0.85;metalness:0.6;roughness:0.2'},h1);
-    el('a-plane',{rotation:'-90 0 -90',position:P(1.8,0.005,0),width:0.6,height:2.2,color:'#5b4a2a'},h1);
-    el('a-circle',{rotation:'-90 0 0',position:P(3.2,0.01,0),radius:0.45,color:'#222'},h1);
-    const h2=hazardGroup(R,'p_tool',P(0.3,0,-2.8)); person(h2,P(0,0,0),'#2b6cb0',60);
-    box(h2,P(0.35,0.7,0.3),0.06,1.2,0.06,'#8d6e63',{rotation:'25 0 0'}); box(h2,P(0.35,0.12,0.55),0.3,0.03,0.35,'#9e9e9e');
-    const h3=hazardGroup(R,'p_trench',P(-5,-0.6,-3)); person(h3,P(0,0,0),'#455a64',90);
-    const d1=hazardGroup(R,'p_sand',P(-7.5,0,-1)); cyl(d1,P(0,0.45,0),0.3,0.9,'#c49a3a'); txt(d1,P(0,0.6,0.31),'ARENA',{width:1.4});
+    el('a-circle',{rotation:'-90 0 0',radius:1.2,segments:40,material:'color:#4a3a1e;transparent:true;opacity:0.88;metalness:0.4;roughness:0.06'},h1);
+    el('a-plane',{rotation:'-90 0 -90',position:P(1.8,0.004,0),width:0.6,height:2.2,material:'color:#4a3a1e;transparent:true;opacity:0.85;metalness:0.4;roughness:0.06'},h1);
+    cy(h1,P(3.2,0.012,0),0.47,0.02,'#2b2e31',0.5,0.6); el('a-circle',{rotation:'-90 0 0',position:P(3.2,0.025,0),radius:0.42,material:M('#151617',0.6,0.5)},h1);
+    const h2=hazardGroup(R,'p_tool',P(0.3,0,-2.8)); person(h2,P(0,0,0),'#2b6cb0',60,{pose:'pala',casco:'#f2c230',chaleco:'#ff8f1f'});
+    bx(h2,P(0.05,0.72,0.42),0.05,1.25,0.05,'#8d6e63',0.8,0,{rotation:'35 0 0'}); bx(h2,P(0.05,0.14,0.82),0.3,0.03,0.36,'#a9adb1',0.3,0.85,{rotation:'15 0 0'});
+    const h3=hazardGroup(R,'p_trench',P(-5,-0.6,-3)); person(h3,P(0,0,0),'#455a64',90,{casco:'#ffffff'});
+    const d1=hazardGroup(R,'p_sand',P(-7.5,0,-1)); cy(d1,P(0,0.45,0),0.3,0.9,'#c49a3a',0.6,0.3); cy(d1,P(0,0.91,0),0.31,0.03,'#8a6a24',0.5,0.4); txt(d1,P(0,0.6,0.31),'ARENA',{width:1.4});
   }
-  txt(R,P(-4,0.02,4),sc.name.toUpperCase(),{rotation:'-90 0 0',width:7,color:'#1d2a36'});
 }
 
 function buildInfo(sc,R){
@@ -473,6 +777,7 @@ function buildWorld(){
     if(sc.id==='ducto_gn') buildDucto(sc,R,'gn');
     if(sc.id==='ducto_crudo') buildDucto(sc,R,'cr');
     if(sc.id==='ducto_gasolina') buildDucto(sc,R,'ga');
+    if(EXTRA_BUILD[sc.id]) EXTRA_BUILD[sc.id](sc,R);
     buildInfo(sc,R);
     [...sc.hazards,...sc.decoys].forEach(h=>{
       const o=OBJ[h.id]; if(!o) return;
@@ -526,11 +831,12 @@ function hud(){
 function teleport(sc){
   const rig=$('#rig').object3D, cam=$('#cam');
   const [cx,cy,cz]=sc?sc.center:[0,0,0]; const v=sc?sc.view:[0,0,22];
-  rig.position.set(cx+v[0],0,cz+v[2]); rig.rotation.set(0,0,0);
+  rig.position.set(cx+v[0],0,cz+v[2]); rig.rotation.set(0,0,0); solSobre(sc?sc.center:null);
   cam.object3D.position.set(0,1.6,0);
   const lc=cam.components['look-controls']; if(lc){ lc.yawObject.rotation.y=0; lc.pitchObject.rotation.x=0; }
 }
 function clearFX(){
+  SFX.splice(0).forEach(h=>window.Sonido&&Sonido.detener(h));
   STATE.fx.forEach(e=>e.parentNode&&e.parentNode.removeChild(e)); STATE.fx=[];
   if(STATE.ring){ STATE.ring.parentNode.removeChild(STATE.ring); STATE.ring=null; }
   if(STATE.arrow){ STATE.arrow.parentNode.removeChild(STATE.arrow); STATE.arrow=null; }
@@ -632,6 +938,10 @@ function startFX(sc){
   }
   if(fx==='lpfire'){ STATE.fx.push(flame(R,P(x,1.25,z),0.7)); }
   if(fx==='gnfire'){ STATE.fx.push(flame(R,P(x,y+0.3,z),1.6)); }
+  // sonido de la emergencia (motor/sonido.js): alarma y, si hay flama, fuego
+  if(window.Sonido){ const pos=R.object3D.localToWorld(new THREE.Vector3(x,1,z)); const o={getWorldPosition:v=>v.copy(pos),position:pos};
+    SFX.push(Sonido.fuente('alarma',o,{vol:0.7,alcance:45})); if(fx==='lpfire'||fx==='gnfire') SFX.push(Sonido.fuente('fuego',o,{vol:0.8,alcance:25})); }
+  setTimeout(sombras,100);
 }
 function showRing(sc,r){
   const R=ROOT[sc.id], [x,,z]=sc.leak;
@@ -672,7 +982,11 @@ function refsPanel(){
 
 // ---------- HUD DOM ----------
 function overlay(html){ $('#ovBox').innerHTML=html+'<p><button id="ovClose">Cerrar</button></p>'; $('#ov').style.display='block'; $('#ovClose').onclick=()=>$('#ov').style.display='none'; }
-$('#bCampus').onclick=()=>{ location.href='../../../index.html?zona=practicas'; };
+const VOLVER=(()=>{ try{ return new URLSearchParams(location.search).get('volver'); }catch(e){ return null; } })();
+const BASE_CAMPUS=VOLVER?VOLVER.split('?')[0]:'../../../index.html';
+$('#bRegresar').onclick=()=>{ location.href=VOLVER||'../../../index.html?mundo=practicas'; };
+$('#bCampus').onclick=()=>{ location.href=BASE_CAMPUS+'?plaza'; };
+$('#bSalir').onclick=()=>{ location.href=BASE_CAMPUS+'?salir'; };
 $('#bMenu').onclick=()=>{ if(STATE.sc) modeMenu(STATE.sc); else mainMenu(); };
 $('#bPanel').onclick=()=>{ const p=$('#panel'); if(p.children.length){ placePanel(); p.setAttribute('visible',true);} else (STATE.sc?modeMenu(STATE.sc):mainMenu()); };
 $('#bRefs').onclick=()=>overlay('<h2>Fuentes y bibliografía</h2><ol>'+REFS.map(r=>`<li>${r.t} <a href="${r.u}" target="_blank" rel="noopener">Ver fuente</a></li>`).join('')+'</ol><p><b>Aviso:</b> simulador de capacitación. La GRE está diseñada para la fase inicial de incidentes de transporte, no para derrames en instalaciones; en una instalación rige su Plan de Respuesta a Emergencias y la normativa aplicable vigente. Verifica en el DOF el estatus de las normas antes de usarlas como requisito.</p>');
@@ -693,9 +1007,88 @@ document.querySelectorAll('#pad button[data-m]').forEach(b=>{
 });
 AFRAME.registerComponent('pad-move',{tick(t,dt){ if(!dt) return; const f=PAD.f-PAD.b, s=PAD.r-PAD.l; if(f||s) moveRig(f,s,dt); }});
 
+
+// ---------- Caminar con clic y respetar objetos (12/10/2026) ----------
+// Toca/clic en el piso: se calcula una ruta A* (motor/navegacion.js) que rodea dispensarios, cilindros, ductos, personas y
+// vehículos. Teclado (WASD/flechas), botones y joystick también chocan con los objetos en lugar de atravesarlos.
+let NAV=null; const RUTA=[]; let MARCA=null;
+AFRAME.registerComponent('encima',{tick(){ this.el.object3D.traverse(o=>{ if(!o.material) return; o.renderOrder=999;
+  (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ if(m.depthTest){ m.depthTest=false; m.depthWrite=false; m.transparent=true; m.needsUpdate=true; } }); }); }});
+async function construirNav(){
+  const {Navegacion}=await import('../../../motor/navegacion.js');
+  const nav=new Navegacion({x0:-90,z0:-50,x1:100,z1:50,celda:0.3});
+  const b=new THREE.Box3(), c=new THREE.Vector3(), t=new THREE.Vector3();
+  const w=$('#world').object3D; w.updateMatrixWorld(true);
+  const bloquear=o=>{ b.setFromObject(o); if(b.isEmpty()) return; b.getSize(t); b.getCenter(c);
+    if(t.y<0.15||b.min.y>1.9||t.x*t.z>150) return; nav.bloquearRect(c.x,c.z,t.x+0.45,t.z+0.45,0); };
+  const visitar=(ent)=>{ for(const ch of ent.children){ if(!ch.object3D||ch.id==='suelo'||ch.id==='camino') continue;
+    // grupos grandes (techumbres, patios) se recorren por partes; los objetos se bloquean completos
+    b.setFromObject(ch.object3D); if(!b.isEmpty()){ b.getSize(t); if(t.x*t.z>60 && ch.children.length) { visitar(ch); continue; } }
+    bloquear(ch.object3D); } };
+  visitar($('#world'));
+  NAV=nav; return nav;
+}
+function caminarA(x,z){ if(!NAV) return; const rig=$('#rig').object3D, cam=$('#cam').object3D, cp=new THREE.Vector3(); cam.getWorldPosition(cp);
+  const r=NAV.ruta({x:cp.x,z:cp.z},{x,z}); RUTA.length=0; if(!r.length){ aviso2('No hay paso libre hasta ahí'); return; }
+  const off=new THREE.Vector3(cp.x-rig.position.x,0,cp.z-rig.position.z);   // en el visor la cabeza no está en el centro del rig
+  r.forEach(p=>RUTA.push(new THREE.Vector3(p.x-off.x,0,p.z-off.z)));
+  if(!MARCA){ MARCA=el('a-ring',{rotation:'-90 0 0',radiusInner:0.18,radiusOuter:0.28,color:'#3FA7C6',material:'shader:flat;side:double'}); }
+  const u=r[r.length-1]; MARCA.setAttribute('position',P(u.x,0.03,u.z)); MARCA.setAttribute('visible',true); }
+function aviso2(t){ const h=$('#hudScore'); const o=h.textContent; h.textContent='⚠ '+t; setTimeout(()=>{ if(h.textContent==='⚠ '+t) h.textContent=o; },1800); }
+AFRAME.registerComponent('seguir-ruta',{tick(t,dt){ if(!RUTA.length||!dt) return; ULT_MOV=performance.now(); const rig=$('#rig').object3D, d=RUTA[0].clone().sub(rig.position); d.y=0; const L=d.length();
+  if(L<0.08){ RUTA.shift(); if(!RUTA.length&&MARCA) MARCA.setAttribute('visible',false); return; }
+  rig.position.addScaledVector(d.normalize(),Math.min(L,2.4*dt/1000)); }});
+// clic/toque en el piso (no cuenta si fue un arrastre para mirar)
+let abajo=null;
+addEventListener('pointerdown',e=>{ if(e.target.tagName==='CANVAS') abajo=[e.clientX,e.clientY]; },true);
+addEventListener('pointerup',e=>{ if(e.target.tagName!=='CANVAS'||!abajo) return; const mov=Math.hypot(e.clientX-abajo[0],e.clientY-abajo[1]); abajo=null; if(mov>8) return;
+  const cam=scene.camera; if(!cam) return; const ray=new THREE.Raycaster(), v=new THREE.Vector2(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1); ray.setFromCamera(v,cam);
+  const objs=[]; document.querySelectorAll('.clickable').forEach(n=>{ if(n.object3D&&n.object3D.visible) objs.push(n.object3D); });
+  const hitObj=ray.intersectObjects(objs,true)[0], piso=new THREE.Plane(new THREE.Vector3(0,1,0),0), p=new THREE.Vector3();
+  if(!ray.ray.intersectPlane(piso,p)) return; if(hitObj && hitObj.distance < ray.ray.origin.distanceTo(p)) return;   // tocó un objeto o el panel
+  if($('#panel').getAttribute('visible')===true||$('#panel').object3D.visible) return;
+  caminarA(p.x,p.z); },true);
+// en el visor: gatillo apuntando al piso
+['#hl','#hr'].forEach(id=>{ const c=$(id); c.addEventListener('triggerdown',()=>{ const rc=c.components.raycaster; if(!rc) return; if(rc.intersectedEls&&rc.intersectedEls.length) return;
+  const o=new THREE.Vector3(), d=new THREE.Vector3(); c.object3D.getWorldPosition(o); c.object3D.getWorldDirection(d); d.negate();
+  if(d.y>-0.05) return; const k=-o.y/d.y, x=o.x+d.x*k, z=o.z+d.z*k; caminarA(x,z); }); });
+// teclado con colisiones
+const TECLAS={KeyW:'f',ArrowUp:'f',KeyS:'b',ArrowDown:'b',KeyA:'l',ArrowLeft:'l',KeyD:'r',ArrowRight:'r'};
+addEventListener('keydown',e=>{ const m=TECLAS[e.code]; if(m&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){ PAD[m]=1; } });
+addEventListener('keyup',e=>{ const m=TECLAS[e.code]; if(m) PAD[m]=0; });
+
+// ---------- Señalética de seguridad (pictogramas de motor/senales.js: NOM-026-STPS-2008 y NOM-003-SEGOB-2011) ----------
+function senal(p,pos,id,rotY=0,alto=2.0){ if(!window.Senales) return null; const cv=Senales.canvas(id,256); cv.id='sen_'+id+'_'+Math.random().toString(36).slice(2,7); cv.style.display='none'; document.body.appendChild(cv);
+  const info=(Senales.LISTA||[]).find(x=>x.id===id)||{nombre:id};
+  const g=el('a-entity',{position:pos,rotation:P(0,rotY,0)},p);
+  cy(g,P(0,alto/2,-0.03),0.04,alto,'#7b858d',0.4,0.7);
+  el('a-plane',{position:P(0,alto+0.3,0),width:0.6,height:0.6,material:`src:#${cv.id};shader:flat;transparent:true;side:double`},g);
+  bx(g,P(0,alto+0.3,-0.02),0.64,0.64,0.02,'#5d666e',0.5,0.6);
+  txt(g,P(0,alto-0.08,0.01),info.nombre.toUpperCase(),{width:1.6,color:'#111'}); bx(g,P(0,alto-0.08,-0.005),0.95,0.16,0.01,'#ffffff',0.8);
+  return g; }
+const SENALES={
+  gasolinera:[['no_fumar',[-13,0,11],15],['no_llama',[13,0,11],-15],['inflamable',[12,0,4],-90],['extintor',[6.2,0,-3.2],0],['salida',[-14.2,0,-7],90],['reunion',[16,0,13],-30]],
+  galera:[['no_fumar',[-7.2,0,6.3],15],['no_llama',[7.2,0,6.3],-15],['inflamable',[-7.6,0,-4.6],90],['extintor',[-6.6,0,4.2],0],['reunion',[10,0,9],-30]],
+  ducto_gn:[['inflamable',[-2.5,0,-1.5],0],['no_llama',[6,0,-1.5],0],['no_paso',[-9,0,-12],60],['reunion',[-8,0,4],20]],
+  ducto_crudo:[['inflamable',[-2.5,0,-1.5],0],['no_fumar',[5.5,0,-1.5],0],['no_paso',[-9,0,-12],60],['reunion',[-8,0,4],20]],
+  ducto_gasolina:[['inflamable',[-1.2,0,-1.5],0],['no_fumar',[6,0,-1.5],0],['no_paso',[-9,0,-12],60],['reunion',[-8,0,4],20]]};
+function ponerSenales(){ Object.entries(SENALES).forEach(([id,lista])=>{ const R=ROOT[id]; if(!R) return; lista.forEach(([s,pos,ry])=>senal(R,P(...pos),s,ry)); }); }
+
+// ---------- Sonido ambiental y de equipos (generado por código, sin archivos) ----------
+const SFX=[];
+function sonidos(){ if(!window.Sonido) return; Sonido.camara(scene.camera); Sonido.ambiente('viento',0.4);
+  const en=id=>OBJ[id]&&OBJ[id].object3D;
+  if(en('g_truck')) Sonido.fuente('motor',en('g_truck'),{vol:0.6,alcance:20});      // autotanque descargando
+  if(en('l_leak')) Sonido.fuente('fuga',en('l_leak'),{vol:0.6,alcance:10});        // cilindro con fuga
+  if(en('l_sparks')) Sonido.fuente('sierra',en('l_sparks'),{vol:0.35,alcance:12}); // esmeril con chispas
+  const gn=ROOT.ducto_gn; if(gn){ const p=gn.object3D.localToWorld(new THREE.Vector3(2,1.2,-6)); Sonido.fuente('fuga',{getWorldPosition:v=>v.copy(p),position:p},{vol:0.5,alcance:12}); } }
+
 // ---------- Inicio ----------
 const scene=document.querySelector('a-scene');
-function boot(){ buildWorld(); scene.setAttribute('pad-move','');
+async function boot(){ await probarTex(); buildWorld(); ponerSenales(); texturizar(); scene.setAttribute('pad-move',''); scene.setAttribute('seguir-ruta',''); setTimeout(sonidos,800);
+  setTimeout(()=>construirNav().catch(e=>console.warn('nav',e)),1500);
+  if(window.Realismo){ scene.object3D.background=Realismo.cielo(THREE,'#5d9bd1','#d7e9f3','#d7e9f3'); }
+  setTimeout(sombras,300); setTimeout(sombras,1500);
   const pedido=new URLSearchParams(location.search).get('e'), sc=SC.find(x=>x.id===pedido);
   if(sc){ setTimeout(()=>openScenario(sc),200); } else { teleport(null); setTimeout(mainMenu,200); } }
 // Acceso con código (mismo sistema que el resto del campus)

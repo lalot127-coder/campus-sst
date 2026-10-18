@@ -68,11 +68,31 @@
       return s0.apply(this, arguments);
     };
   } catch (e) { }
-  window.EnviarRes = { ofrecer, abrir, texto };
+  // 3) Navegación de salida (12/10/2026): en juegos y páginas sin barra propia aparece «⬅ Regresar · 🏙️ Campus · 🚪 Salir».
+  //    El campus abre cada puerta con ?volver=<campus/index.html?mundo=área>; sin ese dato regresa con el historial
+  //    o al campus publicado. No se muestra en páginas que ya tienen su barra (sub-mundos con motor.js, aula, cafetería).
+  const CAMPUS = 'https://lalot127-coder.github.io/campus-sst/index.html';
+  function navegacion() {
+    if (document.getElementById('barra') || document.getElementById('auAtras') || document.getElementById('navSalida') || window.SIN_NAV_SALIDA) return;
+    let volver = null; try { volver = new URLSearchParams(location.search).get('volver'); if (volver) sessionStorage.setItem('nav_volver_' + location.pathname, volver); else volver = sessionStorage.getItem('nav_volver_' + location.pathname); } catch (e) { }
+    const base = volver ? volver.split('?')[0] : (location.protocol === 'file:' ? null : CAMPUS);
+    const ir = q => { location.href = base ? base + q : CAMPUS + q; };
+    document.head.insertAdjacentHTML('beforeend', `<style id="navCss">#navSalida{position:fixed;top:calc(8px + env(safe-area-inset-top));right:8px;z-index:89;display:flex;gap:6px;font:700 .9rem Calibri,"Segoe UI",sans-serif}
+#navSalida button{border:0;border-radius:999px;padding:8px 12px;background:rgba(14,58,107,.92);color:#fff;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.25);font:inherit}
+#navSalida .s{background:#C62828}@media (max-width:560px){#navSalida .t{display:none}#navSalida button{padding:8px 10px}}@media print{#navSalida{display:none}}</style>`);
+    const d = document.createElement('div'); d.id = 'navSalida';
+    d.innerHTML = '<button id="navReg" title="Regresar al edificio o al curso">⬅<span class="t"> Regresar</span></button><button id="navCam" title="Ir a la plaza del campus">🏙️<span class="t"> Campus</span></button><button class="s" id="navSal" title="Salir a la pantalla de inicio">🚪<span class="t"> Salir</span></button>';
+    document.body.appendChild(d);
+    d.querySelector('#navReg').onclick = () => { if (volver) location.href = volver; else if (history.length > 1) history.back(); else ir('?plaza'); };
+    d.querySelector('#navCam').onclick = () => ir('?plaza');
+    d.querySelector('#navSal').onclick = () => ir('?salir');
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', navegacion); else setTimeout(navegacion, 0);
+  window.EnviarRes = { ofrecer, abrir, texto, navegacion };
 })();
 </script><!--/ENVIAR_RESULTADOS--><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#12304A"><title>¿Mito o realidad? · Enfermería industrial</title>
+<meta name="theme-color" content="#12304A"><title>¿Mito o realidad? · Enfermería ocupacional</title>
 <style>
 :root{--navy:#12304A;--rojo:#0F766E;--teal:#0E7490;--ambar:#F97316;--rosa:#CCFBF1;--hielo:#F3F4F7;--texto:#1F2433;--tenue:#5B6270;--bien:#2E7D32;--mal:#C62828}
 *{box-sizing:border-box}html,body{margin:0}
@@ -106,8 +126,8 @@ table{width:100%;border-collapse:collapse;font-size:.95rem}td,th{padding:6px;bor
 </style></head><body>
 <header><button class="volver" onclick="history.length>1?history.back():location.href='manual.html'">‹ Volver</button>
 <div><h1>💬 ¿Mito o realidad?</h1><div class="meta">Lo que sí y lo que no dice la ley de tu profesión</div></div><div class="marcador" id="marc"></div></header>
-<main><div id="app"></div><p class="pie">Fuentes: Convenio 161 OIT, LFT, LGS, RFSST, NOM-019-SSA3-2013 y las 10 NOM de salud de la STPS (textos oficiales verificados el 10/10/2026), citadas en cada retroalimentación. Escenas ficticias con fines didácticos. Plática Enfermería industrial · Ing. Carlos Eduardo Roa Sánchez.</p></main>
-<div class="modal" id="inicio" style="display:flex"><div class="tarjeta"><h2>💬 ¿Mito o realidad?</h2><p>Lee cada afirmación sobre la enfermería industrial y decide si es <b>realidad</b> o <b>mito</b>.</p>
+<main><div id="app"></div><p class="pie">Fuentes: Convenio 161 OIT, LFT, LGS, RFSST, NOM-019-SSA3-2013 y las 10 NOM de salud de la STPS (textos oficiales verificados el 10/10/2026), citadas en cada retroalimentación. Escenas ficticias con fines didácticos. Plática Enfermería ocupacional · Ing. Carlos Eduardo Roa Sánchez.</p></main>
+<div class="modal" id="inicio" style="display:flex"><div class="tarjeta"><h2>💬 ¿Mito o realidad?</h2><p>Lee cada afirmación sobre la enfermería ocupacional y decide si es <b>realidad</b> o <b>mito</b>.</p>
 <input type="text" id="nombre" placeholder="Nombre completo o de tu equipo" autocomplete="off">
 <button class="prim" id="empezar">Empezar</button> <button class="sec" id="verGrupo">Resultados del grupo</button></div></div>
 <div class="modal" id="final"><div class="tarjeta" id="finalCont"></div></div>
@@ -141,7 +161,7 @@ function csv(){const a=leer();const t='Juego,Nombre,Fecha,Puntos,Maximo,Porcenta
 const barajar=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 $('#verGrupo').onclick=grupo;
 $('#empezar').onclick=()=>{JUGADOR=$('#nombre').value.trim()||'Participante';$('#inicio').style.display='none';iniciar()};
-const DATOS={"casos": [{"av": "💬", "t": "La enfermera industrial solo da curitas y paracetamol.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 1, "Sus funciones van de la vigilancia de la salud al análisis de accidentes y la ergonomía.", "Convenio 161 OIT (DOF 13/04/1987) art. 5"]]}, {"av": "💬", "t": "Una empresa con más de 100 trabajadores debe tener enfermería.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 0, "Dotada con medicamentos y material de curación, bajo la dirección de un médico cirujano.", "LFT (últ. ref. DOF 14/05/2026) art. 504 fr. II"]]}, {"av": "💬", "t": "La LFT dice literalmente que la enfermería de la empresa la atiende una enfermera titulada.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 1, "Dice \"personal competente\". Por eso tu título y tu cédula marcan la diferencia.", "LFT (últ. ref. DOF 14/05/2026) art. 504 fr. II; LGS (últ. ref. DOF 15/01/2026) art. 79"]]}, {"av": "💬", "t": "El servicio de salud en el trabajo debe tener independencia profesional.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 0, "Tanto frente al empleador como frente a los trabajadores.", "Convenio 161 OIT (DOF 13/04/1987) art. 10"]]}, {"av": "💬", "t": "El patrón puede pedirle a la enfermera que vaya a verificar si un trabajador de verdad está enfermo.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 1, "Los empleadores no deben encargar al servicio de salud que verifique las causas de la ausencia.", "Convenio 161 OIT (DOF 13/04/1987) art. 15"]]}, {"av": "💬", "t": "La vigilancia de la salud debe ser gratuita para el trabajador.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 0, "Sin pérdida de ingresos y, en lo posible, en horas de trabajo.", "Convenio 161 OIT (DOF 13/04/1987) art. 12"]]}, {"av": "💬", "t": "Existe una NOM específica de enfermería del trabajo.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 1, "La NOM-019-SSA3-2013 regula la práctica de enfermería en general y no menciona la salud ocupacional.", "NOM-019-SSA3-2013"]]}, {"av": "💬", "t": "La salud ocupacional es materia de salubridad general.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 0, "Así lo dice la Ley General de Salud.", "LGS (últ. ref. DOF 15/01/2026) art. 3 fr. XIV"]]}], "etq": "Afirmación", "fijo": true};
+const DATOS={"casos": [{"av": "💬", "t": "La enfermera ocupacional solo da curitas y paracetamol.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 1, "Sus funciones van de la vigilancia de la salud al análisis de accidentes y la ergonomía.", "Convenio 161 OIT (DOF 13/04/1987) art. 5"]]}, {"av": "💬", "t": "Una empresa con más de 100 trabajadores debe tener enfermería.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 0, "Dotada con medicamentos y material de curación, bajo la dirección de un médico cirujano.", "LFT (últ. ref. DOF 14/05/2026) art. 504 fr. II"]]}, {"av": "💬", "t": "La LFT dice literalmente que la enfermería de la empresa la atiende una enfermera titulada.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 1, "Dice \"personal competente\". Por eso tu título y tu cédula marcan la diferencia.", "LFT (últ. ref. DOF 14/05/2026) art. 504 fr. II; LGS (últ. ref. DOF 15/01/2026) art. 79"]]}, {"av": "💬", "t": "El servicio de salud en el trabajo debe tener independencia profesional.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 0, "Tanto frente al empleador como frente a los trabajadores.", "Convenio 161 OIT (DOF 13/04/1987) art. 10"]]}, {"av": "💬", "t": "El patrón puede pedirle a la enfermera que vaya a verificar si un trabajador de verdad está enfermo.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 1, "Los empleadores no deben encargar al servicio de salud que verifique las causas de la ausencia.", "Convenio 161 OIT (DOF 13/04/1987) art. 15"]]}, {"av": "💬", "t": "La vigilancia de la salud debe ser gratuita para el trabajador.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 0, "Sin pérdida de ingresos y, en lo posible, en horas de trabajo.", "Convenio 161 OIT (DOF 13/04/1987) art. 12"]]}, {"av": "💬", "t": "Existe una NOM específica de enfermería del trabajo.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 1, "La NOM-019-SSA3-2013 regula la práctica de enfermería en general y no menciona la salud ocupacional.", "NOM-019-SSA3-2013"]]}, {"av": "💬", "t": "La salud ocupacional es materia de salubridad general.", "pasos": [["¿Mito o realidad?", ["Realidad", "Mito"], 0, "Así lo dice la Ley General de Salud.", "LGS (últ. ref. DOF 15/01/2026) art. 3 fr. XIV"]]}], "etq": "Afirmación", "fijo": true};
 
 let i=0,p=0,pts=0,max=0,rep=[],ord=[];
 function iniciar(){i=0;p=0;pts=0;max=DATOS.casos.reduce((s,c)=>s+c.pasos.length,0)*10;pinta()}

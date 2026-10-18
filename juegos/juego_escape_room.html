@@ -68,7 +68,27 @@
       return s0.apply(this, arguments);
     };
   } catch (e) { }
-  window.EnviarRes = { ofrecer, abrir, texto };
+  // 3) Navegación de salida (12/10/2026): en juegos y páginas sin barra propia aparece «⬅ Regresar · 🏙️ Campus · 🚪 Salir».
+  //    El campus abre cada puerta con ?volver=<campus/index.html?mundo=área>; sin ese dato regresa con el historial
+  //    o al campus publicado. No se muestra en páginas que ya tienen su barra (sub-mundos con motor.js, aula, cafetería).
+  const CAMPUS = 'https://lalot127-coder.github.io/campus-sst/index.html';
+  function navegacion() {
+    if (document.getElementById('barra') || document.getElementById('auAtras') || document.getElementById('navSalida') || window.SIN_NAV_SALIDA) return;
+    let volver = null; try { volver = new URLSearchParams(location.search).get('volver'); if (volver) sessionStorage.setItem('nav_volver_' + location.pathname, volver); else volver = sessionStorage.getItem('nav_volver_' + location.pathname); } catch (e) { }
+    const base = volver ? volver.split('?')[0] : (location.protocol === 'file:' ? null : CAMPUS);
+    const ir = q => { location.href = base ? base + q : CAMPUS + q; };
+    document.head.insertAdjacentHTML('beforeend', `<style id="navCss">#navSalida{position:fixed;top:calc(8px + env(safe-area-inset-top));right:8px;z-index:89;display:flex;gap:6px;font:700 .9rem Calibri,"Segoe UI",sans-serif}
+#navSalida button{border:0;border-radius:999px;padding:8px 12px;background:rgba(14,58,107,.92);color:#fff;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.25);font:inherit}
+#navSalida .s{background:#C62828}@media (max-width:560px){#navSalida .t{display:none}#navSalida button{padding:8px 10px}}@media print{#navSalida{display:none}}</style>`);
+    const d = document.createElement('div'); d.id = 'navSalida';
+    d.innerHTML = '<button id="navReg" title="Regresar al edificio o al curso">⬅<span class="t"> Regresar</span></button><button id="navCam" title="Ir a la plaza del campus">🏙️<span class="t"> Campus</span></button><button class="s" id="navSal" title="Salir a la pantalla de inicio">🚪<span class="t"> Salir</span></button>';
+    document.body.appendChild(d);
+    d.querySelector('#navReg').onclick = () => { if (volver) location.href = volver; else if (history.length > 1) history.back(); else ir('?plaza'); };
+    d.querySelector('#navCam').onclick = () => ir('?plaza');
+    d.querySelector('#navSal').onclick = () => ir('?salir');
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', navegacion); else setTimeout(navegacion, 0);
+  window.EnviarRes = { ofrecer, abrir, texto, navegacion };
 })();
 </script><!--/ENVIAR_RESULTADOS--><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -107,9 +127,9 @@ table{width:100%;border-collapse:collapse;font-size:.95rem}td,th{padding:6px;bor
 .cuarto small{font-size:.72rem;display:block}.cuarto.actual{background:var(--ambar)}.cuarto.hecho{background:#C8E6C9}.dig{font-size:1.6rem;color:var(--rojo)}
 </style></head><body>
 <header><button class="volver" onclick="history.length>1?history.back():location.href='manual.html'">‹ Volver</button>
-<div><h1>🔐 Escape room: Emergencia en la plaza</h1><div class="meta">Por equipos · 15 minutos</div></div><div class="marcador" id="marc"></div></header>
+<div><h1>🔐 Escape room: Emergencia en la plaza</h1><div class="meta">Por equipos · 20 minutos</div></div><div class="marcador" id="marc"></div></header>
 <main><div id="app"></div><p class="pie">Fuentes: AHA 2025 (Partes 6 y 7); Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025; Cruz Roja Americana (botiquín). Casos ficticios con fines didácticos. Curso de Primeros auxilios básicos · Ing. Carlos Eduardo Roa Sánchez.</p></main>
-<div class="modal" id="inicio" style="display:flex"><div class="tarjeta"><h2>🔐 Escape room: Emergencia en la plaza</h2><p>Su equipo está atrapado en la plaza durante una emergencia [FICTICIO]. Resuelvan los 5 cuartos: cada acierto da un dígito del candado. Errores y pistas restan tiempo.</p>
+<div class="modal" id="inicio" style="display:flex"><div class="tarjeta"><h2>🔐 Escape room: Emergencia en la plaza</h2><p>Su equipo está atrapado en la plaza durante una emergencia [FICTICIO]. Resuelvan los 8 cuartos: cada acierto da un dígito del candado. Errores y pistas restan tiempo.</p>
 <input type="text" id="nombre" placeholder="Nombre del equipo" autocomplete="off">
 <button class="prim" id="empezar">Empezar</button> <button class="sec" id="verGrupo">Resultados del grupo</button></div></div>
 <div class="modal" id="final"><div class="tarjeta" id="finalCont"></div></div>
@@ -143,11 +163,11 @@ function csv(){const a=leer();const t='Juego,Nombre,Fecha,Puntos,Maximo,Porcenta
 const barajar=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 $('#verGrupo').onclick=grupo;
 $('#empezar').onclick=()=>{JUGADOR=$('#nombre').value.trim()||'Participante';$('#inicio').style.display='none';iniciar()};
-const DATOS={"cuartos": [{"ic": "🦺", "n": "La escena", "h": "Un señor cayó junto a un poste con un cable eléctrico suelto. Hay gente alrededor.", "p": "¿Qué haces primero?", "o": ["Corro a jalarlo", "Mantengo distancia, aseguro la zona y llamo al 911", "Le echo agua", "Lo toco con una vara de metal"], "r": 1, "d": "9", "f": "IFRC 2025, p. 114", "pista": "Tu seguridad va primero."}, {"ic": "💓", "n": "El paro", "h": "Ya es seguro. El señor no responde y solo jadea. Alguien trae un DEA.", "p": "¿Cuál es la secuencia correcta?", "o": ["Buscar pulso 1 minuto y luego decidir", "911, RCP de inmediato (100-120/min, 5-6 cm) y DEA en cuanto llegue", "Darle aire y esperar", "Sentarlo"], "r": 1, "d": "1", "f": "AHA 2025, Parte 7 (SVB adulto)", "pista": "Jadear no es respirar."}, {"ic": "😮‍💨", "n": "El bocado", "h": "Mientras tanto, una niña de 5 años se atraganta con un dulce: no puede toser ni hablar.", "p": "¿Qué haces?", "o": ["5 golpes entre los omóplatos + 5 compresiones abdominales", "Darle agua", "Meterle el dedo a ciegas", "Solo compresiones en el pecho"], "r": 0, "d": "1", "f": "AHA/AAP 2025, Parte 6 (SVB pediátrico)", "pista": "Cambio 2025: espalda primero."}, {"ic": "🩸", "n": "La lámina", "h": "Un trabajador se cortó el muslo: la sangre sale a chorro y la presión directa no la detiene.", "p": "¿Qué sigue?", "o": ["Hielo sobre la herida", "Torniquete y apretarlo hasta que deje de sangrar", "Lavar con agua oxigenada", "Punto de presión en la ingle"], "r": 1, "d": "4", "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024", "pista": "Extremidad + sangrado que no cede."}, {"ic": "🔥", "n": "El puesto de comida", "h": "Una vendedora se quemó la mano con aceite.", "p": "¿Qué haces?", "o": ["Pasta de dientes", "Agua corriente limpia de inmediato y quitar anillos", "Hielo directo", "Reventar las ampollas"], "r": 1, "d": "7", "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025, p. 288", "pista": "Enfría con agua."}]};
+const DATOS={"cuartos": [{"ic": "🦺", "n": "La escena", "h": "Un señor cayó junto a un poste con un cable eléctrico suelto. Hay gente alrededor.", "p": "¿Qué haces primero?", "o": ["Corro a jalarlo", "Mantengo distancia, aseguro la zona y llamo al 911", "Le echo agua", "Lo toco con una vara de metal"], "r": 1, "d": "9", "f": "IFRC 2025, p. 114", "pista": "Tu seguridad va primero."}, {"ic": "💓", "n": "El paro", "h": "Ya es seguro. El señor no responde y solo jadea. Alguien trae un DEA.", "p": "¿Cuál es la secuencia correcta?", "o": ["Buscar pulso 1 minuto y luego decidir", "911, RCP de inmediato (100-120/min, 5-6 cm) y DEA en cuanto llegue", "Darle aire y esperar", "Sentarlo"], "r": 1, "d": "1", "f": "AHA 2025, Parte 7 (SVB adulto)", "pista": "Jadear no es respirar."}, {"ic": "😮‍💨", "n": "El bocado", "h": "Mientras tanto, una niña de 5 años se atraganta con un dulce: no puede toser ni hablar.", "p": "¿Qué haces?", "o": ["5 golpes entre los omóplatos + 5 compresiones abdominales", "Darle agua", "Meterle el dedo a ciegas", "Solo compresiones en el pecho"], "r": 0, "d": "1", "f": "AHA/AAP 2025, Parte 6 (SVB pediátrico)", "pista": "Cambio 2025: espalda primero."}, {"ic": "🩸", "n": "La lámina", "h": "Un trabajador se cortó el muslo: la sangre sale a chorro y la presión directa no la detiene.", "p": "¿Qué sigue?", "o": ["Hielo sobre la herida", "Torniquete y apretarlo hasta que deje de sangrar", "Lavar con agua oxigenada", "Punto de presión en la ingle"], "r": 1, "d": "4", "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024", "pista": "Extremidad + sangrado que no cede."}, {"ic": "🔥", "n": "El puesto de comida", "h": "Una vendedora se quemó la mano con aceite.", "p": "¿Qué haces?", "o": ["Pasta de dientes", "Agua corriente limpia de inmediato y quitar anillos", "Hielo directo", "Reventar las ampollas"], "r": 1, "d": "7", "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025, p. 288", "pista": "Enfría con agua."}, {"ic": "🧪", "n": "El laboratorio", "h": "A una laboratorista le salpicó un químico en un ojo.", "p": "¿Qué haces?", "o": ["Que se frote el ojo", "Irrigar de inmediato con abundante agua al menos 15 min, sin contaminar el otro ojo", "Ponerle gotas de leche", "Taparlo y esperar"], "r": 1, "d": "2", "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024", "pista": "Agua, mucha y ya."}, {"ic": "🪜", "n": "La escalera", "h": "Un pintor cayó de una escalera; responde, respira y le duele el cuello.", "p": "¿Qué haces?", "o": ["Lo siento para que se le pase", "Que permanezca lo más quieto posible, en la posición en que está, y llamo al 911", "Le pongo un collarín rígido improvisado", "Lo cargo hasta la banqueta"], "r": 1, "d": "0", "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024", "pista": "No lo muevas."}, {"ic": "🍬", "n": "El mareo", "h": "Un compañero con diabetes está sudoroso y confundido, pero despierto y puede tragar.", "p": "¿Qué haces?", "o": ["Nada, que duerma", "Darle glucosa por boca (tabletas o azúcar) y llamar al 911 si no mejora en 10 min", "Inyectarle insulina", "Darle agua sola"], "r": 1, "d": "5", "f": "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025, p. 391", "pista": "Azúcar si puede tragar."}]};
 
-let c=0,t0=0,pen=0,fallos=0,dig=[],rep=[],h=null;const LIM=15*60;
+let c=0,t0=0,pen=0,fallos=0,dig=[],rep=[],h=null;const LIM=20*60;
 function iniciar(){t0=Date.now();h=setInterval(reloj,1000);pinta()}
-function reloj(){const s=Math.max(0,LIM-Math.floor((Date.now()-t0)/1000)-pen);marc([`⏱ ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`,`🔓 ${dig.length}/5`]);if(s<=0){clearInterval(h);fin(false)}}
+function reloj(){const s=Math.max(0,LIM-Math.floor((Date.now()-t0)/1000)-pen);marc([`⏱ ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`,`🔓 ${dig.length}/${DATOS.cuartos.length}`]);if(s<=0){clearInterval(h);fin(false)}}
 function candado(){return `<div class="candado">${DATOS.cuartos.map((q,k)=>`<span class="${dig[k]?'on':''}">${dig[k]||'?'}</span>`).join('')}</div>`}
 function pinta(){reloj();if(c>=DATOS.cuartos.length)return codigo();const q=DATOS.cuartos[c];
  $('#app').innerHTML=`${candado()}<div class="mapa">${DATOS.cuartos.map((x,k)=>`<div class="cuarto ${k<c?'hecho':k===c?'actual':''}">${k<c?'✅':k===c?x.ic:'🔒'}<br><small>${esc(x.n)}</small></div>`).join('')}</div>
@@ -161,8 +181,8 @@ function elegir(k,b){const q=DATOS.cuartos[c];if(k!==q.r){b.classList.add('no');
  b.classList.add('ok');$$('.op').forEach(x=>x.disabled=true);dig[c]=q.d;
  $('#retro').innerHTML=`<div class="retro ok">✅ ¡Correcto! Encontraste el dígito <b class="dig">${q.d}</b><small>Fuente: ${esc(q.f)}</small></div><div style="text-align:right"><button class="prim" id="sig">Siguiente cuarto ➜</button></div>`;
  $('#sig').onclick=()=>{c++;pinta();scrollTo(0,0)}}
-function codigo(){$('#app').innerHTML=`${candado()}<div class="card" style="text-align:center"><h2>🔐 La salida de la plaza</h2><p>Escribe el código de 5 dígitos en el orden de los cuartos.</p>
- <input type="text" id="cod" inputmode="numeric" maxlength="5" style="font-size:2rem;text-align:center;letter-spacing:.4em;max-width:260px"><br><button class="prim" id="abrir">Abrir</button><div id="retro"></div>
+function codigo(){$('#app').innerHTML=`${candado()}<div class="card" style="text-align:center"><h2>🔐 La salida de la plaza</h2><p>Escribe el código de ${DATOS.cuartos.length} dígitos en el orden de los cuartos.</p>
+ <input type="text" id="cod" inputmode="numeric" maxlength="${DATOS.cuartos.length}" style="font-size:2rem;text-align:center;letter-spacing:.4em;max-width:260px"><br><button class="prim" id="abrir">Abrir</button><div id="retro"></div>
  <p class="fuente">Pista: el código es el número de emergencias seguido de los dígitos que faltan.</p></div>`;
  $('#abrir').onclick=()=>{if($('#cod').value.trim()===dig.join(''))fin(true);else{pen+=20;reloj();$('#retro').innerHTML='<div class="retro no">❌ Código incorrecto (−20 s)</div>'}}}
 function fin(ok){clearInterval(h);const s=Math.max(0,LIM-Math.floor((Date.now()-t0)/1000)-pen);const pts=ok?Math.max(10,50-fallos*5):dig.length*5;

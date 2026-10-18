@@ -68,7 +68,27 @@
       return s0.apply(this, arguments);
     };
   } catch (e) { }
-  window.EnviarRes = { ofrecer, abrir, texto };
+  // 3) Navegación de salida (12/10/2026): en juegos y páginas sin barra propia aparece «⬅ Regresar · 🏙️ Campus · 🚪 Salir».
+  //    El campus abre cada puerta con ?volver=<campus/index.html?mundo=área>; sin ese dato regresa con el historial
+  //    o al campus publicado. No se muestra en páginas que ya tienen su barra (sub-mundos con motor.js, aula, cafetería).
+  const CAMPUS = 'https://lalot127-coder.github.io/campus-sst/index.html';
+  function navegacion() {
+    if (document.getElementById('barra') || document.getElementById('auAtras') || document.getElementById('navSalida') || window.SIN_NAV_SALIDA) return;
+    let volver = null; try { volver = new URLSearchParams(location.search).get('volver'); if (volver) sessionStorage.setItem('nav_volver_' + location.pathname, volver); else volver = sessionStorage.getItem('nav_volver_' + location.pathname); } catch (e) { }
+    const base = volver ? volver.split('?')[0] : (location.protocol === 'file:' ? null : CAMPUS);
+    const ir = q => { location.href = base ? base + q : CAMPUS + q; };
+    document.head.insertAdjacentHTML('beforeend', `<style id="navCss">#navSalida{position:fixed;top:calc(8px + env(safe-area-inset-top));right:8px;z-index:89;display:flex;gap:6px;font:700 .9rem Calibri,"Segoe UI",sans-serif}
+#navSalida button{border:0;border-radius:999px;padding:8px 12px;background:rgba(14,58,107,.92);color:#fff;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.25);font:inherit}
+#navSalida .s{background:#C62828}@media (max-width:560px){#navSalida .t{display:none}#navSalida button{padding:8px 10px}}@media print{#navSalida{display:none}}</style>`);
+    const d = document.createElement('div'); d.id = 'navSalida';
+    d.innerHTML = '<button id="navReg" title="Regresar al edificio o al curso">⬅<span class="t"> Regresar</span></button><button id="navCam" title="Ir a la plaza del campus">🏙️<span class="t"> Campus</span></button><button class="s" id="navSal" title="Salir a la pantalla de inicio">🚪<span class="t"> Salir</span></button>';
+    document.body.appendChild(d);
+    d.querySelector('#navReg').onclick = () => { if (volver) location.href = volver; else if (history.length > 1) history.back(); else ir('?plaza'); };
+    d.querySelector('#navCam').onclick = () => ir('?plaza');
+    d.querySelector('#navSal').onclick = () => ir('?salir');
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', navegacion); else setTimeout(navegacion, 0);
+  window.EnviarRes = { ofrecer, abrir, texto, navegacion };
 })();
 </script><!--/ENVIAR_RESULTADOS--><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -146,10 +166,10 @@ function csv(){const a=leer();const t='Juego,Nombre,Fecha,Puntos,Maximo,Porcenta
 const barajar=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 $('#verGrupo').onclick=grupo;
 $('#empezar').onclick=()=>{JUGADOR=$('#nombre').value.trim()||'Participante';$('#inicio').style.display='none';iniciar()};
-const DATOS={"parejas": [["🔥 Quemadura", "Agua corriente limpia", "Pasta de dientes o hielo directo", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025, p. 288"], ["🩸 Sangrado fuerte", "Presión directa firme", "Hielo o \"puntos de presión\"", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025, p. 256"], ["🤕 Convulsión", "Despejar y poner de lado", "Meter algo en la boca o sujetarla", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"], ["👃 Nariz que sangra", "Cabeza ligeramente adelante y apretar", "Cabeza hacia atrás", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"], ["🩹 Raspón sucio", "Lavar con agua de la llave", "Alcohol o agua oxigenada", "IFRC 2025, p. 275"], ["😮‍💨 Bebé atragantado", "Golpes en la espalda + compresiones en el pecho", "Compresiones abdominales", "AHA/AAP 2025, Parte 6 (SVB pediátrico)"], ["💔 No responde, solo jadea", "911 y RCP sin buscar pulso", "Esperar a que respire", "AHA 2025, Parte 7 (SVB adulto)"], ["🍬 Hipoglucemia", "Darle azúcar si está despierta y puede tragar", "Darle algo por la boca si no puede tragar", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"]]};
+const DATOS={"parejas": [["🔥 Quemadura", "Agua corriente limpia", "Pasta de dientes o hielo directo", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025, p. 288"], ["🩸 Sangrado fuerte", "Presión directa firme", "Hielo o \"puntos de presión\"", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025, p. 256"], ["🤕 Convulsión", "Despejar y poner de lado", "Meter algo en la boca o sujetarla", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"], ["👃 Nariz que sangra", "Cabeza ligeramente adelante y apretar", "Cabeza hacia atrás", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"], ["🩹 Raspón sucio", "Lavar con agua de la llave", "Alcohol o agua oxigenada", "IFRC 2025, p. 275"], ["😮‍💨 Bebé atragantado", "Golpes en la espalda + compresiones en el pecho", "Compresiones abdominales", "AHA/AAP 2025, Parte 6 (SVB pediátrico)"], ["💔 No responde, solo jadea", "911 y RCP sin buscar pulso", "Esperar a que respire", "AHA 2025, Parte 7 (SVB adulto)"], ["🍬 Hipoglucemia", "Darle azúcar si está despierta y puede tragar", "Darle algo por la boca si no puede tragar", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"], ["🦷 Diente arrancado", "Llevarlo en leche o suero oral y buscar atención inmediata", "Guardarlo en agua de la llave", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"], ["🧪 Químico en la piel", "Agua corriente al menos 15 min y quitar la ropa contaminada", "Esperar a que se seque", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"], ["🦴 Posible lesión de cuello", "Que no se mueva y llamar al 911", "Ponerle un collarín rígido improvisado", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"], ["🐝 Picadura de abeja", "Retirar pronto el aguijón raspando o pellizcando y lavar con agua y jabón", "Dejar el aguijón para después", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"], ["😵 Siente que se desmaya", "Sentarse o acostarse y tensar las piernas cruzadas", "Seguir de pie para que se le pase", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024; IFRC 2025, p. 401"], ["🌡️ Golpe de calor", "Sacar del calor y enfriar (inmersión desde el cuello) y llamar al 911", "Abrigarlo para que sude", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"], ["🌬️ Crisis de asma", "Ayudar con su inhalador y dejarlo en la posición más cómoda, usualmente sentado", "Acostarlo boca arriba", "Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024"]]};
 
 let cartas=[],abiertas=[],pares=0,mov=0,t0=0,h=null,bloq=false;
-function iniciar(){cartas=barajar(DATOS.parejas.flatMap((p,k)=>[{k,t:p[0],tipo:'s'},{k,t:p[1],tipo:'a'}]));t0=Date.now();h=setInterval(rel,1000);pinta()}
+function iniciar(){if(DATOS.parejas.length>10)DATOS.parejas=barajar(DATOS.parejas).slice(0,10);cartas=barajar(DATOS.parejas.flatMap((p,k)=>[{k,t:p[0],tipo:'s'},{k,t:p[1],tipo:'a'}]));t0=Date.now();h=setInterval(rel,1000);pinta()}
 function rel(){const s=Math.floor((Date.now()-t0)/1000);marc([`⏱ ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`,`🔁 ${mov}`,`✅ ${pares}/${DATOS.parejas.length}`])}
 function pinta(){rel();$('#app').innerHTML=`<div class="tablero">${cartas.map((c,i)=>`<button class="carta ${c.ok?'hecha':''} ${c.ab?'abierta':''} ${c.tipo}" data-i="${i}"><span class="dorso">✚</span><span class="cara">${esc(c.t)}</span></button>`).join('')}</div><div id="retro"></div>`;
  $$('.carta').forEach(b=>b.onclick=()=>voltear(+b.dataset.i))}

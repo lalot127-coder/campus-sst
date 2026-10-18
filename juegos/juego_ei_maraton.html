@@ -68,11 +68,31 @@
       return s0.apply(this, arguments);
     };
   } catch (e) { }
-  window.EnviarRes = { ofrecer, abrir, texto };
+  // 3) Navegación de salida (12/10/2026): en juegos y páginas sin barra propia aparece «⬅ Regresar · 🏙️ Campus · 🚪 Salir».
+  //    El campus abre cada puerta con ?volver=<campus/index.html?mundo=área>; sin ese dato regresa con el historial
+  //    o al campus publicado. No se muestra en páginas que ya tienen su barra (sub-mundos con motor.js, aula, cafetería).
+  const CAMPUS = 'https://lalot127-coder.github.io/campus-sst/index.html';
+  function navegacion() {
+    if (document.getElementById('barra') || document.getElementById('auAtras') || document.getElementById('navSalida') || window.SIN_NAV_SALIDA) return;
+    let volver = null; try { volver = new URLSearchParams(location.search).get('volver'); if (volver) sessionStorage.setItem('nav_volver_' + location.pathname, volver); else volver = sessionStorage.getItem('nav_volver_' + location.pathname); } catch (e) { }
+    const base = volver ? volver.split('?')[0] : (location.protocol === 'file:' ? null : CAMPUS);
+    const ir = q => { location.href = base ? base + q : CAMPUS + q; };
+    document.head.insertAdjacentHTML('beforeend', `<style id="navCss">#navSalida{position:fixed;top:calc(8px + env(safe-area-inset-top));right:8px;z-index:89;display:flex;gap:6px;font:700 .9rem Calibri,"Segoe UI",sans-serif}
+#navSalida button{border:0;border-radius:999px;padding:8px 12px;background:rgba(14,58,107,.92);color:#fff;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.25);font:inherit}
+#navSalida .s{background:#C62828}@media (max-width:560px){#navSalida .t{display:none}#navSalida button{padding:8px 10px}}@media print{#navSalida{display:none}}</style>`);
+    const d = document.createElement('div'); d.id = 'navSalida';
+    d.innerHTML = '<button id="navReg" title="Regresar al edificio o al curso">⬅<span class="t"> Regresar</span></button><button id="navCam" title="Ir a la plaza del campus">🏙️<span class="t"> Campus</span></button><button class="s" id="navSal" title="Salir a la pantalla de inicio">🚪<span class="t"> Salir</span></button>';
+    document.body.appendChild(d);
+    d.querySelector('#navReg').onclick = () => { if (volver) location.href = volver; else if (history.length > 1) history.back(); else ir('?plaza'); };
+    d.querySelector('#navCam').onclick = () => ir('?plaza');
+    d.querySelector('#navSal').onclick = () => ir('?salir');
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', navegacion); else setTimeout(navegacion, 0);
+  window.EnviarRes = { ofrecer, abrir, texto, navegacion };
 })();
 </script><!--/ENVIAR_RESULTADOS--><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#12304A"><title>Maratón por equipos · Enfermería industrial</title>
+<meta name="theme-color" content="#12304A"><title>Maratón por equipos · Enfermería ocupacional</title>
 <style>
 :root{--navy:#12304A;--rojo:#0F766E;--teal:#0E7490;--ambar:#F97316;--rosa:#CCFBF1;--hielo:#F3F4F7;--texto:#1F2433;--tenue:#5B6270;--bien:#2E7D32;--mal:#C62828}
 *{box-sizing:border-box}html,body{margin:0}
@@ -108,7 +128,7 @@ table{width:100%;border-collapse:collapse;font-size:.95rem}td,th{padding:6px;bor
 </style></head><body>
 <header><button class="volver" onclick="history.length>1?history.back():location.href='manual.html'">‹ Volver</button>
 <div><h1>🏁 Maratón por equipos</h1><div class="meta">Ruleta de temas · para proyectar</div></div><div class="marcador" id="marc"></div></header>
-<main><div id="app"></div><p class="pie">Fuentes: Convenio 161 OIT, LFT, LGS, RFSST, NOM-019-SSA3-2013 y las 10 NOM de salud de la STPS (textos oficiales verificados el 10/10/2026), citadas en cada retroalimentación. Escenas ficticias con fines didácticos. Plática Enfermería industrial · Ing. Carlos Eduardo Roa Sánchez.</p></main>
+<main><div id="app"></div><p class="pie">Fuentes: Convenio 161 OIT, LFT, LGS, RFSST, NOM-019-SSA3-2013 y las 10 NOM de salud de la STPS (textos oficiales verificados el 10/10/2026), citadas en cada retroalimentación. Escenas ficticias con fines didácticos. Plática Enfermería ocupacional · Ing. Carlos Eduardo Roa Sánchez.</p></main>
 <div class="modal" id="inicio" style="display:flex"><div class="tarjeta"><h2>🏁 Maratón por equipos</h2><p>Para jugar en grupo con el proyector: 2 a 6 equipos, 3 rondas. Giren la ruleta, respondan en 20 segundos y sumen 10 puntos por acierto.</p>
 <input type="text" id="nombre" placeholder="Nombre del grupo" autocomplete="off">
 <button class="prim" id="empezar">Empezar</button> <button class="sec" id="verGrupo">Resultados del grupo</button></div></div>

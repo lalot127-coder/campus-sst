@@ -503,7 +503,7 @@ window.BANCO_TRIVIA = [
 ]
 },
 {
-"tema": "Enfermería industrial",
+"tema": "Enfermería ocupacional",
 "preguntas": [
 {
 "p": "¿Qué incluyen los servicios preventivos de medicina del trabajo según el RFSST?",
@@ -1036,6 +1036,544 @@ window.BANCO_TRIVIA = [
 ],
 "r": 0,
 "f": "NOM-035-STPS-2018, 9.4",
+"rf": ""
+}
+]
+},
+{
+"tema": "NOM-035 · Versión exprés",
+"preguntas": [
+{
+"p": "La Línea de la Vida funciona…",
+"o": [
+"24 horas, los 365 días, gratis",
+"Solo de lunes a viernes",
+"Con costo",
+"Solo en CDMX"
+],
+"r": 0,
+"f": "Línea de la Vida, CONASAMA (gob.mx, 23/10/2025)",
+"rf": ""
+},
+{
+"p": "¿La NOM-035 aplica en un negocio de 5 personas?",
+"o": [
+"Sí, aplica a todos los centros de trabajo",
+"No",
+"Solo si es fábrica",
+"Solo con sindicato"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 2",
+"rf": ""
+},
+{
+"p": "En 2019, ¿qué parte de los adultos en edad de trabajar tenía un trastorno mental?",
+"o": [
+"15%",
+"1%",
+"60%",
+"Nadie"
+],
+"r": 0,
+"f": "OMS/OIT, comunicado del 28/09/2022 (Directrices sobre salud mental en el trabajo)",
+"rf": ""
+},
+{
+"p": "Turnos nocturnos sin pausas ni descanso son un factor de…",
+"o": [
+"Jornadas y rotación de turnos",
+"Apoyo social",
+"Entorno favorable",
+"Comunicación"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.2 d)",
+"rf": ""
+},
+{
+"p": "El hostigamiento es…",
+"o": [
+"Abuso de poder en una relación de subordinación",
+"Una discusión entre iguales",
+"Una corrección respetuosa",
+"Un cambio de área"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.2 g) 2)",
+"rf": ""
+},
+{
+"p": "¿El acoso sexual se tolera si es \"broma\"?",
+"o": [
+"No; la LFT prohíbe realizarlo y tolerarlo",
+"Sí",
+"Solo los viernes",
+"Depende del jefe"
+],
+"r": 0,
+"f": "LFT art. 133 fr. XII y XIII",
+"rf": ""
+},
+{
+"p": "La ayuda mutua entre compañeros y jefes se llama…",
+"o": [
+"Apoyo social",
+"Carga mental",
+"Hostigamiento",
+"Rotación"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 4.2",
+"rf": ""
+},
+{
+"p": "Centro con 8 trabajadores: ¿debe aplicar la Guía II?",
+"o": [
+"No; con hasta 15 no se exige la identificación con cuestionarios",
+"Sí, a todos",
+"Sí, a la mitad",
+"Solo al dueño"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 2 a)",
+"rf": ""
+},
+{
+"p": "¿Cuántas obligaciones de los trabajadores tiene el capítulo 6?",
+"o": [
+"7",
+"2",
+"15",
+"Ninguna"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 6.1 a 6.7",
+"rf": ""
+},
+{
+"p": "Contestar los cuestionarios de identificación es…",
+"o": [
+"Una obligación de los trabajadores",
+"Opcional",
+"Tarea del jefe",
+"Prohibido"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 6.3",
+"rf": ""
+},
+{
+"p": "¿Qué guía de la NOM-035 trae un ejemplo de política?",
+"o": [
+"La Guía de referencia IV",
+"La Guía I",
+"La Guía V",
+"Ninguna"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 5.1 y Guía IV",
+"rf": ""
+},
+{
+"p": "¿Con qué se puede acreditar la difusión de la política?",
+"o": [
+"Con folletos, boletines o carteles",
+"Con nada: basta decirlo",
+"Solo con un notario",
+"Con un video privado"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 10.2 (5.1)",
+"rf": ""
+},
+{
+"p": "Según el ejemplo de la Guía IV, ¿quién debe aplicar la política y predicar con el ejemplo?",
+"o": [
+"Supervisores, gerentes y directores",
+"Solo los clientes",
+"Nadie",
+"Solo el sindicato"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, Guía de referencia IV",
+"rf": ""
+},
+{
+"p": "¿Cuántos datos mínimos lleva el escrito de un ATS?",
+"o": [
+"5",
+"1",
+"10",
+"Ninguno"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 6.5",
+"rf": ""
+},
+{
+"p": "Además del buzón, ¿qué debe tener el centro ante la violencia laboral?",
+"o": [
+"Un procedimiento de actuación y seguimiento con responsable capacitado",
+"Nada más",
+"Una multa interna",
+"Cámaras en los baños"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 8.2 g)",
+"rf": ""
+},
+{
+"p": "¿Cada cuánto se repite la identificación y análisis de los factores?",
+"o": [
+"Al menos cada dos años",
+"Cada mes",
+"Cada 10 años",
+"Solo una vez"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.9",
+"rf": ""
+},
+{
+"p": "¿Cuándo es obligatorio el programa de intervención?",
+"o": [
+"Cuando el resultado de la evaluación determina la necesidad de acciones de control",
+"Nunca",
+"Solo si lo pide un cliente",
+"Siempre, aunque no haya evaluación"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 8.3",
+"rf": ""
+},
+{
+"p": "Valor diario de la UMA en 2026:",
+"o": [
+"$117.31",
+"$50.00",
+"$278.80",
+"$1,000.00"
+],
+"r": 0,
+"f": "UMA 2026: $117.31 (INEGI, DOF 09/01/2026)",
+"rf": ""
+},
+{
+"p": "¿Cuánto tiempo mínimo se conservan las evidencias y registros?",
+"o": [
+"Al menos un año",
+"Un mes",
+"No se conservan",
+"Diez años"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 10.4",
+"rf": ""
+},
+{
+"p": "Reincidir en la misma infracción dentro de 2 años…",
+"o": [
+"Duplica la multa",
+"La reduce",
+"No cambia",
+"La cancela"
+],
+"r": 0,
+"f": "LFT art. 992",
+"rf": ""
+}
+]
+},
+{
+"tema": "NOM-035 · Todo el personal",
+"preguntas": [
+{
+"p": "La Línea de la Vida funciona…",
+"o": [
+"24 horas, los 365 días, gratis",
+"Solo de lunes a viernes",
+"Con costo",
+"Solo en CDMX"
+],
+"r": 0,
+"f": "Línea de la Vida, CONASAMA (gob.mx, 23/10/2025)",
+"rf": ""
+},
+{
+"p": "¿La NOM-035 aplica en un negocio de 5 personas?",
+"o": [
+"Sí, aplica a todos los centros de trabajo",
+"No",
+"Solo si es fábrica",
+"Solo con sindicato"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 2",
+"rf": ""
+},
+{
+"p": "¿Qué convenio de la OIT sobre violencia y acoso ratificó México?",
+"o": [
+"Convenio 190",
+"Convenio 1",
+"Convenio 500",
+"Ninguno"
+],
+"r": 0,
+"f": "Convenio 190 de la OIT (ratificación depositada por México el 06/07/2022)",
+"rf": ""
+},
+{
+"p": "¿Cuántos días de trabajo se pierden al año en el mundo por depresión y ansiedad?",
+"o": [
+"12,000 millones",
+"12 mil",
+"1 millón",
+"Ninguno"
+],
+"r": 0,
+"f": "OMS/OIT, comunicado del 28/09/2022 (Directrices sobre salud mental en el trabajo)",
+"rf": ""
+},
+{
+"p": "Ruido fuerte y miedo a un accidente son factores de…",
+"o": [
+"Ambiente de trabajo",
+"Reconocimiento",
+"Pertenencia",
+"Capacitación"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.2 a)",
+"rf": ""
+},
+{
+"p": "Turnos nocturnos sin pausas ni descanso son un factor de…",
+"o": [
+"Jornadas y rotación de turnos",
+"Apoyo social",
+"Entorno favorable",
+"Comunicación"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.2 d)",
+"rf": ""
+},
+{
+"p": "Órdenes contradictorias que no se pueden cumplir al mismo tiempo son…",
+"o": [
+"Cargas contradictorias o inconsistentes",
+"Apoyo social",
+"Liderazgo positivo",
+"Descanso"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.2 b)",
+"rf": ""
+},
+{
+"p": "¿Cuál es un elemento del entorno organizacional favorable?",
+"o": [
+"Sentido de pertenencia",
+"Gritos",
+"Jornadas sin fin",
+"Aislamiento"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.3 a)",
+"rf": ""
+},
+{
+"p": "¿El acoso sexual se tolera si es \"broma\"?",
+"o": [
+"No; la LFT prohíbe realizarlo y tolerarlo",
+"Sí",
+"Solo los viernes",
+"Depende del jefe"
+],
+"r": 0,
+"f": "LFT art. 133 fr. XII y XIII",
+"rf": ""
+},
+{
+"p": "¿Dónde se denuncia la violencia laboral?",
+"o": [
+"En el mecanismo seguro y confidencial del centro o con la comisión de seguridad e higiene",
+"En el chat del grupo",
+"En ningún lado",
+"Con el cliente"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 6.4 y 8.1 b)",
+"rf": ""
+},
+{
+"p": "La violencia o los malos tratos del patrón permiten al trabajador…",
+"o": [
+"Rescindir la relación sin responsabilidad para el trabajador",
+"Nada",
+"Perder su antigüedad",
+"Pagar una multa"
+],
+"r": 0,
+"f": "LFT art. 51 fr. II",
+"rf": ""
+},
+{
+"p": "Además del buzón, ¿qué debe tener el centro ante la violencia laboral?",
+"o": [
+"Un procedimiento de actuación y seguimiento con personal capacitado",
+"Nada más",
+"Una multa interna",
+"Cámaras en los baños"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 8.2 g)",
+"rf": ""
+},
+{
+"p": "Centro con 8 trabajadores: ¿debe aplicar la Guía II?",
+"o": [
+"No; con hasta 15 no se exige la identificación con cuestionarios",
+"Sí, a todos",
+"Sí, a la mitad",
+"Solo al dueño"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 2 a)",
+"rf": ""
+},
+{
+"p": "¿Cuántos ejes tiene la política de prevención?",
+"o": [
+"3: factores de riesgo, violencia laboral y entorno favorable",
+"1",
+"10",
+"Ninguno"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 5.1",
+"rf": ""
+},
+{
+"p": "¿Cuántas obligaciones de los trabajadores tiene el capítulo 6?",
+"o": [
+"7",
+"2",
+"15",
+"Ninguna"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 6.1 a 6.7",
+"rf": ""
+},
+{
+"p": "Un centro con 30 trabajadores identifica los factores de riesgo…",
+"o": [
+"Incluyendo a todos los trabajadores",
+"Con una muestra de 5",
+"Solo con los jefes",
+"No está obligado"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.1 a)",
+"rf": ""
+},
+{
+"p": "¿Cuántos datos mínimos lleva el escrito de un ATS?",
+"o": [
+"5",
+"1",
+"10",
+"Ninguno"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 6.5",
+"rf": ""
+},
+{
+"p": "¿Qué periodo se considera al contestar los cuestionarios?",
+"o": [
+"Los dos últimos meses",
+"Toda la vida",
+"Solo hoy",
+"El año que viene"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, Guías II.2 y III.2",
+"rf": ""
+},
+{
+"p": "¿Cada cuánto se repite la identificación y análisis de los factores?",
+"o": [
+"Al menos cada dos años",
+"Cada mes",
+"Cada 10 años",
+"Solo una vez"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 7.9",
+"rf": ""
+},
+{
+"p": "Las acciones de segundo nivel se enfocan en…",
+"o": [
+"El grupo: información, sensibilización y apoyo social",
+"La terapia individual",
+"Despedir personal",
+"El edificio"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 8.5 b)",
+"rf": ""
+},
+{
+"p": "Valor diario de la UMA en 2026:",
+"o": [
+"$117.31",
+"$50.00",
+"$278.80",
+"$1,000.00"
+],
+"r": 0,
+"f": "UMA 2026: $117.31 (INEGI, DOF 09/01/2026)",
+"rf": ""
+},
+{
+"p": "Reincidir en la misma infracción dentro de 2 años…",
+"o": [
+"Duplica la multa",
+"La reduce",
+"No cambia",
+"La cancela"
+],
+"r": 0,
+"f": "LFT art. 992",
+"rf": ""
+},
+{
+"p": "¿Cuántos trabajadores entrevista la autoridad en un centro de 12?",
+"o": [
+"1",
+"5",
+"12",
+"Ninguno"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 10.3 (Tabla 1)",
+"rf": ""
+},
+{
+"p": "Las pausas y la rotación de tareas sirven para…",
+"o": [
+"Evitar ritmos de trabajo acelerados",
+"Perder tiempo",
+"Castigar",
+"Nada"
+],
+"r": 0,
+"f": "NOM-035-STPS-2018, 8.2 b) 2)",
 "rf": ""
 }
 ]

@@ -60,7 +60,7 @@ let sangra = false; W.cuadro.push(t => { gotas.forEach((g, i) => { g.visible = s
 const bebe = new THREE.Group(); bebe.position.set(-0.8, 0.8, 0.4); bebe.visible = false; scene.add(bebe);
 caja(0.7, 0.05, 0.45, 0xD9C2A8, 0, -0.05, 0, bebe);
 const bT = capsula(0.08, 0.16, 0xFFF3C4); bT.rotation.z = Math.PI / 2; bT.position.set(0, 0.09, 0); bebe.add(bT);
-esfera(0.08, piel, -0.22, 0.09, 0, bebe);
+const bCab = esfera(0.08, piel, -0.22, 0.09, 0, bebe); W.cara(bCab, { dir: [0, 1, 0], arriba: [-1, 0, 0] });
 const bz = (x, y, t) => { const m = esfera(0.04, 0xffffff, x, y, 0, bebe); m.material.transparent = true; m.material.opacity = 0; tocable(m, t, 0.15); return m; };
 const bEsp = bz(0, 0.02, 'espalda'), bPecho = bz(-0.04, 0.18, 'pecho'), bAbd = bz(0.1, 0.18, 'abdomen');
 // guantes
@@ -72,7 +72,12 @@ const tocarPaso = ({ titulo, texto, fuente, objetivo, errores = {}, alAcertar, r
   iniciar() { W.resaltar(resaltar || []); },
   tocar(o) { const t = o.userData.tipo; if (t === objetivo) { W.resaltar([]); efecto && efecto(); W.bien(alAcertar || 'Correcto.', fuente); W.siguiente(); }
     else if (errores[t]) W.mal(errores[t][0], errores[t][1] || fuente, !!errores[t][2]); } });
-const preguntaPaso = ({ titulo, texto, fuente, p, ops, ok, retro }) => ({ titulo, texto, fuente, iniciar() { W.pregunta(p, ops, ok, fuente, () => W.siguiente(), false, retro); } });
+// anim: lo que la escena hace al acertar (12/10/2026): la persona «hace lo que dice la respuesta» antes del siguiente paso
+const preguntaPaso = ({ titulo, texto, fuente, p, ops, ok, retro, anim }) => ({ titulo, texto, fuente, iniciar() { W.pregunta(p, ops, ok, fuente, async () => { if (anim) { try { await anim(); } catch (e) { } } W.siguiente(); }, false, retro); } });
+const A = W.animar, esperar = W.esperar;
+const BR0 = brazos.map(b => ({ p: b.position.clone(), r: b.rotation.clone() }));
+async function manosAlCuello(on = true) { await A(500, k => { const t = on ? k : 1 - k; brazos.forEach((b, i) => { const s = i ? -1 : 1; b.position.set(BR0[i].p.x * (1 - t) + s * 0.14 * t, 1.05 + 0.3 * t, 0.16 * t); b.rotation.set(-1.25 * t, 0, s * 1.15 * t); }); }); }
+const cobija = caja(0.7, 0.05, 0.9, 0x5C6BC0, 0, 1.0, 0.18); cobija.visible = false; per.add(cobija);
 // Serie: tocar la zona correcta n veces (golpes o compresiones)
 function seriePaso({ titulo, texto, fuente, objetivo, n = 5, resaltar, errores = {}, anim, fin }) {
   let k = 0;
@@ -81,24 +86,24 @@ function seriePaso({ titulo, texto, fuente, objetivo, n = 5, resaltar, errores =
       if (t === objetivo) { k++; anim && anim(); W.$('pTxt').innerHTML = texto + `<br><b>${k}/${n}</b>`; if (k === n) { W.resaltar([]); W.bien(fin || 'Serie completa.', fuente); W.siguiente(); } }
       else if (errores[t]) W.mal(errores[t][0], errores[t][1] || fuente, !!errores[t][2]); } };
 }
-const sacude = (obj, dz = 0.04) => { const z0 = obj.position.z; obj.position.z = z0 + dz; setTimeout(() => obj.position.z = z0, 120); };
+const sacude = (obj, dz = 0.04) => { W.efecto('compresion'); const z0 = obj.position.z; obj.position.z = z0 + dz; setTimeout(() => obj.position.z = z0, 120); };
 
 // ------------------------------------------------------------------ casos [FICTICIO – ejercicio didáctico]
 const ADULTO = () => [
   { titulo: 'Inicio', texto: 'Fonda, 14:00 h.', sinPuntos: true, iniciar() { W.aviso('<h2>🍽️ Caso 1: atragantamiento en la fonda</h2><p>Doña Rosa, 50 años, come carne y de pronto se lleva las manos al cuello.</p><p class="ficticio">[FICTICIO – ejercicio didáctico]</p>', () => W.siguiente(), 'Comenzar'); } },
   preguntaPaso({ titulo: 'Reconoce', texto: 'Le preguntas: «¿Se está atragantando?». Mueve la cabeza que sí, pero no puede hablar ni toser.', fuente: F.ovA,
-    p: '¿Qué tipo de obstrucción es?', ops: ['Leve: dejarla toser', 'Grave: actuar de inmediato y pedir que llamen al 911', 'No es nada'], ok: [1], retro: 'Obstrucción grave.' }),
-  tocarPaso({ titulo: 'Activa la ayuda', texto: 'Toca el <b>celular</b> de la mesa: pide a alguien que llame al 911 mientras actúas.', fuente: F.ovA, objetivo: 'cel', resaltar: [cel],
+    p: '¿Qué tipo de obstrucción es?', ops: ['Leve: dejarla toser', 'Grave: actuar de inmediato y pedir que llamen al 911', 'No es nada'], ok: [1], retro: 'Obstrucción grave.', anim: async () => { await manosAlCuello(true); W.globo('(no puede hablar ni toser)', cab, 2000, 0.4); await esperar(1200); } }),
+  tocarPaso({ titulo: 'Activa la ayuda', texto: 'Toca el <b>celular</b> de la mesa: pide a alguien que llame al 911 mientras actúas.', efecto: () => W.globo('¡Llamen al 911!', cel, 1800, 0.35), fuente: F.ovA, objetivo: 'cel', resaltar: [cel],
     errores: { boca: ['No metas los dedos a ciegas.', F.inc, true] } }),
   seriePaso({ titulo: '5 golpes en la espalda', texto: 'Inclínala hacia adelante y da <b>5 golpes firmes entre los omóplatos</b>: toca su espalda 5 veces.', fuente: F.tec, objetivo: 'espalda', resaltar: [espalda],
     errores: { abdomen: ['Cambio 2025: primero los 5 golpes en la espalda.', F.ovA], boca: ['No metas los dedos a ciegas.', F.inc, true] }, anim: () => sacude(per) }),
   seriePaso({ titulo: '5 compresiones abdominales', texto: 'Por detrás, puño entre las costillas y el ombligo, hacia adentro y arriba: toca el <b>abdomen</b> 5 veces.', fuente: F.tec, objetivo: 'abdomen', resaltar: [abdomen],
     errores: { pecho: ['En un adulto (sin embarazo avanzado) son compresiones abdominales.', F.ovA] }, anim: () => sacude(per, -0.04), fin: '¡El trozo de carne salió! Respira y tose.' }),
-  preguntaPaso({ titulo: 'Después', texto: 'Doña Rosa ya respira.', fuente: F.ovA, p: '¿Qué sigue?', ops: ['Que la valore un servicio médico y quedarte con ella', 'Que siga comiendo como si nada', 'Darle más golpes'], ok: [0], retro: 'Recibió compresiones: que la valoren; quédate con ella hasta que llegue la ayuda.' }),
+  preguntaPaso({ titulo: 'Después', texto: 'Doña Rosa ya respira.', fuente: F.ovA, p: '¿Qué sigue?', ops: ['Que la valore un servicio médico y quedarte con ella', 'Que siga comiendo como si nada', 'Darle más golpes'], ok: [0], retro: 'Recibió compresiones: que la valoren; quédate con ella hasta que llegue la ayuda.' , anim: async () => { await manosAlCuello(false); W.globo('Ya respiro… gracias', cab, 2000, 0.4); await esperar(1200); } }),
 ];
 const LACTANTE = () => [
   { titulo: 'Inicio', texto: 'Mesa de la fonda.', sinPuntos: true, iniciar() { per.visible = false; bebe.visible = true; W.aviso('<h2>👶 Caso 2: lactante atragantado</h2><p>Un bebé de 9 meses se pone morado; no llora ni hace ruido tras meterse un trozo de fruta. Lo tienes en tus brazos (sobre la mesa en la escena).</p><p class="ficticio">[FICTICIO – ejercicio didáctico]</p>', () => W.siguiente(), 'Comenzar'); } },
-  preguntaPaso({ titulo: 'Reconoce', texto: 'No llora, no tose, no respira.', fuente: F.ovL, p: '¿Qué haces?', ops: ['Pedir que llamen al 911 y empezar las maniobras de lactante', 'Darle agua', 'Esperar a que llore'], ok: [0], retro: 'Obstrucción grave en lactante.' }),
+  preguntaPaso({ titulo: 'Reconoce', texto: 'No llora, no tose, no respira.', fuente: F.ovL, p: '¿Qué haces?', ops: ['Pedir que llamen al 911 y empezar las maniobras de lactante', 'Darle agua', 'Esperar a que llore'], ok: [0], retro: 'Obstrucción grave en lactante.' , anim: async () => { W.globo('¡Llamen al 911! Empiezo maniobras', bCab, 2000, 0.3); await A(600, k => { bebe.rotation.z = Math.PI * 0.9 * k; bebe.position.y = 0.8 + 0.15 * Math.sin(k * Math.PI); }); bebe.rotation.z = 0; await esperar(500); } }),
   seriePaso({ titulo: '5 golpes en la espalda', texto: 'Bien sostenido boca abajo: <b>5 golpes firmes entre los omóplatos</b>. Toca su espalda 5 veces.', fuente: `${F.ovL}; IFRC 2025, p. 240`, objetivo: 'espalda', resaltar: [bEsp],
     errores: { abdomen: ['NUNCA compresiones abdominales en lactantes.', F.ovL, true] }, anim: () => sacude(bebe, 0.02) }),
   seriePaso({ titulo: '5 compresiones en el pecho', texto: 'Boca arriba: <b>5 compresiones en el centro del pecho</b> (como en su RCP). Toca 5 veces.', fuente: F.ovL, objetivo: 'pecho', resaltar: [bPecho, bAbd],
@@ -112,17 +117,17 @@ const HEMORRAGIA = () => [
   tocarPaso({ titulo: 'Presión directa', texto: 'Toca la <b>herida</b> para aplicar presión directa firme con gasa.', fuente: F.hem, objetivo: 'herida', resaltar: [herida],
     efecto: () => { gasa.visible = true; }, alAcertar: 'Presionas con fuerza… pero sigue saliendo sangre a chorro.' }),
   preguntaPaso({ titulo: 'No se detiene', texto: 'Después de presionar con fuerza, sigue sangrando a chorro: amenaza la vida.', fuente: F.tor,
-    p: '¿Qué sigue?', ops: ['Poner hielo', 'Aplicar un torniquete y apretarlo hasta que deje de sangrar', 'Presionar un "punto de presión" en la ingle', 'Lavar con agua oxigenada'], ok: [1], retro: 'Hielo y puntos de presión no se recomiendan.' }),
+    p: '¿Qué sigue?', ops: ['Poner hielo', 'Aplicar un torniquete y apretarlo hasta que deje de sangrar', 'Presionar un "punto de presión" en la ingle', 'Lavar con agua oxigenada'], ok: [1], retro: 'Hielo y puntos de presión no se recomiendan.' , anim: async () => { W.resaltar([boti]); W.globo('Torniquete: en el botiquín', boti, 2200, 0.45); await esperar(1300); } }),
   tocarPaso({ titulo: 'Coloca el torniquete', texto: 'Toca el <b>botiquín</b> para sacar el torniquete comercial.', fuente: F.tor, objetivo: 'botiquin', resaltar: [boti] }),
   tocarPaso({ titulo: 'Aprieta', texto: 'Toca la <b>pierna lesionada</b> (zona que brilla) para colocar el torniquete como lo practicaste y apretarlo.', fuente: F.tor, objetivo: 'arriba', resaltar: [sobreHerida],
     efecto: () => { tq.visible = true; sangra = false; }, alAcertar: 'Apretado hasta que dejó de sangrar.' }),
-  preguntaPaso({ titulo: 'Mientras llega la ambulancia', texto: 'Ya no sangra.', fuente: `${F.prot}; IFRC 2025, p. 257 (mantener el torniquete hasta que llegue EMS; abrigar)`, p: '¿Qué haces ahora?', ops: ['Quedarte con él, mantener el torniquete puesto, abrigarlo y vigilarlo hasta que llegue el 911', 'Aflojar el torniquete para ver si ya paró', 'Mandarlo a su casa'], ok: [0], retro: 'El torniquete se deja colocado hasta que llegue el servicio de emergencias.' }),
+  preguntaPaso({ titulo: 'Mientras llega la ambulancia', texto: 'Ya no sangra.', fuente: `${F.prot}; IFRC 2025, p. 257 (mantener el torniquete hasta que llegue EMS; abrigar)`, p: '¿Qué haces ahora?', ops: ['Quedarte con él, mantener el torniquete puesto, abrigarlo y vigilarlo hasta que llegue el 911', 'Aflojar el torniquete para ver si ya paró', 'Mandarlo a su casa'], ok: [0], retro: 'El torniquete se deja colocado hasta que llegue el servicio de emergencias.' , anim: async () => { cobija.visible = true; W.globo('Abrigado · torniquete puesto · 911 en camino', cab, 2400, 0.4); await esperar(1500); } }),
 ];
 
 W.inicio([{ id: 'adulto', txt: '🍽️ <b>Caso 1:</b> Adulto atragantado · 5 golpes + 5 compresiones abdominales' },
   { id: 'bebe', txt: '👶 <b>Caso 2:</b> Lactante atragantado · espalda + pecho' },
   { id: 'hem', txt: '🩸 <b>Caso 3:</b> Hemorragia en el muslo · presión directa y torniquete' }],
-  id => { per.visible = id !== 'bebe'; bebe.visible = id === 'bebe'; herida.visible = id === 'hem'; sangra = false; tq.visible = false; gasa.visible = false;
+  id => { cobija.visible = false; brazos.forEach((b, i) => { b.position.copy(BR0[i].p); b.rotation.copy(BR0[i].r); }); per.visible = id !== 'bebe'; bebe.visible = id === 'bebe'; herida.visible = id === 'hem'; sangra = false; tq.visible = false; gasa.visible = false;
     return id === 'adulto' ? ADULTO() : id === 'bebe' ? LACTANTE() : HEMORRAGIA(); },
   'Basado en: Guías AHA 2025 (Partes 6 y 7), Guía de Primeros Auxilios AHA/Cruz Roja Americana 2024 e IFRC 2025. Casos ficticios con fines didácticos.');
 

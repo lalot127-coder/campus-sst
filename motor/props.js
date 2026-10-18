@@ -21,20 +21,37 @@ export function Props(THREE) {
   const ROJO = 0xC8102E, NEGRO = 0x1B1B1B, GRIS = 0x8A949C, AMAR = 0xF2C230, NARANJA = 0xE8701A, AZUL = 0x0D6EB8, VERDE = 0x00995C;
 
   // ---------------------------------------------------------------- EXTINTORES (genéricos, sin marca)
-  // tipo: 'pqs' (polvo químico seco, con manómetro), 'co2' (sin manómetro, difusor/corneta), 'agua' (con manómetro, cilindro alto)
+  // tipo: 'pqs' (polvo químico seco ABC, con manómetro), 'co2' (sin manómetro, difusor/corneta), 'agua' (con manómetro,
+  // cilindro alto), 'k' (químico húmedo, cuerpo de acero inoxidable). Cada uno lleva una ETIQUETA envolvente con el agente y
+  // la clase de fuego, como pide la NOM-002-STPS-2010, 7.2 l) 2) y 4) (agente extintor y clase de fuego en la etiqueta).
+  const AGENTE_EXT = { pqs: ['POLVO QUÍMICO SECO', 'PQS', ['A', 'B', 'C']], co2: ['BIÓXIDO DE CARBONO', 'CO₂', ['B', 'C']], agua: ['AGUA', 'AGUA', ['A']], k: ['QUÍMICO HÚMEDO', 'K', ['A', 'B', 'K']] };
+  const COLOR_CLASE = { A: '#2E7D32', B: '#C62828', C: '#1565C0', K: '#212121' };
+  function etiquetaExtintor(tipo, r, y, h, padre) {
+    const [nom, cod, clases] = AGENTE_EXT[tipo]; const cv = document.createElement('canvas'); cv.width = 512; cv.height = 384; const g = cv.getContext('2d');
+    g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, 512, 384); g.fillStyle = '#B71C1C'; g.fillRect(0, 0, 512, 78);
+    const fit = (t, w, fs, peso = 900) => { g.font = `${peso} ${fs}px Arial, sans-serif`; while (g.measureText(t).width > w && fs > 12) { fs -= 2; g.font = `${peso} ${fs}px Arial, sans-serif`; } };
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff'; fit(nom, 400, 50); g.fillText(nom, 256, 41);
+    g.fillStyle = '#111'; fit(cod, 470, 128); g.fillText(cod, 256, 160);
+    g.font = '900 34px Arial, sans-serif'; g.fillText('FUEGOS CLASE', 256, 248);
+    const w = 86, x0 = 256 - (clases.length * (w + 12) - 12) / 2; clases.forEach((c, i) => { g.fillStyle = COLOR_CLASE[c]; g.fillRect(x0 + i * (w + 12), 280, w, 86); g.fillStyle = '#fff'; g.font = '900 70px Arial, sans-serif'; g.fillText(c, x0 + i * (w + 12) + w / 2, 326); });
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.01, r * 1.01, h, 28, 1, true, -1.15, 2.3), new THREE.MeshStandardMaterial({ map: t, roughness: .6 })); m.position.y = y; padre.add(m); return m;
+  }
   function extintor(tipo = 'pqs') {
     const g = new THREE.Group(); const alto = tipo === 'agua' ? .66 : tipo === 'co2' ? .6 : .5, r = tipo === 'co2' ? .085 : .09;
-    cil(r, alto, ROJO, 0, alto / 2 + .02, 0, g, r, 20, { roughness: .35, metalness: .3 });
-    mesh(new THREE.SphereGeometry(r, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), ROJO, 0, alto + .02, 0, g, { roughness: .35, metalness: .3 });
+    const CUERPO = tipo === 'k' ? 0xC9D1D6 : ROJO, mt = tipo === 'k' ? { roughness: .25, metalness: .85 } : { roughness: .35, metalness: .3 };
+    cil(r, alto, CUERPO, 0, alto / 2 + .02, 0, g, r, 20, mt);
+    mesh(new THREE.SphereGeometry(r, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), CUERPO, 0, alto + .02, 0, g, mt);
     cil(r * .95, .03, NEGRO, 0, .015, 0, g);   // base
     cil(.025, .07, GRIS, 0, alto + r + .02, 0, g, .025, 10, { metalness: .8, roughness: .3 });   // válvula
     caja(.12, .015, .03, NEGRO, .03, alto + r + .07, 0, g); caja(.11, .015, .03, NEGRO, .03, alto + r + .04, 0, g).rotation.z = -.25;   // palanca y manija
     const seguro = new THREE.Mesh(new THREE.TorusGeometry(.018, .004, 6, 14), M(0xDDDDDD, { metalness: .8 })); seguro.position.set(-.035, alto + r + .06, .02); g.add(seguro);
     if (tipo !== 'co2') { const man = cil(.028, .012, 0xFFFFFF, -.045, alto + r + .025, .03, g); man.rotation.x = Math.PI / 2; const ar = new THREE.Mesh(new THREE.RingGeometry(.012, .026, 16, 1, 0, Math.PI * .6), new THREE.MeshBasicMaterial({ color: 0x2E9E4F, side: THREE.DoubleSide })); ar.position.set(-.045, alto + r + .025, .037); g.add(ar); }
-    if (tipo === 'co2') { tubo([[0, alto + r + .04, 0], [.08, alto + r, .05], [.12, alto * .6, .09]], .012, NEGRO, g); const c = cil(.012, .18, NEGRO, .12, alto * .45, .09, g, .05, 14); }
+    if (tipo === 'co2') { tubo([[0, alto + r + .04, 0], [.08, alto + r, .05], [.12, alto * .6, .09]], .012, NEGRO, g); cil(.012, .18, NEGRO, .12, alto * .45, .09, g, .05, 14); }   // corneta (difusor)
+    else if (tipo === 'k') { tubo([[0, alto + r + .04, 0], [.07, alto + r - .02, .06], [.11, alto * .6, .1]], .011, NEGRO, g); caja(.03, .16, .03, GRIS, .11, alto * .45, .1, g, { metalness: .8 }); }   // lanza aplicadora
     else tubo([[0, alto + r + .04, 0], [.07, alto + r - .02, .06], [.11, alto * .55, .1], [.1, alto * .3, .1]], .011, NEGRO, g);
-    const etq = texto({ pqs: 'PQS\nABC', co2: 'CO₂\nBC', agua: 'AGUA\nA' }[tipo], .1, .12, '#ffffff', '#111', .7); etq.position.set(0, alto * .55, r + .002); g.add(etq);
-    g.userData.nombre = { pqs: 'Extintor de polvo químico seco (PQS)', co2: 'Extintor de bióxido de carbono (CO₂)', agua: 'Extintor de agua' }[tipo]; return g;
+    etiquetaExtintor(tipo, r, alto * .5, alto * .55, g);
+    g.userData.nombre = { pqs: 'Extintor de polvo químico seco ABC (PQS): fuegos A, B y C', co2: 'Extintor de bióxido de carbono (CO₂): fuegos B y C', agua: 'Extintor de agua: fuego clase A', k: 'Extintor de químico húmedo: fuego clase K' }[tipo]; return g;
   }
   function gabineteExtintor() { const g = new THREE.Group(); caja(.42, .8, .26, ROJO, 0, .4, -.13, g); const v = caja(.36, .7, .01, 0xBFE3F2, 0, .4, .005, g, { transparent: true, opacity: .35 }); v.material.depthWrite = false;
     const e = extintor('pqs'); e.position.set(0, .06, -.12); e.scale.setScalar(.95); g.add(e); g.userData.nombre = 'Gabinete para extintor'; return g; }
@@ -114,7 +131,7 @@ export function Props(THREE) {
 
   const LISTA = [
     ['extintor_pqs', 'Extintor PQS (genérico)', 'extintores-fuego', () => extintor('pqs')], ['extintor_co2', 'Extintor CO₂ (genérico)', 'extintores-fuego', () => extintor('co2')],
-    ['extintor_agua', 'Extintor de agua (genérico)', 'extintores-fuego', () => extintor('agua')], ['gabinete', 'Gabinete para extintor', 'extintores-fuego', gabineteExtintor],
+    ['extintor_agua', 'Extintor de agua (genérico)', 'extintores-fuego', () => extintor('agua')], ['extintor_k', 'Extintor clase K (genérico)', 'extintores-fuego', () => extintor('k')], ['gabinete', 'Gabinete para extintor', 'extintores-fuego', gabineteExtintor],
     ['casco', 'Casco con barbiquejo', 'alturas', casco], ['arnes', 'Arnés de cuerpo completo', 'alturas', arnes], ['anclaje', 'Punto de anclaje', 'alturas', anclaje],
     ['linea_vida', 'Línea de vida', 'alturas', lineaVida], ['andamio', 'Andamio tubular', 'alturas', andamio],
     ['tripie', 'Tripié de rescate', 'espacios-confinados', tripie], ['detector', 'Detector de gases', 'espacios-confinados', detectorGases], ['ventilador_ducto', 'Ventilador con ducto', 'espacios-confinados', ventilador],
@@ -123,6 +140,6 @@ export function Props(THREE) {
     ['candado', 'Candado de bloqueo', 'loto', candado], ['pinza', 'Pinza multibloqueo', 'loto', pinza], ['etiqueta', 'Etiqueta de bloqueo', 'loto', etiqueta], ['estacion', 'Estación LOTO', 'loto', estacionLOTO],
     ['camilla', 'Camilla rígida', 'primeros-auxilios', camilla], ['collarin', 'Collarín cervical', 'primeros-auxilios', collarin], ['cobija', 'Cobija térmica', 'primeros-auxilios', cobija],
   ].map(([clave, nombre, modulo, fn]) => ({ clave, nombre, modulo, fn }));
-  return { extintor, gabineteExtintor, casco, maniqui, arnes, anclaje, lineaVida, andamio, tripie, detectorGases, ventilador, tapete, guantes, careta, herramientaAislada,
+  return { extintor, etiquetaExtintor, gabineteExtintor, casco, maniqui, arnes, anclaje, lineaVida, andamio, tripie, detectorGases, ventilador, tapete, guantes, careta, herramientaAislada,
     candado, pinza, etiqueta, estacionLOTO, camilla, collarin, cobija, texto, LISTA, POR_CLAVE: k => LISTA.find(x => x.clave === k) };
 }

@@ -69,7 +69,27 @@
       return s0.apply(this, arguments);
     };
   } catch (e) { }
-  window.EnviarRes = { ofrecer, abrir, texto };
+  // 3) Navegación de salida (12/10/2026): en juegos y páginas sin barra propia aparece «⬅ Regresar · 🏙️ Campus · 🚪 Salir».
+  //    El campus abre cada puerta con ?volver=<campus/index.html?mundo=área>; sin ese dato regresa con el historial
+  //    o al campus publicado. No se muestra en páginas que ya tienen su barra (sub-mundos con motor.js, aula, cafetería).
+  const CAMPUS = 'https://lalot127-coder.github.io/campus-sst/index.html';
+  function navegacion() {
+    if (document.getElementById('barra') || document.getElementById('auAtras') || document.getElementById('navSalida') || window.SIN_NAV_SALIDA) return;
+    let volver = null; try { volver = new URLSearchParams(location.search).get('volver'); if (volver) sessionStorage.setItem('nav_volver_' + location.pathname, volver); else volver = sessionStorage.getItem('nav_volver_' + location.pathname); } catch (e) { }
+    const base = volver ? volver.split('?')[0] : (location.protocol === 'file:' ? null : CAMPUS);
+    const ir = q => { location.href = base ? base + q : CAMPUS + q; };
+    document.head.insertAdjacentHTML('beforeend', `<style id="navCss">#navSalida{position:fixed;top:calc(8px + env(safe-area-inset-top));right:8px;z-index:89;display:flex;gap:6px;font:700 .9rem Calibri,"Segoe UI",sans-serif}
+#navSalida button{border:0;border-radius:999px;padding:8px 12px;background:rgba(14,58,107,.92);color:#fff;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.25);font:inherit}
+#navSalida .s{background:#C62828}@media (max-width:560px){#navSalida .t{display:none}#navSalida button{padding:8px 10px}}@media print{#navSalida{display:none}}</style>`);
+    const d = document.createElement('div'); d.id = 'navSalida';
+    d.innerHTML = '<button id="navReg" title="Regresar al edificio o al curso">⬅<span class="t"> Regresar</span></button><button id="navCam" title="Ir a la plaza del campus">🏙️<span class="t"> Campus</span></button><button class="s" id="navSal" title="Salir a la pantalla de inicio">🚪<span class="t"> Salir</span></button>';
+    document.body.appendChild(d);
+    d.querySelector('#navReg').onclick = () => { if (volver) location.href = volver; else if (history.length > 1) history.back(); else ir('?plaza'); };
+    d.querySelector('#navCam').onclick = () => ir('?plaza');
+    d.querySelector('#navSal').onclick = () => ir('?salir');
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', navegacion); else setTimeout(navegacion, 0);
+  window.EnviarRes = { ofrecer, abrir, texto, navegacion };
 })();
 </script><!--/ENVIAR_RESULTADOS-->
 <meta charset="utf-8">
@@ -162,6 +182,12 @@ const RES = [
   {ico:'🧪', n:'Muestra patológica líquida', ok:'ha', f:'Residuo patológico líquido → recipiente hermético amarillo (NOM-087, 6.2).'},
   {ico:'📄', n:'Envoltura de papel de una jeringa nueva (sin contacto con el paciente)', ok:'mu', f:'No contiene agentes biológico-infecciosos: no cumple la definición de RPBI (NOM-087, 3 y 4).'},
   {ico:'🥤', n:'Vaso desechable del comedor', ok:'mu', f:'No es residuo de la atención médica: no es RPBI (NOM-087, 3 y 4).'},
+  {ico:'🩸', n:'Lanceta usada para medir glucosa capilar', ok:'pc', f:'Objeto punzocortante (lancetas) → recipiente rígido rojo (NOM-087, 4.5.1 y 6.2.1).'},
+  {ico:'🧪', n:'Tubo capilar usado con sangre', ok:'pc', f:'Los tubos capilares son punzocortantes → recipiente rígido rojo (NOM-087, 4.5.1 y 6.2.1).'},
+  {ico:'🩹', n:'Apósito empapado de líquido pleural', ok:'br', f:'Residuo no anatómico sólido → bolsa roja (NOM-087, 4.4.2 y 6.2.1).'},
+  {ico:'🤧', n:'Pañuelo desechable con esputo de un paciente con tuberculosis', ok:'br', f:'Residuo no anatómico sólido → bolsa roja (NOM-087, 4.4.3 y 6.2.1).'},
+  {ico:'🧫', n:'Asa desechable usada para inocular un cultivo', ok:'br', f:'Utensilio desechable de cultivos y cepas → bolsa roja (NOM-087, 4.2.2 y 6.2.1).'},
+  {ico:'🫙', n:'Vidrio roto de laboratorio, ya lavado y desinfectado', ok:'mu', f:'El vidrio roto de laboratorio no es punzocortante RPBI; se desinfecta o esteriliza antes de desecharlo como residuo municipal (NOM-087, 4.5.1).'},
 ];
 const $ = s => document.querySelector(s);
 let sel=null, pts=0, hechos=0, errores=[], t0=0, timer=null, nombre='';

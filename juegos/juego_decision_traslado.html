@@ -69,7 +69,27 @@
       return s0.apply(this, arguments);
     };
   } catch (e) { }
-  window.EnviarRes = { ofrecer, abrir, texto };
+  // 3) Navegación de salida (12/10/2026): en juegos y páginas sin barra propia aparece «⬅ Regresar · 🏙️ Campus · 🚪 Salir».
+  //    El campus abre cada puerta con ?volver=<campus/index.html?mundo=área>; sin ese dato regresa con el historial
+  //    o al campus publicado. No se muestra en páginas que ya tienen su barra (sub-mundos con motor.js, aula, cafetería).
+  const CAMPUS = 'https://lalot127-coder.github.io/campus-sst/index.html';
+  function navegacion() {
+    if (document.getElementById('barra') || document.getElementById('auAtras') || document.getElementById('navSalida') || window.SIN_NAV_SALIDA) return;
+    let volver = null; try { volver = new URLSearchParams(location.search).get('volver'); if (volver) sessionStorage.setItem('nav_volver_' + location.pathname, volver); else volver = sessionStorage.getItem('nav_volver_' + location.pathname); } catch (e) { }
+    const base = volver ? volver.split('?')[0] : (location.protocol === 'file:' ? null : CAMPUS);
+    const ir = q => { location.href = base ? base + q : CAMPUS + q; };
+    document.head.insertAdjacentHTML('beforeend', `<style id="navCss">#navSalida{position:fixed;top:calc(8px + env(safe-area-inset-top));right:8px;z-index:89;display:flex;gap:6px;font:700 .9rem Calibri,"Segoe UI",sans-serif}
+#navSalida button{border:0;border-radius:999px;padding:8px 12px;background:rgba(14,58,107,.92);color:#fff;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.25);font:inherit}
+#navSalida .s{background:#C62828}@media (max-width:560px){#navSalida .t{display:none}#navSalida button{padding:8px 10px}}@media print{#navSalida{display:none}}</style>`);
+    const d = document.createElement('div'); d.id = 'navSalida';
+    d.innerHTML = '<button id="navReg" title="Regresar al edificio o al curso">⬅<span class="t"> Regresar</span></button><button id="navCam" title="Ir a la plaza del campus">🏙️<span class="t"> Campus</span></button><button class="s" id="navSal" title="Salir a la pantalla de inicio">🚪<span class="t"> Salir</span></button>';
+    document.body.appendChild(d);
+    d.querySelector('#navReg').onclick = () => { if (volver) location.href = volver; else if (history.length > 1) history.back(); else ir('?plaza'); };
+    d.querySelector('#navCam').onclick = () => ir('?plaza');
+    d.querySelector('#navSal').onclick = () => ir('?salir');
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', navegacion); else setTimeout(navegacion, 0);
+  window.EnviarRes = { ofrecer, abrir, texto, navegacion };
 })();
 </script><!--/ENVIAR_RESULTADOS-->
 <meta charset="utf-8">
@@ -181,6 +201,21 @@ const CASOS=[
   ops:[['🚶','Evacuarlo por su propio pie, guiado por la brigada y la ruta establecida',1],['🛏️','Buscar camilla primero',0],['🪵','Tabla rígida',0],['🧹','Arrastre',0]],
   ok:'Identificar previamente a quienes se movilizan por sí mismos, a quienes necesitan ayuda y a los graves permite priorizar el orden de evacuación y que sea más fluida.',
   f:'IMSS CVOED, Movilización de pacientes (clasificación de pacientes). Técnica final: la decide el jefe del servicio.'},
+ {tipo:'Traslado', av:'🤰', pac:'Eres camillera y tienes 5 meses de embarazo; te piden pasar a un paciente de la cama a la camilla.',
+  orden:'Equipo indicado: <b>camilla</b>',
+  ops:[['💪','Lo paso yo, con cuidado',0],['🙋','Pido que lo hagan compañeros con equipo auxiliar; yo no hago esa carga',1],['🤝','Lo jalo de la sábana yo sola',0],['🛏️','Que el paciente se impulse',0]],
+  ok:'Durante la gestación está prohibido el manejo manual de cargas de más de 10 kg, posturas forzadas o esfuerzo abdominal prolongado.',
+  f:'NOM-036-1-STPS-2018, 8.3 b) 1).'},
+ {tipo:'Traslado', av:'🧔', pac:'Camillero de 52 años sin evaluación médica de aptitud física; le asignan levantar cargas de 25 kg.',
+  orden:'Movimiento de insumos al almacén',
+  ops:[['💪','Las levanta: es fuerte',0],['🩺','Primero evaluación médica; sin ella, su límite es 20 kg',1],['🧍','Las levanta rápido',0],['🙅','Nunca puede cargar nada',0]],
+  ok:'Para mayores de 45 años la masa máxima (20 kg) se determina previa evaluación médica; con aval médico puede llegar a 25 kg.',
+  f:'NOM-036-1-STPS-2018, 8.3 b) 2) Tabla 1 (*).'},
+ {tipo:'Evacuación', av:'🌎', pac:'Sismo sin alerta sísmica; estás en el 4.º piso trasladando a un paciente en camilla.',
+  orden:'Instrucción de la brigada: <b>repliegue</b>',
+  ops:[['🏃','Bajar corriendo por la escalera con la camilla',0],['🧱','Replegarse a la zona de menor riesgo: junto a columnas o muros de carga, lejos de vidrios',1],['🛗','Usar el elevador',0],['🪟','Acercarse a la ventana para ver',0]],
+  ok:'Sin alerta, o en un piso tercero o superior, se puede replegar a la zona de menor riesgo: castillos y trabes, lejos de vidrios.',
+  f:'SGIRPC CDMX, tríptico «Evacuación y repliegue en caso de sismo» (2022).'},
 ];
 const $=s=>document.querySelector(s);
 let i=0, pts=0, nombre='', errores=[], resp=false;

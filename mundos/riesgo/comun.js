@@ -20,11 +20,16 @@
     const { THREE, scene, caja, M, letrero } = W;
     const p = new THREE.Mesh(new THREE.PlaneGeometry(ancho, fondo), M(piso)); p.rotation.x = -Math.PI / 2; p.position.z = -fondo / 2 + 2; scene.add(p);
     const z0 = -fondo + 2, entorno = [p];
+    { const ext = new THREE.Mesh(new THREE.PlaneGeometry(ancho + 30, fondo + 30), M(0xB9B3A8)); ext.rotation.x = -Math.PI / 2; ext.position.set(0, -0.012, -fondo / 2 + 2); ext.userData.sinTextura = true; scene.add(ext); }   // explanada: la cámara nunca ve el vacío
     entorno.push(caja(ancho, 3, 0.1, muro, 0, 1.5, z0), caja(0.1, 3, fondo, muro, -ancho / 2, 1.5, z0 + fondo / 2), caja(0.1, 3, fondo, muro, ancho / 2, 1.5, z0 + fondo / 2));
     // franja de seguridad en el piso (NOM-026: delimitación de áreas)
     for (const x of [-ancho / 2 + 0.6, ancho / 2 - 0.6]) { const f = caja(0.08, 0.005, fondo - 1, 0xF2C94C, x, 0.004, z0 + fondo / 2); entorno.push(f); }
     if (rotulo) { const r = letrero(rotulo, Math.min(ancho - 1, 0.13 * rotulo.length + 1), 0.4, color); r.position.set(0, 2.7, z0 + 0.07); scene.add(r); entorno.push(r); }
-    const luz = new THREE.PointLight(0xFFF4E0, 0.7, 16); luz.position.set(0, 2.8, -2); scene.add(luz);
+    // luminarias repartidas (salas grandes: una cada ~6 m) con su lámpara visible en el techo
+    const nx = Math.max(1, Math.round(ancho / 6)), nz = Math.max(1, Math.round(fondo / 6));
+    for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) { const x = -ancho / 2 + ancho * (i + 0.5) / nx, z = z0 + fondo * (k + 0.5) / nz;
+      const luz = new THREE.PointLight(0xFFF4E0, nx * nz > 1 ? 0.45 : 0.7, 14); luz.position.set(x, 2.8, z); scene.add(luz);
+      const lam = caja(1.2, 0.05, 0.3, 0xFFFDF5, x, 2.98, z); lam.material = lam.material.clone(); lam.material.emissive.set(0xFFF2CC); lam.material.emissiveIntensity = 0.6; }
     return { piso: p, entorno, z0 };
   }
 
@@ -74,7 +79,7 @@
       camilla() { c(0.7, 0.08, 1.9, 0xECEFF1, 0, 0.75, 0); for (const [a, b] of [[-0.3, -0.85], [0.3, -0.85], [-0.3, 0.85], [0.3, 0.85]]) k(0.025, 0.72, 0x9E9E9E, a, 0.37, b); },
       mesa() { c(1.2, 0.05, 0.7, 0xEEEEEE, 0, 0.8, 0); for (const [a, b] of [[-0.55, -0.3], [0.55, -0.3], [-0.55, 0.3], [0.55, 0.3]]) c(0.04, 0.8, 0.04, 0x9E9E9E, a, 0.4, b); },
       dea() { c(0.3, 0.35, 0.12, 0x43A047, 0, 1.3, 0); c(0.22, 0.12, 0.01, 0xFFFFFF, 0, 1.33, 0.07); },
-      extintor() { k(0.09, 0.5, 0xC62828, 0, 0.3, 0); k(0.03, 0.08, 0x212121, 0, 0.6, 0); },
+      extintor() { k(0.09, 0.5, 0xC62828, 0, 0.3, 0); k(0.03, 0.08, 0x212121, 0, 0.6, 0); const e = W.letrero('PQS · ABC', 0.17, 0.07, '#FFFFFF', '#B71C1C'); e.position.set(0, 0.32, 0.093); g.add(e); },   // etiqueta: agente y clase (NOM-002-STPS-2010, 7.2 l))
       extintor_obstruido() { k(0.09, 0.5, 0xC62828, 0, 0.3, 0); for (let i = 0; i < 3; i++) c(0.5, 0.4, 0.4, 0xC8A27A, (i - 1) * 0.5, 0.2, 0.35); },
       planta() { k(0.18, 0.35, 0x8D6E63, 0, 0.17, 0); esfera(0.3, 0x43A047, 0, 0.6, 0, g); },
       // ---- objetos y condiciones CONTROLADAS (distractores del juego, 07/10/2026)

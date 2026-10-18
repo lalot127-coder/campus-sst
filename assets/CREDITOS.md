@@ -1,6 +1,6 @@
 # Créditos de recursos 3D — Campus de Simulación SST · CERS
 
-Actualizado: 05/10/2026. Este campus usa modelos y texturas con licencias abiertas.
+Actualizado: 11/10/2026. Este campus usa modelos y texturas con licencias abiertas.
 
 ## Licencia Creative Commons Atribución (CC BY 3.0): crédito obligatorio
 
@@ -32,13 +32,13 @@ Actualizado: 05/10/2026. Este campus usa modelos y texturas con licencias abiert
 - **Ethan Place** — https://polyhaven.com/a/SchoolChair_01
 - **James Ray Cock** — https://polyhaven.com/a/utility_box_01, https://polyhaven.com/a/utility_box_02
 - **KelecikDev** — https://poly.pizza
-- **Kenney** — https://kenney.nl/assets/building-kit, https://kenney.nl/assets/car-kit, https://kenney.nl/assets/city-kit-industrial, https://kenney.nl/assets/city-kit-roads, https://kenney.nl/assets/factory-kit, https://kenney.nl/assets/furniture-kit, https://kenney.nl/assets/mini-characters, https://kenney.nl/assets/modular-buildings, https://kenney.nl/assets/modular-cave-kit, https://kenney.nl/assets/nature-kit, https://kenney.nl/assets/particle-pack, https://kenney.nl/assets/survival-kit, https://kenney.nl/assets/train-kit
+- **Kenney** — https://kenney.nl/assets/building-kit, https://kenney.nl/assets/car-kit, https://kenney.nl/assets/city-kit-commercial, https://kenney.nl/assets/city-kit-industrial, https://kenney.nl/assets/city-kit-roads, https://kenney.nl/assets/factory-kit, https://kenney.nl/assets/furniture-kit, https://kenney.nl/assets/mini-characters, https://kenney.nl/assets/modular-buildings, https://kenney.nl/assets/modular-cave-kit, https://kenney.nl/assets/nature-kit, https://kenney.nl/assets/particle-pack, https://kenney.nl/assets/survival-kit, https://kenney.nl/assets/train-kit
 - **Konrad Szałankiewicz** — https://polyhaven.com/a/handsaw_wood
 - **Kuutti Siitonen** — https://polyhaven.com/a/hanging_industrial_lamp, https://polyhaven.com/a/plastic_monobloc_chair_01
 - **MP** — https://polyhaven.com/a/ladder_sectioned_01
 - **Quaternius** — https://poly.pizza
 - **Ulan Cabanilla** — https://polyhaven.com/a/medical_box, https://polyhaven.com/a/wooden_axe
-- **ambientCG** — https://ambientcg.com/view?id=Concrete034, https://ambientcg.com/view?id=Gravel022, https://ambientcg.com/view?id=Ground054, https://ambientcg.com/view?id=MetalPlates006, https://ambientcg.com/view?id=Planks012, https://ambientcg.com/view?id=Rock030, https://ambientcg.com/view?id=Tiles141, https://ambientcg.com/view?id=PaintedPlaster017, https://ambientcg.com/view?id=Asphalt031, https://ambientcg.com/view?id=Grass004, https://ambientcg.com/view?id=Carpet016, https://ambientcg.com/view?id=WoodFloor051, https://ambientcg.com/view?id=Concrete048
+- **ambientCG** — https://ambientcg.com/view?id=Asphalt031, https://ambientcg.com/view?id=Carpet016, https://ambientcg.com/view?id=Concrete034, https://ambientcg.com/view?id=Concrete048, https://ambientcg.com/view?id=Grass004, https://ambientcg.com/view?id=Gravel022, https://ambientcg.com/view?id=Ground054, https://ambientcg.com/view?id=MetalPlates006, https://ambientcg.com/view?id=PaintedPlaster017, https://ambientcg.com/view?id=Planks012, https://ambientcg.com/view?id=Rock030, https://ambientcg.com/view?id=Tiles141, https://ambientcg.com/view?id=WoodFloor051
 - **hat_my_guy** — https://poly.pizza
 - **iPoly3D** — https://poly.pizza
 

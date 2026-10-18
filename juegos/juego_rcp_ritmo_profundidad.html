@@ -68,7 +68,27 @@
       return s0.apply(this, arguments);
     };
   } catch (e) { }
-  window.EnviarRes = { ofrecer, abrir, texto };
+  // 3) Navegación de salida (12/10/2026): en juegos y páginas sin barra propia aparece «⬅ Regresar · 🏙️ Campus · 🚪 Salir».
+  //    El campus abre cada puerta con ?volver=<campus/index.html?mundo=área>; sin ese dato regresa con el historial
+  //    o al campus publicado. No se muestra en páginas que ya tienen su barra (sub-mundos con motor.js, aula, cafetería).
+  const CAMPUS = 'https://lalot127-coder.github.io/campus-sst/index.html';
+  function navegacion() {
+    if (document.getElementById('barra') || document.getElementById('auAtras') || document.getElementById('navSalida') || window.SIN_NAV_SALIDA) return;
+    let volver = null; try { volver = new URLSearchParams(location.search).get('volver'); if (volver) sessionStorage.setItem('nav_volver_' + location.pathname, volver); else volver = sessionStorage.getItem('nav_volver_' + location.pathname); } catch (e) { }
+    const base = volver ? volver.split('?')[0] : (location.protocol === 'file:' ? null : CAMPUS);
+    const ir = q => { location.href = base ? base + q : CAMPUS + q; };
+    document.head.insertAdjacentHTML('beforeend', `<style id="navCss">#navSalida{position:fixed;top:calc(8px + env(safe-area-inset-top));right:8px;z-index:89;display:flex;gap:6px;font:700 .9rem Calibri,"Segoe UI",sans-serif}
+#navSalida button{border:0;border-radius:999px;padding:8px 12px;background:rgba(14,58,107,.92);color:#fff;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.25);font:inherit}
+#navSalida .s{background:#C62828}@media (max-width:560px){#navSalida .t{display:none}#navSalida button{padding:8px 10px}}@media print{#navSalida{display:none}}</style>`);
+    const d = document.createElement('div'); d.id = 'navSalida';
+    d.innerHTML = '<button id="navReg" title="Regresar al edificio o al curso">⬅<span class="t"> Regresar</span></button><button id="navCam" title="Ir a la plaza del campus">🏙️<span class="t"> Campus</span></button><button class="s" id="navSal" title="Salir a la pantalla de inicio">🚪<span class="t"> Salir</span></button>';
+    document.body.appendChild(d);
+    d.querySelector('#navReg').onclick = () => { if (volver) location.href = volver; else if (history.length > 1) history.back(); else ir('?plaza'); };
+    d.querySelector('#navCam').onclick = () => ir('?plaza');
+    d.querySelector('#navSal').onclick = () => ir('?salir');
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', navegacion); else setTimeout(navegacion, 0);
+  window.EnviarRes = { ofrecer, abrir, texto, navegacion };
 })();
 </script><!--/ENVIAR_RESULTADOS--><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -144,7 +164,7 @@ function csv(){const a=leer();const t='Juego,Nombre,Fecha,Puntos,Maximo,Porcenta
 const barajar=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 $('#verGrupo').onclick=grupo;
 $('#empezar').onclick=()=>{JUGADOR=$('#nombre').value.trim()||'Participante';$('#inicio').style.display='none';iniciar()};
-const DATOS={"casos": [{"av": "👨", "quien": "Don Luis, 58 años, se desplomó en la oficina. No responde y solo jadea.", "edad": "Adulto", "resc": 1}, {"av": "👧", "quien": "Sofía, 6 años, sacada de la alberca. No responde y no respira.", "edad": "Niño", "resc": 1}, {"av": "👶", "quien": "Bebé de 8 meses que no responde ni respira en su cuna.", "edad": "Lactante", "resc": 1}, {"av": "🧑", "quien": "Adolescente de 14 años con vello axilar, se desvaneció jugando futbol. Llegó otra persona a ayudarte.", "edad": "Adulto", "resc": 2}, {"av": "👦", "quien": "Niño de 9 años en paro. Una maestra y tú lo atienden juntos.", "edad": "Niño", "resc": 2}, {"av": "👶", "quien": "Lactante de 3 meses en paro; tú y su mamá dan RCP.", "edad": "Lactante", "resc": 2}, {"av": "👵", "quien": "Señora de 75 años en el mercado: no responde, no respira normal.", "edad": "Adulto", "resc": 1}, {"av": "🧒", "quien": "Niña de 3 años en el patio de la escuela, en paro. Estás sola con ella.", "edad": "Niño", "resc": 1}], "tecnicas": ["Dos manos encimadas en el centro del pecho", "Una o dos manos (según el tamaño)", "Talón de una mano o dos pulgares rodeando el tórax", "Dos dedos sobre el esternón"], "tecok": {"Adulto": [0], "Niño": [1, 0], "Lactante": [2]}, "prof": {"Adulto": [5, 6], "Niño": [5, 5], "Lactante": [4, 4]}, "fuente": {"Adulto": "AHA 2025, Parte 7 (SVB adulto)", "Niño": "AHA/AAP 2025, Parte 6 (SVB pediátrico)", "Lactante": "AHA/AAP 2025, Parte 6 (SVB pediátrico)"}};
+const DATOS={"casos": [{"av": "👨", "quien": "Don Luis, 58 años, se desplomó en la oficina. No responde y solo jadea.", "edad": "Adulto", "resc": 1}, {"av": "👧", "quien": "Sofía, 6 años, sacada de la alberca. No responde y no respira.", "edad": "Niño", "resc": 1}, {"av": "👶", "quien": "Bebé de 8 meses que no responde ni respira en su cuna.", "edad": "Lactante", "resc": 1}, {"av": "🧑", "quien": "Adolescente de 14 años con vello axilar, se desvaneció jugando futbol. Llegó otra persona a ayudarte.", "edad": "Adulto", "resc": 2}, {"av": "👦", "quien": "Niño de 9 años en paro. Una maestra y tú lo atienden juntos.", "edad": "Niño", "resc": 2}, {"av": "👶", "quien": "Lactante de 3 meses en paro; tú y su mamá dan RCP.", "edad": "Lactante", "resc": 2}, {"av": "👵", "quien": "Señora de 75 años en el mercado: no responde, no respira normal.", "edad": "Adulto", "resc": 1}, {"av": "🧒", "quien": "Niña de 3 años en el patio de la escuela, en paro. Estás sola con ella.", "edad": "Niño", "resc": 1}, {"av": "👷", "quien": "Un almacenista de 30 años se desploma junto al montacargas. No responde y no respira normal.", "edad": "Adulto", "resc": 1}, {"av": "👶", "quien": "Bebé de 11 meses en la guardería, en paro. Dos educadoras lo atienden.", "edad": "Lactante", "resc": 2}, {"av": "👧", "quien": "Niña de 10 años, sin signos de pubertad, en paro en la escuela. La maestra y tú dan RCP.", "edad": "Niño", "resc": 2}, {"av": "🧑", "quien": "Joven de 16 años, con desarrollo puberal, se desploma en la cancha. Estás solo.", "edad": "Adulto", "resc": 1}], "tecnicas": ["Dos manos encimadas en el centro del pecho", "Una o dos manos (según el tamaño)", "Talón de una mano o dos pulgares rodeando el tórax", "Dos dedos sobre el esternón"], "tecok": {"Adulto": [0], "Niño": [1, 0], "Lactante": [2]}, "prof": {"Adulto": [5, 6], "Niño": [5, 5], "Lactante": [4, 4]}, "fuente": {"Adulto": "AHA 2025, Parte 7 (SVB adulto)", "Niño": "AHA/AAP 2025, Parte 6 (SVB pediátrico)", "Lactante": "AHA/AAP 2025, Parte 6 (SVB pediátrico)"}};
 
 let i=0,pts=0,max=0,rep=[],sel={};
 const PROF_T={Adulto:'al menos 5 cm sin pasar de 6 cm',Niño:'≈5 cm (un tercio del pecho)',Lactante:'≈4 cm (un tercio del pecho)'};

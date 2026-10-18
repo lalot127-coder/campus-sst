@@ -136,8 +136,8 @@
       ],
       principal: 'prensa', evalua: { f: 'C', s: 'III', pista: 'Los atrapamientos ocurren pocas veces, pero pueden causar la pérdida de un dedo.' },
       control: [{ t: 'Guarda fija y mando bimanual', ok: true, fb: 'Control de ingeniería.', f: `NOM-004-STPS-1999, 5.3; ${NIOSH}` }, SOLO_EPP, NO_CUIDADO] },
-    // Curso "Enfermería industrial" (UT de Oriental, 19/11/2026) · fuentes verificadas el 10/10/2026
-    { id: 'servicio_medico', titulo: 'Servicio médico de la planta (curso Enfermería industrial)', modulos: ['industria/consultorio_planta', 'industria/juego_ei_mito_realidad', 'industria/juego_ei_maraton'],
+    // Curso "Enfermería ocupacional" (UT de Oriental, 19/11/2026) · fuentes verificadas el 10/10/2026
+    { id: 'servicio_medico', titulo: 'Servicio médico de la planta (curso Enfermería ocupacional)', modulos: ['industria/consultorio_planta', 'industria/juego_ei_mito_realidad', 'industria/juego_ei_maraton'],
       escena: 'Consultorio de la planta de Autopartes del Oriente, 450 trabajadores, a media mañana. [FICTICIO]',
       riesgos: [
         { id: 'aguja', prop: 'punzo', icono: '💉', nombre: 'Agujas usadas sobre la mesa, sin recipiente rígido', real: true, tipo: 'Biológico', fb: 'Piquete accidental y exposición a agentes biológicos.', f: `${N87}, 6.2` },
@@ -149,7 +149,7 @@
       principal: 'aguja', evalua: { f: 'C', s: 'III', pista: 'Los piquetes ocurren pocas veces, pero pueden transmitir una infección grave. (Ejemplo didáctico.)' },
       control: [{ t: 'Desechar las agujas de inmediato en un recipiente rígido de polipropileno rojo', ok: true, fb: 'Es el envasado que la norma fija para punzocortantes.', f: `${N87}, 6.2` },
         SOLO_EPP, NO_CUIDADO] },
-    { id: 'agentes_salud', titulo: 'Nave con agentes de salud (curso Enfermería industrial)', modulos: ['industria/normas_salud', 'industria/juego_ei_que_nom', 'industria/juego_ei_memorama_vigilancia'],
+    { id: 'agentes_salud', titulo: 'Nave con agentes de salud (curso Enfermería ocupacional)', modulos: ['industria/normas_salud', 'industria/juego_ei_que_nom', 'industria/juego_ei_memorama_vigilancia'],
       escena: 'Nave de prensas y pintura de Autopartes del Oriente durante el turno matutino. [FICTICIO]',
       riesgos: [
         { id: 'ruido', prop: 'compresora', icono: '🔊', nombre: 'Prensas a 92 dB(A) sin programa de conservación de la audición', real: true, tipo: 'Físico', fb: 'Exposición a ruido de 85 dB(A) o más.', f: 'NOM-011-STPS-2001, 8.1 y 8.6' },
@@ -175,6 +175,35 @@
       principal: 'borde', evalua: { f: 'D', s: 'IV', pista: 'Trabajan junto al borde en cada colado; una caída de 4 m puede ser mortal.' },
       control: [{ t: 'Colocar protección colectiva (barandal o red de seguridad) y, donde no sea posible, sistema personal para interrumpir caídas', ok: true, fb: 'Primero lo colectivo; si no es posible, el sistema personal.', f: 'NOM-009-STPS-2011, 7.1, 8.4.1 a) y 13.1' },
         SOLO_EPP, NO_CUIDADO] },
+  ] },
+
+  // Zona «Prácticas» (hidrocarburos), 11/10/2026. Fuentes consultadas el 11/10/2026: GRE 2024 guías 115 y 128 (CAMEO/NOAA),
+  // NOM-026-STPS-2008, NOM-022-STPS-2015 (DOF 01/04/2016). La GRE orienta la fase inicial de incidentes de transporte.
+  practicas: { nombre: 'Prácticas (hidrocarburos)', icono: '🛢️', color: 0x2E9E4F, zonas: [
+    { id: 'estacion', titulo: 'Estación de servicio: descarga de gasolina', modulos: ['practicas/hidrocarburos'],
+      escena: 'El autotanque descarga gasolina a los tanques subterráneos mientras se despacha a clientes; el operador casi nunca conecta la tierra. [FICTICIO]',
+      riesgos: [
+        { id: 'tierra', prop: 'tanque', icono: '⚡', nombre: 'Autotanque descargando sin conexión a tierra', real: true, tipo: 'Incendio / químico-tecnológico', fb: 'La electricidad estática puede encender los vapores: todo el equipo que maneja el producto debe estar conectado a tierra.', f: 'GRE 2024, Guía 128; NOM-022-STPS-2015' },
+        { id: 'derrame', prop: 'charco', icono: '⛽', nombre: 'Derrame de gasolina avanzando hacia la coladera', real: true, tipo: 'Químico', fb: 'Hay que evitar que entre a alcantarillas o drenajes: el escurrimiento puede crear peligro de incendio o explosión.', f: 'GRE 2024, Guía 128' },
+        { id: 'chispas', prop: 'soldadura', icono: '🔥', nombre: 'Trabajo con chispas junto a los dispensarios', real: true, tipo: 'Incendio / químico-tecnológico', fb: 'Se deben eliminar todas las fuentes de ignición del área inmediata (no fumar, sin chispas ni llamas).', f: 'GRE 2024, Guía 128' },
+        { id: 'extintor', prop: 'extintor', icono: '🧯', nombre: 'Extintor identificado en rojo', real: false, fb: 'Es equipo contra incendio, identificado con el color rojo.', f: 'NOM-026-STPS-2008, 7.1 Tabla 1' },
+        { id: 'arena', prop: 'tambo', icono: '🪣', nombre: 'Tambo con arena (material absorbente no combustible)', real: false, fb: 'Es un control: la GRE indica absorber o cubrir el derrame con tierra seca, arena u otro material no combustible.', f: 'GRE 2024, Guía 128' },
+      ],
+      principal: 'tierra', evalua: { f: 'D', s: 'IV', pista: 'La omisión se repite en casi todas las descargas; una ignición de los vapores puede ser mortal.' },
+      control: [{ t: 'Detener la descarga y no reanudarla hasta conectar el autotanque a tierra', ok: true, fb: 'Se controla la fuente de ignición antes de manejar el producto.', f: 'GRE 2024, Guía 128; NOM-022-STPS-2015' },
+        NO_CUIDADO, { t: 'Terminar rápido la descarga y conectar la tierra después', ok: false, crit: true, fb: 'Deja la fuente de ignición activa mientras salen los vapores.', f: 'GRE 2024, Guía 128' }] },
+    { id: 'gas_lp', titulo: 'Galera de gas LP y ductos', modulos: ['practicas/hidrocarburos'],
+      escena: 'Bodega de cilindros de gas LP junto a un ducto de gas natural; hace frío y alguien encendió un calefactor dentro de la galera. [FICTICIO]',
+      riesgos: [
+        { id: 'calor', prop: 'estufa', icono: '🌡️', nombre: 'Calefactor encendido junto a los cilindros', real: true, tipo: 'Incendio / químico-tecnológico', fb: 'Los contenedores pueden explotar si se calientan y los cilindros rotos pueden salir proyectados.', f: 'GRE 2024, Guía 115' },
+        { id: 'fuga', prop: 'cilindro', icono: '💨', nombre: 'Cilindro con fuga junto a un registro', real: true, tipo: 'Incendio / químico-tecnológico', fb: 'Los vapores del gas licuado son inicialmente más pesados que el aire: se esparcen por el piso y se acumulan en zonas bajas.', f: 'GRE 2024, Guía 115' },
+        { id: 'viento', prop: 'persona_epp', icono: '🧍', nombre: 'Persona parada viento abajo de una fuga del ducto', real: true, tipo: 'Químico', fb: 'Hay que mantenerse viento arriba, cuesta arriba y/o aguas arriba.', f: 'GRE 2024, Guía 115' },
+        { id: 'amarillo', prop: 'senal_obligacion', icono: '🟨', nombre: 'Tubería identificada en amarillo con nombre del fluido', real: false, fb: 'Es la identificación de una tubería que conduce un fluido peligroso.', f: 'NOM-026-STPS-2008' },
+        { id: 'extintor', prop: 'extintor', icono: '🧯', nombre: 'Extintor visible e identificado', real: false, fb: 'Es equipo contra incendio, identificado con el color rojo.', f: 'NOM-026-STPS-2008, 7.1 Tabla 1' },
+      ],
+      principal: 'calor', evalua: { f: 'C', s: 'IV', pista: 'Solo ocurre algunos días de frío, pero un cilindro que explota puede causar muertes.' },
+      control: [{ t: 'Retirar el calefactor y prohibir toda fuente de calor o ignición dentro de la galera', ok: true, fb: 'Se elimina el peligro en su origen.', f: 'GRE 2024, Guía 115' },
+        SOLO_EPP, { t: 'Mojar los cilindros de vez en cuando y dejar el calefactor', ok: false, crit: true, fb: 'Mantiene la fuente de calor junto a recipientes a presión.', f: 'GRE 2024, Guía 115' }] },
   ] },
 
   proteccion: { nombre: 'Protección civil', icono: '🚨', color: 0xE07A1F, zonas: [
@@ -230,7 +259,7 @@
   ] },
 
   empresa: { nombre: 'Empresa · RH', icono: '🏢', color: 0x14284B, zonas: [
-    { id: 'rh', titulo: 'Recursos humanos y jornada', modulos: ['empresa/rh_checador', 'empresa/horarios_qa'],
+    { id: 'rh', titulo: 'Recursos humanos y jornada', modulos: ['empresa/rh_checador', 'empresa/horarios_qa', 'empresa/aula_jornada40'],
       escena: 'Oficina de RH y archivo de expedientes. [FICTICIO]',
       riesgos: [
         { id: 'cajas', prop: 'cajas', icono: '📦', nombre: 'Cajas de archivo de 20 kg cargadas desde el piso', real: true, tipo: 'Ergonómico', fb: 'Manejo manual de cargas.', f: 'NOM-036-1-STPS-2018, cap. 7' },
@@ -274,7 +303,7 @@
     alturas: ['senal', 'franja', 'escalera', 'epp'], confinado: ['senal', 'franja', 'epp'], electrica: ['cable', 'franja', 'epp'],
     taller: ['guarda', 'franja', 'senal', 'basurero'], obra_alturas: ['senal', 'franja', 'epp'], incendio: ['lampara', 'botiquin', 'franja', 'cilindro'],
     evacuacion: ['lampara', 'cuadro', 'botiquin'], psicosocial: ['agua', 'cuadro', 'planta', 'basurero'], oficina: ['lampara', 'cuadro', 'cable', 'agua'],
-    rh: ['cuadro', 'agua', 'basurero', 'planta'],
+    rh: ['cuadro', 'agua', 'basurero', 'planta'], estacion: ['franja', 'senal', 'basurero'], gas_lp: ['franja', 'senal', 'lampara'],
   };
   Object.values(window.CATALOGO_RIESGOS.edificios).forEach(ed => ed.zonas.forEach(z => (EXTRA[z.id] || ['basurero', 'cuadro', 'agua']).forEach(k => {
     if (z.riesgos.some(r => r.id === 'x_' + k || r.prop === D[k].prop)) return;

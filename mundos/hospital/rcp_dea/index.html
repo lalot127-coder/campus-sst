@@ -44,7 +44,7 @@ const dea = new THREE.Group(); caja(0.34, 0.12, 0.28, 0xF2C200, 0, 0, 0, dea); c
 // teléfono celular en el piso junto a ti
 const cel = caja(0.09, 0.015, 0.17, 0x14161C, 0.85, 0.01, 0.7); tocable(cel, 'cel', 0.45);
 // compañero/a que ayuda
-const comp = new THREE.Group(); comp.position.set(-1.6, 0, 0.6); scene.add(comp);
+const comp = new THREE.Group(); comp.position.set(-1.6, 0, 0.6); comp.rotation.y = 2.2; scene.add(comp); const COMP0 = comp.position.clone();
 const cTor = capsula(0.17, 0.6, 0x0F7A8C); cTor.position.y = 1.0; comp.add(cTor); esfera(0.13, 0xC79B7A, 0, 1.55, 0, comp);
 const cPi = capsula(0.09, 0.7, 0x31394A); cPi.position.set(0, 0.42, 0); comp.add(cPi); tocable(cTor, 'comp', 0.6);
 // víctima: adulto
@@ -57,85 +57,171 @@ const brI = capsula(0.06, 0.45, camisa); brI.rotation.z = Math.PI / 2; brI.posit
 const brD = brI.clone(); brD.position.z = -0.3; adulto.add(brD);
 // zonas tocables (sobre el torso)
 const zona = (x, z, t, col = 0xffffff) => { const m = esfera(0.06, col, x, 0.42, z, adulto); m.material.transparent = true; m.material.opacity = 0.0; tocable(m, t, 0.22); return m; };
-const hombros = zona(-0.38, 0.0, 'hombros'), pecho = zona(-0.12, 0, 'pecho'), abdomen = zona(0.25, 0, 'abdomen'), cuello = zona(-0.5, 0, 'cuello');
+// zonas separadas para que no se encimen: cada hombro a su lado (z ±0.2), pecho al centro, cuello hacia la cabeza
+const zonaH = (z) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.075, 16, 12), M(0xFFD54F, { transparent: true, opacity: 0.0, emissive: 0x000000 })); m.position.set(-0.36, 0.36, z); adulto.add(m);
+  m.userData.tipo = 'hombros'; const zt = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.2, 0.16), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); zt.userData = { tipo: 'hombros', ref: m }; m.add(zt); return m; };
+const hombroD = zonaH(0.21), hombroI = zonaH(-0.21), hombros = hombroD;
+const pecho = zona(-0.12, 0, 'pecho'), abdomen = zona(0.25, 0, 'abdomen'), cuello = zona(-0.5, 0, 'cuello');
+[pecho, abdomen, cuello].forEach(m => m.children.forEach(z => z.scale.setScalar(0.75)));   // zonas táctiles más chicas: ya no se tocan entre sí
+W.cuadro.push(() => { const on = paso_resalta_hombros; [hombroD, hombroI].forEach(h => { h.material.opacity = on ? 0.55 : 0; }); });
+let paso_resalta_hombros = false;
+W.cara(cabeza, { dir: [0, 1, 0], arriba: [-1, 0, 0] });
 tocable(cabeza, 'cabeza', 0.35);
 // víctima: lactante (en un tapete)
 const bebe = new THREE.Group(); bebe.position.set(0.2, 0, 0.1); bebe.visible = false; scene.add(bebe);
 caja(0.9, 0.03, 0.6, 0xF6C9CE, 0.1, 0.015, 0, bebe);
 const bT = capsula(0.09, 0.18, 0xFFF3C4); bT.rotation.z = Math.PI / 2; bT.position.set(0, 0.11, 0); bebe.add(bT);
-const bC = esfera(0.085, piel, -0.25, 0.11, 0, bebe); const bP = capsula(0.05, 0.16, 0xFFF3C4); bP.rotation.z = Math.PI / 2; bP.position.set(0.24, 0.08, 0); bebe.add(bP);
+const bC = esfera(0.085, piel, -0.25, 0.11, 0, bebe); W.cara(bC, { dir: [0, 1, 0], arriba: [-1, 0, 0] }); const bP = capsula(0.05, 0.16, 0xFFF3C4); bP.rotation.z = Math.PI / 2; bP.position.set(0.24, 0.08, 0); bebe.add(bP);
 const pie = esfera(0.04, piel, 0.38, 0.06, 0.05, bebe); tocable(pie, 'pie', 0.2);
 const bPecho = esfera(0.04, 0xffffff, -0.06, 0.22, 0, bebe); bPecho.material.transparent = true; bPecho.material.opacity = 0; tocable(bPecho, 'pecho', 0.16);
 const bAbd = esfera(0.04, 0xffffff, 0.1, 0.22, 0, bebe); bAbd.material.transparent = true; bAbd.material.opacity = 0; tocable(bAbd, 'abdomen', 0.14);
 
 // marcador visual de las manos
 const manos = caja(0.14, 0.05, 0.1, 0xB01824, -0.12, 0.47, 0); manos.visible = false; scene.add(manos);
+// ------------------------------------------------------------------ rescatista («tú»): de rodillas, sus brazos siguen a las manos
+const yo = new THREE.Group(); scene.add(yo); const camisaYo = 0xB01824, pielYo = 0xD39F77;
+const yoMuslos = capsula(0.1, 0.32, 0x31394A); yoMuslos.rotation.x = Math.PI / 2; yoMuslos.position.set(0, 0.32, -0.12); yo.add(yoMuslos);
+const yoPiernas = capsula(0.09, 0.4, 0x31394A); yoPiernas.rotation.x = Math.PI / 2; yoPiernas.position.set(0, 0.1, -0.38); yo.add(yoPiernas);
+const yoTronco = new THREE.Group(); yoTronco.position.set(0, 0.42, 0); yo.add(yoTronco);
+const yoTorso = capsula(0.17, 0.42, camisaYo); yoTorso.position.set(0, 0.34, 0); yoTronco.add(yoTorso);
+const yoCab = esfera(0.13, pielYo, 0, 0.78, 0.02, yoTronco); W.cara(yoCab);
+const hombroYo = [new THREE.Vector3(-0.2, 0.55, 0), new THREE.Vector3(0.2, 0.55, 0)];
+const brazoYo = hombroYo.map(() => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.045, 1, 10), M(camisaYo)); scene.add(m); return m; });
+const manoYo = hombroYo.map(() => { const m = esfera(0.055, pielYo, 0, 0, 0); m.userData.sinCara = true; return m; });
+const objMano = [new THREE.Vector3(), new THREE.Vector3()];
+const POS_ADULTO = new THREE.Vector3(-0.15, 0, -0.62), POS_BEBE = new THREE.Vector3(0.12, 0, -0.42);
+function reposo() { const b = yo.position; objMano[0].set(b.x - 0.16, 0.42, b.z + 0.12); objMano[1].set(b.x + 0.16, 0.42, b.z + 0.12); yoTronco.rotation.x = 0; }
+function colocarYo(bebeCaso) { yo.position.copy(bebeCaso ? POS_BEBE : POS_ADULTO); yo.rotation.y = 0; yo.scale.setScalar(1); reposo(); }
+const _a = new THREE.Vector3(), _d = new THREE.Vector3(), _y = new THREE.Vector3(0, 1, 0);
+W.cuadro.push(() => { yo.updateMatrixWorld(true);
+  hombroYo.forEach((h, i) => { yoTronco.localToWorld(_a.copy(h)); const fin = objMano[i]; manoYo[i].position.copy(fin);
+    _d.subVectors(fin, _a); const L = Math.max(0.05, _d.length()); brazoYo[i].position.copy(_a).addScaledVector(_d, 0.5); brazoYo[i].scale.set(1, L, 1);
+    brazoYo[i].quaternion.setFromUnitVectors(_y, _d.normalize()); }); });
+// utilidades de animación
+const A = W.animar, esperar = W.esperar;
+const lerpV = (v, a, b, k) => v.copy(a).lerp(b, k);
+async function manosA(destI, destD, ms = 500, inclina = 0.35) { const i0 = objMano[0].clone(), d0 = objMano[1].clone(), r0 = yoTronco.rotation.x;
+  await A(ms, k => { lerpV(objMano[0], i0, destI, k); lerpV(objMano[1], d0, destD, k); yoTronco.rotation.x = r0 + (inclina - r0) * k; }); }
+const enAdulto = (x, y, z) => adulto.localToWorld(new THREE.Vector3(x, y, z)), enBebe = (x, y, z) => bebe.localToWorld(new THREE.Vector3(x, y, z));
+async function comprimir(n, cuerpo = 'adulto', ms = 270) { const obj = cuerpo === 'bebe' ? bT : torso, h = cuerpo === 'bebe' ? 0.025 : 0.05;
+  for (let i = 0; i < n; i++) { const a0 = objMano[0].clone(), b0 = objMano[1].clone(); W.efecto('compresion');
+    await A(ms / 2, k => { objMano[0].y = a0.y - h * k; objMano[1].y = b0.y - h * k; obj.scale.y = 1 - 0.18 * k; yoTronco.position.y = 0.42 - h * k; });
+    await A(ms / 2, k => { objMano[0].y = a0.y - h * (1 - k); objMano[1].y = b0.y - h * (1 - k); obj.scale.y = 0.82 + 0.18 * k; yoTronco.position.y = 0.42 - h * (1 - k); }); } }
+async function manosEnPecho() { const c = enAdulto(-0.12, 0.47, 0); await manosA(c.clone().add(new THREE.Vector3(0, 0, -0.03)), c.clone().add(new THREE.Vector3(0, 0.03, 0.03)), 600, 0.55); }
+async function caminarComp(dest, ms = 1400) { const o = comp.position.clone(); comp.lookAt(dest.x, 0, dest.z); await A(ms, k => { comp.position.lerpVectors(o, dest, k); comp.position.y = Math.abs(Math.sin(k * Math.PI * 6)) * 0.03; }); comp.position.y = 0; }
+// regla visual de profundidad
+function regla(texto, pos) { const r = new THREE.Group(); const barra = caja(0.02, 0.12, 0.02, 0x0E3A6B, 0, 0, 0, r); const g = W.globo(texto, null, 0); g.scale.multiplyScalar(0.6); scene.remove(g); g.position.set(0.18, 0.06, 0); r.add(g); r.position.copy(pos); scene.add(r); return r; }
+const parches = new THREE.Group(); scene.add(parches); parches.visible = false;
+const parche = (x, z, ry) => { const p = caja(0.13, 0.008, 0.09, 0xF5F5F5, x, 0.415, z, adulto); p.rotation.y = ry; const c = caja(0.11, 0.009, 0.07, 0xE53935, x, 0.416, z, adulto); c.rotation.y = ry; return [p, c]; };
+const pads = [...parche(-0.36, 0.13, 0.4), ...parche(-0.1, -0.2, -0.3)]; pads.forEach(p => p.visible = false);   // derecho bajo la clavícula · izquierdo al costado
+const padsPed = new THREE.Group(); caja(0.22, 0.03, 0.16, 0x1565C0, 0, 0.015, 0, padsPed); const lp = letrero('PARCHES PEDIÁTRICOS', 0.5, 0.09, '#1565C0'); lp.rotation.x = -Math.PI / 2; lp.position.set(0, 0.035, 0); padsPed.add(lp); padsPed.position.set(-0.55, 0, 0.45); padsPed.visible = false; scene.add(padsPed);
+let sonDea = null;   // pitidos del DEA encendido (motor/sonido.js)
 const respira = t => { if (adulto.visible) torso.scale.y = 1; };
 W.cuadro.push(respira);
 
 // ------------------------------------------------------------------ utilidades de paso
-const tocarPaso = ({ titulo, texto, fuente, objetivo, errores = {}, alAcertar, resaltar }) => ({ titulo, texto, fuente,
-  iniciar() { W.resaltar(resaltar || []); },
-  tocar(o) { const t = o.userData.tipo; if (t === objetivo) { W.resaltar([]); W.bien(alAcertar || 'Correcto.', fuente); W.siguiente(); }
+let ocupado = false;
+const correr = async (anim) => { if (!anim) return W.siguiente(); ocupado = true; W.botones([]); try { await anim(); } catch (e) { console.warn(e); } ocupado = false; W.siguiente(); };
+const tocarPaso = ({ titulo, texto, fuente, objetivo, errores = {}, alAcertar, resaltar, anim }) => ({ titulo, texto, fuente,
+  iniciar() { W.resaltar(resaltar || []); paso_resalta_hombros = objetivo === 'hombros'; },
+  tocar(o) { if (ocupado) return; const t = o.userData.tipo; if (t === objetivo) { W.resaltar([]); paso_resalta_hombros = false; W.bien(alAcertar || 'Correcto.', fuente); correr(anim); }
     else if (errores[t]) W.mal(errores[t][0], errores[t][1] || fuente, !!errores[t][2]); } });
-const preguntaPaso = ({ titulo, texto, fuente, p, ops, ok, retro, multiple }) => ({ titulo, texto, fuente,
-  iniciar() { W.pregunta(p, ops, ok, fuente, () => W.siguiente(), multiple, retro); } });
-// Ritmo: tocar "Comprimir" al ritmo correcto (12 compresiones). Mide la frecuencia promedio.
-function ritmoPaso({ titulo, texto, fuente, cuerpo, bajar = 0.05 }) {
-  let t = [];
+const preguntaPaso = ({ titulo, texto, fuente, p, ops, ok, retro, multiple, antes, anim }) => ({ titulo, texto, fuente,
+  async iniciar() { if (antes) { ocupado = true; await antes(); ocupado = false; } W.pregunta(p, ops, ok, fuente, () => correr(anim), multiple, retro); } });
+// Ciclo 30:2 (14/10/2026): 30 compresiones con «Comprimir» al ritmo de 100 a 120 por minuto (se mide el promedio) y luego
+// 2 ventilaciones de 1 segundo con «Ventilar» (AHA 2025: 30:2; 2 ventilaciones de 1 s que eleven el pecho).
+async function ventilarAnim(cuerpo) {
+  if (cuerpo === 'bebe') { await manosA(enBebe(-0.3, 0.16, -0.06), enBebe(-0.22, 0.2, 0.08), 350, 0.6); await A(1000, k => { bT.scale.x = 1 + 0.08 * Math.sin(k * Math.PI); }); return; }
+  const c = enAdulto(-0.62, 0.32, 0); await manosA(c.clone().add(new THREE.Vector3(0.05, 0.05, -0.09)), c.clone().add(new THREE.Vector3(-0.08, -0.02, 0.06)), 350, 0.7);
+  cabeza.rotation.z = -0.35; await A(1000, k => { torso.scale.x = 1 + 0.06 * Math.sin(k * Math.PI); torso.position.y = 0.2 + 0.02 * Math.sin(k * Math.PI); }); }
+async function manosComprimir(cuerpo) { if (cuerpo === 'bebe') { const c = enBebe(-0.06, 0.25, 0); await manosA(c.clone().add(new THREE.Vector3(0, 0, -0.03)), c.clone().add(new THREE.Vector3(0, 0, 0.03)), 350, 0.5); } else { cabeza.rotation.z = 0; await manosEnPecho(); } }
+function ritmoPaso({ titulo, texto, fuente, cuerpo, bajar = 0.05, n = 30, vent = 2 }) {
+  let t = [], v = 0, ocupadoV = false;
+  const marcador = (extra = '') => { const iv = t.slice(-6).map((x, i, a) => i ? x - a[i - 1] : 0).slice(1), f = iv.length ? Math.round(60000 / (iv.reduce((a, b) => a + b, 0) / iv.length)) : 0;
+    W.$('pTxt').innerHTML = texto + `<div style="display:flex;gap:10px;align-items:center;margin-top:6px"><b style="font-size:1.6rem;color:#0E3A6B">${t.length}/${n}</b>` +
+      `<span>compresiones${f ? ` · ritmo actual <b style="color:${f >= 100 && f <= 120 ? '#2E7D32' : '#C62828'}">${f}/min</b>` : ''}</span></div>` + `<div>Ventilaciones: <b>${v}/${vent}</b></div>${extra}`; };
+  const comprimirUna = () => {
+    if (t.length >= n) return; t.push(performance.now()); const obj = cuerpo === 'bebe' ? bT : torso; const y0 = manos.position.y;
+    W.efecto('compresion'); manos.position.y = y0 - bajar; obj.scale.y = 0.82; objMano.forEach(q => q.y -= bajar); yoTronco.position.y = 0.42 - bajar;
+    setTimeout(() => { manos.position.y = y0; obj.scale.y = 1; objMano.forEach(q => q.y += bajar); yoTronco.position.y = 0.42; }, 160);
+    if (t.length === n) {
+      const iv = t.slice(1).map((x, i) => x - t[i]), prom = iv.reduce((a, b) => a + b, 0) / iv.length, f = Math.round(60000 / prom);
+      if (f < 95 || f > 125) { W.mal(`Tu ritmo promedio fue de ${f} por minuto. Debe ser de 100 a 120: ${f < 100 ? 'más rápido' : 'más lento'}. Repite las ${n} compresiones.`, fuente); t = []; marcador(); return; }
+      W.toast && W.toast(`¡${n} compresiones a ${f} por minuto! Ahora ${vent} ventilaciones.`); t.f = f; marcador('<div style="margin-top:4px">Abre la vía aérea (inclina la cabeza, eleva el mentón) y toca <b>🌬️ Ventilar</b> 2 veces.</div>');
+      W.botones([['🌬️ Ventilar (1 segundo)', ventilar]]); return; }
+    marcador(); };
+  const ventilar = async () => { if (ocupadoV) return; ocupadoV = true; manos.visible = false; await ventilarAnim(cuerpo); v++; ocupadoV = false; marcador();
+    if (v < vent) return;
+    W.botones([]); await manosComprimir(cuerpo); manos.visible = false;
+    W.bien(`Ciclo 30:2 completo: ${n} compresiones a ${t.f} por minuto y ${vent} ventilaciones de 1 segundo.`, fuente); W.siguiente(); };
   return { titulo, texto, fuente,
-    iniciar() { t = []; manos.visible = true; manos.position.copy(cuerpo === 'bebe' ? new THREE.Vector3(0.14, 0.27, 0.1) : new THREE.Vector3(-0.12, 0.47, 0)); manos.scale.set(cuerpo === 'bebe' ? 0.5 : 1, 1, cuerpo === 'bebe' ? 0.6 : 1);
-      W.botones([['💓 Comprimir', () => {
-        t.push(performance.now()); const obj = cuerpo === 'bebe' ? bT : torso; const y0 = manos.position.y;
-        manos.position.y = y0 - bajar; obj.scale.y = 0.82; setTimeout(() => { manos.position.y = y0; obj.scale.y = 1; }, 160);
-        W.$('pTxt').innerHTML = texto + `<br><b>Compresiones: ${t.length}/12</b>`;
-        if (t.length === 12) {
-          const iv = t.slice(1).map((x, i) => x - t[i]), prom = iv.reduce((a, b) => a + b, 0) / iv.length, f = Math.round(60000 / prom);
-          if (f >= 95 && f <= 125) { W.bien(`Ritmo de ${f} por minuto: ¡dentro de 100 a 120!`, fuente); W.botones([]); W.siguiente(); }
-          else { W.mal(`Tu ritmo fue de ${f} por minuto. Debe ser de 100 a 120: ${f < 100 ? 'más rápido' : 'más lento'}. Intenta de nuevo.`, fuente); t = []; }
-        } }]]); } };
+    iniciar() { t = []; v = 0; manos.visible = false; manosComprimir(cuerpo); manos.position.copy(cuerpo === 'bebe' ? new THREE.Vector3(0.14, 0.27, 0.1) : new THREE.Vector3(-0.12, 0.47, 0)); manos.scale.set(cuerpo === 'bebe' ? 0.5 : 1, 1, cuerpo === 'bebe' ? 0.6 : 1);
+      marcador(); W.botones([['💓 Comprimir', comprimirUna]]); } };
+}
+// El jugador da la descarga: el DEA indica «Descarga indicada, nadie toque al paciente, presione el botón de descarga».
+function descargaPaso({ titulo, texto, fuente }) {
+  return { titulo, texto, fuente,
+    async iniciar() { ocupado = true; const i0 = objMano[0].clone(), d0 = objMano[1].clone();
+      await A(600, k => { yoTronco.rotation.x = 0.4 * (1 - k) - 0.15 * k; objMano[0].y = i0.y + 0.4 * k; objMano[1].y = d0.y + 0.4 * k; });
+      W.globo('¡Nadie lo toque!', yoCab, 2200); W.globo('¡Me alejo!', cTor, 1800); await A(600, k => { comp.position.x -= 0.004; }); ocupado = false;
+      const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.03, 20), new THREE.MeshStandardMaterial({ color: 0xFF6D00, emissive: 0xFF3D00, emissiveIntensity: 0.6 })); btn.position.set(0.08, 0.075, 0.06); dea.add(btn);
+      const parpadeo = () => { btn.material.emissiveIntensity = 0.3 + 0.7 * Math.abs(Math.sin(performance.now() / 180)); }; W.cuadro.push(parpadeo);
+      W.$('pTxt').innerHTML = texto + '<div style="margin-top:6px">El botón de descarga <b style="color:#E65100">parpadea</b>. Verifica que <b>nadie</b> toque a la persona y presiónalo.</div>';
+      W.botones([['⚡ Presionar DESCARGA', async () => { W.botones([]); ocupado = true; const luz = new THREE.PointLight(0xBFE8FF, 0, 4); luz.position.copy(enAdulto(-0.25, 0.8, 0)); scene.add(luz);
+        W.efecto('descarga'); await A(350, k => { luz.intensity = 8 * Math.sin(k * Math.PI); torso.position.y = 0.2 + 0.04 * Math.sin(k * Math.PI); btn.scale.y = 1 - 0.5 * Math.sin(k * Math.PI); }); scene.remove(luz);
+        const k0 = W.cuadro.indexOf(parpadeo); if (k0 >= 0) W.cuadro.splice(k0, 1); btn.material.emissiveIntensity = 0; W.globo('Descarga administrada', dea, 1600, 0.3); await esperar(900); ocupado = false;
+        W.bien('Descarga administrada sin que nadie tocara a la persona.', fuente); W.siguiente(); }, 'prim']]); } };
 }
 
 // ------------------------------------------------------------------ casos [FICTICIO – ejercicio didáctico]
 const ADULTO = () => [
   { titulo: 'Inicio', texto: 'Oficina, 10:30 h.', sinPuntos: true, iniciar() { W.aviso('<h2>🏢 Caso 1: paro en la oficina</h2><p>Don Luis, 58 años, se desploma junto a su escritorio. Estás con una compañera. Hay un <b>DEA</b> en la pared y tu celular está en el piso.</p><p>Toca en la escena lo que corresponda y responde las preguntas.</p><p class="ficticio">[FICTICIO – ejercicio didáctico]</p>', () => W.siguiente(), 'Comenzar'); } },
-  preguntaPaso({ titulo: '¿Es seguro?', texto: 'Antes de tocarlo…', fuente: F.seg, p: 'No hay cables, fuego ni tráfico. ¿Qué haces?', ops: ['Me acerco: la escena es segura', 'Espero 5 minutos a ver si se levanta', 'Lo grabo con el celular'], ok: [0], retro: 'Escena segura: acércate y evalúa.' }),
+  preguntaPaso({ titulo: '¿Es seguro?', texto: 'Antes de tocarlo…', fuente: F.seg, p: 'No hay cables, fuego ni tráfico. ¿Qué haces?', ops: ['Me acerco: la escena es segura', 'Espero 5 minutos a ver si se levanta', 'Lo grabo con el celular'], ok: [0], retro: 'Escena segura: acércate y evalúa.', anim: async () => { const fin = yo.position.clone(); yo.position.set(1.6, 0, -1.6); reposo(); const o = yo.position.clone(); await A(1300, k => { yo.position.lerpVectors(o, fin, k); reposo(); }); W.globo('Escena segura', yoCab, 1600); await esperar(700); } }),
   tocarPaso({ titulo: '¿Responde?', texto: 'Toca sus <b>hombros</b> y háblale fuerte: «¿Me escucha?»', fuente: F.eval, objetivo: 'hombros', resaltar: [hombros, cabeza],
-    errores: { pecho: ['Primero verifica si responde.'], abdomen: ['Primero verifica si responde.'], cel: ['Primero verifica si responde (son segundos).'] }, alAcertar: 'No responde.' }),
+    errores: { pecho: ['Primero verifica si responde.'], abdomen: ['Primero verifica si responde.'], cel: ['Primero verifica si responde (son segundos).'] }, alAcertar: 'No responde.', anim: async () => { await manosA(enAdulto(-0.36, 0.44, -0.21), enAdulto(-0.36, 0.44, 0.21), 500, 0.5); W.globo('¿Me escucha? ¿Me escucha?', yoCab, 2000);
+      for (let i = 0; i < 3; i++) { await A(160, k => { objMano[0].y = 0.44 - 0.03 * Math.sin(k * Math.PI); objMano[1].y = 0.44 - 0.03 * Math.sin(k * Math.PI); }); } W.globo('…', cabeza, 1200, 0.3); await esperar(600); reposo(); } }),
   preguntaPaso({ titulo: '¿Respira normalmente?', texto: 'Miras su pecho no más de 10 segundos: hace boqueadas lentas y ruidosas.', fuente: F.rec,
-    p: 'No responde y solo jadea (boquea). ¿Qué significa?', ops: ['Respira normal: lo dejo descansar', 'Es un paro cardíaco: hay que activar el 911 y empezar RCP', 'Busco su pulso durante 1 minuto'], ok: [1], retro: 'Jadear no es respirar: es paro.' }),
+    p: 'No responde y solo jadea (boquea). ¿Qué significa?', ops: ['Respira normal: lo dejo descansar', 'Es un paro cardíaco: hay que activar el 911 y empezar RCP', 'Busco su pulso durante 1 minuto'], ok: [1], retro: 'Jadear no es respirar: es paro.', antes: async () => { await manosA(objMano[0].clone(), objMano[1].clone(), 1, 0.6); for (let i = 0; i < 2; i++) { await A(900, k => { torso.scale.y = 1 + 0.08 * Math.sin(k * Math.PI); cabeza.rotation.z = 0.12 * Math.sin(k * Math.PI); }); await esperar(500); } }, anim: async () => { W.globo('¡Es un paro! Activo la ayuda', yoCab, 2000); await esperar(900); reposo(); } }),
   tocarPaso({ titulo: 'Activa la ayuda', texto: 'Toca a tu <b>compañera</b> para que llame al 911 y traiga el DEA (o toca tu celular y ponlo en altavoz).', fuente: F.act, objetivo: 'comp', resaltar: [cTor, cel],
-    errores: { pecho: ['Antes de comprimir, activa la ayuda: son segundos y te traen el DEA.', F.act] } }),
+    errores: { pecho: ['Antes de comprimir, activa la ayuda: son segundos y te traen el DEA.', F.act] },
+    anim: async () => { W.globo('¡Llama al 911 y trae el DEA!', yoCab, 1800); await esperar(600); W.globo('¡Voy! 911 en altavoz', cTor, 1800); await caminarComp(new THREE.Vector3(-2.3, 0, -2.3)); } }),
   tocarPaso({ titulo: 'Posición de las manos', texto: 'Toca el lugar correcto para comprimir.', fuente: F.mano, objetivo: 'pecho', resaltar: [pecho, abdomen, cuello],
-    errores: { abdomen: ['El abdomen no: talón de la mano en el centro del pecho (mitad inferior del esternón).', F.mano, true], cuello: ['El cuello no: centro del pecho.', F.mano, true] }, alAcertar: 'Talón de una mano en el centro del pecho y la otra encima.' }),
-  preguntaPaso({ titulo: 'Profundidad', texto: 'Antes de empezar…', fuente: F.cal, p: '¿Qué tan profundo comprimes en un adulto?', ops: ['1 a 2 cm', 'Al menos 5 cm sin pasar de 6 cm', '8 a 10 cm'], ok: [1], retro: 'Al menos 5 cm, sin pasar de 6, dejando que el pecho regrese.' }),
-  ritmoPaso({ titulo: 'Comprime al ritmo', texto: 'Toca <b>Comprimir</b> 12 veces al ritmo correcto (100 a 120 por minuto: casi 2 por segundo).', fuente: F.cal }),
-  preguntaPaso({ titulo: 'Ventilaciones', texto: 'Estás entrenado y tienes barrera facial.', fuente: F.vent, p: '¿Cuál es la relación y cómo ventilas?', ops: ['30 compresiones y 2 ventilaciones de 1 segundo que eleven el pecho', '15 compresiones y 5 ventilaciones largas', 'Solo ventilar sin comprimir'], ok: [0], retro: '30:2, cada ventilación de 1 segundo.' }),
+    errores: { abdomen: ['El abdomen no: talón de la mano en el centro del pecho (mitad inferior del esternón).', F.mano, true], cuello: ['El cuello no: centro del pecho.', F.mano, true] }, alAcertar: 'Talón de una mano en el centro del pecho y la otra encima.', anim: async () => { await manosEnPecho(); W.globo('Centro del pecho', pecho, 1500, 0.25); await esperar(500); } }),
+  preguntaPaso({ titulo: 'Profundidad', texto: 'Antes de empezar…', fuente: F.cal, p: '¿Qué tan profundo comprimes en un adulto?', ops: ['1 a 2 cm', 'Al menos 5 cm sin pasar de 6 cm', '8 a 10 cm'], ok: [1], retro: 'Al menos 5 cm, sin pasar de 6, dejando que el pecho regrese.', anim: async () => { await manosEnPecho(); const r = regla('5 a 6 cm', enAdulto(-0.12, 0.5, 0.32)); await comprimir(4, 'adulto', 700); scene.remove(r); } }),
+  preguntaPaso({ titulo: 'Ventilaciones', texto: 'Estás entrenado y tienes barrera facial.', fuente: F.vent, p: '¿Cuál es la relación y cómo ventilas?', ops: ['30 compresiones y 2 ventilaciones de 1 segundo que eleven el pecho', '15 compresiones y 5 ventilaciones largas', 'Solo ventilar sin comprimir'], ok: [0], retro: '30:2, cada ventilación de 1 segundo.', anim: async () => { W.globo('… 28, 29, 30', yoCab, 1400); await comprimir(3); const c = enAdulto(-0.62, 0.32, 0);
+      await manosA(c.clone().add(new THREE.Vector3(0.05, 0.05, -0.09)), c.clone().add(new THREE.Vector3(-0.08, -0.02, 0.06)), 600, 0.7); await A(400, k => { cabeza.rotation.z = -0.35 * k; });
+      for (let i = 0; i < 2; i++) { W.globo('Ventilación de 1 segundo', yoCab, 900); await A(1000, k => { torso.scale.x = 1 + 0.06 * Math.sin(k * Math.PI); torso.position.y = 0.2 + 0.02 * Math.sin(k * Math.PI); }); await esperar(250); }
+      await A(300, k => { cabeza.rotation.z = -0.35 * (1 - k); }); await manosEnPecho(); await comprimir(3); } }),
+  ritmoPaso({ titulo: 'Ciclo 30:2', texto: 'Haz un ciclo completo: toca <b>Comprimir</b> 30 veces al ritmo correcto (100 a 120 por minuto: casi 2 por segundo) y después da 2 ventilaciones.', fuente: `${F.cal}; ${F.vent}` }),
   tocarPaso({ titulo: 'Llegó el DEA', texto: 'Tu compañera trae el DEA. Toca el <b>gabinete del DEA</b> para abrirlo y encenderlo.', fuente: F.dea, objetivo: 'dea', resaltar: [gab],
-    alAcertar: 'DEA encendido: sigue sus indicaciones de voz.' }),
-  preguntaPaso({ titulo: 'Parches', texto: 'El DEA dice: «Coloque los parches en el pecho desnudo del paciente».', fuente: F.dea, p: '¿Dónde van los parches de adulto?', ops: ['Como indica el dibujo: uno bajo la clavícula derecha y otro al costado izquierdo, bajo la axila (o adelante y atrás)', 'Ambos en el abdomen', 'Sobre la ropa, en los brazos'], ok: [0], retro: 'Anterolateral o anteroposterior, sobre el pecho descubierto.' }),
-  preguntaPaso({ titulo: 'Análisis', texto: 'El DEA: «Analizando el ritmo… Descarga indicada».', fuente: F.dea, p: 'Durante el análisis y la descarga…', ops: ['Sigo comprimiendo para no perder tiempo', 'Nadie toca a la persona; presiono el botón cuando me indique', 'Le quito los parches'], ok: [1], retro: 'Que nadie la toque.' }),
-  preguntaPaso({ titulo: 'Después de la descarga', texto: 'El DEA dio la descarga.', fuente: F.dea, p: '¿Qué sigue?', ops: ['Reanudar la RCP de inmediato por 2 minutos, hasta que el DEA vuelva a analizar', 'Buscar el pulso 1 minuto', 'Esperar a la ambulancia sin hacer nada'], ok: [0], retro: 'RCP de inmediato; relevo cada 2 minutos si hay otra persona.' }),
+    alAcertar: 'DEA encendido: sigue sus indicaciones de voz.', anim: async () => { dea.visible = true; dea.position.set(-2.4, 1.1, -2.6); sonDea = W.sonido('dea', dea, { vol: 0.6, alcance: 8 }); W.globo('¡Aquí está el DEA!', cTor, 1500);
+      await caminarComp(new THREE.Vector3(-0.9, 0, -0.75)); const o = dea.position.clone(), d = enAdulto(-0.55, 0.06, -0.45); W.cuadro.push(() => {}); await A(500, k => dea.position.lerpVectors(o, d, k)); W.globo('Encendido: siga las instrucciones', dea, 1800, 0.3); await esperar(800); } }),
+  preguntaPaso({ titulo: 'Parches', texto: 'El DEA dice: «Coloque los parches en el pecho desnudo del paciente».', fuente: F.dea, p: '¿Dónde van los parches de adulto?', ops: ['Como indica el dibujo: uno bajo la clavícula derecha y otro al costado izquierdo, bajo la axila (o adelante y atrás)', 'Ambos en el abdomen', 'Sobre la ropa, en los brazos'], ok: [0], retro: 'Anterolateral o anteroposterior, sobre el pecho descubierto.', anim: async () => { await manosA(enAdulto(-0.36, 0.46, 0.13), enAdulto(-0.1, 0.46, -0.2), 700, 0.5); pads.forEach(p => p.visible = true);
+      W.globo('Parches colocados', pads[0], 1600, 0.3); await esperar(900); reposo(); } }),
+  preguntaPaso({ titulo: 'Análisis', texto: 'El DEA: «Analizando el ritmo… No toque al paciente».', fuente: F.dea, p: 'Durante el análisis y la descarga…', ops: ['Sigo comprimiendo para no perder tiempo', 'Nadie toca a la persona; presiono el botón de descarga cuando el DEA lo indique', 'Le quito los parches'], ok: [1], retro: 'Que nadie la toque.', anim: async () => { W.globo('Analizando… Descarga indicada', dea, 2200, 0.3); await esperar(1200); } }),
+  descargaPaso({ titulo: 'Da la descarga', texto: 'El DEA: «Descarga indicada. Aléjese del paciente. Presione el botón de descarga».', fuente: F.dea }),
+  preguntaPaso({ titulo: 'Después de la descarga', texto: 'El DEA dio la descarga.', fuente: F.dea, p: '¿Qué sigue?', ops: ['Reanudar la RCP de inmediato por 2 minutos, hasta que el DEA vuelva a analizar', 'Buscar el pulso 1 minuto', 'Esperar a la ambulancia sin hacer nada'], ok: [0], retro: 'RCP de inmediato; relevo cada 2 minutos si hay otra persona.', anim: async () => { await manosEnPecho(); W.globo('RCP de inmediato: 2 minutos', yoCab, 2200); await comprimir(3); } }),
+  ritmoPaso({ titulo: 'Reanuda la RCP', texto: 'Sin perder tiempo: otro ciclo de <b>30 compresiones y 2 ventilaciones</b>. Seguirás así 2 minutos, hasta que el DEA vuelva a analizar o llegue la ambulancia.', fuente: F.dea }),
 ];
 const LACTANTE = () => [
   { titulo: 'Inicio', texto: 'Guardería, 12:00 h.', sinPuntos: true, iniciar() { adulto.visible = false; bebe.visible = true; W.aviso('<h2>👶 Caso 2: lactante en la guardería</h2><p>Mateo, 8 meses, no responde en su tapete. Estás <b>sola/o con tu celular</b>. Hay un DEA con parches pediátricos.</p><p class="ficticio">[FICTICIO – ejercicio didáctico]</p>', () => W.siguiente(), 'Comenzar'); } },
-  tocarPaso({ titulo: '¿Responde?', texto: 'Al bebé no se le sacude: toca su <b>pie</b> y háblale fuerte.', fuente: 'IFRC 2025, p. 153', objetivo: 'pie', resaltar: [pie], errores: { pecho: ['Primero verifica si responde (tócale el pie).'] }, alAcertar: 'No responde.' }),
-  preguntaPaso({ titulo: '¿Respira?', texto: 'Miras su pecho no más de 10 segundos: no respira.', fuente: F.ped, p: 'No responde y no respira. Como persona sin formación médica…', ops: ['Busco su pulso en el cuello', 'Empiezo la RCP sin buscar pulso y activo el 911', 'Le doy agua'], ok: [1], retro: 'Los legos no buscan pulso.' }),
-  tocarPaso({ titulo: 'Activa el 911', texto: 'Estás sola/o: toca tu <b>celular</b>, marca 911 y ponlo en altavoz.', fuente: F.act, objetivo: 'cel', resaltar: [cel], alAcertar: '911 en altavoz: sigue sus indicaciones mientras das RCP.' }),
-  preguntaPaso({ titulo: 'Técnica en lactante', texto: 'Guías 2025.', fuente: F.lac, p: '¿Cómo comprimes el pecho de un lactante?', ops: ['Con dos dedos sobre el esternón', 'Con el talón de una mano o con dos pulgares rodeando el tórax', 'Con las dos manos encimadas'], ok: [1], retro: 'La técnica de 2 dedos se eliminó en 2025.' }),
+  tocarPaso({ titulo: '¿Responde?', texto: 'Al bebé no se le sacude: toca su <b>pie</b> y háblale fuerte.', fuente: 'IFRC 2025, p. 153', objetivo: 'pie', resaltar: [pie], errores: { pecho: ['Primero verifica si responde (tócale el pie).'] }, alAcertar: 'No responde.', anim: async () => { const p = enBebe(0.38, 0.1, 0.05); await manosA(p, objMano[1].clone(), 500, 0.45); W.globo('¡Bebé! ¡Mateo!', yoCab, 1700); for (let i = 0; i < 3; i++) await A(160, k => { objMano[0].x = p.x + 0.02 * Math.sin(k * Math.PI); }); await esperar(500); reposo(); } }),
+  preguntaPaso({ titulo: '¿Respira?', texto: 'Miras su pecho no más de 10 segundos: no respira.', fuente: F.ped, p: 'No responde y no respira. Como persona sin formación médica…', ops: ['Busco su pulso en el cuello', 'Empiezo la RCP sin buscar pulso y activo el 911', 'Le doy agua'], ok: [1], retro: 'Los legos no buscan pulso.', anim: async () => { W.globo('No respira: RCP y 911', yoCab, 1800); await esperar(800); } }),
+  tocarPaso({ titulo: 'Activa el 911', texto: 'Estás sola/o: toca tu <b>celular</b>, marca 911 y ponlo en altavoz.', fuente: F.act, objetivo: 'cel', resaltar: [cel], alAcertar: '911 en altavoz: sigue sus indicaciones mientras das RCP.', anim: async () => { await manosA(cel.position.clone().add(new THREE.Vector3(0, 0.04, 0)), objMano[1].clone(), 600, 0.3); W.globo('911 · altavoz', cel, 1800, 0.25); await esperar(900); reposo(); } }),
+  preguntaPaso({ titulo: 'Técnica en lactante', texto: 'Guías 2025.', fuente: F.lac, p: '¿Cómo comprimes el pecho de un lactante?', ops: ['Con dos dedos sobre el esternón', 'Con el talón de una mano o con dos pulgares rodeando el tórax', 'Con las dos manos encimadas'], ok: [1], retro: 'La técnica de 2 dedos se eliminó en 2025.', anim: async () => { await manosA(enBebe(-0.06, 0.2, -0.1), enBebe(-0.06, 0.2, 0.1), 700, 0.5); W.globo('Dos pulgares rodeando el tórax', yoCab, 2000); await esperar(1000); } }),
   tocarPaso({ titulo: 'Dónde comprimir', texto: 'Toca el centro del <b>pecho</b> del bebé.', fuente: F.lac, objetivo: 'pecho', resaltar: [bPecho, bAbd], errores: { abdomen: ['El abdomen no: centro del pecho.', F.lac, true] } }),
-  preguntaPaso({ titulo: 'Profundidad', texto: 'Un tercio del pecho.', fuente: F.lac, p: '¿Cuánto comprimes en un lactante?', ops: ['Aproximadamente 4 cm (un tercio del pecho)', '1 cm', '6 cm'], ok: [0], retro: '≈4 cm.' }),
-  ritmoPaso({ titulo: 'Comprime al ritmo', texto: 'Toca <b>Comprimir</b> 12 veces a 100-120 por minuto.', fuente: F.ped, cuerpo: 'bebe', bajar: 0.025 }),
-  preguntaPaso({ titulo: 'Relación', texto: 'Estás sola/o.', fuente: F.ped, p: '¿Qué relación usas con un solo rescatador?', ops: ['30:2', '15:2', '5:1'], ok: [0], retro: '30:2 con un rescatador; 15:2 si son dos.' }),
-  preguntaPaso({ titulo: 'DEA pediátrico', texto: 'Llega un vecino con el DEA.', fuente: F.dea8, p: 'Mateo tiene 8 meses. ¿Qué parches usas?', ops: ['Parches pediátricos (o atenuador); si no hubiera, los de adulto', 'No se usa DEA en bebés', 'Solo los de adulto'], ok: [0], retro: 'Menores de 8 años: pediátricos; si no hay, el de adulto.' }),
+  preguntaPaso({ titulo: 'Profundidad', texto: 'Un tercio del pecho.', fuente: F.lac, p: '¿Cuánto comprimes en un lactante?', ops: ['Aproximadamente 4 cm (un tercio del pecho)', '1 cm', '6 cm'], ok: [0], retro: '≈4 cm.', anim: async () => { const r = regla('≈4 cm (1/3 del pecho)', enBebe(-0.06, 0.3, 0.25)); await comprimir(4, 'bebe', 700); scene.remove(r); } }),
+  preguntaPaso({ titulo: 'Relación', texto: 'Estás sola/o.', fuente: F.ped, p: '¿Qué relación usas con un solo rescatador?', ops: ['30:2', '15:2', '5:1'], ok: [0], retro: '30:2 con un rescatador; 15:2 si son dos.', anim: async () => { W.globo('… 29, 30', yoCab, 1200); await comprimir(3, 'bebe'); for (let i = 0; i < 2; i++) { W.globo('Ventilación', yoCab, 800); await A(900, k => { bT.scale.x = 1 + 0.08 * Math.sin(k * Math.PI); }); } } }),
+  ritmoPaso({ titulo: 'Ciclo 30:2', texto: 'Estás sola/o: toca <b>Comprimir</b> 30 veces a 100-120 por minuto y luego da 2 ventilaciones.', fuente: F.ped, cuerpo: 'bebe', bajar: 0.025 }),
+  preguntaPaso({ titulo: 'DEA pediátrico', texto: 'Llega un vecino con el DEA.', fuente: F.dea8, p: 'Mateo tiene 8 meses. ¿Qué parches usas?', ops: ['Parches pediátricos (o atenuador); si no hubiera, los de adulto', 'No se usa DEA en bebés', 'Solo los de adulto'], ok: [0], retro: 'Menores de 8 años: pediátricos; si no hay, el de adulto.', anim: async () => { padsPed.visible = true; W.globo('Parches pediátricos', padsPed, 1800, 0.25); await esperar(1000); } }),
 ];
 
 W.inicio([{ id: 'adulto', txt: '🏢 <b>Caso 1:</b> Paro en la oficina · adulto, RCP 30:2 y DEA' },
   { id: 'bebe', txt: '👶 <b>Caso 2:</b> Lactante en la guardería · RCP con talón de una mano o dos pulgares' }],
-  id => { manos.visible = false; adulto.visible = id === 'adulto'; bebe.visible = id === 'bebe'; return id === 'adulto' ? ADULTO() : LACTANTE(); },
+  id => { manos.visible = false; adulto.visible = id === 'adulto'; bebe.visible = id === 'bebe'; colocarYo(id === 'bebe'); if (sonDea) { sonDea.detener(); sonDea = null; } comp.position.copy(COMP0); comp.rotation.y = 2.2; dea.visible = false; pads.forEach(p => p.visible = false); padsPed.visible = false; cabeza.rotation.z = 0; return id === 'adulto' ? ADULTO() : LACTANTE(); },
   'Basado en: Guías AHA 2025 (Partes 6 y 7) e IFRC 2025. Casos ficticios con fines didácticos. Curso de Primeros auxilios básicos.');
 
-if (location.search.includes('qa')) window.__qa = { hombros, pecho, abdomen, cuello, cel, comp: cTor, gab, pie, bPecho, bAbd, tocar: W.tocar, estado: W.qa };
+if (location.search.includes('qa')) window.__qa = { hombros, hombroI, pecho, abdomen, cuello, cel, comp: cTor, gab, pie, bPecho, bAbd, tocar: W.tocar, estado: W.qa };
 </script>
 </body>
 </html>

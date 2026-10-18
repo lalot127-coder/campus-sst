@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Prácticas en zonas de trabajo</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="../../../motor/avatar.js"></script>
+<script src="../../../motor/realismo.js"></script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../../motor/senales.js"></script>
+<script src="../../riesgo/comun.js"></script>
+<script src="../../../motor/barco.js"></script>
+<script src="props.js"></script>
+<script src="datos.js"></script>
+<script src="datos_extra.js"></script>
+<script src="datos_edificios.js"></script>
+<style>.flecha{position:fixed;pointer-events:none}</style>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Prácticas por zona de trabajo (12/10/2026): ?z=<zona> (mina_abierta, mina_subterranea, construccion, aserradero, ferrocarril,
+// agricola, puerto, carretera) y por edificio (14/10/2026: hospital, industria, proteccion, laboral, empresa, cafeteria, biblioteca). Modos: recorrido, identificar peligros, inspección, respuesta a emergencia y análisis de riesgo.
+// Contenido y fuentes en datos.js (numerales verificados); objetos en props.js; caminar con clic: motor.recorrido (A*).
+const Q = new URLSearchParams(location.search), DATA = window.PRACTICAS_ZONA, FUENTES = window.PRACTICAS_ZONA_FUENTES;
+const ZID = DATA[Q.get('z')] ? Q.get('z') : 'construccion', D = DATA[ZID], R = window.Riesgo;
+const VOLVER = Q.get('volver') || `../../../index.html?mundo=${ZID}`;
+const AN = D.ancho, FO = D.fondo;
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: `Prácticas · ${D.nombre}`, icono: D.icono, clave: 'practica_' + ZID,
+  criterio: { pct: 80, sinCriticos: true }, fondo: D.tunel ? 0x2B2B2B : 0xC9DDEA, xr: false,
+  vistas: [[[0, 7, FO / 2 + 7], [0, 0.6, -2]], [[0, 26, FO / 2 + 10], [0, 0, -2]], [[-AN / 2, 6, 4], [0, 1, -3]], [[AN / 2, 6, 4], [0, 1, -3]]] });
+const { scene, camera, M } = W;
+// botones de la barra: Atrás regresa a la caseta de la zona; Inicio a la plaza; Salir a la pantalla de inicio
+const base = VOLVER.split('?')[0];
+W.$('bAtrasM').onclick = () => { location.href = VOLVER; };
+W.$('bInicioM').onclick = () => { location.href = base + '?plaza'; };
+W.$('bCampus').onclick = () => { location.href = base + '?salir'; };
+camera.far = 300; camera.updateProjectionMatrix();
+if (window.Realismo && !D.tunel) scene.background = Realismo.cielo(THREE, D.cielo || '#5B97CC', '#DCEBF3', '#DCEBF3');
+
+// ------------------------------------------------------------------ terreno
+const piso = new THREE.Mesh(new THREE.PlaneGeometry(AN, FO), M(D.piso)); piso.rotation.x = -Math.PI / 2; piso.position.y = 0.002; scene.add(piso);
+const ext = new THREE.Mesh(new THREE.PlaneGeometry(AN + 80, FO + 80), M(D.tunel ? 0x3E342B : (D.exterior ?? 0x7FAF6A))); ext.rotation.x = -Math.PI / 2; ext.position.y = -0.01; scene.add(ext);
+if (D.tunel) { const amb = new THREE.AmbientLight(0xFFE0B2, 0.25); scene.add(amb); }
+const sol = new THREE.DirectionalLight(0xFFF4E0, D.tunel ? 0.15 : 0.9); sol.position.set(-20, 30, 18); scene.add(sol); scene.add(new THREE.HemisphereLight(0xEAF4FF, 0x7A8A5A, D.tunel ? 0.15 : 0.55));
+
+// ------------------------------------------------------------------ escena (objetos con nombre para inspección, emergencia y animaciones)
+const REG = {}, OBST = [], MUROS = [];
+// edificios (14/10/2026): muros perimetrales (el del frente bajo, como maqueta en corte), divisiones y luminarias
+if (D.interior) { const H = D.alto || 3, cm = D.muro || 0xEEF1F4, mu = (w, h, d, x, z) => { const m = W.caja(w, h, d, cm, x, h / 2, z); MUROS.push(m); return m; };
+  mu(AN, H, 0.2, 0, -FO / 2); mu(0.2, H, FO, -AN / 2, 0); mu(0.2, H, FO, AN / 2, 0); mu(AN / 2 - 1.2, 1.0, 0.2, -AN / 4 - 0.6, FO / 2); mu(AN / 2 - 1.2, 1.0, 0.2, AN / 4 + 0.6, FO / 2);
+  (D.divisiones || []).forEach(([x, z, w, d, h]) => mu(w, h || H, d, x, z));
+  for (let x = -AN / 2 + 4; x < AN / 2; x += 8) for (let z = -FO / 2 + 4; z < FO / 2; z += 8) { const l = new THREE.PointLight(0xFFF4E0, 0.5, 14); l.position.set(x, H - 0.2, z); scene.add(l);
+    const lam = W.caja(1.2, 0.05, 0.3, 0xFFFDF5, x, H - 0.05, z); lam.material = lam.material.clone(); lam.material.emissive.set(0xFFF2CC); lam.material.emissiveIntensity = 0.6; }
+  if (D.rotulo) { const r = W.letrero(D.rotulo, Math.min(AN - 2, 0.16 * D.rotulo.length + 1), 0.45, '#0E3A6B'); r.position.set(0, H - 0.5, -FO / 2 + 0.12); scene.add(r); } }
+// objetos: tipo de props.js o 'r:<clave>' de los objetos de interiores de mundos/riesgo/comun.js (Riesgo.prop)
+const crearObj = (tipo, x, z, ry = 0, o = {}) => tipo.startsWith('r:') ? R.prop(W, tipo.slice(2), x, z, ry) : PropsZona.crear(W, tipo, x, z, ry, o);
+const registrar = (nombre, g) => { let n = nombre, k = 2; while (REG[n]) n = nombre + (k++); REG[n] = g; return n; };
+const poner = ([tipo, x, z, ry = 0, o = {}]) => { const g = crearObj(tipo, x, z, ry, o); if (o.y) g.position.y = o.y; if (o.escala) g.scale.setScalar(o.escala); registrar(tipo, g); if (o.id) REG[o.id] = g;
+  if (['camino', 'surcos', 'carretera', 'paso', 'via', 'agua', 'marca'].includes(tipo)) return g;
+  if (['galeria', 'banco', 'barco'].includes(tipo)) { g.traverse(m => { if (m.isMesh && m.geometry.type === 'BoxGeometry' && m.geometry.parameters.height > 0.5) MUROS.push(m); }); return g; }
+  OBST.push(g); return g; };
+D.escena.forEach(poner); (D.extras || []).forEach(poner);
+// personas (cara automática del motor; opciones: casco, pose, hundido, y, fuma, mochila, bandera, brazo)
+function persona([, x, z, ry = 0, o = {}]) {
+  const p = R.persona(W, { x, z, ry, ropa: o.ropa ?? 0x1565C0, casco: o.casco === undefined ? 0xF2C230 : o.casco, pose: o.pose || '' }), g = p.g;
+  if (o.hundido) g.position.y = -o.hundido; if (o.y) g.position.y = o.y;
+  if (o.fuma) { const c = W.cil(0.012, 0.09, 0xFFFFFF, 0.06, 1.42, 0.14, g); c.rotation.x = Math.PI / 2; const b = W.esfera(0.014, 0xFF5722, 0.06, 1.42, 0.19, g); b.material = new THREE.MeshBasicMaterial({ color: 0xFF5722 }); }
+  if (o.mochila) { W.caja(0.32, 0.45, 0.2, 0xECEFF1, 0, 1.1, -0.25, g); W.cil(0.015, 0.8, 0x424242, 0.3, 0.9, 0.2, g).rotation.x = 0.6; }
+  if (o.bandera) { W.cil(0.015, 1.0, 0x8D6E63, 0.32, 1.3, 0.15, g); W.caja(0.6, 0.6, 0.01, 0xF57C00, 0.62, 1.55, 0.15, g); }
+  if (o.brazo) { const b = W.capsula(0.055, 0.45, o.ropa ?? 0xFF9800); b.position.set(0.28, 1.55, 0); b.rotation.z = 0.3; g.add(b); }
+  return g;
+}
+// hallazgos: objeto + zona tocable (caja invisible) + marcador que aparece al encontrarlo
+const H = {};
+D.peligros.forEach(p => {
+  const g = p.obj[0] === 'persona' ? persona(p.obj) : crearObj(p.obj[0], p.obj[1], p.obj[2], p.obj[3] || 0, p.obj[4] || {}); if (p.obj[4] && p.obj[4].y && p.obj[0] !== 'persona') g.position.y = p.obj[4].y;
+  REG[p.id] = g; if (p.obj[0] !== 'marca') OBST.push(g);
+  g.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(g); let cen, tam;
+  if (b.isEmpty()) { const alto = (p.obj[4] && p.obj[4].alto) || 1.6; cen = new THREE.Vector3(p.obj[1], alto / 2, p.obj[2]); tam = new THREE.Vector3(1.4, alto, 1.4); }
+  else { cen = b.getCenter(new THREE.Vector3()); tam = b.getSize(new THREE.Vector3()); }
+  const hit = new THREE.Mesh(new THREE.BoxGeometry(Math.max(0.9, tam.x + 0.3), Math.max(0.9, tam.y + 0.3), Math.max(0.9, tam.z + 0.3)), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+  hit.position.copy(cen); hit.userData = { tipo: 'h:' + p.id }; hit.userData.ref = hit; scene.add(hit);
+  const top = (b.isEmpty() ? cen.y + tam.y / 2 : b.max.y) + 0.55;
+  const mk = R.situacion(W, { x: cen.x, z: cen.z, y: top, tipo: 'm:' + p.id, icono: p.icono, etiqueta: p.nombre, color: R.PALETA ? R.PALETA.azul : '#1F6F8B' });
+  mk.ic.visible = mk.marco.visible = false; H[p.id] = { p, g, hit, mk, cen, top };
+});
+// fichas del recorrido (marcadores numerados)
+const PINES = D.recorrido.map((r, k) => { const mk = R.situacion(W, { x: r.at[0], z: r.at[1], y: 2.6, tipo: 'i:' + k, icono: String(k + 1), etiqueta: r.titulo, color: '#154F90' }); mk.ic.visible = mk.marco.visible = false; return mk; });
+// animaciones permanentes: disco de la sierra, torretas, semáforo, destellos, flamas
+const anim = { sierra: true };
+W.cuadro.push(t => {
+  Object.values(REG).forEach(g => { const u = g.userData;
+    if (u.disco && anim.sierra) u.disco.rotation.y += 0.4;
+    if (u.torreta) u.torreta.visible = anim.sierra !== 'detenido' && Math.floor(t * 3) % 2 === 0;
+    if (u.luz) u.luz.visible = Math.floor(t * 2) % 2 === 0;
+    if (u.destello) u.destello.visible = Math.floor(t * 2.5) % 2 === 0;
+    if (u.flama) u.flama.scale.setScalar(0.85 + 0.25 * Math.sin(t * 18)); });
+});
+
+// ------------------------------------------------------------------ caminar con clic (rodea maquinaria, personas y muros)
+const RC = await W.recorrido({ piso: [piso, ext], limites: { x0: -AN / 2 - 6, x1: AN / 2 + 6, z0: -FO / 2 - 6, z1: FO / 2 + 6 }, obstaculos: OBST, muros: MUROS,
+  inicio: [0, FO / 2 - 1.5], ry: Math.PI, camara: [3.8, 7.8], alcance: 2.2 });
+REG.yo = RC.yo;
+// ------------------------------------------------------------------ sonido (motor/sonido.js, generado por código, sin archivos)
+const SON = { camion: 'motor_grande', cargador: 'motor_grande', excavadora: 'motor_grande', locomotora: 'motor_grande', banda: 'banda', sierra: 'sierra', tractor: 'motor', montacargas: 'motor', tolva: 'maquina', grua: 'maquina' };
+const SND = {}, SNDFX = [];
+Object.entries(REG).forEach(([n, g]) => { const t = SON[n.replace(/\d+$/, '')]; if (t && g !== RC.yo) SND[n] = W.sonido(t, g, { vol: 0.75, alcance: 22 }); });
+W.sonido({ mina_subterranea: 'ventilador', puerto: 'agua' }[ZID] || 'viento', null, { vol: 0.45 });
+if (REG.semaforo) SND.semaforo = W.sonido('campana', REG.semaforo, { vol: 0.5, alcance: 18 });
+if (H.mechero) SND.mechero = W.sonido('fuego', H.mechero.g, { vol: 0.4, alcance: 8 });
+
+// ------------------------------------------------------------------ utilidades de los modos
+const fuente = f => f;
+const barajar = (ops, ok) => { const idx = ops.map((_, i) => i).sort(() => Math.random() - 0.5); return { ops: idx.map(i => ops[i]), ok: idx.indexOf(ok) }; };
+const posDe = n => { const g = REG[n] || (H[n] && H[n].g); if (!g) return null; const b = new THREE.Box3().setFromObject(g); return b.isEmpty() ? g.getWorldPosition(new THREE.Vector3()) : b.getCenter(new THREE.Vector3()).setY(b.max.y); };
+let flecha = null;
+function senalar(n) { if (flecha) { scene.remove(flecha); flecha = null; } const p = posDe(n); if (!p) return;
+  flecha = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.7, 16), new THREE.MeshBasicMaterial({ color: 0xF5B400, depthTest: false })); flecha.rotation.x = Math.PI; flecha.renderOrder = 9; flecha.position.copy(p).add(new THREE.Vector3(0, 1.2, 0)); scene.add(flecha);
+  const y0 = flecha.position.y; flecha.userData.f = t => { if (flecha) flecha.position.y = y0 + 0.2 * Math.sin(t * 5); }; }
+W.cuadro.push(t => flecha && flecha.userData.f && flecha.userData.f(t));
+const mirar = n => { const p = posDe(n); if (!p) return; RC.seguir(false); W.mover(W.controls.target, p.clone().setY(1), 700); };
+// efectos de emergencia
+const FX = [];
+function efecto(tipo, foco) { const p = posDe(foco) || new THREE.Vector3(0, 0, 0), g = REG[foco] || (H[foco] && H[foco].g);
+  const fx = { volcar: ['golpe', 'sirena'], humo: [null, 'alarma'], derrumbe: ['golpe', 'alarma'], alarma: [null, 'alarma'], fuga: [null, 'fuga'], derrame: [null, null], caida: ['golpe', 'alarma'], auto: ['claxon', 'alarma'], incendio: [null, 'alarma'], desmayo: [null, null], sismo: ['golpe', 'alarma'] }[tipo] || [];
+  if (fx[0]) W.efecto(fx[0]); if (fx[1]) SNDFX.push(W.sonido(fx[1], g || REG.yo, { vol: 0.8, alcance: 40 }));
+  if (tipo === 'volcar' && g) { W.animar(900, k => { g.rotation.z = -1.3 * k; g.position.y = 0.6 * k; }); }
+  if (tipo === 'humo' || tipo === 'fuga' || tipo === 'derrame') { const color = tipo === 'humo' ? 0x9E9E9E : tipo === 'fuga' ? 0xC0CA33 : 0x8BC34A;
+    for (let i = 0; i < (tipo === 'humo' ? 14 : 1); i++) { const s = new THREE.Mesh(tipo === 'humo' ? new THREE.SphereGeometry(0.5, 10, 8) : new THREE.CircleGeometry(0.4, 24), new THREE.MeshStandardMaterial({ color, transparent: true, opacity: 0.55 }));
+      if (tipo !== 'humo') { s.rotation.x = -Math.PI / 2; s.position.set(p.x, 0.03, p.z + 1.2); W.animar(5000, k => s.scale.setScalar(1 + 4 * k)); }
+      else { s.position.set(p.x + (Math.random() - .5) * 3, 1 + Math.random(), p.z); s.userData.v = 0.3 + Math.random() * 0.5; }
+      scene.add(s); FX.push(s); } }
+  if (tipo === 'incendio') { const base = p.clone().setY(0); FUEGO.activo = true; FUEGO.I = 1; FUEGO.c.copy(base);   // llamas, humo y crepitar (motor/sonido.js)
+    for (let i = 0; i < 26; i++) { const f = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.9, 8), new THREE.MeshBasicMaterial({ color: i % 3 ? 0xFF6D00 : 0xFFC400, transparent: true, opacity: 0.85 })); f.userData.llama = { a: Math.random() * 6.3, r: Math.random() * 0.9, v: Math.random() }; scene.add(f); FX.push(f); }
+    for (let i = 0; i < 10; i++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.45, 10, 8), new THREE.MeshStandardMaterial({ color: 0x5A5A5A, transparent: true, opacity: 0.5 })); s.position.set(base.x + (Math.random() - .5) * 1.5, 1.2 + Math.random() * 2, base.z); s.userData.v = 0.4 + Math.random() * 0.4; scene.add(s); FX.push(s); }
+    const lf = new THREE.PointLight(0xFF7A1A, 6, 9); lf.position.copy(base).add(new THREE.Vector3(0, 1, 0)); lf.userData.flama = true; scene.add(lf); FX.push(lf); SNDFX.push(W.sonido('fuego', lf, { vol: 1, alcance: 16 }));
+    const la = new THREE.PointLight(0xFF1744, 0, 14); la.position.copy(base).add(new THREE.Vector3(0, 2.6, 0)); la.userData.alarma = true; scene.add(la); FX.push(la); }
+  if (tipo === 'desmayo' && g) { W.animar(700, k => { g.rotation.x = -Math.PI / 2 * k; g.position.y = 0.25 * k; }); }
+  if (tipo === 'sismo') { const c0 = W.camera.position.clone(); W.animar(2500, k => { W.camera.position.set(c0.x + Math.sin(k * 60) * 0.12 * (1 - k), c0.y, c0.z + Math.cos(k * 47) * 0.1 * (1 - k)); }); }
+  if (tipo === 'derrumbe') { const m = new THREE.Mesh(new THREE.ConeGeometry(1.1, 1.2, 14), M(0x7A5A3A, { flatShading: true })); m.position.set(p.x + 0.4, -1.1, p.z); scene.add(m); FX.push(m); }
+  if (tipo === 'alarma' || tipo === 'caida' || tipo === 'auto') { const l = new THREE.PointLight(0xFF1744, 0, 12); l.position.copy(p).add(new THREE.Vector3(0, 2, 0)); scene.add(l); l.userData.alarma = true; FX.push(l); }
+  if (tipo === 'caida' && REG.grua && REG.grua.userData.carga) { const c = REG.grua.userData.carga; W.animar(700, k => { c.position.y = 9.6 - 5.4 * k * k; }); }
+  if (tipo === 'auto') { const a = PropsZona.crear(W, 'cajas', p.x + 2, p.z - 0.4, 0.4); a.children.forEach(m => m.material = M(0x90A4AE)); FX.push(a); if (REG.conos) REG.conos.children.slice(0, 6).forEach((c, i) => { c.rotation.z = 1.4; c.position.y = 0.15; }); }
+}
+const FUEGO = { activo: false, I: 0, c: new THREE.Vector3() };
+W.cuadro.push(t => FX.forEach(f => { if (f.userData.v) { f.position.y += f.userData.v * 0.02; if (f.position.y > 5) f.position.y = 1; } if (f.userData.alarma) f.intensity = Math.floor(t * 4) % 2 ? 6 : 0;
+  if (f.userData.llama) { const u = f.userData.llama, I = FUEGO.I; u.v = (u.v + 0.03) % 1; f.visible = I > 0.03; f.position.set(FUEGO.c.x + Math.cos(u.a) * u.r * I, 0.3 + u.v * 1.4 * I, FUEGO.c.z + Math.sin(u.a) * u.r * I); f.scale.setScalar((1 - u.v) * (0.6 + I)); }
+  if (f.userData.flama) f.intensity = FUEGO.I * (5 + Math.sin(t * 23) * 1.5); }));
+function limpiarFX() { FUEGO.activo = false; FUEGO.I = 0; SNDFX.splice(0).forEach(h => h.detener()); FX.splice(0).forEach(f => scene.remove(f)); if (REG.camion) { REG.camion.rotation.z = 0; REG.camion.position.y = 0; } if (REG.grua && REG.grua.userData.carga) REG.grua.userData.carga.position.y = 9.6;
+  if (REG.conos) REG.conos.children.forEach(c => { c.rotation.z = 0; }); anim.sierra = true; }
+// animaciones que «hacen lo que dice la respuesta»
+async function animar(a) { if (!a) return; const [t, n, x] = a;
+  if (t === 'globo') { W.globo(x, REG[n] || (H[n] && H[n].g), 2400, n === 'yo' ? 2.1 : 2.6); await W.esperar(1300); }
+  if (t === 'detener') { anim.sierra = 'detenido'; if (SND[n]) { SND[n].detener(); delete SND[n]; } SNDFX.forEach(h => h.detener()); FX.forEach(f => { if (f.userData.alarma) f.userData.alarma = false; }); W.globo('Detenido', REG[n] || (H[n] && H[n].g), 2000, 3); await W.esperar(1200); }
+  if (t === 'delimitar') { const p = posDe(n); if (!p) return; const r = x || 4, cs = [];
+    for (let k = 0; k < 12; k++) { const a2 = k / 12 * Math.PI * 2, c = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.7, 12), M(0xF57C00)); c.position.set(p.x + Math.cos(a2) * r, 0.35, p.z + Math.sin(a2) * r); c.scale.setScalar(0.01); scene.add(c); FX.push(c); cs.push(c); }
+    await W.animar(900, k => cs.forEach(c => c.scale.setScalar(Math.max(0.01, k)))); W.globo('Área delimitada', REG[n] || (H[n] && H[n].g), 1800, 3); await W.esperar(800); }
+  if (t === 'acudir') { const p = posDe(n); if (!p) return; const b = persona(['persona', AN / 2 - 3, FO / 2 - 2, 0, { ropa: 0xC62828, casco: 0xFFFFFF }]); FX.push(b);
+    const o = b.position.clone(), d = new THREE.Vector3(p.x + 1.2, 0, p.z + 1.2); b.lookAt(d.x, 0, d.z);
+    await W.animar(1600, k => { b.position.lerpVectors(o, d, k); b.position.y = Math.abs(Math.sin(k * 20)) * 0.04; }); W.globo('Brigada / primeros auxilios', b, 2000, 2.2); await W.esperar(900); }
+  if (t === 'apagar') { const p = posDe(n) || FUEGO.c, b = persona(['persona', p.x + 2.4, p.z + 2.2, 0, { ropa: 0xC62828, casco: 0xC62828 }]); FX.push(b); b.lookAt(p.x, 0, p.z);
+    const ext = PropsZona.crear(W, 'extintor', 0, 0, 0, { tipo: x || 'pqs' }); scene.remove(ext); ext.scale.setScalar(0.6); ext.position.set(0.25, 0.5, 0.3); b.add(ext);
+    const nube = []; for (let i = 0; i < 14; i++) { const c = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 6), new THREE.MeshBasicMaterial({ color: 0xF5F5F5, transparent: true, opacity: 0.7 })); c.visible = false; scene.add(c); FX.push(c); nube.push(c); }
+    W.globo('A la base del fuego', b, 1800, 2.2); SNDFX.push(W.sonido('fuga', b, { vol: 0.7, alcance: 14 }));
+    await W.animar(2600, k => { FUEGO.I = Math.max(0, 1 - k * 1.1); nube.forEach((c, i) => { const q = (k * 3 + i / 14) % 1; c.visible = true; c.position.set(b.position.x + (p.x - b.position.x) * q, 0.6 - 0.3 * q, b.position.z + (p.z - b.position.z) * q); c.scale.setScalar(0.5 + q * 2); }); });
+    nube.forEach(c => c.visible = false); FUEGO.I = 0; SNDFX.forEach(h => h.detener()); FX.forEach(f => { if (f.userData.alarma) f.userData.alarma = false; }); W.globo('Fuego extinguido', b, 2000, 2.2); await W.esperar(900); }
+  if (t === 'alarma') { SNDFX.push(W.sonido('alarma', null, { vol: 0.5 })); const l = new THREE.PointLight(0xFF1744, 0, 30); l.position.set(0, (D.alto || 4) - 0.3, 0); l.userData.alarma = true; scene.add(l); FX.push(l); W.globo(x || '¡Alarma activada!', REG.yo, 2200, 2.1); await W.esperar(1200); }
+  if (t === 'evacuar') { const dest = new THREE.Vector3(...(D.reunion || [0, FO / 2 + 3])).setY(0), gente = [];
+    for (let i = 0; i < (x || 4); i++) { const b = persona(['persona', -AN / 3 + i * 1.6, -FO / 4 + (i % 2), 0, { ropa: [0x1565C0, 0x6A1B9A, 0x2E7D32, 0xEF6C00][i % 4], casco: D.interior ? null : 0xF2C230 }]); FX.push(b); gente.push([b, b.position.clone()]); }
+    W.globo('Sigan la ruta de evacuación', REG.yo, 2000, 2.1);
+    await W.animar(3200, k => gente.forEach(([b, o], i) => { const d = dest.clone().add(new THREE.Vector3((i - 1.5) * 0.9, 0, 0)); b.position.lerpVectors(o, d, k); b.lookAt(d.x, 0, d.z); b.position.y = Math.abs(Math.sin(k * 30 + i)) * 0.04; }));
+    W.globo('Punto de reunión: conteo', gente[0][0], 2000, 2.2); await W.esperar(900); }
+  if (t === 'cortar') { const g = REG[n] || (H[n] && H[n].g); W.efecto('clic'); W.globo(x || 'Energía cortada y bloqueada', g, 2200, 2.4); anim.sierra = 'detenido'; Object.keys(SND).forEach(k => { SND[k].detener(); delete SND[k]; }); await W.esperar(1100); }
+  if (t === 'ir') { const p = posDe(n); if (!p) return; await new Promise(ok => { if (!RC.ir(p.x + 1, p.z + 1.5, ok)) ok(); setTimeout(ok, 9000); }); }
+}
+// paso de pregunta con animación al acertar (opciones barajadas)
+const pasoPregunta = (titulo, texto, q, ops, ok, exp, f, a, antes) => ({ titulo, texto, fuente: f, puntos: 10,
+  async iniciar() { if (antes) await antes(); const b = barajar(ops, ok); W.pregunta(q, b.ops, [b.ok], fuente(f), async () => { await animar(a); W.siguiente(); }, false, exp); } });
+const intro = (html) => ({ titulo: 'Inicio', texto: D.intro, sinPuntos: true, iniciar() { W.aviso(html + `<p class="ficticio">${D.intro}</p>`, () => W.siguiente(), 'Comenzar'); } });
+function tablaMatriz(f, s) { const SV = ['I', 'II', 'III', 'IV'], col = { Grave: '#B03A2E', Elevado: '#E67E22', Medio: '#F2C94C', Bajo: '#A5D6A7', 'Mínimo': '#2E7D32' };
+  return `<table style="margin-top:8px;font-size:.8rem;text-align:center"><tr><th></th>${SV.map(x => `<th>${x}</th>`).join('')}</tr>${['E', 'D', 'C', 'B', 'A'].map(fr => `<tr><th>${fr}</th>${SV.map((x, j) => { const v = R.MATRIZ[fr][j];
+    return `<td style="background:${col[v]};color:${['Grave', 'Elevado', 'Mínimo'].includes(v) ? '#fff' : '#1F2433'};${fr === f || x === s ? 'outline:2px solid #14213D' : ''}">${fr === f && x === s ? '?' : v}</td>`; }).join('')}</tr>`).join('')}</table><p class="ficticio">Matriz NOM-031-STPS-2011, 8.3, Tabla 4.</p>`; }
+const verPines = v => PINES.forEach(m => { m.ic.visible = m.marco.visible = v; });
+const verHallazgos = v => Object.values(H).forEach(h => { h.mk.ic.visible = h.mk.marco.visible = v && h._visto; });
+
+// ------------------------------------------------------------------ modos
+const MODOS = {
+  recorrido: () => [intro(`<h2>🗺️ Recorrido · ${D.nombre}</h2><p>Camina (toca el piso) y toca cada marcador numerado para leer qué pide la norma en ese punto.</p>`),
+    ...D.recorrido.map((r, k) => ({ titulo: `${k + 1}. ${r.titulo}`, texto: `Camina y toca el marcador <b>${k + 1}</b>: ${r.titulo}.`, fuente: r.f, puntos: 10,
+      iniciar() { verPines(true); W.resaltar([PINES[k].marco]); },
+      tocar(o) { if (o.userData.tipo !== 'i:' + k || this._h) return; this._h = true; W.resaltar([]); PINES[k].marco.material.color.set(0x2E7D32);
+        W.aviso(`<h2>${k + 1}. ${r.titulo}</h2><p>${r.texto}</p><p class="ficticio">Fuente: ${r.f}</p>`, () => { W.bien('Ficha leída.', r.f); W.siguiente(); }, 'Siguiente'); } }))],
+  peligros: () => { const buenas = D.peligros.filter(p => p.real), malas = D.peligros.filter(p => !p.real);
+    const item = p => ({ tipo: 'h:' + p.id, nombre: p.nombre, fb: p.fb, f: p.f, obj: H[p.id].mk });
+    const st = R.encuentra(W, { titulo: 'Identifica los peligros', texto: 'Recorre la zona (toca el piso para caminar) y toca lo que sea un <b>riesgo sin control</b>. Cuidado: también hay condiciones controladas.', fuente: 'NOM-030-STPS-2009, 6.1', buenas: buenas.map(item), malas: malas.map(item) });
+    const toc = st.tocar; st.tocar = function (o) { const t = o.userData.tipo || ''; const id = t.slice(2); if (H[id]) { H[id]._visto = true; H[id].mk.ic.visible = H[id].mk.marco.visible = true; toc.call(this, { userData: { tipo: 'h:' + id } }); } };
+    return [intro(`<h2>⚠️ Identifica los peligros · ${D.nombre}</h2><p>Hay <b>${buenas.length}</b> riesgos sin control y <b>${malas.length}</b> condiciones controladas. Marcar una controlada resta puntos.</p>`), st]; },
+  inspeccion: () => [intro(`<h2>📋 Inspección · ${D.nombre}</h2><p>Revisa cada punto de la lista (la flecha amarilla te muestra dónde) y contesta si <b>cumple</b> o <b>no cumple</b>.</p>`),
+    ...D.inspeccion.map((it, k) => ({ titulo: `Inspección ${k + 1}/${D.inspeccion.length}`, texto: it.q, fuente: it.f, puntos: 10,
+      iniciar() { senalar(it.obj); mirar(it.obj); const resp = v => { if (this._h) return; this._h = true; W.botones([]); if (flecha) { scene.remove(flecha); flecha = null; }
+          if (v === it.a) W.bien(it.exp, it.f); else W.mal(it.exp, it.f); RC.seguir(true); W.siguiente(); };
+        W.botones([['✔ Sí cumple', () => resp(true)], ['✘ No cumple', () => resp(false), 'sec']]); } }))],
+  emergencia: () => { const E = D.emergencia; return [
+    { titulo: 'Emergencia', texto: E.intro, sinPuntos: true, iniciar() { limpiarFX(); efecto(E.efecto, E.foco); mirar(E.foco); W.aviso(`<h2>🚨 Respuesta a emergencia · ${D.nombre}</h2><p>${E.intro}</p><p>Contesta en orden; la escena hará lo que diga cada respuesta correcta.</p>`, () => W.siguiente(), 'Comenzar'); } },
+    ...E.pasos.map((p, k) => pasoPregunta(`Decisión ${k + 1}/${E.pasos.length}`, E.intro, p.q, p.ops, p.ok, p.exp, p.f, p.anim))]; },
+  analisis: () => [].concat(D.analisis).flatMap((A, ia, todos) => { const h = H[A.principal], nv = R.nivel(A.f, A.s), FR = ['A', 'B', 'C', 'D', 'E'], SV = ['I', 'II', 'III', 'IV'], NV = ['Grave', 'Elevado', 'Medio', 'Bajo', 'Mínimo'];
+    const ctx = `<b>${A.riesgo}</b><br><i>${A.pista}</i>`;
+    const n = todos.length > 1 ? ` (${ia + 1}/${todos.length})` : '';
+    return [...(ia ? [] : [intro(`<h2>🔎 Análisis de riesgo · ${D.nombre}</h2><p>Evalúa ${todos.length > 1 ? `<b>${todos.length} riesgos</b>` : 'el riesgo principal'} con la matriz de la NOM-031-STPS-2011 (frecuencia × severidad) y elige el control más efectivo para cada uno.</p>`)]),
+      { titulo: 'Identifica' + n, texto: `Toca el riesgo: <b>${h.p.nombre}</b>.`, fuente: h.p.f, puntos: 10, iniciar() { senalar(A.principal); h._visto = true; h.mk.ic.visible = h.mk.marco.visible = true; W.resaltar([h.mk.marco]); },
+        tocar(o) { const t = o.userData.tipo || ''; if (t !== 'h:' + A.principal && t !== 'm:' + A.principal || this._h) return; this._h = true; W.resaltar([]); if (flecha) { scene.remove(flecha); flecha = null; } W.bien(h.p.fb, h.p.f); W.siguiente(); } },
+      { titulo: 'Frecuencia' + n, texto: ctx, fuente: R.N31, puntos: 10, iniciar() { R.decidir(W, '¿Qué frecuencia de ocurrencia tiene?', FR.map(f => ({ t: R.FREC[f], ok: f === A.f, fb: `Frecuencia ${R.FREC[A.f]}.`, f: 'NOM-031-STPS-2011, 8.3 a) Tabla 2' })), () => W.siguiente(), ctx, false); } },
+      { titulo: 'Severidad' + n, texto: ctx, fuente: R.N31, puntos: 10, iniciar() { R.decidir(W, '¿Qué severidad del daño puede ocasionar?', SV.map(s => ({ t: R.SEV[s], ok: s === A.s, fb: `Severidad ${R.SEV[A.s]}.`, f: 'NOM-031-STPS-2011, 8.3 b) Tabla 3' })), () => W.siguiente(), ctx, false); } },
+      { titulo: 'Nivel de riesgo' + n, texto: ctx, fuente: R.N31, puntos: 10, iniciar() { R.decidir(W, `Con ${A.f} × ${A.s}, ¿qué nivel indica la matriz?`, NV.map(x => ({ t: x, ok: x === nv, fb: `${A.f} × ${A.s} = ${nv}.`, f: 'NOM-031-STPS-2011, 8.3 c) Tabla 4' })),
+        () => { h.mk.marco.material.color.set(R.NIVEL_COLOR[nv]); W.siguiente(); }, ctx + tablaMatriz(A.f, A.s), false); } },
+      { titulo: 'Control' + n, texto: ctx, fuente: 'NOM-017-STPS-2024, 5.2; NIOSH (referencia)', puntos: 10, iniciar() { R.decidir(W, '¿Cuál es la medida MÁS efectiva?', A.control, () => { W.globo('Control aplicado', h.g, 2200, 2.6); setTimeout(() => W.siguiente(), 900); }, `${ctx}<br>Jerarquía: eliminación → sustitución → ingeniería → administrativos → EPP.`); } }]; }),
+};
+const NOMBRES = { recorrido: '🗺️ <b>Recorrido:</b> fichas de la norma en cada punto', peligros: '⚠️ <b>Identificar peligros</b> (riesgos sin control y condiciones controladas)',
+  inspeccion: '📋 <b>Inspección</b> con lista de verificación', emergencia: '🚨 <b>Respuesta a emergencia</b> (la escena hace lo que dices)', analisis: '🔎 <b>Análisis de riesgo</b> (matriz NOM-031 y jerarquía de controles)' };
+const pedido = Q.get('modo'), orden = Object.keys(MODOS).sort((a, b) => (b === pedido) - (a === pedido));
+W.inicio(orden.map(id => ({ id, txt: NOMBRES[id] })), id => { limpiarFX(); verHallazgos(false); verPines(false); Object.values(H).forEach(h => { h._visto = false; h.mk.marco.material.color.set(0x1F6F8B); if (h.mk.rot) h.mk.rot.visible = false; });
+  PINES.forEach(m => m.marco.material.color.set(0x154F90)); return MODOS[id](); },
+  'Fuentes: ' + Object.values(FUENTES).map(f => f.t).join(' · ') + ' Escenas y personas ficticias con fines didácticos.');
+W.activarXR({ inicio: [0, FO / 2 - 1.5], piso, entorno: [piso] });
+if (Q.has('qa')) window.__qa = { W, REG, H, PINES, RC, D, tocar: W.tocar };
+</script>
+</body>
+</html>

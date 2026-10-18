@@ -6,6 +6,8 @@
 <title>Simulador · Uso de extintores</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script src="../../../motor/senales.js"></script>
+<script src="../../../motor/avatar.js"></script>
+<script src="../../../motor/realismo.js"></script>
 <script src="../../../motor/motor.js"></script>
 <style>#xrBar{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}#xrBar button{background:#0E3A6B;color:#fff;border:0;border-radius:12px;padding:10px 14px;font-weight:800}
 #medidor{position:fixed;right:12px;top:calc(var(--barraH,60px) + 10px);z-index:4;background:rgba(255,255,255,.96);border-radius:14px;padding:10px 12px;width:210px;display:none;box-shadow:0 6px 20px rgba(0,0,0,.2);font-weight:700;color:#0E3A6B}
@@ -21,6 +23,9 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Kit3D } from '../../../motor/kit3d.js';
+import { Personas } from '../../../motor/personas3d.js';
+import { patio } from '../../../motor/exterior3d.js';
 
 // Fuentes verificadas (registro_fuentes.md, consulta 03/10/2026): NOM-002-STPS-2010 4.11 (clases de fuego), 7.2 (revisión:
 // sello, manómetro en verde, capacidad de CO2, instrucciones en la etiqueta), 8.1 c) (alertamiento), 4.19 (mantenimiento y
@@ -30,24 +35,54 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Uso de extintores: fuego virtual', icono: '🧯', clave: 'pc_extintores',
   criterio: { pct: 80, sinCriticos: true }, fondo: 0xDCE6EE, xr: false,   // VR propia (paso 7: extintor en la mano)
  
-  vistas: [[[0, 2.4, 4.6], [0, 0.8, -2.4]], [[-1.0, 1.7, 1.6], [-3.1, 0.9, 0.2]], [[1.4, 1.8, 1.4], [3.4, 1.3, -0.6]], [[0, 5.5, 1.8], [0, 0, -2]]] });
+  vistas: [[[0, 2.4, 4.6], [0, 0.8, -2.4]], [[-1.0, 1.7, 1.6], [-3.1, 0.9, 0.2]], [[1.4, 1.8, 1.4], [3.4, 1.3, -0.6]], [[0, 5.5, 1.8], [0, 0, -2]],
+    [[-0.6, 3.4, 5.4], [3.6, 1.0, 1.6]], [[6, 10, 17], [15, 0, 3]], [[17, 4.5, 12.5], [23, 0, 5]]], radioSombra: 20 });
 const { scene, camera, controls, renderer, caja, cil, esfera, tocable, letrero, M } = W;
-renderer.xr.enabled = true;
+renderer.xr.enabled = true; camera.far = 220; camera.updateProjectionMatrix(); controls.maxDistance = 40;
+if (window.Realismo) scene.background = Realismo.cielo(THREE, '#4F8FC9', '#DCEBF3', '#DCEBF3');
 const $ = s => document.getElementById(s);
 const F26 = 'NOM-002-STPS-2010', T71 = `${F26}, Guía de Referencia VII, Tabla VII.1`;
 
 // ------------------------------------------------------------------ entorno (se oculta en realidad mixta)
 const entorno = new THREE.Group(); scene.add(entorno);
 const piso = new THREE.Mesh(new THREE.PlaneGeometry(8, 10), M(0xB9BEC4)); piso.rotation.x = -Math.PI / 2; piso.position.z = -1; entorno.add(piso);
-caja(8, 3.2, 0.1, 0xEEF1F4, 0, 1.6, -6, entorno); caja(0.1, 3.2, 10, 0xE6EAEE, -4, 1.6, -1, entorno); caja(0.1, 3.2, 10, 0xE6EAEE, 4, 1.6, -1, entorno);
+caja(8, 3.2, 0.1, 0xEEF1F4, 0, 1.6, -6, entorno); caja(0.1, 3.2, 10, 0xE6EAEE, -4, 1.6, -1, entorno);
+// muro derecho con la SALIDA DE EMERGENCIA (hueco en z ≈ 2) que da al exterior
+caja(0.1, 3.2, 7.4, 0xE6EAEE, 4, 1.6, -2.3, entorno); caja(0.1, 3.2, 1.4, 0xE6EAEE, 4, 1.6, 3.3, entorno); caja(0.1, 1.0, 1.2, 0xE6EAEE, 4, 2.7, 2.0, entorno);
+{ const h = caja(1.1, 2.15, 0.05, 0x2E7D32, 4.45, 1.08, 2.62, entorno); h.rotation.y = -1.15; }
 for (let z = -5; z <= 3; z += 2) { const l = new THREE.Mesh(new THREE.PlaneGeometry(8, 0.08), M(0xF2C230)); l.rotation.x = -Math.PI / 2; l.position.set(0, 0.005, z); entorno.add(l); }
 const tx = id => { const t = new THREE.CanvasTexture(Senales.canvas(id, 256)); t.colorSpace = THREE.SRGBColorSpace; return t; };
 const senal = (id, w, x, y, z, ry) => { const cv = Senales.canvas(id, 256); const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w * cv.height / cv.width), new THREE.MeshBasicMaterial({ map: tx(id), transparent: true })); m.position.set(x, y, z); m.rotation.y = ry; entorno.add(m); return m; };
-senal('extintor', 0.55, -3.94, 2.1, 0.2, Math.PI / 2); senal('alarma', 0.45, 3.94, 2.05, -0.6, -Math.PI / 2); senal('salida', 1.0, 0, 2.6, -5.94, 0); senal('ruta', 0.8, -3.94, 1.6, -3.5, Math.PI / 2);
+senal('extintor', 0.55, -3.94, 2.1, 0.2, Math.PI / 2); senal('alarma', 0.45, 3.94, 2.05, -0.6, -Math.PI / 2); senal('ruta_izq', 0.8, -3.94, 1.6, -3.5, Math.PI / 2); senal('ruta', 0.8, 1.6, 2.2, -5.94, 0);
+const sSalida = senal('salida', 1.0, 3.94, 2.55, 2.0, -Math.PI / 2);
 const tit = letrero('ÁREA DE PRÁCTICA · USO DE EXTINTORES', 3.4, 0.3, '#B71C1C'); tit.position.set(0, 2.95, -5.94); entorno.add(tit);
 // botón de alarma (pared derecha)
 const alarma = caja(0.12, 0.3, 0.24, 0xD3122A, 3.92, 1.35, -0.6, entorno); tocable(alarma, 'alarma', 0.5);
 const luzAlarma = new THREE.PointLight(0xff2222, 0, 6); luzAlarma.position.set(3.4, 2.6, -0.6); scene.add(luzAlarma);
+
+// ------------------------------------------------------------------ exterior con punto de reunión (11/10/2026): después de usar el extintor se
+// evacúa el edificio por la salida de emergencia hasta el punto de reunión exterior (NOM-002-STPS-2010 8.1 b) y e)).
+const kit = new Kit3D(THREE, '../../../'), gente = new Personas(THREE, '../../../');
+const REUNION = [23, 5], RUTA_EXT = [[4.7, 2.0], [8, 2.0], [20.5, 4.6]];
+const exterior = patio(W, kit, { padre: entorno, suelo: [-30, 50, -34, 28], ruta: RUTA_EXT, banquetas: [[[4.9, -6.2], [4.9, 4.2]]], reunion: REUNION,
+  estacionamiento: [8, 21, -16, -8], calle: [-28, -21], postes: [[-8, -19.6], [12, -19.6], [32, -19.6]],
+  arboles: [[-6, 7, 'arbol_b'], [1, 8, 'arbol'], [11, 14.5, 'arbol_b'], [36, 12, 'arbol'], [37, -4, 'arbol_c'], [-9, -9, 'arbol_c']],
+  arbustos: [[5.6, -5.5], [5.6, 4.0], [24, -5, 'arbusto_chico']],
+  edificios: [[38, -13, Math.PI / 2, 'edificio'], [-20, 6, Math.PI / 2, 'edificio_c']], objetos: [[12, 15.6, Math.PI, 'banca'], [8.5, -5.5, 0, 'contenedor']] });
+exterior.then(e => tocable(e.reunion, 'reunion', 2.6));
+tocable(sSalida, 'salida', 0.9);
+// compañeros de trabajo [FICTICIOS]: al sonar la alarma evacúan
+const P = {}; const listos = Promise.all([
+  gente.crear({ modelo: 'hombre-d', x: -2.6, z: 2.6, ry: 0.6, padre: entorno }).then(p => P.c1 = p),
+  gente.crear({ modelo: 'mujer-c', x: 2.7, z: -5.0, ry: -0.4, padre: entorno }).then(p => P.c2 = p),
+  gente.crear({ modelo: 'hombre-c', x: 3.0, z: 3.4, ry: -2.4, padre: entorno, chaleco: 0xF57C00, etiqueta: 'BRIGADA', colorEtiqueta: '#E65100' }).then(p => P.brig = p) ]);
+const enReunion = (i, n = 6) => { const a = i / n * Math.PI * 2; return [REUNION[0] + Math.cos(a) * 1.5, REUNION[1] + Math.sin(a) * 1.5]; };
+function evacuan() { listos.then(() => [P.c1, P.c2].forEach((p, i) => p && setTimeout(() => p.caminar([[3.4, 2.0], ...RUTA_EXT, enReunion(i)], { vel: 1.5 }).then(() => p.mirarA(...REUNION)), 600 + i * 1200))); }
+// tu avatar aparece para la evacuación (en los pasos de descarga la vista es en primera persona)
+let perfil = {}; try { perfil = JSON.parse(localStorage.getItem('campus_perfil') || '{}'); } catch (e) { }
+const av = Avatar.construir(THREE, perfil), yo = av.grupo; yo.visible = false; scene.add(yo);
+let rutaYo = [], faseYo = 0, alLlegarYo = null;
+const caminarYo = (pts, cb) => { rutaYo = pts.map(p => new THREE.Vector3(p[0], 0, p[1])); alLlegarYo = cb; };
 
 // ------------------------------------------------------------------ extintores (estante pared izquierda)
 const AGENTES = {
@@ -56,6 +91,18 @@ const AGENTES = {
   co2: { nombre: 'Bióxido de carbono (CO2)', color: 0xC62828, chorro: 0xFFFFFF, clases: ['B', 'C'], alcance: 'de 1 a 2.5 m; no usar al aire libre ni con corrientes de aire', fAlc: `${F26}, Guía VII, VII.3.2`, mano: false, dist: 2 },
   k: { nombre: 'Químico húmedo (clase K)', color: 0xB0BEC5, chorro: 0xE0F7FA, clases: ['A', 'B', 'K'], alcance: 'el que indica su etiqueta', fAlc: `${F26}, 7.2 l) 3)`, mano: true, dist: 2.5 },
 };
+// etiqueta del cuerpo: nombre del agente, código grande y clases de fuego (Guía VII, Tabla VII.1) para distinguir cada extintor
+const BANDA = { agua: ['AGUA', 'AGUA', ['A']], pqs: ['POLVO QUÍMICO SECO', 'PQS', ['A', 'B', 'C']], co2: ['BIÓXIDO DE CARBONO', 'CO₂', ['B', 'C']], k: ['QUÍMICO HÚMEDO', 'K', ['A', 'B', 'K']] };
+const COL_CLASE = { A: '#2E7D32', B: '#C62828', C: '#1565C0', K: '#212121' };
+function etiquetaBanda(tipo, padre) {
+  const [nom, cod, clases] = BANDA[tipo], cv = document.createElement('canvas'); cv.width = 512; cv.height = 384; const g = cv.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, 512, 384); g.fillStyle = '#B71C1C'; g.fillRect(0, 0, 512, 78);
+  const fit = (t, w, fs) => { g.font = `900 ${fs}px Arial, sans-serif`; while (g.measureText(t).width > w && fs > 12) { fs -= 2; g.font = `900 ${fs}px Arial, sans-serif`; } };
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff'; fit(nom, 400, 50); g.fillText(nom, 256, 41); g.fillStyle = '#111'; fit(cod, 470, 128); g.fillText(cod, 256, 160);
+  g.font = '900 34px Arial, sans-serif'; g.fillText('FUEGOS CLASE', 256, 248);
+  const w = 86, x0 = 256 - (clases.length * (w + 12) - 12) / 2; clases.forEach((c, i) => { g.fillStyle = COL_CLASE[c]; g.fillRect(x0 + i * (w + 12), 280, w, 86); g.fillStyle = '#fff'; g.font = '900 70px Arial, sans-serif'; g.fillText(c, x0 + i * (w + 12) + w / 2, 326); });
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(0.1115, 0.1115, 0.3, 28, 1, true, -1.15, 2.3), new THREE.MeshStandardMaterial({ map: t, roughness: .6 })); m.position.y = 0.3; padre.add(m); return m; }
 function modeloExtintor(tipo, conEtiqueta = true) {
   const a = AGENTES[tipo], g = new THREE.Group();
   const cuerpo = cil(0.11, 0.52, a.color, 0, 0.3, 0, g); cil(0.115, 0.04, 0x222222, 0, 0.04, 0, g);
@@ -71,6 +118,7 @@ function modeloExtintor(tipo, conEtiqueta = true) {
   const manguera = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0.66, 0), new THREE.Vector3(0.12, 0.55, 0.02), new THREE.Vector3(0.14, 0.3, 0.05)]), 12, 0.012, 6), M(0x111111)); g.add(manguera);
   boq.position.set(0.14, 0.22, 0.05); boq.rotation.x = Math.PI; g.add(boq);
   if (conEtiqueta) { const e = letrero(a.nombre.split(' (')[0].toUpperCase(), 0.5, 0.11, '#FFFFFF', '#B71C1C'); e.position.set(0, 1.0, 0.0); g.add(e); }
+  etiquetaBanda(tipo, g);   // etiqueta envolvente: agente y clase de fuego (NOM-002-STPS-2010, 7.2 l) 2) y 4))
   return { g, cuerpo, seguro, mano };
 }
 const RACK = {}; const ordenRack = ['agua', 'pqs', 'co2', 'k'];
@@ -149,9 +197,22 @@ const panelXR = (() => { const c = document.createElement('canvas'); c.width = 1
   return { m, pintar(txt1, txt2) { const g = c.getContext('2d'); g.clearRect(0, 0, 1024, 256); g.fillStyle = 'rgba(14,58,107,.88)'; g.fillRect(0, 0, 1024, 256); g.fillStyle = '#fff'; g.font = 'bold 54px Calibri, sans-serif'; g.textAlign = 'center';
     g.fillText(txt1, 512, 100); g.font = '44px Calibri, sans-serif'; g.fillText(txt2, 512, 185); t.needsUpdate = true; } }; })();
 
+// sonidos (motor/sonido.js): alarma mientras está activada, crepitar del fuego junto a las llamas y siseo al descargar
+const SND = { alarma: null, fuego: null, chorro: null };
+W.cuadro.push(() => {
+  const quiere = { alarma: !!F.alarma, fuego: !!(F.activo && F.I > 0.03), chorro: !!F.rociando };
+  if (quiere.alarma && !SND.alarma) SND.alarma = W.sonido('alarma', null, { vol: 0.45 }); if (!quiere.alarma && SND.alarma) { SND.alarma.detener(); SND.alarma = null; }
+  if (quiere.fuego && !SND.fuego) SND.fuego = W.sonido('fuego', luzFuego, { vol: 1, alcance: 14 }); if (!quiere.fuego && SND.fuego) { SND.fuego.detener(); SND.fuego = null; }
+  if (quiere.chorro && !SND.chorro) SND.chorro = W.sonido('fuga', null, { vol: 0.8 }); if (!quiere.chorro && SND.chorro) { SND.chorro.detener(); SND.chorro = null; }
+});
 let tPrev = 0;
 W.cuadro.push(t => {
-  const dt = Math.min(0.05, t - tPrev || 0.016); tPrev = t;
+  const dt = Math.min(0.05, t - tPrev || 0.016); tPrev = t; gente.actualizar(dt);
+  if (rutaYo.length) { const d = rutaYo[0].clone().sub(yo.position), L = d.length();
+    if (L < 0.05) { rutaYo.shift(); if (!rutaYo.length && alLlegarYo) { const c = alLlegarYo; alLlegarYo = null; c(); } }
+    else { d.normalize(); const pa = Math.min(L, 2.4 * dt); yo.position.addScaledVector(d, pa); yo.rotation.y = Math.atan2(d.x, d.z); faseYo += dt * 10; av.animar(faseYo, true);
+      const k = Math.min(1, dt * 2.5), obj = yo.position.clone().add(new THREE.Vector3(0, 0.8, 0)); controls.target.lerp(obj, k); camera.position.lerp(obj.clone().add(new THREE.Vector3(-1.5, 6.5, 7)), k); } }
+  else if (yo.visible) av.animar(0, false);
   luzAlarma.intensity = F.alarma ? (Math.sin(t * 12) > 0 ? 8 : 0) : 0;
   // fuego
   const I = F.activo ? F.I : 0, caso = F.caso && CASOS[F.caso];
@@ -217,10 +278,10 @@ function pasos(c) {
     { titulo: 'Se detecta un fuego', texto: caso.txt + ' <span class="ficticio">[FICTICIO]</span>', sinPuntos: true,
       iniciar() { armarEscenario(c); encender(c); F.I = 0.55; W.irVista(0);
         W.aviso(`<h2>🔥 ¡Fuego!</h2><p>${caso.txt}.</p><p>Practicarás: dar la alarma, identificar la clase de fuego, elegir el extintor correcto, revisarlo, colocarte a la distancia adecuada y descargarlo a la base del fuego.</p>
-          <p>Si el fuego no se controla: evacúa por la ruta de evacuación al punto de reunión y sigue a la brigada (${F26}, 8.1 b) y e).</p><p class="ficticio">Escenario [FICTICIO – ejercicio didáctico]. El fuego es virtual.</p>`, () => W.siguiente(), 'Empezar'); } },
+          <p>Al terminar, <b>evacúa el edificio</b> por la salida de emergencia hasta el <b>punto de reunión</b> exterior y repórtate con la brigada (${F26}, 8.1 b) y e). Si el fuego no se controla, evacúa de inmediato.</p><p class="ficticio">Escenario [FICTICIO – ejercicio didáctico]. El fuego es virtual.</p>`, () => W.siguiente(), 'Empezar'); } },
     { titulo: '1 · Da la alarma', texto: 'Toca el <b>botón rojo de alarma</b> en la pared derecha (brilla en azul).', fuente: `${F26}, 8.1 c) procedimiento de alertamiento`,
       iniciar() { W.irVista(2); W.resaltar([alarma]); },
-      tocar(o) { if (o.userData.tipo !== 'alarma') return W.toast('info', 'Primero da la alarma.'); F.alarma = true; W.resaltar([]); W.bien('Alarma activada: la brigada y las personas saben que hay una emergencia.', `${F26}, 8.1 c)`); W.siguiente(); } },
+      tocar(o) { if (o.userData.tipo !== 'alarma') return W.toast('info', 'Primero da la alarma.'); F.alarma = true; W.resaltar([]); W.bien('Alarma activada: la brigada y las personas saben que hay una emergencia; quienes no participan empiezan a evacuar.', `${F26}, 8.1 c)`); evacuan(); W.siguiente(); } },
     { titulo: '2 · ¿Qué clase de fuego es?', texto: 'Identifica la clase de fuego según la norma.', fuente: `${F26}, 4.11`,
       iniciar() { W.irVista(0); elegir(`${caso.txt.replace(/<[^>]+>/g, '')}: ¿qué clase de fuego es?`,
         ['A', 'B', 'C', 'K'].map(k => ({ t: `Clase ${k}`, ok: k === caso.clase, fb: k === caso.clase ? `Clase ${k}: ${caso.def}.` : `No. Este fuego es de ${caso.def}.` })), `${F26}, 4.11`, () => W.siguiente()); } },
@@ -251,7 +312,7 @@ function pasos(c) {
         else if (t === 'marca_cerca') W.mal('Demasiado cerca: te expones al calor y a las llamas.', a.fAlc, true);
         else W.mal(`Demasiado lejos: el agente no alcanza el fuego (${a.alcance}).`, a.fAlc); } },
     { titulo: '7 · Descarga a la base del fuego', texto: `<b>Pantalla:</b> arrastra la <b>mira</b> a la <b>base</b> de las llamas y <b>mantén presionada la palanca roja 🧯</b> mientras barres de lado a lado (con mouse: mantén el clic; teclado: barra espaciadora). <b>Visor:</b> aprieta el gatillo.<div id="xrBar"></div>`,
-      fuente: 'Instrucción general de uso; confirma siempre con la etiqueta del extintor (NOM-002-STPS-2010, 7.2 l) 3).', puntos: 20,
+      fuente: 'Instrucción general de uso; confirma siempre con la etiqueta del extintor (NOM-002-STPS-2010, 7.2 l) 3).', puntos: 10,
       iniciar() { modoDescarga = true; F.carga = 1; F.activo = true; F.I = Math.max(F.I, 0.85); $('medidor').style.display = 'block'; $('palanca').style.display = 'block'; $('mira').style.display = 'block'; controls.enabled = false; F.centrar = 1.2; if (innerWidth < 700) { W.$('panel').classList.add('mini'); W.$('bMin').textContent = '▴'; } let agotado = 0;
         (async () => { const bar = $('xrBar'); if (await soporta('immersive-vr')) { const b = document.createElement('button'); b.textContent = '🥽 Realidad virtual'; b.onclick = () => entrarXR(false); bar.appendChild(b); }
           if (await soporta('immersive-ar')) { const b = document.createElement('button'); b.textContent = '🔲 Realidad mixta (tu espacio real)'; b.onclick = () => entrarXR(true); bar.appendChild(b); } })();
@@ -262,13 +323,30 @@ function pasos(c) {
       iniciar() { W.irVista(0); elegir('El fuego se apagó. ¿Qué haces con el extintor y con la emergencia?', [
         { t: 'Vigilo que no se reavive, aviso a la brigada y reporto el extintor usado para su mantenimiento y recarga', ok: true, fb: 'Correcto: un extintor usado debe recargarse antes de volver a su lugar.' },
         { t: 'Regreso el extintor a su lugar aunque esté descargado', critico: true, fb: 'Un extintor descargado deja el área sin protección.' },
-        { t: 'Sigo trabajando sin avisar', fb: 'Hay que avisar a la brigada y revisar el área.' }], `${F26}, 4.19 (mantenimiento incluye la recarga) y 7.2`, () => { F.alarma = false; W.siguiente(); }); } },
+        { t: 'Sigo trabajando sin avisar', fb: 'Hay que avisar a la brigada y revisar el área.' }], `${F26}, 4.19 (mantenimiento incluye la recarga) y 7.2`, () => W.siguiente()); } },
+    { titulo: '9 · Evacúa el edificio', puntos: 20, texto: 'La alarma activó el plan de emergencia. Toca la <b>señal de salida de emergencia</b> (muro derecho) y sal del edificio.', fuente: `${F26}, 8.1 b) y e); NOM-003-SEGOB-2011, 5.1`,
+      iniciar() { enMano.clear();
+        elegir('La brigada revisa el área del fuego e indica evacuar. ¿Qué haces?', [
+          { t: 'Salgo del edificio por la ruta de evacuación hasta el punto de reunión exterior', ok: true, fb: 'Correcto: en un incendio se evacúa el inmueble hasta el punto de reunión, en zona abierta y lejos del edificio.' },
+          { t: 'Me resguardo en otro cuarto del mismo edificio', fb: 'En un incendio no te quedes dentro: el humo se propaga. La zona de menor riesgo interior es para el repliegue en sismos (SGIRPC CDMX, 2022).' },
+          { t: 'Me quedo junto al fuego apagado sin avisar a nadie', critico: true, fb: 'La brigada controla el área; tú evacúas y te reportas.' }], `${F26}, 8.1 b) rutas, salidas y puntos de reunión; 8.1 e) evacuación`, () => {
+            const c = camera.position; yo.position.set(Math.max(-3.4, Math.min(3.4, c.x)), 0, Math.max(-1.5, Math.min(3.4, c.z - 1))); yo.visible = true; W.irVista(4); W.resaltar([sSalida]); }); },
+      tocar(o) { if (o.userData.tipo !== 'salida' || this._h) return; this._h = true; W.resaltar([]); W.bien('Salida de emergencia: verde, con silueta que avanza hacia la salida.', 'NOM-003-SEGOB-2011, 5.1');
+        caminarYo([[3.3, 2.0], [4.7, 2.0], [8, 2.0]], () => W.siguiente()); } },
+    { titulo: '10 · Llega al punto de reunión', puntos: 20, texto: 'Sigue las flechas verdes de la banqueta y toca el <b>punto de reunión</b> (círculo verde con cuatro flechas).', fuente: 'NOM-003-SEGOB-2011, 5.1',
+      iniciar() { W.irVista(5); listos.then(() => P.brig && P.brig.caminar([[3.4, 2.0], ...RUTA_EXT, enReunion(4)]).then(() => P.brig.mirarA(...REUNION))); },
+      tocar(o) { if (o.userData.tipo !== 'reunion' || this._h) return; this._h = true; W.bien('Punto de reunión: zona abierta, alejada del edificio, cables, postes y árboles.', 'NOM-003-SEGOB-2011, 5.1; SGIRPC CDMX (2022)');
+        caminarYo([[20.5, 4.6], enReunion(2)], () => { F.alarma = false; W.irVista(6);
+          elegir('Llegaste al punto de reunión. ¿Qué sigue?', [
+            { t: 'Me reporto con la brigada para el censo, aviso que usé un extintor y espero a que indiquen si se puede regresar', ok: true, fb: 'Correcto: la brigada hace el censo y coordina el regreso cuando ya no hay peligro.' },
+            { t: 'Regreso a mi lugar porque el fuego ya se apagó', critico: true, fb: 'El regreso lo autoriza la brigada después de revisar el área.' },
+            { t: 'Me voy a mi casa', critico: true, fb: 'Si te vas sin reportarte, la brigada podría arriesgarse buscándote.' }], `${F26}, Guía de Referencia II, II.4 j) y k)`, () => W.siguiente()); }); } },
   ];
 }
 W.inicio(Object.keys(CASOS).map(k => ({ id: k, txt: CASOS[k].txt })), c => pasos(c),
   'Basado en la NOM-002-STPS-2010 (DOF 09/12/2010): clases de fuego 4.11, revisión 7.2, Guía VII Tabla VII.1. Escenarios ficticios; el fuego es virtual. En el Meta Quest 3S abre esta página en el navegador del visor para usar realidad virtual o mixta.');
 armarEscenario('A'); encender('A'); F.I = 0.4;
-if (location.search.includes("qa")) window.__qa = { W, F, RACK, MARCAS, alarma, tocar: W.tocar, estado: W.qa, mira, moverMira, miraALaBase,
+if (location.search.includes("qa")) window.__qa = { exterior, sSalida, yo, P, W, F, RACK, MARCAS, alarma, tocar: W.tocar, estado: W.qa, mira, moverMira, miraALaBase,
   rociar: (zona = 'base') => { F.rociando = true; F.zona = zona; F.desde.set(0.3, 1.25, FUEGO_Z + 3); F.hacia.copy(centroFuego()); }, soltar: () => { F.rociando = false; } };
 </script>
 </body>
