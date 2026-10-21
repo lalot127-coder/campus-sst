@@ -110,6 +110,9 @@ function crearMundo(THREE, OrbitControls, cfg) {
   // sonidos generados por código (12/10/2026): motor/sonido.js; la cámara es el oyente
   const conSonido = f => { if (window.Sonido) return f(window.Sonido); const ex = document.querySelector('script[data-sonido]'); if (ex) { ex.addEventListener('load', () => f(window.Sonido)); return; }
     const s = document.createElement('script'); s.src = new URL('sonido.js', BASE_MOTOR).href; s.dataset.sonido = '1'; s.onload = () => f(window.Sonido); document.head.appendChild(s); };
+  // vista a la altura de los ojos (21/10/2026): motor/vista1a.js, se carga una sola vez aunque haya varios sub-mundos
+  const conVista1a = f => { if (window.Vista1a) return f(); const ex = document.querySelector('script[data-vista1a]'); if (ex) { ex.addEventListener('load', () => f()); return; }
+    const s = document.createElement('script'); s.src = new URL('vista1a.js', BASE_MOTOR).href; s.dataset.vista1a = '1'; s.onload = () => f(); document.head.appendChild(s); };
   // Control de acceso: si se abre con enlace directo sin código vigente para esta puerta, muestra el candado + WhatsApp
   const proteger = () => { Acceso.sesionUnica && Acceso.sesionUnica(); Acceso.proteger(`${cfg.icono} ${cfg.titulo}`, new URL('../index.html' + (area ? '?mundo=' + area : ''), BASE_MOTOR).href); };
   if (window.Acceso) proteger(); else { const s = document.createElement('script'); s.src = new URL('acceso.js', BASE_MOTOR).href; s.onload = proteger; document.head.appendChild(s); }
@@ -229,18 +232,28 @@ function crearMundo(THREE, OrbitControls, cfg) {
     controls.addEventListener('start', () => { seguir = false; });
     let tPrev = performance.now();
     cuadro.push(() => { const ahora = performance.now(), dt = Math.min(0.05, (ahora - tPrev) / 1000); tPrev = ahora;
-      if (ruta.length) { const d = ruta[0].clone().sub(yo.position); d.y = 0; const Ld = d.length();
+      const p1 = api.v1a && api.v1a.activa(); if (p1) api.v1a.actualizar(dt);   // vista a la altura de los ojos
+      if (ruta.length && !p1) { const d = ruta[0].clone().sub(yo.position); d.y = 0; const Ld = d.length();
         if (Ld < 0.06) { ruta.shift(); if (!ruta.length) { marca.visible = false; const f = alLlegar; alLlegar = null; f && f(); } }
         else { d.normalize(); const paso = Math.min(Ld, (o.vel || 2.4) * dt), antes = yo.position.clone(); yo.position.addScaledVector(d, paso); yo.rotation.y = Math.atan2(d.x, d.z); fase += dt * 10; av && av.animar(fase, true);
           const mov = yo.position.clone().sub(antes); camera.position.add(mov); controls.target.add(mov); } }
       else av && av.animar(0, false);
       const anda = ruta.length > 0; if (anda !== recorrido._anda) { recorrido._anda = anda; window.Sonido && Sonido.andar(anda); }
-      if (seguir) { const obj = yo.position.clone().add(new V(0, 1.2, 0)); controls.target.lerp(obj, Math.min(1, dt * 3)); }
+      if (seguir && !p1) { const obj = yo.position.clone().add(new V(0, 1.2, 0)); controls.target.lerp(obj, Math.min(1, dt * 3)); }
       if (muros.length) { const tapan = new Set();   // rayos de la cámara al avatar y a su alrededor (lo que hay junto a él también se ve)
         for (const [dx, dz] of [[0, 0], [1.8, 0], [-1.8, 0], [0, -1.8], [0, 1.8]]) { cab.copy(yo.position).add(new V(dx, 1.0, dz)); const dv = cab.clone().sub(camera.position), Ld = dv.length();
           ray2.set(camera.position, dv.normalize()); ray2.far = Ld; ray2.intersectObjects(muros, false).forEach(h => tapan.add(h.object)); }
         muros.forEach(m => { const meta = tapan.has(m) ? 0.16 : 1; m.userData.op += (meta - m.userData.op) * Math.min(1, dt * 8); m.material.opacity = m.userData.op; m.material.depthWrite = m.userData.op > 0.9; }); } });
     REC.activo = true; REC.ir = ir; REC.yo = yo; REC.nav = nav;
+    // Vista a la altura de los ojos girando con el movimiento del celular (21/10/2026, motor/vista1a.js): se ofrece en
+    // todo sub-mundo que se recorre a pie. Mientras está encendida no se camina por clic: mandan las flechas.
+    conVista1a(() => { if (api.v1a) return;
+      api.v1a = Vista1a.crear({ THREE, camera, controls, renderer, barra: document.querySelector('#barra .der'),
+        yo: () => yo, libre: (x, z) => nav.libre(x, z), altura: 1.58,
+        bloqueado: () => $('modal').style.display === 'flex' || $('conf').style.display === 'flex',
+        alCambiar: a => { ruta = []; alLlegar = null; marca.visible = false; seguir = !a;
+          if (a) toast('info', 'Vista a la altura de los ojos: gira moviendo el celular o arrastrando con el dedo; camina con las flechas.'); } });
+    });
     return { yo, ir, nav, detener: () => { ruta = []; marca.visible = false; }, seguir: (v = true) => { seguir = v; } };
   };
   function toast(tipo, txt, fuente = '', ms) { const t = $('toast'); t.className = tipo; t.innerHTML = txt + (fuente ? `<small>Fuente: ${fuente}</small>` : ''); t.style.display = 'block';

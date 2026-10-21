@@ -65,6 +65,7 @@ button{font-family:inherit;cursor:pointer}.sec{background:var(--hielo);color:var
 <script src="motor/barco.js"></script>
 <script src="motor/sonido.js"></script>
 <script src="motor/realismo.js"></script>
+<script src="motor/vista1a.js"></script>
 <script type="importmap">{"imports":{"three":"./motor/vendor/three/build/three.module.js","three/addons/":"./motor/vendor/three/examples/jsm/"}}</script>
 </head>
 <body>
@@ -612,10 +613,21 @@ const xr = crearXR({ THREE, renderer, camera, controls, contenedor: $('#barra .d
   libre: (x, z) => navAct().libre(x, z),
   alBoton: b => { if (b === 'menu') menuVR(); else if (b === 'atras') atras(); },
   alCambiar: activo => { ruta = []; alLlegar = null; marca.visible = false;
+    if (activo && v1a.activa()) v1a.desactivar();   // en el visor manda la realidad virtual
     if (activo && pr.activo) {   // la pantalla de inicio (HTML) no se ve en el visor: se entra con el avatar guardado
       perfil = ed.perfil(); if (!String(perfil.nombre || '').trim()) perfil.nombre = 'Participante'; Avatar.guardar(perfil); vestir();
       $('#inicio').style.display = 'none'; pr.activo = false; try { sessionStorage.setItem('campus_entro', '1'); } catch (e) { } }
     if (activo) aviso('VR: joystick izq. para caminar · A/X = menú · B/Y = atrás · manos: botón ☰ en la muñeca'); } });
+
+// ---------------------------------------------------------------------------- VISTA EN PRIMERA PERSONA (21/10/2026)
+// A la altura de los ojos y girando la vista con el movimiento del celular (motor/vista1a.js). El botón 🧍 vive junto a
+// los demás de la barra. En el visor no aplica: ahí manda la realidad virtual.
+const v1a = Vista1a.crear({
+  THREE, camera, controls, renderer, barra: $('#barra .der'), yo: () => yo,
+  libre: (x, z) => navAct().libre(x, z),
+  bloqueado: () => $('#inicio').style.display === 'block' || $('#modal').style.display === 'flex',
+  alCambiar: activa => { ruta = []; alLlegar = null; marca.visible = false; if (activa) { levantar(); $('#ayuda').style.display = 'none'; aviso('Vista a la altura de los ojos: gira moviendo el celular o arrastrando; camina con las flechas.'); } else colocarCamara(); }
+});
 
 // ============================================================================ MULTIJUGADOR (servidor de aula en el mismo wifi)
 // Funciona cuando el campus se abre desde `python 05_herramientas/servidor_aula.py <curso>`: cada celular envía su
@@ -724,24 +736,24 @@ function cuadro() {
   nCuadros++; tFps += dt; if (tFps > 1) { window.__fps = Math.round(nCuadros / tFps); nCuadros = 0; tFps = 0; }
   for (let i = tweens.length - 1; i >= 0; i--) { const tw = tweens[i]; const k = Math.min(1, (ahora - tw.t0) / tw.ms); const ee = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
     tw.v.lerpVectors(tw.de, tw.a, ee); if (k >= 1) { tweens.splice(i, 1); tw.res(); } }
-  prev.copy(yo.position); const nav = navAct(), vr = xr.activo();
+  prev.copy(yo.position); const nav = navAct(), vr = xr.activo(), p1 = v1a.activa();   // p1: vista a la altura de los ojos
   // teclado (computadora): avanza si la celda está libre; si choca, se desliza por el eje que sí está libre
-  if (teclas.size && !vr) { const f = new THREE.Vector3(); camera.getWorldDirection(f); f.y = 0; f.normalize(); const r = new THREE.Vector3(-f.z, 0, f.x); const d = new THREE.Vector3();
+  if (teclas.size && !vr && !p1) { const f = new THREE.Vector3(); camera.getWorldDirection(f); f.y = 0; f.normalize(); const r = new THREE.Vector3(-f.z, 0, f.x); const d = new THREE.Vector3();
     if (teclas.has('w') || teclas.has('arrowup')) d.add(f); if (teclas.has('s') || teclas.has('arrowdown')) d.sub(f);
     if (teclas.has('d') || teclas.has('arrowright')) d.add(r); if (teclas.has('a') || teclas.has('arrowleft')) d.sub(r);
     if (d.lengthSq()) { ruta = []; marca.visible = false; levantar(); $('#ayuda').style.display = 'none'; d.normalize(); const paso = (dentro ? 3.6 : 4.5) * dt, x = yo.position.x + d.x * paso, z = yo.position.z + d.z * paso;
       if (nav.libre(x, z)) yo.position.set(x, 0, z); else if (nav.libre(x, yo.position.z)) yo.position.x = x; else if (nav.libre(yo.position.x, z)) yo.position.z = z;
       yo.rotation.y = Math.atan2(d.x, d.z); } }
   // seguir la ruta calculada (A*)
-  if (ruta.length && !vr) { const m = ruta[0], dx = m.x - yo.position.x, dz = m.z - yo.position.z, L = Math.hypot(dx, dz);
+  if (ruta.length && !vr && !p1) { const m = ruta[0], dx = m.x - yo.position.x, dz = m.z - yo.position.z, L = Math.hypot(dx, dz);
     if (L < 0.08) { ruta.shift(); if (!ruta.length) { marca.visible = false; const cb = alLlegar; alLlegar = null; cb && cb(); } }
     else { const s = Math.min(L, (dentro ? 3.6 : 5) * dt); yo.position.x += dx / L * s; yo.position.z += dz / L * s; yo.rotation.y = Math.atan2(dx, dz); } }
-  if (vr) xr.actualizar();
+  if (vr) xr.actualizar(); else if (p1) v1a.actualizar(dt);
   const andando = yo.position.distanceToSquared(prev) > 1e-6; fase += andando ? dt * 10 : 0; animYo(fase, andando, pose); if (window.Sonido) Sonido.andar(andando && pose !== 'sentado');
   const lugar = dentro || 'plaza';
   OTROS.forEach(o => { if (!o.meta) return; const d = o.meta.clone().sub(o.g.position); const mov = d.length() > 0.02; o.g.position.lerp(o.meta, Math.min(1, dt * 6)); o.g.rotation.y = o.ry;
     o.g.visible = o.lugar === lugar; if (o.g.visible && o.g.parent !== escena) escena.add(o.g); o.fase += mov ? dt * 10 : 0; o.animar(o.fase, mov); });
-  if (camModo === 'seguir' && !vr) { const delta = yo.position.clone().sub(prev); delta.y = 0; camera.position.add(delta); controls.target.add(delta); }
+  if (camModo === 'seguir' && !vr && !p1) { const delta = yo.position.clone().sub(prev); delta.y = 0; camera.position.add(delta); controls.target.add(delta); }
   if (I) I.actualizar(dt, vr ? null : camera, yo); else Z.actualizar(dt, yo.position);
   if (!I) { for (let i = 0; i < gotas; i++) { const k = (gfase[i] + t * 0.55) % 1, r = k * 2.4, a = gdir[i]; gp[i * 3] = Math.cos(a) * r; gp[i * 3 + 1] = 1.4 * k - 3.2 * k * k * 1.5 + 0.2; gp[i * 3 + 2] = Math.sin(a) * r; }
     gGeo.attributes.position.needsUpdate = true; escultura.rotation.y = t * 0.35; }
