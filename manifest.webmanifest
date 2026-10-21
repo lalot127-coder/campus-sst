@@ -1,16 +1,22 @@
 {
+  "id": "./?app=1",
   "name": "Campus de Simulación SST · CERS",
   "short_name": "Campus SST",
   "description": "Campus 3D de simulación en Seguridad y Salud en el Trabajo: edificios, simuladores, biblioteca normativa y juegos. Funciona en computadora, celular y Meta Quest.",
   "lang": "es-MX",
+  "dir": "ltr",
   "start_url": "./?app=1",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "landscape",
   "background_color": "#0E3A6B",
   "theme_color": "#0E3A6B",
+  "categories": ["education", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
     { "src": "recursos/icono_192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "recursos/icono_512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    { "src": "recursos/icono_512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "recursos/icono_512_mask.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
