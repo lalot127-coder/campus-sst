@@ -53,7 +53,16 @@ async function verificar(cod) {
 }
 // control.json publicado (cursos activos y códigos anulados). Se busca junto al simulador y, en copias de otros
 // repositorios de github.io, en el campus principal.
+// (20/10/2026) Copia en el dispositivo del último control.json válido (va FIRMADO: se vuelve a comprobar la firma al usarla).
+//  · Si se leyó hace menos de 2 min, no se descarga otra vez (abrir el campus varias veces seguidas en el celular hacía
+//    3 descargas por página y, con señal débil, cada una esperaba 5 s).
+//  · Si no hay internet o tarda, se usa la copia (máx. 3 días) en lugar de negar el acceso del curso.
+const KCTL = 'campus_control', FRESCO = 2 * 60e3, VIEJO = 3 * 864e5;
+async function copiaControl(maxEdad) {
+  try { const c = JSON.parse(localStorage.getItem(KCTL) || 'null'); if (!c || !c.d || !c.s || Date.now() - c.h > maxEdad) return null;
+    if (!await firmaOk(c.d, c.s)) return null; return JSON.parse(new TextDecoder().decode(b64(c.d))); } catch (e) { return null; } }
 async function leerControl() {
+  const fresca = await copiaControl(FRESCO); if (fresca) return fresca;
   const urls = [new URL('../acceso/control.json', BASE_ACC).href];
   if (modo() === 'publico') CONTROLES_PUBLICOS.forEach(u => { if (!urls.includes(u)) urls.push(u); });
   for (const u of urls) {
@@ -62,10 +71,15 @@ async function leerControl() {
       const r = await fetch(u + '?t=' + Math.floor(Date.now() / 60000), { cache: 'no-store', signal: ctl.signal }); clearTimeout(to);
       if (!r.ok) continue;
       const j = await r.json(); if (!j || !j.d || !j.s || !await firmaOk(j.d, j.s)) continue;
-      return JSON.parse(new TextDecoder().decode(b64(j.d)));
+      const d = JSON.parse(new TextDecoder().decode(b64(j.d)));
+      // nunca se reemplaza por uno más viejo (p. ej. una plataforma que aún no se actualiza): gana el emitido más reciente
+      try { const prev = JSON.parse(localStorage.getItem(KCTL) || 'null'), dPrev = prev ? JSON.parse(new TextDecoder().decode(b64(prev.d))) : null;
+        if (dPrev && (dPrev.t || 0) > (d.t || 0) && await firmaOk(prev.d, prev.s)) return dPrev;
+        localStorage.setItem(KCTL, JSON.stringify({ d: j.d, s: j.s, h: Date.now() })); } catch (e) { }
+      return d;
     } catch (e) { }
   }
-  return null;
+  return copiaControl(VIEJO);
 }
 const leerCursos = () => { try { return JSON.parse(localStorage.getItem(KC) || '[]').filter(x => typeof x === 'string'); } catch (e) { return []; } };
 const limpiaClave = c => String(c || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40);
@@ -166,6 +180,7 @@ function liberar3D() {
   document.querySelectorAll('canvas').forEach(c => { try { const gl = c.getContext('webgl2') || c.getContext('webgl'); const x = gl && gl.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); } catch (e) { } });
   document.querySelectorAll('audio,video').forEach(m => { try { m.pause(); } catch (e) { } });
   try { (window.__audioCtxs || []).forEach(a => a.suspend && a.suspend()); } catch (e) { }
+  try { dispatchEvent(new Event('campus-liberado')); } catch (e) { }   // la página detiene su ciclo 3D, sala y consultas
 }
 function avisoSesion(html, botones) {
   const d = document.createElement('div'); d.id = 'sesFondo';
@@ -190,6 +205,16 @@ function sesionUnica() {
     t.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#154F90;color:#fff;padding:10px 16px;border-radius:12px;z-index:70;font-family:Calibri,sans-serif;max-width:92vw;box-shadow:0 6px 20px rgba(0,0,0,.25)';
     document.body.appendChild(t); setTimeout(() => t.remove(), 5000); }
   ch.postMessage({ tipo: 'nueva', id: yo });
+  // (20/10/2026) En el celular, una pestaña en segundo plano queda «congelada» por el sistema: ya no recibe el aviso de
+  // la pestaña nueva y no suelta la memoria de video → la nueva falla. Si la pestaña pasa más de 90 s oculta (o el
+  // navegador la congela) libera su 3D; al volver se ofrece recargar. No aplica al visor (al entrar a VR cambia la visibilidad).
+  const ua = navigator.userAgent || '', celular = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) && !/OculusBrowser|Quest|Pico|Wolvic/i.test(ua);
+  if (celular) { let t = null;
+    const soltar = () => { if (cerrada) return; cerrada = true; liberar3D();
+      avisoSesion('<div style="font-size:2.2rem">💤</div><h2 style="color:#0E3A6B;margin:.2rem 0">Pausamos el Campus</h2><p>Esta pestaña estuvo en segundo plano y liberamos memoria para que tu celular no se sature.</p>',
+        [['Volver a cargar', () => location.reload(), true]]); };
+    document.addEventListener('visibilitychange', () => { clearTimeout(t); if (document.visibilityState === 'hidden') t = setTimeout(soltar, 90e3); });
+    document.addEventListener('freeze', soltar); }
   // si el sistema libera el 3D (poca memoria), ofrece recargar en lugar de quedarse en negro
   document.addEventListener('webglcontextlost', e => { if (cerrada) return; e.preventDefault && e.preventDefault();
     avisoSesion('<div style="font-size:2.2rem">⚠️</div><h2 style="color:#0E3A6B;margin:.2rem 0">Se reinició la vista 3D</h2><p>Tu dispositivo liberó memoria (por ejemplo, por otra pestaña o app pesada). Cierra otras pestañas del Campus y vuelve a cargar.</p>',

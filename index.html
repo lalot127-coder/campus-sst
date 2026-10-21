@@ -611,7 +611,11 @@ const xr = crearXR({ THREE, renderer, camera, controls, contenedor: $('#barra .d
   alTeletransportar: p => { if (navAct().libre(p.x, p.z)) { levantar(); ruta = []; alLlegar = null; yo.position.set(p.x, 0, p.z); xr.colocar(p); } },
   libre: (x, z) => navAct().libre(x, z),
   alBoton: b => { if (b === 'menu') menuVR(); else if (b === 'atras') atras(); },
-  alCambiar: activo => { ruta = []; alLlegar = null; marca.visible = false; if (activo) aviso('VR: joystick izq. para caminar · A/X = menú · B/Y = atrás'); } });
+  alCambiar: activo => { ruta = []; alLlegar = null; marca.visible = false;
+    if (activo && pr.activo) {   // la pantalla de inicio (HTML) no se ve en el visor: se entra con el avatar guardado
+      perfil = ed.perfil(); if (!String(perfil.nombre || '').trim()) perfil.nombre = 'Participante'; Avatar.guardar(perfil); vestir();
+      $('#inicio').style.display = 'none'; pr.activo = false; try { sessionStorage.setItem('campus_entro', '1'); } catch (e) { } }
+    if (activo) aviso('VR: joystick izq. para caminar · A/X = menú · B/Y = atrás · manos: botón ☰ en la muñeca'); } });
 
 // ============================================================================ MULTIJUGADOR (servidor de aula en el mismo wifi)
 // Funciona cuando el campus se abre desde `python 05_herramientas/servidor_aula.py <curso>`: cada celular envía su
@@ -716,7 +720,7 @@ const reloj = new THREE.Clock(); const prev = new THREE.Vector3(); window.__fps 
 let dtForzado = null;   // solo modo de prueba (?qa): avanzar el ciclo aunque la pestaña esté oculta
 function cuadro() {
   const dt = dtForzado ?? Math.min(0.05, reloj.getDelta()), ahora = performance.now() + (dtForzado ? (cuadro.extra = (cuadro.extra || 0) + dtForzado * 1000) : (cuadro.extra || 0)), t = reloj.elapsedTime;
-  if (pr.activo) { if (pr.g) pr.g.rotation.y = t * 0.6; pr.r.render(pr.s, pr.c); return; }
+  if (pr.activo && !xr.activo()) { if (pr.g) pr.g.rotation.y = t * 0.6; pr.r.render(pr.s, pr.c); return; }   // en VR siempre se dibuja el campus (si no, el visor se quedaba congelado)
   nCuadros++; tFps += dt; if (tFps > 1) { window.__fps = Math.round(nCuadros / tFps); nCuadros = 0; tFps = 0; }
   for (let i = tweens.length - 1; i >= 0; i--) { const tw = tweens[i]; const k = Math.min(1, (ahora - tw.t0) / tw.ms); const ee = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
     tw.v.lerpVectors(tw.de, tw.a, ee); if (k >= 1) { tweens.splice(i, 1); tw.res(); } }
@@ -746,6 +750,8 @@ function cuadro() {
   if (!vr) controls.update(); renderer.render(escena, camera); actualizarEtiquetas();
 }
 renderer.setAnimationLoop(cuadro);
+// otra pestaña tomó la sesión o el celular pausó esta (motor/acceso.js): se detiene todo para no saturar el dispositivo
+addEventListener('campus-liberado', () => { renderer.setAnimationLoop(null); clearInterval(MP.timer); try { if (window.SalaLinea && SalaLinea.activa()) SalaLinea.salir(); } catch (e) { } });
 { const c = document.getElementById('cargando'); if (c) { c.dataset.ok = '1'; c.remove(); } }
 
 // ============================================================================ INICIO

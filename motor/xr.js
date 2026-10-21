@@ -50,17 +50,18 @@ window.CampusXR = window.CampusXR || (() => { const ua = navigator.userAgent || 
     function visible(el) { return el && getComputedStyle(el).display !== 'none'; }
 
     function leer() {   // qué hay en pantalla ahora
-      const modal = $('modal'), toast = $('toast');
+      const conf = $('conf'), modal = visible(conf) ? conf : $('modal'), toast = $('toast');   // conf = confirmación Sí/No (motor.js)
       let titulo, cuerpo, els;
       if (visible(modal)) {
-        const c = $('mCont').cloneNode(true); c.querySelectorAll('button,input,script,style').forEach(e => e.remove());
+        const tarj = modal.firstElementChild, c = tarj.cloneNode(true); c.querySelectorAll('button,input,script,style').forEach(e => e.remove());
         const h = c.querySelector('h2,h3'); titulo = h ? h.textContent : ''; if (h) h.remove();
         cuerpo = c.innerText.replace(/\n{2,}/g, '\n').trim();
-        els = [...$('mCont').querySelectorAll('button')].filter(b => !/print\(/.test(b.getAttribute('onclick') || '') && b.id !== 'bCsv' && b.id !== 'bBorrar');
+        els = [...tarj.querySelectorAll('button')].filter(b => !/print\(/.test(b.getAttribute('onclick') || '') && b.id !== 'bCsv' && b.id !== 'bBorrar');
       } else {
         titulo = ($('pNum').textContent ? $('pNum').textContent + ' · ' : '') + $('pTit').textContent;
         cuerpo = $('pTxt').innerText + ($('pFuente').textContent ? '\n' + $('pFuente').textContent : '');
         els = [...$('acciones').querySelectorAll('button')];
+        const atras = $('bAtrasM'); if (atras) els.push(atras);   // con manos libres no hay botón B/Y: «Atrás» va en el panel
       }
       return { titulo, cuerpo, els, toast: visible(toast) ? { tipo: toast.className, txt: toast.innerText } : null };
     }
@@ -94,7 +95,9 @@ window.CampusXR = window.CampusXR || (() => { const ua = navigator.userAgent || 
       tex.needsUpdate = true;
     }
     let pendiente = false;
-    const repintar = () => { if (pendiente || !renderer.xr.isPresenting) return; pendiente = true; requestAnimationFrame(() => { pendiente = false; pintar(); }); };
+    // (20/10/2026) setTimeout y no requestAnimationFrame: dentro de VR el rAF de la ventana no corre y `pendiente` se
+    // quedaba en true para siempre → el panel ya no cambiaba y sus botones no respondían («se congela»).
+    const repintar = () => { if (pendiente || !renderer.xr.isPresenting) return; pendiente = true; setTimeout(() => { pendiente = false; try { pintar(); } catch (e) { console.error('XR panel', e); } }, 30); };
     new MutationObserver(repintar).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['style', 'class', 'disabled'] });
 
     function alFrente() {   // coloca el panel 1 m al frente de la vista, un poco abajo y a la izquierda
@@ -110,61 +113,98 @@ window.CampusXR = window.CampusXR || (() => { const ua = navigator.userAgent || 
     const mira = new THREE.Mesh(new THREE.RingGeometry(0.02, 0.035, 24), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
     mira.visible = false; scene.add(mira);
     function apuntar(c) { M4.identity().extractRotation(c.matrixWorld); ray.ray.origin.setFromMatrixPosition(c.matrixWorld); ray.ray.direction.set(0, 0, -1).applyMatrix4(M4); }
+    // (20/10/2026) antes se lanzaba el rayo contra TODA la escena (recursivo) 2 veces por cuadro: en el Quest 3S bajaba
+    // los cuadros por segundo y la imagen se veía mal / a saltos. Ahora solo contra los tocables (lista renovada cada 1 s).
+    const vis = o => { for (let p = o; p; p = p.parent) if (p.visible === false) return false; return true; };
+    let tocables = [], tLista = 0;
+    function listaTocables() { const ahora = performance.now(); if (ahora - tLista < 1000) return tocables; tLista = ahora;
+      tocables = []; scene.traverse(o => { if (o.isMesh && o.userData.tipo && o !== panel) tocables.push(o); }); return tocables; }
     function golpe(c) {
       apuntar(c);
+      if (muneca.visible) { const hm = ray.intersectObject(muneca)[0]; if (hm) return { tipo: 'muneca', h: hm }; }
       const hp = panel.visible ? ray.intersectObject(panel)[0] : null;
-      const vis = o => { for (let p = o; p; p = p.parent) if (p.visible === false) return false; return true; };
-      const ho = ray.intersectObjects(scene.children, true).find(h => h.object !== panel && h.object.userData.tipo && vis(h.object));
+      const ho = ray.intersectObjects(listaTocables(), false).find(h => vis(h.object));
       const hs = opc.piso ? ray.intersectObject(opc.piso)[0] : null;
       if (hp && (!ho || hp.distance <= ho.distance)) return { tipo: 'panel', h: hp };
       if (ho) return { tipo: 'obj', h: ho };
       if (hs) return { tipo: 'piso', h: hs };
       return null;
     }
-    let base = null; const ofs = { x: 0, z: 0 };   // desplazamiento del espacio físico dentro del mundo
-    function irA(x, z) {   // teletransporte: el origen físico queda en (x, z) del mundo
-      if (!base) base = renderer.xr.getReferenceSpace();
-      ofs.x = x; ofs.z = z;
-      renderer.xr.setReferenceSpace(base.getOffsetReferenceSpace(new XRRigidTransform({ x: -x, y: 0, z: -z, w: 1 })));
-      setTimeout(alFrente, 120);
-    }
+    // posición y giro del espacio físico dentro del mundo (rig): mundo = Trasladar(ofs) · GirarY(yaw) · pose del visor
+    let base = null; const ofs = { x: 0, z: 0 }; let yaw = 0;
+    function aplicarRig() {
+      if (!base) base = renderer.xr.getReferenceSpace(); if (!base) return;
+      const c = Math.cos(-yaw), s = Math.sin(-yaw), px = -ofs.x, pz = -ofs.z;   // inversa: GirarY(-yaw) · Trasladar(-ofs)
+      renderer.xr.setReferenceSpace(base.getOffsetReferenceSpace(new XRRigidTransform(
+        { x: c * px + s * pz, y: 0, z: -s * px + c * pz, w: 1 }, { x: 0, y: Math.sin(-yaw / 2), z: 0, w: Math.cos(-yaw / 2) }))); }
+    function irA(x, z) { ofs.x = x; ofs.z = z; aplicarRig(); setTimeout(alFrente, 120); }   // teletransporte
+    function girar(d) {   // giro por pasos alrededor de la cabeza (no del centro del cuarto)
+      const h = new THREE.Vector3(); renderer.xr.getCamera().getWorldPosition(h);
+      const dx = ofs.x - h.x, dz = ofs.z - h.z, c = Math.cos(d), s = Math.sin(d);
+      ofs.x = h.x + c * dx + s * dz; ofs.z = h.z - s * dx + c * dz; yaw += d; aplicarRig(); }
+    // ---------------------------------------------------------------- manos libres (hand tracking)
+    // Se dibujan las articulaciones (antes no se veían las manos y parecía que no funcionaban). Pellizco = gatillo.
+    // Botón en la muñeca IZQUIERDA: apúntale con la otra mano y pellizca = traer el panel al frente.
+    const matMano = new THREE.MeshBasicMaterial({ color: 0xF2D2BD }), geoArt = new THREE.SphereGeometry(0.008, 8, 6);
+    const manos = [0, 1].map(i => { const h = renderer.xr.getHand(i); scene.add(h); return h; });
+    const cvM = document.createElement('canvas'); cvM.width = 256; cvM.height = 128; { const g2 = cvM.getContext('2d');
+      g2.fillStyle = '#3FA7C6'; g2.beginPath(); g2.roundRect(0, 0, 256, 128, 30); g2.fill(); g2.fillStyle = '#fff'; g2.font = '900 48px Arial'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText('📋 Panel', 128, 66); }
+    const texM = new THREE.CanvasTexture(cvM); texM.colorSpace = THREE.SRGBColorSpace;
+    const muneca = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.045), new THREE.MeshBasicMaterial({ map: texM, side: THREE.DoubleSide, depthTest: false }));
+    muneca.visible = false; muneca.renderOrder = 12; scene.add(muneca);
+    const qTmp = new THREE.Quaternion(), vTmp = new THREE.Vector3();
+    W.cuadro.push(() => { if (!renderer.xr.isPresenting) { muneca.visible = false; return; } let hayMano = false;
+      manos.forEach(h => { const j = h.joints || {};
+        for (const k in j) { const a = j[k]; if (!a.userData.bola) { a.userData.bola = new THREE.Mesh(geoArt, matMano); a.add(a.userData.bola); } }
+        const w = j['wrist']; const src = h.userData.fuente;
+        if (w && w.visible && src && src.handedness === 'left') { hayMano = true; w.getWorldPosition(vTmp); w.getWorldQuaternion(qTmp);
+          muneca.position.copy(vTmp).add(new THREE.Vector3(0, 0.06, 0)); const cam = new THREE.Vector3(); renderer.xr.getCamera().getWorldPosition(cam); muneca.lookAt(cam); } });
+      muneca.visible = hayMano; });
+    manos.forEach(h => { h.addEventListener('connected', e => { h.userData.fuente = e.data; }); h.addEventListener('disconnected', () => { h.userData.fuente = null; }); });
     [0, 1].forEach(i => {
       const c = renderer.xr.getController(i); scene.add(c);
       const linea = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x9CC5A1 })); linea.scale.z = 4; c.add(linea);
-      c.addEventListener('selectstart', () => {
+      c.addEventListener('selectstart', () => { try {
         const r = golpe(c); if (!r) return;
+        if (r.tipo === 'muneca') { alFrente(); return; }
         if (r.tipo === 'panel') { const u = r.h.uv, px = u.x * ANCHO, py = (1 - u.y) * ALTO;
           const b = botones.find(b => px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h); if (b && !b.el.disabled) b.el.click(); }
         else if (r.tipo === 'obj') W.tocar(r.h.object.userData.ref || r.h.object);
         else if (r.tipo === 'piso') {   // la persona queda parada donde apunta (descuenta lo que ya caminó en su cuarto)
           const p = r.h.point, cp = new THREE.Vector3(); renderer.xr.getCamera().getWorldPosition(cp);
           irA(p.x - (cp.x - ofs.x), p.z - (cp.z - ofs.z)); }
-      });
+      } catch (e) { console.error('XR select', e); } });
       c.addEventListener('squeezestart', alFrente);
       c.addEventListener('connected', e => { c.userData.fuente = e.data; });
+      c.addEventListener('disconnected', () => { c.userData.fuente = null; });
       W.cuadro.push(() => { if (!renderer.xr.isPresenting) return; const r = golpe(c);
         linea.scale.z = r ? r.h.distance : 4; if (i === 0) { mira.visible = !!r && r.tipo === 'piso'; if (mira.visible) { mira.position.copy(r.h.point).y += 0.01; mira.rotation.x = -Math.PI / 2; } } });
     });
 
     // ---------------------------------------------------------------- joystick y botones del Quest (18/10/2026)
-    // Joystick izq. = caminar · B/Y = Atrás (pregunta si quieres volver al edificio) · A/X = traer el panel al frente
-    const prevB = new Map(), dir = new THREE.Vector3(); let tMov = performance.now();
+    // Joystick izq. = caminar · Joystick der. = girar 30° (hacia atrás = media vuelta) · B/Y = Atrás (pregunta si quieres
+    // volver al edificio) · A/X = traer el panel al frente. Las manos (sin gamepad) usan pellizco y el botón de la muñeca.
+    const prevB = new Map(), dir = new THREE.Vector3(); let tMov = performance.now(), girando = false;
     W.cuadro.push(() => { const s = renderer.xr.getSession && renderer.xr.getSession(); if (!s || !renderer.xr.isPresenting) return;
-      const ahora = performance.now(), dt = Math.min(0.05, (ahora - tMov) / 1000); tMov = ahora;
-      for (const f of s.inputSources) { const gp = f.gamepad; if (!gp) continue; const mano = f.handedness;
+      const ahora = performance.now(), dt = Math.min(0.05, (ahora - tMov) / 1000); tMov = ahora; let gx = 0, gz = 0;
+      for (const f of s.inputSources) { const gp = f.gamepad; if (!gp || f.hand) continue; const mano = f.handedness;
         [[4, alFrente], [5, () => { const b = document.getElementById('bAtrasM'); if (b) b.click(); }]].forEach(([i, fn]) => {
-          const k = mano + i, on = !!(gp.buttons[i] && gp.buttons[i].pressed); if (on && !prevB.get(k)) fn(); prevB.set(k, on); });
-        if (mano === 'left' && gp.axes.length >= 4 && Math.hypot(gp.axes[2], gp.axes[3]) > .15) {
+          const k = mano + i, on = !!(gp.buttons[i] && gp.buttons[i].pressed); if (on && !prevB.get(k)) { try { fn(); } catch (e) { console.error(e); } } prevB.set(k, on); });
+        if (gp.axes.length < 4) continue;
+        if (mano === 'right') { gx = gp.axes[2]; gz = gp.axes[3]; continue; }
+        if (Math.hypot(gp.axes[2], gp.axes[3]) > .15) {
           renderer.xr.getCamera().getWorldDirection(dir); dir.y = 0; dir.normalize(); const v = 2 * dt;
-          if (!base) base = renderer.xr.getReferenceSpace();
-          ofs.x += (dir.x * -gp.axes[3] - dir.z * gp.axes[2]) * v; ofs.z += (dir.z * -gp.axes[3] + dir.x * gp.axes[2]) * v;
-          renderer.xr.setReferenceSpace(base.getOffsetReferenceSpace(new XRRigidTransform({ x: -ofs.x, y: 0, z: -ofs.z, w: 1 }))); } } });
+          ofs.x += (dir.x * -gp.axes[3] - dir.z * gp.axes[2]) * v; ofs.z += (dir.z * -gp.axes[3] + dir.x * gp.axes[2]) * v; aplicarRig(); } }
+      if (!girando && Math.abs(gx) > .7) { girando = true; girar(-Math.sign(gx) * Math.PI / 6); }
+      else if (!girando && gz > .8) { girando = true; girar(Math.PI); }
+      if (Math.abs(gx) < .3 && gz < .3) girando = false; });
 
     // ---------------------------------------------------------------- entrar / salir
     const fondo = scene.background;
     async function entrar(modo) {
       const s = await navigator.xr.requestSession(modo, { requiredFeatures: ['local-floor'], optionalFeatures: ['hand-tracking'] });
-      renderer.xr.setReferenceSpaceType('local-floor'); await renderer.xr.setSession(s); base = null; ofs.x = ofs.z = 0;
+      renderer.xr.setReferenceSpaceType('local-floor'); await renderer.xr.setSession(s); base = null; ofs.x = ofs.z = 0; yaw = 0;
+      renderer.xr.setFoveation && renderer.xr.setFoveation(1);   // menos carga en los bordes de la lente (Quest 3S)
       try { sessionStorage.setItem('campus_vr', '1'); } catch (e) { }
       controls.enabled = false;
       if (modo === 'immersive-ar') { scene.background = null; (opc.entorno || []).forEach(o => o.visible = false); }

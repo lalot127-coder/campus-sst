@@ -2,7 +2,7 @@
 // la señal sea débil (Meta Quest, celular, APK). Solo se registra en https (Cloudflare / GitHub Pages), nunca en la red local.
 // - Páginas, scripts y acceso/control.json: primero internet (máx. 5 s) y, si no hay, la copia guardada → siempre lo más nuevo.
 // - Modelos 3D, texturas, imágenes y three.js local: primero la copia guardada (se actualiza en segundo plano).
-const VERSION = 'campus-2026-10-18';
+const VERSION = 'campus-2026-10-20';
 const BASICO = ['./', './index.html', './manifest.webmanifest', './recursos/logo_CERS.jpeg', './recursos/icono_192.png',
   './motor/vendor/three/build/three.module.js', './motor/vendor/three/examples/jsm/controls/OrbitControls.js',
   './motor/vendor/three/examples/jsm/loaders/FontLoader.js', './motor/vendor/three/examples/jsm/geometries/TextGeometry.js',

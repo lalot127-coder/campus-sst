@@ -29,7 +29,9 @@
     renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = o.exposicion ?? 1.08;
     if (o.cielo) scene.background = cielo(THREE);
     if (calidad === 'baja') return;
-    if (o.sol && o.sombras !== false && !(o.soloAlta && calidad !== 'alta')) {
+    // (20/10/2026) en el visor (Meta Quest) sin sombras salvo calidad 'alta' forzada: cada cuadro se dibuja dos veces (un ojo
+    // cada vez) y las sombras suaves bajaban los cuadros por segundo → imagen a saltos y congelamientos.
+    if (o.sol && o.sombras !== false && !(o.soloAlta && calidad !== 'alta') && !(visor && calidad !== 'alta')) {
       renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       const s = o.sol, t = calidad === 'alta' ? 2048 : 1024, r = o.radio || 9;
       s.castShadow = true; s.shadow.mapSize.set(t, t); Object.assign(s.shadow.camera, { left: -r, right: r, top: r, bottom: -r, near: 0.5, far: r * 6 });

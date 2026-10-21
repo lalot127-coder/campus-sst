@@ -36,10 +36,29 @@ export function crearXR(o) {
     linea.scale.z = 6; c.add(linea); const punta = new THREE.Mesh(new THREE.SphereGeometry(.012, 8, 6), new THREE.MeshBasicMaterial({ color: 0x3FA7C6 })); c.add(punta);
     c.addEventListener('connected', e => { c.userData.fuente = e.data; }); c.addEventListener('disconnected', () => { c.userData.fuente = null; });
     c.addEventListener('select', () => { try { seleccionar(c); } catch (e) { console.error('XR select', e); } }); rig.add(c); return { c, linea }; });
+  // ---------------- manos libres (20/10/2026): se dibujan las articulaciones (antes no se veían y parecía que no
+  // funcionaban) y en la muñeca IZQUIERDA aparece un botón «☰ Menú»: apúntale con la otra mano y pellizca.
+  const matMano = new THREE.MeshBasicMaterial({ color: 0xF2D2BD }), geoArt = new THREE.SphereGeometry(0.008, 8, 6);
+  const manos = [0, 1].map(i => { const h = renderer.xr.getHand(i); rig.add(h);
+    h.addEventListener('connected', e => { h.userData.fuente = e.data; }); h.addEventListener('disconnected', () => { h.userData.fuente = null; }); return h; });
+  const cvM = document.createElement('canvas'); cvM.width = 256; cvM.height = 128; { const g = cvM.getContext('2d');
+    g.fillStyle = '#3FA7C6'; g.beginPath(); g.roundRect(0, 0, 256, 128, 30); g.fill(); g.fillStyle = '#fff'; g.font = '900 52px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('☰ Menú', 128, 66); }
+  const texM = new THREE.CanvasTexture(cvM); texM.colorSpace = THREE.SRGBColorSpace;
+  const muneca = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.045), new THREE.MeshBasicMaterial({ map: texM, side: THREE.DoubleSide, depthTest: false }));
+  muneca.visible = false; muneca.renderOrder = 12;
+  function manosCuadro() { let hay = false; const vTmp = new THREE.Vector3(), cam = new THREE.Vector3();
+    manos.forEach(h => { const j = h.joints || {};
+      for (const k in j) { const a = j[k]; if (!a.userData.bola) { a.userData.bola = new THREE.Mesh(geoArt, matMano); a.add(a.userData.bola); } }
+      const w = j['wrist'], src = h.userData.fuente;
+      if (w && w.visible && src && src.handedness === 'left') { hay = true; w.getWorldPosition(vTmp); camera.getWorldPosition(cam); muneca.position.copy(vTmp).add(new THREE.Vector3(0, 0.06, 0)); muneca.lookAt(cam); } });
+    muneca.visible = hay && !panelMesh; }
   let panelMesh = null, menuOps = null;
   function lanzar(c) { mtx.identity().extractRotation(c.matrixWorld); ray.ray.origin.setFromMatrixPosition(c.matrixWorld); ray.ray.direction.set(0, 0, -1).applyMatrix4(mtx); ray.far = 60;
+    if (!panelMesh && muneca.visible) { const hm = ray.intersectObject(muneca)[0]; if (hm) return hm; }
     const objs = panelMesh ? [panelMesh] : o.objetivos(); return ray.intersectObjects(objs, true)[0]; }
   function seleccionar(c) {
+    if (!panelMesh && muneca.visible) { mtx.identity().extractRotation(c.matrixWorld); ray.ray.origin.setFromMatrixPosition(c.matrixWorld); ray.ray.direction.set(0, 0, -1).applyMatrix4(mtx);
+      if (ray.intersectObject(muneca)[0]) { o.alBoton && o.alBoton('menu'); return; } }
     if (panelMesh) { const h = lanzar(c);
       if (menuOps && h && h.uv) { const fila = Math.floor((1 - h.uv.y) * menuOps.filas) - menuOps.cabecera; const op = menuOps.ops[fila];
         if (op) { cerrarPanel(); setTimeout(() => op[1](), 0); return; } }
@@ -50,7 +69,7 @@ export function crearXR(o) {
   function colocar(pos, ry) { if (ry !== undefined) rig.rotation.y = ry;
     const off = renderer.xr.isPresenting ? new THREE.Vector3(camera.position.x, 0, camera.position.z).applyAxisAngle(new THREE.Vector3(0, 1, 0), rig.rotation.y) : new THREE.Vector3();
     rig.position.set(pos.x - off.x, 0, pos.z - off.z); }
-  function montar() { const sc = o.escena(); if (rig.parent !== sc) sc.add(rig); if (retic.parent !== sc) sc.add(retic); }
+  function montar() { const sc = o.escena(); if (rig.parent !== sc) sc.add(rig); if (retic.parent !== sc) sc.add(retic); if (muneca.parent !== sc) sc.add(muneca); }
   // ---------------- botón
   const btn = document.createElement('button'); btn.className = 'sec'; btn.id = 'bVR'; btn.textContent = '🥽 VR'; btn.title = 'Entrar en realidad virtual (Meta Quest)'; btn.style.display = 'none';
   if (o.contenedor) o.contenedor.prepend(btn);
@@ -60,7 +79,7 @@ export function crearXR(o) {
     try { sesion = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking'] });
       sesion.addEventListener('end', () => { sesion = null; });
       try { sessionStorage.setItem('campus_vr', '1'); } catch (e) { }
-      await renderer.xr.setSession(sesion); } catch (e) { sesion = null; alert('No se pudo iniciar la realidad virtual: ' + e.message); } finally { pidiendo = false; } }
+      await renderer.xr.setSession(sesion); renderer.xr.setFoveation && renderer.xr.setFoveation(1); } catch (e) { sesion = null; alert('No se pudo iniciar la realidad virtual: ' + e.message); } finally { pidiendo = false; } }
   btn.onclick = () => { if (sesion) salir(); else entrarVR(); };
   renderer.xr.addEventListener('sessionstart', () => { const yo = o.yo(); montar(); camera.position.set(0, 0, 0); camera.rotation.set(0, 0, 0); rig.add(camera);
     colocar(yo.position, yo.rotation.y + Math.PI); yo.visible = false; if (o.controls) o.controls.enabled = false; btn.textContent = '🥽 Salir VR'; o.alCambiar && o.alCambiar(true); });
@@ -91,11 +110,11 @@ export function crearXR(o) {
     [[4, 'menu'], [5, 'atras']].forEach(([i, accion]) => { const k = mano + i, ahora = !!(b[i] && b[i].pressed);
       if (ahora && !previo.get(k)) { if (panelMesh) cerrarPanel(); else if (o.alBoton) o.alBoton(accion); } previo.set(k, ahora); }); }
   function girar(d) { const cam = camera.getWorldPosition(new THREE.Vector3()); rig.position.sub(cam).applyAxisAngle(Y, d).add(cam); rig.rotation.y += d; }
-  function actualizar() { if (!renderer.xr.isPresenting) return; montar(); retic.visible = false;
+  function actualizar() { if (!renderer.xr.isPresenting) return; montar(); retic.visible = false; manosCuadro();
     const ahoraT = performance.now(), dt = Math.min(0.05, (ahoraT - ultimo) / 1000); ultimo = ahoraT;
     for (const { c, linea } of controles) { const h = lanzar(c); linea.scale.z = h ? h.distance : 6; if (h && h.object.userData.piso && !panelMesh) { retic.visible = true; retic.position.copy(h.point).setY(h.point.y + .02); } }
     const fuentes = sesion ? [...sesion.inputSources] : []; let ejeGiro = 0, ejeAtras = 0, mx = 0, mz = 0;
-    fuentes.forEach(f => { const ax = f.gamepad && f.gamepad.axes; botones(f); if (!ax || ax.length < 4) return;
+    fuentes.forEach(f => { if (f.hand) return; const ax = f.gamepad && f.gamepad.axes; botones(f); if (!ax || ax.length < 4) return;
       if (f.handedness === 'left') { mx = ax[2]; mz = ax[3]; } else { ejeGiro = ax[2]; ejeAtras = ax[3]; } });
     // giro por pasos (joystick derecho) y media vuelta (joystick derecho hacia atrás)
     if (!girando && Math.abs(ejeGiro) > .7) { girando = true; girar(-Math.sign(ejeGiro) * Math.PI / 6); }

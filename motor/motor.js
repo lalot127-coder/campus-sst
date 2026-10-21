@@ -85,7 +85,7 @@ function crearMundo(THREE, OrbitControls, cfg) {
 <div id="barra"><img src="${new URL('../recursos/logo_CERS.jpeg', BASE_MOTOR).href}" alt="CERS" style="height:34px;border-radius:7px;background:#fff;padding:2px"><b>${cfg.icono} ${cfg.titulo}</b><span class="chip" id="cPaso">Paso 0/0</span><span class="chip" id="cPts">0 pts</span><span class="chip" id="cTiempo">0:00</span>
 <div class="der"><button class="sec peq" id="bAtrasM" title="Regresar al edificio">⬅<span class="txt"> Atrás</span></button><button class="sec peq" id="bVista" title="Cambiar la vista">🎥<span class="txt"> Vista</span></button><button class="sec peq" id="bReini" title="Reiniciar el caso">↺<span class="txt"> Reiniciar</span></button><button class="sec peq" id="bInicioM" title="Inicio del campus">🏠<span class="txt"> Inicio</span></button><button class="sec peq" id="bCompM" title="Compartir este simulador">🔗</button><button class="sec peq salir" id="bCampus" title="Salir del simulador">✖<span class="txt"> Salir</span></button></div></div>
 <div id="panel"><button class="min" id="bMin" title="Minimizar o ampliar las instrucciones">▾</button><div class="paso" id="pNum"></div><h2 id="pTit">Cargando…</h2><p id="pTxt"></p><small id="pFuente"></small><div id="acciones"></div></div>
-<div id="toast"></div><div class="modal" id="modal"><div class="tarjeta" id="mCont"></div></div>`);
+<div id="toast"></div><div class="modal" id="modal"><div class="tarjeta" id="mCont"></div></div><div class="modal" id="conf" style="z-index:40"><div class="tarjeta" id="confC"></div></div>`);
   const $ = s => document.getElementById(s);
   // la barra puede ocupar 1 o 2 renglones (celular): las ventanas se acomodan debajo de ella y nunca se enciman
   const altoBarra = () => document.documentElement.style.setProperty('--barraH', $('barra').offsetHeight + 'px');
@@ -95,7 +95,11 @@ function crearMundo(THREE, OrbitControls, cfg) {
   const area = (location.pathname.match(/mundos\/([^/]+)\//) || [])[1];
   const alCampus = (q) => { location.href = cfg.campus || ('../../../index.html' + (q || (area ? '?mundo=' + area : ''))); };
   const enPartida = () => S.t0 && nPaso < pasos.length;
-  const confirmar = (fn) => () => { if (!enPartida() || confirm('¿Salir del simulador? La partida en curso se cancelará y no se registrará.')) fn(); };
+  // (20/10/2026) confirmación propia en lugar de confirm(): en el Quest el cuadro nativo no se ve dentro de VR y deja la
+  // página bloqueada («se congela»). Esta ventana sí aparece en el panel 3D (motor/xr.js la lee primero).
+  function siNo(txt, fn) { $('confC').innerHTML = `<h2>${txt}</h2><br><button class="prim" id="confSi">Sí</button> <button class="sec" id="confNo">No, seguir aquí</button>`;
+    $('conf').style.display = 'flex'; $('confSi').onclick = () => { $('conf').style.display = 'none'; fn(); }; $('confNo').onclick = () => { $('conf').style.display = 'none'; }; }
+  const confirmar = (fn) => () => { if (!enPartida()) fn(); else siNo('¿Salir del simulador? La partida en curso se cancelará y no se registrará.', fn); };
   $('bAtrasM').onclick = confirmar(() => alCampus());            // al edificio de su área
   $('bInicioM').onclick = confirmar(() => alCampus('?plaza'));   // a la entrada del campus
   $('bCampus').onclick = confirmar(() => alCampus('?salir'));    // a la pantalla de inicio (salir)
@@ -109,7 +113,7 @@ function crearMundo(THREE, OrbitControls, cfg) {
   // Control de acceso: si se abre con enlace directo sin código vigente para esta puerta, muestra el candado + WhatsApp
   const proteger = () => { Acceso.sesionUnica && Acceso.sesionUnica(); Acceso.proteger(`${cfg.icono} ${cfg.titulo}`, new URL('../index.html' + (area ? '?mundo=' + area : ''), BASE_MOTOR).href); };
   if (window.Acceso) proteger(); else { const s = document.createElement('script'); s.src = new URL('acceso.js', BASE_MOTOR).href; s.onload = proteger; document.head.appendChild(s); }
-  $('bReini').onclick = () => { if (!enPartida() || confirm('¿Reiniciar? La partida en curso se cancelará.')) location.reload(); };
+  $('bReini').onclick = () => { if (!enPartida()) location.reload(); else siNo('¿Reiniciar? La partida en curso se cancelará.', () => location.reload()); };
 
   // ---------------------------------------------------------------- escena
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -160,9 +164,10 @@ function crearMundo(THREE, OrbitControls, cfg) {
   // ---------------------------------------------------------------- animación, resaltado y toques
   const tweens = [];
   const mover = (v, destino, ms) => new Promise(res => tweens.push({ v, de: v.clone(), a: destino.clone ? destino.clone() : destino, t0: performance.now(), ms, res }));
-  const reloj = new THREE.Clock(); let objetivos = []; const cuadro = [];
+  const reloj = new THREE.Clock(); let objetivos = []; const cuadro = [], anims = [];
   renderer.setAnimationLoop(() => {
     const ahora = performance.now();
+    for (let i = anims.length - 1; i >= 0; i--) if (anims[i](ahora)) anims.splice(i, 1);   // api.animar (ver abajo)
     for (let i = tweens.length - 1; i >= 0; i--) { const tw = tweens[i]; const k = Math.min(1, (ahora - tw.t0) / tw.ms); const e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
       tw.v.lerpVectors(tw.de, tw.a, e); if (k >= 1) { tweens.splice(i, 1); tw.res(); } }
     const pulso = (Math.sin(reloj.getElapsedTime() * 5) + 1) / 2;
@@ -170,6 +175,7 @@ function crearMundo(THREE, OrbitControls, cfg) {
     cuadro.forEach(f => f(reloj.getElapsedTime()));
     controls.update(); renderer.render(scene, camera);
   });
+  addEventListener('campus-liberado', () => renderer.setAnimationLoop(null));   // otra pestaña tomó la sesión (motor/acceso.js)
   addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
   function resaltar(lista) { objetivos.forEach(o => { o.material && o.material.emissive && o.material.emissive.setRGB(0, 0, 0); o.scale.setScalar(1); }); objetivos = lista.filter(Boolean); }
   function irVista(i) { vista = i % VISTAS.length; mover(camera.position, new THREE.Vector3(...VISTAS[vista][0]), 700); mover(controls.target, new THREE.Vector3(...VISTAS[vista][1]), 700); }
@@ -291,7 +297,7 @@ function crearMundo(THREE, OrbitControls, cfg) {
     $('modal').style.display = 'flex';
     $('bCsv').onclick = () => { const t = 'Modulo,Nombre,Caso,Fecha,Puntos,Porcentaje,Criticos,Errores,Segundos,Resultado\n' + a.map(r => [r.modulo, r.nombre, r.caso, r.fecha, r.puntos, r.porcentaje, r.criticos, r.errores, r.segundos, r.resultado].map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
       const b = new Blob(['﻿' + t], { type: 'text/csv' }); const l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = `resultados_${cfg.clave}.csv`; l.click(); };
-    $('bBorrar').onclick = () => { if (confirm('¿Borrar resultados de este dispositivo?')) { localStorage.removeItem(K); grupo(); } };
+    $('bBorrar').onclick = () => siNo('¿Borrar resultados de este dispositivo?', () => { localStorage.removeItem(K); grupo(); });
   }
   // Pantalla de inicio: nombre + casos
   function inicio(casos, alIniciar, notaFuentes) {
@@ -319,7 +325,10 @@ function crearMundo(THREE, OrbitControls, cfg) {
   // api.sonido(tipo, objeto, opc) → fuente continua (se oye más fuerte al acercarse); api.efecto(tipo) → sonido corto
   api.sonido = (tipo, obj, o) => { let h = null; const pend = { detener: () => { if (h) Sonido.detener(h); else pend.cancel = true; } }; conSonido(S => { if (!pend.cancel && S) h = obj ? S.fuente(tipo, obj, o) : S.ambiente(tipo, o && o.vol); }); return pend; };
   api.efecto = tipo => conSonido(S => S && S.una(tipo));
-  api.animar = (ms, fn) => new Promise(ok => { const t0 = performance.now(); const f = () => { const k = Math.min(1, (performance.now() - t0) / ms); fn(k); if (k < 1) requestAnimationFrame(f); else ok(); }; requestAnimationFrame(f); });
+  // (20/10/2026) corre dentro del ciclo del renderer: en el visor (WebXR) el requestAnimationFrame de la ventana NO se
+  // ejecuta y la animación nunca terminaba → el paso se quedaba congelado en el Quest.
+  api.animar = (ms, fn) => new Promise(ok => { const t0 = performance.now();
+    anims.push(ahora => { let k = Math.min(1, (ahora - t0) / ms); try { fn(k); } catch (e) { console.error(e); k = 1; } if (k >= 1) { ok(); return true; } return false; }); });
   api.esperar = ms => new Promise(ok => setTimeout(ok, ms));
   api.globo = (texto, obj, ms = 2600, alto = 0.55) => {
     const cv = document.createElement('canvas'), g = cv.getContext('2d'); g.font = '900 44px Arial, Helvetica, sans-serif';
