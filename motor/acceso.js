@@ -205,16 +205,15 @@ function sesionUnica() {
     t.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#154F90;color:#fff;padding:10px 16px;border-radius:12px;z-index:70;font-family:Calibri,sans-serif;max-width:92vw;box-shadow:0 6px 20px rgba(0,0,0,.25)';
     document.body.appendChild(t); setTimeout(() => t.remove(), 5000); }
   ch.postMessage({ tipo: 'nueva', id: yo });
-  // (20/10/2026) En el celular, una pestaña en segundo plano queda «congelada» por el sistema: ya no recibe el aviso de
-  // la pestaña nueva y no suelta la memoria de video → la nueva falla. Si la pestaña pasa más de 90 s oculta (o el
-  // navegador la congela) libera su 3D; al volver se ofrece recargar. No aplica al visor (al entrar a VR cambia la visibilidad).
-  const ua = navigator.userAgent || '', celular = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) && !/OculusBrowser|Quest|Pico|Wolvic/i.test(ua);
-  if (celular) { let t = null;
-    const soltar = () => { if (cerrada) return; cerrada = true; liberar3D();
-      avisoSesion('<div style="font-size:2.2rem">💤</div><h2 style="color:#0E3A6B;margin:.2rem 0">Pausamos el Campus</h2><p>Esta pestaña estuvo en segundo plano y liberamos memoria para que tu celular no se sature.</p>',
-        [['Volver a cargar', () => location.reload(), true]]); };
-    document.addEventListener('visibilitychange', () => { clearTimeout(t); if (document.visibilityState === 'hidden') t = setTimeout(soltar, 90e3); });
-    document.addEventListener('freeze', soltar); }
+  // (21/10/2026) Se QUITÓ el aviso «Pausamos el Campus» por tiempo en segundo plano: cortaba la partida al cambiar de
+  // app y al entrar y salir de una puerta (el navegador guarda la página al navegar y la restaura al volver, lo que
+  // disparaba el aviso sin motivo). El celular ya libera memoria por su cuenta; si de verdad se pierde el 3D lo detecta
+  // `webglcontextlost` (aquí abajo), y si se abren dos pestañas lo resuelve el aviso de sesión única de arriba.
+  // Si la página vuelve desde la memoria del navegador con el 3D perdido, se recarga sola y sin preguntar.
+  addEventListener('pageshow', e => { if (!e.persisted) return;
+    const c = document.querySelector('canvas'); let perdido = false;
+    try { const gl = c && (c.getContext('webgl2') || c.getContext('webgl')); perdido = !!gl && gl.isContextLost(); } catch (err) { }
+    if (perdido) location.reload(); });
   // si el sistema libera el 3D (poca memoria), ofrece recargar en lugar de quedarse en negro
   document.addEventListener('webglcontextlost', e => { if (cerrada) return; e.preventDefault && e.preventDefault();
     avisoSesion('<div style="font-size:2.2rem">⚠️</div><h2 style="color:#0E3A6B;margin:.2rem 0">Se reinició la vista 3D</h2><p>Tu dispositivo liberó memoria (por ejemplo, por otra pestaña o app pesada). Cierra otras pestañas del Campus y vuelve a cargar.</p>',

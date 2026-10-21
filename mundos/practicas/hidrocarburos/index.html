@@ -46,7 +46,9 @@ html,body{margin:0;height:100%;background:var(--bg);font-family:system-ui,-apple
 </div>
 <div id="ov"><div class="box" id="ovBox"></div></div>
 
-<a-scene renderer="antialias:true; colorManagement:true; toneMapping:ACESFilmic; exposure:1.05" shadow="type:pcfsoft" background="color:#bcd6ea" fog="type:linear;color:#cfe0ec;near:70;far:260"
+<!-- (21/10/2026) vr-mode-ui apagado por omisión: en el celular el botón VR de A-Frame parte la pantalla en dos (modo
+     Cardboard) y se ve "como un túnel". Más abajo se enciende solo cuando hay un visor de verdad (Meta Quest, Pico…). -->
+<a-scene vr-mode-ui="enabled: false" renderer="antialias:true; colorManagement:true; toneMapping:ACESFilmic; exposure:1.05" shadow="type:pcfsoft" background="color:#bcd6ea" fog="type:linear;color:#cfe0ec;near:70;far:260"
          cursor="rayOrigin: mouse" raycaster="objects: .clickable, .clickable *">
   <a-entity id="hemi" light="type:hemisphere;color:#eaf4ff;groundColor:#7a8a5a;intensity:1.1"></a-entity>
   <a-entity id="sunTarget" position="0 0 0"></a-entity>
@@ -61,6 +63,28 @@ html,body{margin:0;height:100%;background:var(--bg);font-family:system-ui,-apple
   <a-entity id="world"></a-entity>
   <a-entity id="panel" visible="false" encima></a-entity>
 </a-scene>
+
+<script>
+// (21/10/2026) El botón 🥽 VR solo aparece en un visor de verdad (Meta Quest, Pico, Wolvic…) o con ?xr=1 a la fuerza.
+// En el celular, el navegador dice que "soporta VR" (Cardboard) y la pantalla se parte en dos ojos: se ve como un túnel.
+// Sin visor, en su lugar va un botón de PANTALLA COMPLETA, que es lo que sí sirve en el celular.
+(function () {
+  const ua = navigator.userAgent || '';
+  const visor = /OculusBrowser|Quest|Pico|Wolvic|Vive|SamsungBrowser\/.*VR/i.test(ua) || /[?&]xr=1/.test(location.search);
+  const sc = document.querySelector('a-scene');
+  const listo = fn => sc.hasLoaded ? fn() : sc.addEventListener('loaded', fn);
+  if (visor) { listo(() => sc.setAttribute('vr-mode-ui', 'enabled: true')); return; }
+  document.head.insertAdjacentHTML('beforeend', '<style>.a-enter-vr,.a-enter-ar{display:none!important}</style>');
+  const b = document.createElement('button');
+  b.id = 'bPantalla'; b.textContent = '⛶ Pantalla completa'; b.title = 'Ver en pantalla completa';
+  b.onclick = () => { const d = document.documentElement;
+    if (document.fullscreenElement) { document.exitFullscreen && document.exitFullscreen(); return; }
+    const p = d.requestFullscreen ? d.requestFullscreen() : (d.webkitRequestFullscreen && d.webkitRequestFullscreen());
+    p && p.catch && p.catch(() => { }); };
+  document.addEventListener('fullscreenchange', () => { b.textContent = document.fullscreenElement ? '⛶ Salir de pantalla completa' : '⛶ Pantalla completa'; });
+  const hud = document.getElementById('hud'); if (hud) hud.appendChild(b);
+})();
+</script>
 
 <script>
 /* =========================================================

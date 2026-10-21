@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="es"><head><!--ENVIAR_RESULTADOS--><script>// "📤 Enviar resultados" para TODOS los juegos y simuladores (07/10/2026). Script clásico, autocontenido.
+// Cuando un juego termina y guarda su resultado (servidor de aula /api/registro, localStorage o llamada directa) aparece un
+// botón para mandarlo: compartir (WhatsApp, correo, Teams… lo que tenga el celular), WhatsApp directo a la persona
+// instructora, copiar o descargar un comprobante. No envía nada solo: la persona decide a quién y cuándo.
+//   EnviarRes.ofrecer(fila | texto)   fila = {nombre, modulo/juego, puntos, porcentaje|pct, aciertos, total, resultado, ...}
+// Se inserta en los juegos de los cursos con 05_herramientas/insertar_enviar_resultados.py (sincronizar_hospedaje lo corre).
+(function () {
+  if (window.EnviarRes) return;
+  const WA = '522411794542';
+  let ultimo = null, boton = null;
+  const ETQ = { nombre: 'Nombre', modulo: 'Actividad', juego: 'Juego', caso: 'Caso', equipo: 'Equipo', puntos: 'Puntos', aciertos: 'Aciertos',
+    total: 'De', porcentaje: 'Porcentaje', pct: 'Porcentaje', criticos: 'Errores críticos', errores: 'Errores', segundos: 'Tiempo (s)',
+    resultado: 'Resultado', resultado_examen: 'Resultado', folio: 'Folio', forma: 'Forma', fecha: 'Fecha' };
+  function texto(f) {
+    if (typeof f === 'string') return f;
+    const lin = [`📋 ${document.title.replace(/\s*·.*$/, '')} · Campus SST CERS`];
+    Object.keys(ETQ).forEach(k => { if (f[k] !== undefined && f[k] !== '' && f[k] !== null) lin.push(`${ETQ[k]}: ${f[k]}${(k === 'porcentaje' || k === 'pct') && !String(f[k]).includes('%') ? '%' : ''}`); });
+    if (!f.fecha) lin.push('Fecha: ' + new Date().toLocaleString('es-MX'));
+    return lin.join('\n');
+  }
+  const pareceResultado = o => o && typeof o === 'object' && !Array.isArray(o) &&
+    ['puntos', 'porcentaje', 'pct', 'aciertos', 'resultado', 'resultado_examen'].some(k => k in o);
+  function css() {
+    if (document.getElementById('envCss')) return;
+    document.head.insertAdjacentHTML('beforeend', `<style id="envCss">
+#envBtn{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:90;border:0;border-radius:999px;background:#25D366;color:#fff;font:800 1rem Calibri,"Segoe UI",sans-serif;padding:12px 18px;box-shadow:0 6px 20px rgba(0,0,0,.3);cursor:pointer}
+#envFondo{position:fixed;inset:0;z-index:95;background:rgba(14,58,107,.75);display:flex;align-items:flex-end;justify-content:center;font-family:Calibri,"Segoe UI",sans-serif}
+#envCaja{background:#fff;color:#1B2633;border-radius:18px 18px 0 0;max-width:560px;width:100%;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
+#envCaja h3{margin:.1rem 0 .5rem;color:#0E3A6B}#envCaja pre{white-space:pre-wrap;background:#E8F5F9;border-radius:12px;padding:10px;font:.92rem Calibri,sans-serif;margin:0 0 10px}
+#envCaja button,#envCaja a{display:block;width:100%;box-sizing:border-box;text-align:center;border:0;border-radius:12px;padding:12px;margin:6px 0;font:700 1rem Calibri,sans-serif;cursor:pointer;text-decoration:none}
+.envP{background:#154F90;color:#fff}.envW{background:#25D366;color:#fff}.envS{background:#E8F5F9;color:#0E3A6B}</style>`);
+  }
+  function abrir() {
+    if (!ultimo) return; css();
+    const t = texto(ultimo), d = document.createElement('div'); d.id = 'envFondo';
+    d.innerHTML = `<div id="envCaja"><h3>📤 Enviar mis resultados</h3><pre></pre>
+      ${navigator.share ? '<button class="envP" id="envComp">Compartir (WhatsApp, correo…)</button>' : ''}
+      <a class="envW" target="_blank" rel="noopener" href="https://wa.me/${WA}?text=${encodeURIComponent(t)}">💬 WhatsApp a la persona instructora</a>
+      <button class="envS" id="envCop">📋 Copiar</button><button class="envS" id="envDesc">⬇️ Descargar comprobante</button>
+      <button class="envS" id="envCer">Cerrar</button></div>`;
+    d.querySelector('pre').textContent = t;
+    document.body.appendChild(d);
+    d.onclick = e => { if (e.target === d) d.remove(); };
+    const q = s => d.querySelector(s);
+    if (q('#envComp')) q('#envComp').onclick = () => navigator.share({ title: document.title, text: t }).catch(() => { });
+    q('#envCop').onclick = () => (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { q('#envCop').textContent = '✅ Copiado'; }).catch(() => prompt('Copia tus resultados:', t));
+    q('#envDesc').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + t], { type: 'text/plain' }));
+      a.download = 'resultados_' + (document.title.replace(/[^\wáéíóúñ]+/gi, '_').slice(0, 40)) + '.txt'; a.click(); };
+    q('#envCer').onclick = () => d.remove();
+  }
+  function ofrecer(f) {
+    ultimo = f; css();
+    if (!boton) { boton = document.createElement('button'); boton.id = 'envBtn'; boton.textContent = '📤 Enviar resultados'; boton.onclick = abrir; }
+    if (!boton.isConnected) (document.body || document.documentElement).appendChild(boton);
+  }
+  // 1) resultados que el juego manda al servidor de aula
+  const f0 = window.fetch;
+  if (f0) window.fetch = function (u, o) {
+    try { if (String(u).includes('/api/registro') && o && o.body) { const b = JSON.parse(o.body); if (b && b.fila && b.tipo !== 'encuesta') ofrecer(b.fila); } } catch (e) { }
+    return f0.apply(this, arguments);
+  };
+  // 2) resultados que el juego guarda en el dispositivo (lista de partidas)
+  try {
+    const s0 = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (k, v) {
+      try { if (this === window.localStorage && /result|sim_|cafeteria|juego/i.test(k)) { const a = JSON.parse(v); const f = Array.isArray(a) ? a[a.length - 1] : null; if (pareceResultado(f)) ofrecer(f); } } catch (e) { }
+      return s0.apply(this, arguments);
+    };
+  } catch (e) { }
+  // 3) Navegación de salida (12/10/2026): en juegos y páginas sin barra propia aparece «⬅ Regresar · 🏙️ Campus · 🚪 Salir».
+  //    El campus abre cada puerta con ?volver=<campus/index.html?mundo=área>; sin ese dato regresa con el historial
+  //    o al campus publicado. No se muestra en páginas que ya tienen su barra (sub-mundos con motor.js, aula, cafetería).
+  const CAMPUS = 'https://lalot127-coder.github.io/campus-sst/index.html';
+  function navegacion() {
+    if (document.getElementById('barra') || document.getElementById('auAtras') || document.getElementById('navSalida') || window.SIN_NAV_SALIDA) return;
+    let volver = null; try { volver = new URLSearchParams(location.search).get('volver'); if (volver) sessionStorage.setItem('nav_volver_' + location.pathname, volver); else volver = sessionStorage.getItem('nav_volver_' + location.pathname); } catch (e) { }
+    const base = volver ? volver.split('?')[0] : (location.protocol === 'file:' ? null : CAMPUS);
+    const ir = q => { location.href = base ? base + q : CAMPUS + q; };
+    document.head.insertAdjacentHTML('beforeend', `<style id="navCss">#navSalida{position:fixed;top:calc(8px + env(safe-area-inset-top));right:8px;z-index:89;display:flex;gap:6px;font:700 .9rem Calibri,"Segoe UI",sans-serif}
+#navSalida button{border:0;border-radius:999px;padding:8px 12px;background:rgba(14,58,107,.92);color:#fff;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.25);font:inherit}
+#navSalida .s{background:#C62828}@media (max-width:560px){#navSalida .t{display:none}#navSalida button{padding:8px 10px}}@media print{#navSalida{display:none}}</style>`);
+    const d = document.createElement('div'); d.id = 'navSalida';
+    d.innerHTML = '<button id="navReg" title="Regresar al edificio o al curso">⬅<span class="t"> Regresar</span></button><button id="navCam" title="Ir a la plaza del campus">🏙️<span class="t"> Campus</span></button><button class="s" id="navSal" title="Salir a la pantalla de inicio">🚪<span class="t"> Salir</span></button>';
+    document.body.appendChild(d);
+    d.querySelector('#navReg').onclick = () => { if (volver) location.href = volver; else if (history.length > 1) history.back(); else ir('?plaza'); };
+    d.querySelector('#navCam').onclick = () => ir('?plaza');
+    d.querySelector('#navSal').onclick = () => ir('?salir');
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', navegacion); else setTimeout(navegacion, 0);
+  window.EnviarRes = { ofrecer, abrir, texto, navegacion };
+})();
+</script><!--/ENVIAR_RESULTADOS--><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14213D"><title>Maratón por equipos · Análisis de riesgo</title>
+<style>
+:root{--navy:#14213D;--rojo:#C2410C;--teal:#1F6F8B;--ambar:#F2A900;--rosa:#FFF4E0;--hielo:#F3F4F7;--texto:#1F2433;--tenue:#5B6270;--bien:#2E7D32;--mal:#C62828}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:Calibri,"Segoe UI",system-ui,sans-serif;background:var(--hielo);color:var(--texto);-webkit-tap-highlight-color:transparent}
+header{background:var(--navy);color:#fff;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:1.2rem}header .meta{color:#FFE2C2;font-size:.88rem}
+.marcador{margin-left:auto;display:flex;gap:8px;font-weight:700;flex-wrap:wrap}.marcador span{background:var(--rojo);padding:5px 11px;border-radius:999px;font-size:.92rem}
+.volver{background:#fff;color:var(--navy);border:0;border-radius:10px;padding:6px 10px;font-weight:700;cursor:pointer}
+main{max-width:980px;margin:0 auto;padding:14px}
+.card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 2px 10px rgba(29,27,46,.1);margin-bottom:12px}
+.etq{display:inline-block;background:var(--rosa);color:var(--rojo);font-weight:800;border-radius:999px;padding:3px 12px;font-size:.85rem}
+.opciones{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px}
+.op{background:var(--hielo);border:2px solid transparent;border-radius:14px;padding:13px;font-size:1.03rem;cursor:pointer;text-align:left;color:var(--texto);display:flex;gap:10px;align-items:center;min-height:62px;font-family:inherit}
+.op:hover{border-color:var(--ambar)}.op .i{font-size:1.7rem}
+.op.ok{background:#E8F5E9;border-color:var(--bien)}.op.no{background:#FDECEA;border-color:var(--mal)}.op.sel{border-color:var(--teal);background:#E2F2F4}
+.retro{margin-top:12px;border-radius:14px;padding:13px;font-size:1.02rem}.retro.ok{background:#E8F5E9}.retro.no{background:#FDECEA}
+.retro small,.fuente{display:block;color:var(--tenue);font-style:italic;margin-top:6px;font-size:.85rem}
+button.prim{background:var(--rojo);color:#fff;border:0;border-radius:12px;padding:12px 20px;font-size:1.05rem;font-weight:700;cursor:pointer;font-family:inherit}
+button.sec{background:#fff;color:var(--navy);border:2px solid var(--navy);border-radius:12px;padding:10px 18px;font-size:1rem;cursor:pointer;font-family:inherit}
+button:disabled{opacity:.45;cursor:default}
+.modal{position:fixed;inset:0;background:rgba(29,27,46,.75);display:none;align-items:center;justify-content:center;padding:14px;z-index:9}
+.tarjeta{background:#fff;border-radius:18px;max-width:680px;width:100%;padding:22px;max-height:92vh;overflow:auto}
+.tarjeta h2{color:var(--navy);margin-top:0}
+input[type=text]{font-size:1.05rem;padding:10px;border-radius:10px;border:1px solid #c9ccd6;width:100%;margin:6px 0 12px;font-family:inherit}
+table{width:100%;border-collapse:collapse;font-size:.95rem}td,th{padding:6px;border-bottom:1px solid var(--hielo);text-align:left;vertical-align:top}
+.pie{font-size:.78rem;color:var(--tenue);margin-top:14px}
+.big{font-size:2.6rem;font-weight:800;color:var(--rojo);text-align:center}
+.fila{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.equipos{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px}
+.eq{background:#fff;border:3px solid;border-radius:14px;padding:8px 12px;display:flex;justify-content:space-between;font-size:1.1rem}.eq span{font-weight:800;font-size:1.4rem}
+.eq.turno{background:var(--rosa);transform:scale(1.04)}#rul{max-width:100%;height:auto}
+.crono{font-size:2rem;font-weight:800;color:var(--rojo)}.podio{font-size:1.4rem;margin:6px}
+</style></head><body>
+<header><button class="volver" onclick="history.length>1?history.back():location.href='manual.html'">‹ Volver</button>
+<div><h1>🏁 Maratón por equipos</h1><div class="meta">Ruleta de temas · para proyectar</div></div><div class="marcador" id="marc"></div></header>
+<main><div id="app"></div><p class="pie">Fuentes: RFSST (DOF 13/11/2014); NOM-030-STPS-2009; NOM-017-STPS-2024; NOM-031-STPS-2011 y demás NOM citadas en cada retroalimentación (verificadas el 05/10/2026); jerarquía de controles NIOSH como referencia. Casos ficticios con fines didácticos. Curso Análisis de riesgo · Ing. Carlos Eduardo Roa Sánchez.</p></main>
+<div class="modal" id="inicio" style="display:flex"><div class="tarjeta"><h2>🏁 Maratón por equipos</h2><p>Para jugar en grupo con el proyector: 2 a 6 equipos, 3 rondas. Giren la ruleta, respondan en 20 segundos y sumen 10 puntos por acierto.</p>
+<input type="text" id="nombre" placeholder="Nombre del grupo o sede" autocomplete="off">
+<button class="prim" id="empezar">Empezar</button> <button class="sec" id="verGrupo">Resultados del grupo</button></div></div>
+<div class="modal" id="final"><div class="tarjeta" id="finalCont"></div></div>
+<script>
+const CLAVE='maraton_riesgo', TITULO='Maratón por equipos';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let JUGADOR='';
+function leer(){try{return JSON.parse(localStorage.getItem('ar_'+CLAVE)||'[]')}catch(e){return[]}}
+async function registrar(fila){if(!location.protocol.startsWith('http')||location.hostname.endsWith('github.io'))return false;
+ try{const r=await fetch('/api/registro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo:'juego',fila})});return r.ok}catch(e){return false}}
+function marc(items){$('#marc').innerHTML=items.map(t=>`<span>${t}</span>`).join('')}
+async function terminar(pts,max,repaso,extra){
+ const pct=max?Math.round(pts/max*100):0, reg={juego:TITULO,nombre:JUGADOR,fecha:new Date().toLocaleString('es-MX'),puntos:pts,maximo:max,porcentaje:pct,...(extra||{})};
+ try{const a=leer();a.push(reg);localStorage.setItem('ar_'+CLAVE,JSON.stringify(a))}catch(e){}
+ const ok=await registrar(reg);
+ $('#finalCont').innerHTML=`<h2>${pct>=80?'🏆 ¡Excelente!':pct>=60?'👏 ¡Muy bien!':'💪 ¡Sigue practicando!'}</h2>
+ <div class="big">${pts} / ${max}</div><p style="text-align:center"><b>${esc(JUGADOR)}</b> · ${pct}%${extra&&extra.tiempo?' · '+extra.tiempo:''}</p>
+ ${repaso&&repaso.length?'<h3>Para repasar</h3><ul>'+repaso.map(e=>'<li>'+e+'</li>').join('')+'</ul>':'<p>Sin errores. 👏</p>'}
+ <p class="fuente">${ok?'Registrado en la computadora de la persona instructora.':'Guardado en este dispositivo.'}</p>
+ <button class="prim" onclick="location.reload()">Jugar otra vez</button> <button class="sec" onclick="grupo()">Resultados del grupo</button>`;
+ $('#final').style.display='flex'}
+function grupo(){const a=leer();
+ $('#finalCont').innerHTML=`<h2>Resultados del grupo (${a.length})</h2><table><tr><th>Nombre</th><th>Puntos</th><th>%</th><th>Fecha</th></tr>
+ ${a.map(r=>`<tr><td>${esc(r.nombre)}</td><td>${r.puntos}/${r.maximo}</td><td>${r.porcentaje}%</td><td>${esc(r.fecha)}</td></tr>`).join('')||'<tr><td colspan=4>Sin registros</td></tr>'}</table><br>
+ <button class="prim" onclick="csv()">Descargar CSV</button> <button class="sec" onclick="location.reload()">Cerrar</button>
+ <button class="sec" onclick="if(confirm('¿Borrar los resultados de este dispositivo?')){localStorage.removeItem('ar_'+CLAVE);grupo()}">Borrar</button>`;
+ $('#inicio').style.display='none';$('#final').style.display='flex'}
+function csv(){const a=leer();const t='Juego,Nombre,Fecha,Puntos,Maximo,Porcentaje\n'+a.map(r=>[r.juego,r.nombre,r.fecha,r.puntos,r.maximo,r.porcentaje].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+ const b=new Blob(['﻿'+t],{type:'text/csv'});const l=document.createElement('a');l.href=URL.createObjectURL(b);l.download='resultados_'+CLAVE+'.csv';l.click()}
+const barajar=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+$('#verGrupo').onclick=grupo;
+$('#empezar').onclick=()=>{JUGADOR=$('#nombre').value.trim()||'Participante';$('#inicio').style.display='none';iniciar()};
+const DATOS={"preg": [{"p": "¿Qué artículo del RFSST obliga a contar con el diagnóstico y los análisis de riesgos?", "o": ["Art. 1", "Art. 7 fr. I", "Art. 100", "Ninguno"], "r": 1, "f": "RFSST (DOF 13/11/2014) art. 7 fr. I", "fb": "", "m": "M1"}, {"p": "\"Riesgo = peligro × …\"", "o": ["Exposición", "Salario", "Antigüedad", "Turno"], "r": 0, "f": "NOM-030-STPS-2009, 3.12", "fb": "", "m": "M1"}, {"p": "Según la LFT, ¿qué son los riesgos de trabajo?", "o": ["Solo los accidentes en la calle", "Los conflictos sindicales", "Las faltas injustificadas", "Los accidentes y enfermedades a que están expuestos los trabajadores"], "r": 3, "f": "LFT (últ. ref. DOF 14/05/2026) art. 473", "fb": "", "m": "M1"}, {"p": "Según la LGPC, el riesgo resulta de la interacción entre…", "o": ["El salario y la jornada", "La señalización y el color", "La vulnerabilidad y un agente perturbador", "El seguro y la póliza"], "r": 2, "f": "Ley General de Protección Civil (últ. ref. DOF 21/12/2023) art. 2 fr. XLIX", "fb": "", "m": "M1"}, {"p": "¿Qué artículo del RFSST exige el estudio de riesgo de la maquinaria?", "o": ["Art. 43", "Art. 20 fr. I", "Art. 65", "Art. 2"], "r": 1, "f": "RFSST (DOF 13/11/2014) art. 20 fr. I", "fb": "", "m": "M1"}, {"p": "Riesgo que tiene alta probabilidad de materializarse en un futuro inmediato:", "o": ["Riesgo inminente", "Riesgo mínimo", "Riesgo aceptable", "Riesgo remoto"], "r": 0, "f": "NOM-030-STPS-2009, 3.13", "fb": "", "m": "M1"}, {"p": "Ruido, vibraciones e iluminación son riesgos…", "o": ["Biológicos", "Psicosociales", "Mecánicos", "Físicos"], "r": 3, "f": "NOM-017-STPS-2024, 5.1 d) 1)", "fb": "", "m": "M2"}, {"p": "Contacto con sangre en una curación es un riesgo…", "o": ["Mecánico", "Ergonómico", "Biológico", "Físico"], "r": 2, "f": "NOM-017-STPS-2024, 5.1 d) 4)", "fb": "", "m": "M2"}, {"p": "Levantar costales desde el piso con torsión del tronco es un factor de riesgo…", "o": ["Químico", "Ergonómico", "Biológico", "Astronómico"], "r": 1, "f": "RFSST (DOF 13/11/2014) art. 3 fr. XVI", "fb": "", "m": "M2"}, {"p": "Un sismo es un fenómeno perturbador…", "o": ["Geológico", "Socio-organizativo", "Sanitario-ecológico", "Químico-tecnológico"], "r": 0, "f": "Ley General de Protección Civil (últ. ref. DOF 21/12/2023) art. 2 fr. XXIII", "fb": "", "m": "M2"}, {"p": "Incendios, explosiones, fugas y derrames son fenómenos…", "o": ["Geológicos", "Astronómicos", "Hidrometeorológicos", "Químico-tecnológicos"], "r": 3, "f": "Ley General de Protección Civil (últ. ref. DOF 21/12/2023) art. 2 fr. XXV", "fb": "", "m": "M2"}, {"p": "¿Quién realiza los recorridos de verificación para identificar condiciones peligrosas?", "o": ["El cliente", "El proveedor de EPP", "La comisión de seguridad e higiene", "Nadie"], "r": 2, "f": "NOM-019-STPS-2011, 4.13", "fb": "", "m": "M2"}, {"p": "Matriz NOM-031: frecuencia E y severidad III dan…", "o": ["Medio", "Grave", "Bajo", "Mínimo"], "r": 1, "f": "NOM-031-STPS-2011, 8.3 Tabla 4", "fb": "", "m": "M3"}, {"p": "Matriz NOM-031: frecuencia A y severidad IV dan…", "o": ["Bajo", "Grave", "Elevado", "Medio"], "r": 0, "f": "NOM-031-STPS-2011, 8.3 Tabla 4", "fb": "", "m": "M3"}, {"p": "Matriz NOM-031: frecuencia D y severidad II dan…", "o": ["Mínimo", "Grave", "Bajo", "Medio"], "r": 3, "f": "NOM-031-STPS-2011, 8.3 Tabla 4", "fb": "", "m": "M3"}, {"p": "Severidad \"II Moderada\" en la NOM-031 significa…", "o": ["Muerte", "Sin daños", "Incapacidad temporal de más de 3 días", "Incapacidad permanente parcial"], "r": 2, "f": "NOM-031-STPS-2011, 8.3 Tabla 3", "fb": "", "m": "M3"}, {"p": "Frecuencia \"B Aislada\" significa…", "o": ["Que ocurre con regularidad", "Que difícilmente ocurre", "Que se repite con periodicidad", "Que pocas veces ocurre"], "r": 1, "f": "NOM-031-STPS-2011, 8.3 Tabla 2", "fb": "", "m": "M3"}, {"p": "¿Cuántos niveles de jerarquización tiene la matriz NOM-031?", "o": ["5: grave, elevado, medio, bajo y mínimo", "3: alto, medio y bajo", "2: sí y no", "10"], "r": 0, "f": "NOM-031-STPS-2011, 8.3 c)", "fb": "", "m": "M3"}, {"p": "Cambiar un solvente por otro menos nocivo es…", "o": ["EPP", "Eliminación", "Administrativo", "Sustitución"], "r": 3, "f": "NOM-010-STPS-2014, 11.3 h)", "fb": "", "m": "M4"}, {"p": "Extracción localizada de humos es un control…", "o": ["Administrativo", "De EPP", "De ingeniería", "De eliminación"], "r": 2, "f": "NOM-010-STPS-2014, 11.3 f)", "fb": "", "m": "M4"}, {"p": "Un permiso de trabajo y un procedimiento son controles…", "o": ["De ingeniería", "Administrativos", "De sustitución", "De eliminación"], "r": 1, "f": "NIOSH, Hierarchy of Controls (10/04/2024) — referencia no obligatoria", "fb": "", "m": "M4"}, {"p": "¿Qué NOM fija el análisis de riesgos potenciales en soldadura y corte?", "o": ["NOM-027-STPS-2008", "NOM-025-STPS-2008", "NOM-034-STPS-2016", "NOM-019-STPS-2011"], "r": 0, "f": "NOM-027-STPS-2008, cap. 7", "fb": "", "m": "M4"}, {"p": "¿Qué NOM clasifica el riesgo de incendio en ordinario o alto?", "o": ["NOM-009-STPS-2011", "NOM-036-1-STPS-2018", "NOM-017-STPS-2024", "NOM-002-STPS-2010"], "r": 3, "f": "NOM-002-STPS-2010, 5.1 y Apéndice A", "fb": "", "m": "M4"}, {"p": "¿Qué NOM pide técnicas como HAZOP o ¿Qué pasa si? para procesos críticos?", "o": ["NOM-001-STPS-2008", "NOM-026-STPS-2008", "NOM-028-STPS-2012", "NOM-030-STPS-2009"], "r": 2, "f": "NOM-028-STPS-2012, cap. 7 y Guía II", "fb": "", "m": "M4"}, {"p": "Para manejo manual de cargas, el análisis lo fija…", "o": ["NOM-027-STPS-2008", "NOM-036-1-STPS-2018", "NOM-029-STPS-2011", "NOM-005-STPS-1998"], "r": 1, "f": "NOM-036-1-STPS-2018, cap. 7", "fb": "", "m": "M4"}, {"p": "En procesos críticos, el análisis de riesgos se actualiza al menos cada…", "o": ["5 años", "20 años", "Nunca", "6 meses"], "r": 0, "f": "NOM-028-STPS-2012, 7.2 a)", "fb": "", "m": "M4"}], "mods": [["M1", "⚖️ Marco legal"], ["M2", "🔎 ¿Es riesgo?"], ["M3", "🧮 Matriz"], ["M4", "🪜 Controles"]]};
+
+let eq=[],turno=0,ronda=0,usadas=new Set(),girando=false,ang=0;const RONDAS=3;
+const MODS=DATOS.mods, COL=['#B01824','#0F7A8C','#E8A33D','#1D1B2E','#7A3F14','#2E7D32'];
+function iniciar(){$('#app').innerHTML=`<div class="card"><h2>Equipos</h2><p>Escribe de 2 a 6 nombres de equipo (deja vacíos los que no uses).</p>
+ ${[1,2,3,4,5,6].map(i=>`<input type="text" class="neq" placeholder="Equipo ${i}" value="${i<=4?'Equipo '+i:''}">`).join('')}<button class="prim" id="listo">¡A jugar!</button></div>`;
+ $('#listo').onclick=()=>{eq=$$('.neq').map(x=>x.value.trim()).filter(Boolean).slice(0,6).map(n=>({n,p:0}));if(eq.length<2)return alert('Se necesitan al menos 2 equipos.');pinta()}}
+function tabla(){return `<div class="equipos">${eq.map((e,i)=>`<div class="eq ${i===turno?'turno':''}" style="border-color:${COL[i]}"><b>${esc(e.n)}</b><span>${e.p}</span></div>`).join('')}</div>`}
+function pinta(){marc([`Ronda ${ronda+1}/${RONDAS}`,`Turno: ${esc(eq[turno].n)}`]);
+ $('#app').innerHTML=tabla()+`<div class="card" style="text-align:center"><canvas id="rul" width="360" height="360"></canvas><br><button class="prim" id="girar">🎡 Girar la ruleta</button><div id="preg"></div></div>`;
+ dib();$('#girar').onclick=girar}
+function dib(){const cv=$('#rul'),g=cv.getContext('2d'),n=MODS.length,r=170;g.clearRect(0,0,360,360);
+ MODS.forEach((m,i)=>{g.beginPath();g.moveTo(180,180);g.arc(180,180,r,ang+i*2*Math.PI/n,ang+(i+1)*2*Math.PI/n);g.fillStyle=COL[i%COL.length];g.fill();
+  g.save();g.translate(180,180);g.rotate(ang+(i+.5)*2*Math.PI/n);g.fillStyle='#fff';g.font='bold 15px Calibri';g.textAlign='right';g.fillText(m[1],r-12,5);g.restore()});
+ g.beginPath();g.moveTo(180,4);g.lineTo(168,-0);g.lineTo(192,0);g.fill();g.fillStyle='#fff';g.beginPath();g.arc(180,180,26,0,7);g.fill();g.fillStyle='#1D1B2E';g.font='bold 22px Calibri';g.textAlign='center';g.fillText('⚠',180,188);
+ g.fillStyle='#1D1B2E';g.beginPath();g.moveTo(170,2);g.lineTo(190,2);g.lineTo(180,24);g.fill()}
+function girar(){if(girando)return;girando=true;$('#girar').disabled=true;const a0=ang,tot=12+Math.random()*2*Math.PI,t0=performance.now(),D=3500;
+ const h=setInterval(()=>{const t=Math.min(1,(performance.now()-t0)/D);ang=a0+tot*(1-Math.pow(1-t,3));dib();if(t>=1){clearInterval(h);girando=false;elegirMod()}},30)}
+function elegirMod(){const n=MODS.length,a=((-Math.PI/2-ang)%(2*Math.PI)+4*Math.PI)%(2*Math.PI),idx=Math.floor(a/(2*Math.PI/n));const m=MODS[idx][0];
+ let lista=DATOS.preg.filter((q,i)=>q.m===m&&!usadas.has(i));if(!lista.length)lista=DATOS.preg.filter((q,i)=>!usadas.has(i));
+ const q=lista[Math.floor(Math.random()*lista.length)];usadas.add(DATOS.preg.indexOf(q));preguntar(q,MODS[idx][1])}
+function preguntar(q,tema){let s=20;const ops=barajar(q.o.map((o,k)=>({o,ok:k===q.r})));
+ $('#preg').innerHTML=`<h3><span class="etq">${esc(tema)}</span> ${esc(q.p)}</h3><div class="crono" id="cr">20</div><div class="opciones">${ops.map((o,k)=>`<button class="op" data-k="${k}">${'ABCD'[k]}) ${esc(o.o)}</button>`).join('')}</div><div id="retro"></div>`;
+ const h=setInterval(()=>{s--;const c=$('#cr');if(c)c.textContent=s;if(s<=0){clearInterval(h);resp(-1)}},1000);
+ const resp=k=>{clearInterval(h);$$('#preg .op').forEach((b,j)=>{b.disabled=true;if(ops[j].ok)b.classList.add('ok');else if(j===k)b.classList.add('no')});const ok=k>=0&&ops[k].ok;if(ok)eq[turno].p+=10;
+  $('#retro').innerHTML=`<div class="retro ${ok?'ok':'no'}">${ok?'✅ ¡+10 para '+esc(eq[turno].n)+'!':'❌ '+(k<0?'Se acabó el tiempo.':'No es correcta.')} ${q.fb?esc(q.fb):''}<small>Fuente: ${esc(q.f)}</small></div><button class="prim" id="sig">Siguiente equipo ➜</button>`;
+  $('#sig').onclick=()=>{turno++;if(turno>=eq.length){turno=0;ronda++}if(ronda>=RONDAS)return podio();pinta()}};
+ $$('#preg .op').forEach(b=>b.onclick=()=>resp(+b.dataset.k))}
+function podio(){const o=[...eq].sort((a,b)=>b.p-a.p);JUGADOR=o.map(e=>e.n+' '+e.p).join(' | ');
+ $('#app').innerHTML=`<div class="card" style="text-align:center"><h2>🏁 ¡Fin del maratón!</h2>${o.map((e,i)=>`<div class="podio">${['🥇','🥈','🥉'][i]||'🎖️'} <b>${esc(e.n)}</b> · ${e.p} pts</div>`).join('')}<br><button class="prim" id="g">Guardar resultado</button></div>`;
+ $('#g').onclick=()=>terminar(o[0].p,RONDAS*10,[],{})}
+
+</script></body></html>
