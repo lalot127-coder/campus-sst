@@ -23,7 +23,7 @@ import { Props } from '../../../motor/props.js';
 // FUNDAMENTO NORMATIVO VERIFICADO (22/10/2026) contra el DOF: ver la matriz del curso en
 // 03_cursos/BASE_loto_bloqueo_etiquetado_8h/01_diseno/MATRIZ_NORMATIVA_LOTO.md
 const { N04, PROC, BP, FIC, tablero, equipo, volante, cargaElevada, candado, tarjeta, pasoTocar, conTrampas,
-  trampaIntervenir, mesaDispositivos, estacion, aPie, setModo, guiar , F } = window.LOTO;
+  trampaIntervenir, mesaDispositivos, estacion, aPie, setModo, guiar, pasosLiberacion, senalesTablero, senalesConsultables, F } = window.LOTO;
 const { nave, trabajador, marcador } = window.Alturas;
 const { decidir, encuentra, intro } = window.Riesgo;
 
@@ -59,6 +59,7 @@ W.tocable(TR.g, 'companero', 1.0);
 
 const MESA = mesaDispositivos(W, { x: -1.0, z: 1.8 });
 estacion(W, { x: -4.6, z: -7.8 });   // tablero de pared con candados, pinza multibloqueo y etiquetas
+const SEN = senalesTablero(W, { x: TB.g.position.x, y: 1.95, z: TB.g.position.z + 0.2, ry: 0.4, volts: 'PARTES MÓVILES' });
 
 // Recorrido a pie (anexo §5 y §11): toca el piso para caminar; al tocar algo lejano el avatar va hasta ahí
 // antes de inspeccionarlo. Habilita además el botón 🧍 de vista a la altura de los ojos.
@@ -98,6 +99,15 @@ conTrampas(W, pasoFuentes, [TRAMPA, trampaVolante, trampaCarga]);
 const pasoAvisar = pasoTocar(W, { titulo: 'Avisa al personal afectado', texto: 'Avisa a quien opera el transportador.',
   fuente: F.notificar, tipo: 'companero', resaltar: [TR.torso], trampas: [TRAMPA, trampaVolante, trampaCarga],
   alTocar: () => { W.globo('Enterado', TR.g, 2200, 1.9); W.bien('Personal afectado avisado.', PROC); W.siguiente(); } });
+
+// EPP adecuado AL RIESGO de esta celda: atrapamiento por partes móviles. Aquí los guantes holgados ESTORBAN.
+const pasoEPP = { titulo: 'Ponte el equipo de protección', texto: 'Vas a trabajar junto a partes que pueden moverse.', fuente: F.epp, puntos: 10,
+  iniciar() { guiar(W, []);
+    decidir(W, '🥽 ¿Qué equipo de protección corresponde a ESTE riesgo?', [
+      { t: 'Gafas, calzado de seguridad, ropa ceñida y sin guantes holgados ni cadenas junto a partes móviles', ok: true, fb: 'Cerca de transmisiones, lo suelto es lo que atrapa.', f: F.epp },
+      { t: 'Guantes gruesos de carnaza para sujetar mejor el volante', ok: false, crit: true, fb: 'Un guante holgado junto a una parte giratoria arrastra la mano.', f: F.epp },
+      { t: 'Ninguno: el equipo ya está bloqueado', ok: false, fb: 'El bloqueo no quita la inercia ni la carga suspendida que todavía hay que controlar.', f: F.epp },
+    ], () => W.siguiente()); } };
 
 const pasoParo = pasoTocar(W, { titulo: 'Paro controlado', texto: 'Para el transportador con el botón de paro.',
   fuente: F.paro, tipo: 'paro', resaltar: [EQ.paro], trampas: [TRAMPA, trampaVolante, trampaCarga],
@@ -162,17 +172,23 @@ const pasoCierre = { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', 
       <p class="ficticio">Fundamento verificado en el DOF (matriz normativa del curso, 22/10/2026). Lo señalado como buena práctica no es obligatorio en México; comprobar el instrumento antes y después se enseña sin numeral porque el de NFPA 70E sigue sin verificar.</p>`,
       () => W.siguiente(), 'Ver resultado'); } };
 
+// P10: liberar y devolver al servicio. Sin esto el error crítico 6 del anexo no se podía alcanzar.
+const LIB = pasosLiberacion(W, { decidir, equipo: 'el transportador T-04', trampas: [TRAMPA],
+  tipoCandado: 'candado', resaltarCandado: [CAND.g], retirarCandado: () => CAND.colocar(MESA.x - 0.3, MESA.y, MESA.z),
+  tipoTarjeta: 'tarjeta', resaltarTarjeta: [TARJ.g], retirarTarjeta: () => TARJ.colocar(MESA.x, MESA.y + 0.08, MESA.z),
+  tipoDevolver: 'palanca', resaltarDevolver: [TB.mango], devolver: () => TB.cerrar() });
+
 W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel resalta en azul lo que toca' },
   { id: 'evaluacion', txt: '📝 <b>Evaluación:</b> sin ayudas en pantalla; tú decides qué tocar' },
   { id: 'demostracion', txt: '🎬 <b>Demostración:</b> para que la persona instructora muestre el caso' }],
-  sel => { setModo(sel); return [intro(W, `<h2>⚙️ Celda 3: Mecánico y energía almacenada</h2><p>Hay que intervenir el <b>transportador T-04</b>. Tiene volante de inercia, una carga elevada sostenida por su mecanismo y un resorte de retorno en tensión.</p>
+  sel => { setModo(sel); return senalesConsultables(W, [intro(W, `<h2>⚙️ Celda 3: Mecánico y energía almacenada</h2><p>Hay que intervenir el <b>transportador T-04</b>. Tiene volante de inercia, una carga elevada sostenida por su mecanismo y un resorte de retorno en tensión.</p>
     <p>Corta y bloquea la energía… y después ocúpate de lo que <b>sigue teniendo energía aunque el tablero esté apagado</b>.</p>
     <p>⛔ Acercarte al volante girando o meterte bajo la carga elevada son <b>errores críticos</b>.</p>`, FIC),
-    pasoFuentes, pasoAvisar, pasoParo, pasoAislar, pasoBloquear, pasoEtiquetar, pasoVolante, pasoCarga,
-    pasoResorte, pasoArranque, pasoAutorizar, pasoCierre]; },
+    pasoFuentes, pasoAvisar, pasoParo, pasoEPP, pasoAislar, pasoBloquear, pasoEtiquetar, pasoVolante, pasoCarga,
+    pasoResorte, pasoArranque, pasoAutorizar, ...LIB, pasoCierre], SEN.volts); },
   'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento verificado en el DOF: NOM-004-STPS-1999 (31/05/1999) y NOM-029-STPS-2011 (29/12/2011), vigentes; la Aclaración DOF 16/07/1999 no toca el 7.2.2 c) ni el Apéndice A. Lo marcado como buena práctica (OSHA 1910.147) NO es obligatorio en México. 🥽 En visor: botón VR.');
 
-if (location.search.includes('qa')) window.__qa = { MK, EQ, TB, VO, CG, RS, TR, CAND, TARJ, tocar: W.tocar, estado: W.qa };
+if (location.search.includes('qa')) window.__qa = { MK, EQ, TB, VO, CG, RS, TR, CAND, TARJ, SEN, tocar: W.tocar, estado: W.qa };
 </script>
 </body>
 </html>

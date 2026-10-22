@@ -155,7 +155,9 @@
     W.tocable(palanca, 'palanca', 0.5);
     const punto = new THREE.Vector3(-0.15, 1.1, 0.26); g.localToWorld(punto);
     return { g, palanca, mango, piloto, punto: [punto.x, punto.y, punto.z],
-      abrir: async () => { await W.animar(500, k => { palanca.rotation.x = -1.15 * k; }); piloto.material.emissive.setHex(0x000000); piloto.material.color.setHex(0x424242); } };
+      abrir: async () => { await W.animar(500, k => { palanca.rotation.x = -1.15 * k; }); piloto.material.emissive.setHex(0x000000); piloto.material.color.setHex(0x424242); },
+      // devolver al servicio (P10): la palanca vuelve a su sitio y el piloto se enciende
+      cerrar: async () => { await W.animar(500, k => { palanca.rotation.x = -1.15 * (1 - k); }); piloto.material.emissive.setHex(0xAA0000); piloto.material.color.setHex(0xFF5252); } };
   }
 
   // Válvula de bola con manija. cerrar() la gira 90°.
@@ -170,7 +172,8 @@
     W.tocable(manija, tipo, 0.45);
     const punto = new THREE.Vector3(0.07, 0.11, 0); g.localToWorld(punto);
     return { g, manija, tipo, punto: [punto.x, punto.y, punto.z],
-      cerrar: async () => { await W.animar(500, k => { manija.rotation.y = Math.PI / 2 * k; }); } };
+      cerrar: async () => { await W.animar(500, k => { manija.rotation.y = Math.PI / 2 * k; }); },
+      abrir: async () => { await W.animar(500, k => { manija.rotation.y = Math.PI / 2 * (1 - k); }); } };
   }
 
   // Acumulador hidráulico / tanque de aire con purga. purgar() lo despresuriza (manómetro a cero).
@@ -251,6 +254,45 @@
       orig && orig(o);
     };
     return paso;
+  }
+
+  // ---------------------------------------------------------------- P10: liberar y devolver al servicio
+  // Sin este paso el ERROR CRÍTICO 6 del anexo («permitir el retorno al servicio sin cumplir las condiciones de
+  // liberación») no era alcanzable: el caso terminaba al autorizar la intervención. Lo señaló la matriz normativa
+  // del curso (§3, hallazgo para el simulador).
+  //   pasosLiberacion(W, { decidir, tipoCandado, tipoTarjeta, tipoDevolver, resaltarCandado, resaltarTarjeta,
+  //                        resaltarDevolver, retirarCandado(), retirarTarjeta(), devolver(), equipo, trampas })
+  function pasosLiberacion(W, o) {
+    const T = o.trampas || [], eq = o.equipo || 'el equipo';
+    const condiciones = { titulo: 'Condiciones para devolver al servicio', fuente: F.liberar, puntos: 10,
+      texto: `El mantenimiento de ${eq} terminó. Antes de energizar hay condiciones que cumplir.`,
+      iniciar() { guiar(W, []);
+        o.decidir(W, '🔓 El trabajo terminó. ¿Qué haces ANTES de energizar?', [
+          { t: 'Revisar el área, reponer los protectores, retirar al personal y avisar que se va a energizar', ok: true,
+            fb: 'Esas son las condiciones de liberación: primero se comprueba que nadie quede expuesto.', f: F.liberar },
+          { t: 'Energizar de una vez: el trabajo ya acabó', ok: false, crit: true,
+            fb: 'Devolver al servicio sin comprobar el área es el accidente clásico de la liberación: alguien sigue adentro.', f: F.liberar },
+          { t: 'Pedirle al supervisor que corte mi candado para irme rápido', ok: false, crit: true,
+            fb: 'El candado lo retira quien lo puso. Cortarlo rompe la única garantía de que nadie está expuesto.', f: F.liberar },
+        ], () => W.siguiente()); } };
+
+    const quitarCandado = pasoTocar(W, { titulo: 'Retira TU candado', fuente: F.liberar,
+      texto: 'Cada quien retira el suyo: nadie retira el candado de otra persona.',
+      tipo: o.tipoCandado || 'candado', resaltar: o.resaltarCandado || [], trampas: T,
+      alTocar: () => { o.retirarCandado && o.retirarCandado(); W.bien('Retiraste tu candado.', F.liberar); W.siguiente(); } });
+
+    const quitarTarjeta = pasoTocar(W, { titulo: 'Retira TU tarjeta', fuente: F.liberar,
+      texto: 'La tarjeta se retira junto con el candado, por la misma persona.',
+      tipo: o.tipoTarjeta || 'tarjeta', resaltar: o.resaltarTarjeta || [], trampas: T,
+      alTocar: () => { o.retirarTarjeta && o.retirarTarjeta(); W.bien('Retiraste tu tarjeta.', F.liberar); W.siguiente(); } });
+
+    const devolver = pasoTocar(W, { titulo: 'Devuelve el equipo al servicio', fuente: F.liberar,
+      texto: 'Ya con el área despejada y los dispositivos retirados, restablece la energía.',
+      tipo: o.tipoDevolver, resaltar: o.resaltarDevolver || [], trampas: T,
+      alTocar: async () => { if (o.devolver) await o.devolver();
+        W.bien(`${eq} quedó de nuevo en servicio, en condiciones seguras.`, F.liberar); W.siguiente(); } });
+
+    return [condiciones, quitarCandado, quitarTarjeta, devolver];
   }
 
   // Las señales se pueden CONSULTAR en cualquier paso: tocarlas explica qué significan y no resta puntos.
@@ -360,6 +402,6 @@
   // Falta: en cada celda, tras crear la escena → aPie(W, N, { obstaculos: [EQ.g, TB.g, …] }), y en W.inicio()
   // ofrecer los casos 'practica' | 'evaluacion' | 'demostracion' llamando setModo(sel) dentro de alIniciar.
   window.LOTO = { PV, N04, N29, PROC, BP, OSHA, SIN_NUM, F, FIC, COL, init3D, modelo, prop, setModo, guiar, aPie, candado, tarjeta, detector, tablero,
-    valvula, acumulador, perchero, senalesTablero, volante, cargaElevada, equipo, estacion, pasoTocar, conTrampas, senalesConsultables, trampaIntervenir,
+    valvula, acumulador, perchero, senalesTablero, volante, cargaElevada, equipo, estacion, pasoTocar, conTrampas, senalesConsultables, pasosLiberacion, trampaIntervenir,
     ordenar, barajar, mesaDispositivos };
 })();

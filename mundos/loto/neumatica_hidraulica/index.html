@@ -23,7 +23,7 @@ import { Props } from '../../../motor/props.js';
 // FUNDAMENTO NORMATIVO VERIFICADO (22/10/2026) contra el DOF: ver la matriz del curso en
 // 03_cursos/BASE_loto_bloqueo_etiquetado_8h/01_diseno/MATRIZ_NORMATIVA_LOTO.md
 const { N04, PROC, BP, FIC, equipo, valvula, acumulador, candado, tarjeta, pasoTocar, conTrampas,
-  trampaIntervenir, mesaDispositivos, estacion, aPie, setModo, guiar , F } = window.LOTO;
+  trampaIntervenir, mesaDispositivos, estacion, aPie, setModo, guiar, pasosLiberacion, senalesTablero, senalesConsultables, F } = window.LOTO;
 const { nave, trabajador, marcador } = window.Alturas;
 const { decidir, encuentra, intro } = window.Riesgo;
 
@@ -65,6 +65,7 @@ W.tocable(TR.g, 'companero', 1.0);
 
 const MESA = mesaDispositivos(W, { x: -1.2, z: 1.6 });
 estacion(W, { x: -4.6, z: -7.8 });   // tablero de pared con candados, pinza multibloqueo y etiquetas
+const SEN = senalesTablero(W, { x: VA.g.position.x, y: 1.95, z: VA.g.position.z + 0.2, ry: 0, volts: '7 bar' });
 
 // Recorrido a pie (anexo §5 y §11): toca el piso para caminar; al tocar algo lejano el avatar va hasta ahí
 // antes de inspeccionarlo. Habilita además el botón 🧍 de vista a la altura de los ojos.
@@ -101,6 +102,15 @@ conTrampas(W, pasoFuentes, [TRAMPA]);
 const pasoAvisar = pasoTocar(W, { titulo: 'Avisa al personal afectado', texto: 'Avisa a quien opera la prensa antes de pararla.',
   fuente: F.notificar, tipo: 'companero', resaltar: [TR.torso], trampas: [TRAMPA],
   alTocar: () => { W.globo('Va, la detengo', TR.g, 2200, 1.9); W.bien('Personal afectado avisado.', PROC); W.siguiente(); } });
+
+// EPP adecuado AL RIESGO de esta celda: proyección de fluido a presión, no riesgo eléctrico.
+const pasoEPP = { titulo: 'Ponte el equipo de protección', texto: 'Vas a trabajar con aire y aceite a presión.', fuente: F.epp, puntos: 10,
+  iniciar() { guiar(W, []);
+    decidir(W, '🥽 ¿Qué equipo de protección corresponde a ESTE riesgo?', [
+      { t: 'Protección facial y ocular, y guantes resistentes al fluido del sistema', ok: true, fb: 'El peligro aquí es la proyección de fluido a presión.', f: F.epp },
+      { t: 'Guantes dieléctricos y tapete aislante', ok: false, fb: 'Eso es para riesgo eléctrico: en esta celda no protege de un chorro a presión.', f: F.epp },
+      { t: 'Ninguno: el equipo ya está bloqueado', ok: false, crit: true, fb: 'El bloqueo controla la energía del equipo, no la que todavía puede salir de una línea al purgarla.', f: F.epp },
+    ], () => W.siguiente()); } };
 
 const pasoParo = pasoTocar(W, { titulo: 'Paro controlado', texto: 'Para la prensa con el botón de paro de su botonera.',
   fuente: F.paro, tipo: 'paro', resaltar: [EQ.paro], trampas: [TRAMPA],
@@ -176,17 +186,24 @@ const pasoCierre = { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', 
       <p class="ficticio">Fundamento verificado en el DOF (matriz normativa del curso, 22/10/2026). Lo señalado como buena práctica no es obligatorio en México; comprobar el instrumento antes y después se enseña sin numeral porque el de NFPA 70E sigue sin verificar.</p>`,
       () => W.siguiente(), 'Ver resultado'); } };
 
+// P10: liberar y devolver al servicio. Sin esto el error crítico 6 del anexo no se podía alcanzar.
+const LIB = pasosLiberacion(W, { decidir, equipo: 'la prensa P-02', trampas: [TRAMPA],
+  tipoCandado: 'candado', resaltarCandado: [CAND.g],
+  retirarCandado: () => { CAND.colocar(MESA.x - 0.3, MESA.y, MESA.z); CAND2.colocar(MESA.x - 0.1, MESA.y, MESA.z); },
+  tipoTarjeta: 'tarjeta', resaltarTarjeta: [TARJ.g], retirarTarjeta: () => TARJ.colocar(MESA.x + 0.18, MESA.y + 0.08, MESA.z),
+  tipoDevolver: 'valvula_aire', resaltarDevolver: [VA.manija], devolver: async () => { await VA.abrir(); await VH.abrir(); } });
+
 W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel resalta en azul lo que toca' },
   { id: 'evaluacion', txt: '📝 <b>Evaluación:</b> sin ayudas en pantalla; tú decides qué tocar' },
   { id: 'demostracion', txt: '🎬 <b>Demostración:</b> para que la persona instructora muestre el caso' }],
-  sel => { setModo(sel); return [intro(W, `<h2>🫧 Celda 2: Neumático e hidráulico</h2><p>Hay que intervenir la <b>prensa P-02</b>, que trabaja con aire comprimido y con un circuito hidráulico con acumulador.</p>
+  sel => { setModo(sel); return senalesConsultables(W, [intro(W, `<h2>🫧 Celda 2: Neumático e hidráulico</h2><p>Hay que intervenir la <b>prensa P-02</b>, que trabaja con aire comprimido y con un circuito hidráulico con acumulador.</p>
     <p>Ejecuta el procedimiento paso por paso. Ojo con lo que queda guardado después de cerrar las válvulas.</p>
     <p>⛔ Si metes la mano al equipo antes de terminar, se registra como <b>error crítico</b> y no se aprueba.</p>`, FIC),
-    pasoFuentes, pasoAvisar, pasoParo, pasoAire, pasoAceite, pasoDispositivo, pasoBloquear, pasoEtiquetar,
-    pasoAcumulador, pasoLinea, pasoVerificar, pasoPuntoCorrecto, pasoArranque, pasoAutorizar, pasoCierre]; },
+    pasoFuentes, pasoAvisar, pasoParo, pasoEPP, pasoAire, pasoAceite, pasoDispositivo, pasoBloquear, pasoEtiquetar,
+    pasoAcumulador, pasoLinea, pasoVerificar, pasoPuntoCorrecto, pasoArranque, pasoAutorizar, ...LIB, pasoCierre], SEN.volts); },
   'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento verificado en el DOF: NOM-004-STPS-1999 (31/05/1999) y NOM-029-STPS-2011 (29/12/2011), vigentes; la Aclaración DOF 16/07/1999 no toca el 7.2.2 c) ni el Apéndice A. Lo marcado como buena práctica (OSHA 1910.147) NO es obligatorio en México. 🥽 En visor: botón VR.');
 
-if (location.search.includes('qa')) window.__qa = { MK, EQ, VA, VH, AC, MAN, PUR, TR, CAND, TARJ, tocar: W.tocar, estado: W.qa };
+if (location.search.includes('qa')) window.__qa = { MK, EQ, VA, VH, AC, MAN, PUR, TR, CAND, TARJ, SEN, tocar: W.tocar, estado: W.qa };
 </script>
 </body>
 </html>

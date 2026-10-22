@@ -23,7 +23,7 @@ import { Props } from '../../../motor/props.js';
 // FUNDAMENTO NORMATIVO VERIFICADO (22/10/2026) contra el DOF: ver la matriz del curso en
 // 03_cursos/BASE_loto_bloqueo_etiquetado_8h/01_diseno/MATRIZ_NORMATIVA_LOTO.md
 const { N29, PROC, BP, FIC, tablero, equipo, candado, tarjeta, detector, pasoTocar, conTrampas, trampaIntervenir,
-  mesaDispositivos, estacion, aPie, setModo, guiar, perchero, senalesTablero, senalesConsultables, F } = window.LOTO;
+  mesaDispositivos, estacion, aPie, setModo, guiar, perchero, senalesTablero, senalesConsultables, pasosLiberacion, F } = window.LOTO;
 const { nave, trabajador, marcador } = window.Alturas;
 const { decidir, encuentra, intro } = window.Riesgo;
 
@@ -196,6 +196,12 @@ const pasoCierre = { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', 
       <p class="ficticio">Fundamento verificado en el DOF (matriz normativa del curso, 22/10/2026). Lo señalado como buena práctica no es obligatorio en México; comprobar el instrumento antes y después se enseña sin numeral porque el de NFPA 70E sigue sin verificar.</p>`,
       () => W.siguiente(), 'Ver resultado'); } };
 
+// P10: liberar y devolver al servicio. Sin esto el error crítico 6 del anexo no se podía alcanzar.
+const LIB = pasosLiberacion(W, { decidir, equipo: 'la prensa P-02', trampas: [TRAMPA],
+  tipoCandado: 'candado', resaltarCandado: [CAND.g], retirarCandado: () => CAND.colocar(MESA.x - 0.3, MESA.y, MESA.z),
+  tipoTarjeta: 'tarjeta', resaltarTarjeta: [TARJ.g], retirarTarjeta: () => TARJ.colocar(MESA.x, MESA.y + 0.08, MESA.z),
+  tipoDevolver: 'palanca', resaltarDevolver: [TB.mango], devolver: () => TB.cerrar() });
+
 W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel resalta en azul lo que toca' },
   { id: 'evaluacion', txt: '📝 <b>Evaluación:</b> sin ayudas en pantalla; tú decides qué tocar' },
   { id: 'demostracion', txt: '🎬 <b>Demostración:</b> para que la persona instructora muestre el caso' }],
@@ -203,7 +209,7 @@ W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel 
     <p>Ejecuta el procedimiento de bloqueo y etiquetado <b>paso por paso</b>. El panel de abajo te dice qué toca; toca en la escena el objeto correcto.</p>
     <p>⛔ Si metes la mano al equipo antes de terminar, se registra como <b>error crítico</b> y no se aprueba.</p>`, FIC),
     ...senalesConsultables(W, [pasoFuentes, pasoAvisar, pasoParo, pasoEPP, pasoAislar, pasoBloquear, pasoEtiquetar,
-      pasoCapacitores, pasoInstrumento, pasoProbarAntes, pasoMedir, pasoProbarDespues, pasoArranque, pasoAutorizar],
+      pasoCapacitores, pasoInstrumento, pasoProbarAntes, pasoMedir, pasoProbarDespues, pasoArranque, pasoAutorizar, ...LIB],
       SEN.volts), pasoCierre]; },
   'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento verificado en el DOF: NOM-004-STPS-1999 (31/05/1999) y NOM-029-STPS-2011 (29/12/2011), vigentes; la Aclaración DOF 16/07/1999 no toca el 7.2.2 c) ni el Apéndice A. Lo marcado como buena práctica (OSHA 1910.147) NO es obligatorio en México. 🥽 En visor: botón VR.');
 
