@@ -18,11 +18,40 @@
 // las fuentes se muestran con la marca «vigencia por verificar» y los pasos del procedimiento se atribuyen al
 // procedimiento de la máquina (ficticio), que es lo que manda cuando no hay una secuencia universal.
 (function () {
-  const PV = '(vigencia y numerales por verificar en el DOF)';
-  const N04 = 'NOM-004-STPS-1999 ' + PV;                      // maquinaria y equipo
-  const N29 = 'NOM-029-STPS-2011 ' + PV;                      // mantenimiento de instalaciones eléctricas
+  // (22/10/2026) Referencias VERIFICADAS. Salen de la matriz normativa del curso, que leyó el texto en el DOF:
+  //   03_cursos/BASE_loto_bloqueo_etiquetado_8h/01_diseno/MATRIZ_NORMATIVA_LOTO.md
+  // NOM-004-STPS-1999 (DOF 31/05/1999) y NOM-029-STPS-2011 (DOF 29/12/2011): ambas VIGENTES.
+  // La Aclaración DOF 16/07/1999 se verificó: corrige dos erratas y NO toca el 7.2.2 c) ni el Apéndice A.
+  // PROY-NOM-004-STPS-2020 es solo proyecto: no se aplica.
+  const N04 = 'NOM-004-STPS-1999';                            // maquinaria y equipo
+  const N29 = 'NOM-029-STPS-2011';                            // mantenimiento de instalaciones eléctricas
   const PROC = 'Procedimiento LOTO de la máquina [FICTICIO]';
-  const BP = 'Buena práctica técnica (no obligatoria en México salvo que la empresa la adopte)';
+  const BP = 'Buena práctica técnica: no obligatoria en México salvo que la empresa la adopte';
+  const OSHA = 'OSHA 1910.147 (EUA): buena práctica, no obligatoria en México';
+  // Comprobar el instrumento antes y después de medir: el numeral de NFPA 70E sigue NO VERIFICADO (pendiente V3
+  // de la matriz, documento de pago). Hasta verificarlo se enseña como buena práctica SIN numeral.
+  const SIN_NUM = 'Buena práctica técnica (sin numeral verificado)';
+  const PV = '';   // ya no se usa: las referencias están verificadas. Se conserva por compatibilidad.
+  // Fundamento de cada paso del procedimiento (§3 de la matriz: los 10 pasos del curso = los del simulador)
+  const F = {
+    notificar: `${N04}, 7.2.2 c) 2)`,
+    paro: `${N04}, 5.3 a) · procedimiento de la máquina`,
+    identificar: `${N04}, 7.2.2 c) 3)`,
+    aislar: `${N04}, 7.2.2 c) 3) y 4)`,
+    bloquear: `${N04}, 7.2.2 c) 6)`,
+    etiquetar: `${N04}, 7.2.2 c) 5) y Apéndice A`,
+    disiparElectrico: `${N29}, 8.1 a)`,
+    disiparOtras: 'OSHA 1910.147 (d)(5) · EUA: buena práctica, no obligatoria en México',
+    verificarElectrico: `${N29}, 8.1 a) y b), 9.4 d) 2)`,
+    verificarOtras: 'OSHA 1910.147 (d)(6) · EUA: buena práctica, no obligatoria en México',
+    instrumento: SIN_NUM,
+    arranque: 'OSHA 1910.147 (c)(4)(ii)(D) · EUA: buena práctica, no obligatoria en México',
+    autorizarElectrico: `${N29}, 8.2 b)`,
+    autorizar: `${N04}, 7.2.2 c) 1) y 7)`,
+    epp: 'NOM-017-STPS-2024, equipo de protección personal (norma vigente; sin numeral verificado para este paso)',
+    senales: 'NOM-026-STPS-2008, 7.1 Tabla 1 y Apéndice B',
+    liberar: `${N04}, 7.2.2 c) 8) · ${N29}, 8.1 h) e i)`,
+  };
   const FIC = 'Planta, máquinas y personas ficticias, para ejercicio didáctico.';
   const COL = { candado: 0xC62828, tarjeta: 0xD32F2F, acero: 0x9AA6AD, tablero: 0x78909C, tubo: 0xB0BEC5,
     aceite: 0x37474F, peligro: 0xF2C94C, ok: 0x2E7D32, cable: 0x263238 };
@@ -224,6 +253,25 @@
     return paso;
   }
 
+  // Las señales se pueden CONSULTAR en cualquier paso: tocarlas explica qué significan y no resta puntos.
+  // Se envuelve cada paso de la lista, así la consulta funciona durante todo el caso (NOM-026: color y significado).
+  function senalesConsultables(W, pasos, volts = '440 V') {
+    const texto = {
+      se_voltaje: `⚠️ Amarillo = precaución. Advierte la tensión presente (${volts}): hay que conocerla para elegir el instrumento y el equipo de protección adecuados.`,
+      se_prohibido: '⛔ Rojo = prohibición. Nadie debe accionar este dispositivo mientras esté bloqueado y etiquetado.',
+      se_epp: '🔵 Azul = obligación. Señala el equipo de protección personal que hay que usar en esta zona.',
+    };
+    pasos.forEach(p => {
+      const orig = p.tocar && p.tocar.bind(p);
+      p.tocar = o => {
+        const t = o.userData.tipo;
+        if (texto[t]) { W.toast('info', texto[t], 'NOM-026-STPS-2008, 7.1 Tabla 1 y Apéndice B', 5200); return; }
+        orig && orig(o);
+      };
+    });
+    return pasos;
+  }
+
   // Trampa de error crítico que vale en TODOS los pasos de una celda: intervenir el equipo antes de tiempo.
   const trampaIntervenir = (W, extra = {}) => ({ tipo: 'intervenir', critico: true,
     txt: extra.txt || 'Metiste la mano al equipo sin terminar el bloqueo y la verificación. En la realidad esto es lo que amputa y mata.',
@@ -250,6 +298,48 @@
   }
   const barajar = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
+  // ---------------------------------------------------------------- EPP y señalización
+  // Perchero de EPP: lo adecuado para trabajo eléctrico (guantes dieléctricos, careta, tapete, herramienta aislada)
+  // junto a lo que NO sirve (guantes de carnaza, lentes comunes). Cada pieza es tocable con su propio tipo.
+  function perchero(W, { x = 0, z = 0, ry = 0 } = {}) {
+    const { THREE, caja, letrero } = W; const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; W.scene.add(g);
+    caja(1.6, 0.08, 0.3, 0xB0BEC5, 0, 1.75, 0, g); caja(0.08, 1.75, 0.08, 0x78909C, -0.76, 0.88, 0, g);
+    caja(0.08, 1.75, 0.08, 0x78909C, 0.76, 0.88, 0, g);
+    const r = letrero('EQUIPO DE PROTECCIÓN PERSONAL', 1.3, 0.14, '#0E3A6B'); r.position.set(0, 1.92, 0.02); g.add(r);
+    const piezas = {};
+    const colgar = (clave, tipo, px, hechoPor, escala, etiqueta, color) => {
+      const h = new THREE.Group(); h.position.set(px, 1.2, 0.02); g.add(h);
+      const real = hechoPor && prop(hechoPor);
+      if (real) { real.scale.setScalar(escala || 2.6); h.add(real); }
+      else caja(0.22, 0.22, 0.06, color || 0xC62828, 0, 0, 0, h);
+      const et = letrero(etiqueta, 0.42, 0.09, color ? '#8A5A08' : '#0E3A6B'); et.position.set(0, -0.26, 0.03); h.add(et);
+      W.tocable(h, tipo, 0.45); piezas[clave] = h; return h;
+    };
+    colgar('guantes', 'epp_guantes', -0.55, 'guantes', 2.6, 'Guantes dieléctricos');
+    colgar('careta', 'epp_careta', -0.18, 'careta', 2.0, 'Careta');
+    colgar('herramienta', 'epp_herramienta', 0.18, 'herramientaAislada', 2.4, 'Herramienta aislada');
+    colgar('carnaza', 'epp_carnaza', 0.55, null, 1, 'Guantes de carnaza', 0xA1887F);
+    // tapete dieléctrico en el piso, frente al tablero
+    const tap = prop('tapete'); const tg = new THREE.Group(); tg.position.set(x, 0.01, z + 0.9); W.scene.add(tg);
+    if (tap) { tap.scale.setScalar(1.3); tg.add(tap); } else caja(1.2, 0.02, 0.9, 0x212121, 0, 0, 0, tg);
+    W.tocable(tg, 'epp_tapete', 0.9); piezas.tapete = tg;
+    return { g, piezas };
+  }
+
+  // Señalización de voltaje y restricciones sobre un tablero (NOM-026: rojo prohíbe, amarillo previene, azul obliga).
+  // Cada señal es tocable y explica qué significa: así la persona puede consultarlas sin castigo.
+  function senalesTablero(W, { x = 0, y = 1.75, z = 0, ry = 0, volts = '440 V' } = {}) {
+    const { THREE, letrero } = W; const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; W.scene.add(g);
+    const poner = (texto, fondo, color, px, tipo) => {
+      const l = letrero(texto, 0.52, 0.17, fondo, color); l.position.set(px, 0, 0.02); g.add(l);
+      W.tocable(l, tipo, 0.34); return l;
+    };
+    const peligro = poner(`PELIGRO ${volts}`, '#F2C94C', '#1B2633', -0.56, 'se_voltaje');
+    const prohibido = poner('PROHIBIDO OPERAR', '#C62828', '#FFFFFF', 0, 'se_prohibido');
+    const obliga = poner('EPP OBLIGATORIO', '#1565C0', '#FFFFFF', 0.56, 'se_epp');
+    return { g, peligro, prohibido, obliga, volts };
+  }
+
   // Estación de bloqueo de pared (tablero con candados, pinza multibloqueo y etiquetas). Decorado: no es tocable.
   function estacion(W, { x = 0, z = 0, ry = 0 } = {}) {
     const g = new W.THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; W.scene.add(g);
@@ -269,7 +359,7 @@
   // PENDIENTE (21/10/2026): aPie() y setModo() ya están listos pero todavía NO se llaman desde las celdas.
   // Falta: en cada celda, tras crear la escena → aPie(W, N, { obstaculos: [EQ.g, TB.g, …] }), y en W.inicio()
   // ofrecer los casos 'practica' | 'evaluacion' | 'demostracion' llamando setModo(sel) dentro de alIniciar.
-  window.LOTO = { PV, N04, N29, PROC, BP, FIC, COL, init3D, modelo, prop, setModo, guiar, aPie, candado, tarjeta, detector, tablero,
-    valvula, acumulador, volante, cargaElevada, equipo, estacion, pasoTocar, conTrampas, trampaIntervenir,
+  window.LOTO = { PV, N04, N29, PROC, BP, OSHA, SIN_NUM, F, FIC, COL, init3D, modelo, prop, setModo, guiar, aPie, candado, tarjeta, detector, tablero,
+    valvula, acumulador, perchero, senalesTablero, volante, cargaElevada, equipo, estacion, pasoTocar, conTrampas, senalesConsultables, trampaIntervenir,
     ordenar, barajar, mesaDispositivos };
 })();

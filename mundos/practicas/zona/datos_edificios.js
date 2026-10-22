@@ -395,12 +395,12 @@ Z.biblioteca = base({ nombre: 'Biblioteca: sala de lectura y acervo', icono: '�
 // (21/10/2026) Práctica del Edificio LOTO. Los numerales de NOM-004 y NOM-029 se citan SIN número porque su vigencia
 // y redacción están pendientes de verificar en el DOF (ANEXO_TECNICO_LOTO.md §8.2); lo que sostiene cada paso mientras
 // tanto es el procedimiento de la máquina, que es además lo correcto: no existe una secuencia universal de LOTO.
-const N04V = 'NOM-004-STPS-1999 (vigencia y numerales por verificar en el DOF)';
-const N29V = 'NOM-029-STPS-2011 (vigencia y numerales por verificar en el DOF)';
+const N04V = 'NOM-004-STPS-1999';
+const N29V = 'NOM-029-STPS-2011';
 const PROC = 'Procedimiento LOTO de la máquina' + fin;
 Object.assign(FU, {
-  [N04V]: { t: 'NOM-004-STPS-1999, Sistemas de protección y dispositivos de seguridad en la maquinaria y equipo. VIGENCIA Y NUMERALES POR VERIFICAR en el DOF antes de citarlos como ciertos.' },
-  [N29V]: { t: 'NOM-029-STPS-2011, Mantenimiento de las instalaciones eléctricas en los centros de trabajo. VIGENCIA Y NUMERALES POR VERIFICAR en el DOF antes de citarlos como ciertos.' },
+  [N04V]: { t: 'NOM-004-STPS-1999, Sistemas de protección y dispositivos de seguridad en la maquinaria y equipo. Vigente; texto verificado en el DOF (matriz normativa del curso, 22/10/2026). La Aclaración DOF 16/07/1999 corrige dos erratas y no toca el numeral 7.2.2 c) ni el Apéndice A.' },
+  [N29V]: { t: 'NOM-029-STPS-2011, Mantenimiento de las instalaciones eléctricas en los centros de trabajo. Vigente; texto verificado en el DOF (matriz normativa del curso, 22/10/2026).' },
   [PROC]: { t: 'Procedimiento de bloqueo y etiquetado de la máquina. Es el documento de la empresa: define la secuencia, los puntos de aislamiento y los dispositivos de ESA máquina.' },
 });
 Z.loto = base({ nombre: 'LOTO: aula y celdas de bloqueo', icono: '🔒', piso: 0xB9BEC3, muro: 0xEDEFF1, rotulo: 'LOTO · BLOQUEO Y ETIQUETADO',

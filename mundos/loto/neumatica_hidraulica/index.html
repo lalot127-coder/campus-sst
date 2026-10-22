@@ -20,9 +20,10 @@ import { Props } from '../../../motor/props.js';
 // Celda 2 del Edificio LOTO: aire comprimido y circuito hidráulico de la prensa P-02.
 // La lección de esta celda: cerrar la válvula NO quita la energía. El acumulador sigue con presión y la línea
 // guarda presión residual; hay que liberarla o contenerla y verificar en el punto correcto.
-// FUNDAMENTO NORMATIVO: por verificar en el DOF y en la STPS (ANEXO_TECNICO_LOTO.md §8.2).
+// FUNDAMENTO NORMATIVO VERIFICADO (22/10/2026) contra el DOF: ver la matriz del curso en
+// 03_cursos/BASE_loto_bloqueo_etiquetado_8h/01_diseno/MATRIZ_NORMATIVA_LOTO.md
 const { N04, PROC, BP, FIC, equipo, valvula, acumulador, candado, tarjeta, pasoTocar, conTrampas,
-  trampaIntervenir, mesaDispositivos, estacion, aPie, setModo, guiar } = window.LOTO;
+  trampaIntervenir, mesaDispositivos, estacion, aPie, setModo, guiar , F } = window.LOTO;
 const { nave, trabajador, marcador } = window.Alturas;
 const { decidir, encuentra, intro } = window.Riesgo;
 
@@ -85,7 +86,7 @@ const TRAMPA = trampaIntervenir(W);
 // --------------------------------------------------------------- pasos
 const pasoFuentes = encuentra(W, {
   titulo: 'Identifica las fuentes de presión', texto: 'Toca cada fuente de energía que haya que controlar antes de intervenir la prensa.',
-  fuente: N04,
+  fuente: F.identificar,
   buenas: [
     { tipo: 'm_aire', nombre: 'Aire comprimido', fb: 'Se aísla en la válvula V-1.', f: N04, obj: MK.aire },
     { tipo: 'm_aceite', nombre: 'Circuito hidráulico', fb: 'Se aísla en la válvula V-2 de la unidad de potencia.', f: N04, obj: MK.aceite },
@@ -98,23 +99,23 @@ pasoFuentes.iniciar = () => guiar(W, Object.values(MK).map(m => m.marco));
 conTrampas(W, pasoFuentes, [TRAMPA]);
 
 const pasoAvisar = pasoTocar(W, { titulo: 'Avisa al personal afectado', texto: 'Avisa a quien opera la prensa antes de pararla.',
-  fuente: PROC, tipo: 'companero', resaltar: [TR.torso], trampas: [TRAMPA],
+  fuente: F.notificar, tipo: 'companero', resaltar: [TR.torso], trampas: [TRAMPA],
   alTocar: () => { W.globo('Va, la detengo', TR.g, 2200, 1.9); W.bien('Personal afectado avisado.', PROC); W.siguiente(); } });
 
 const pasoParo = pasoTocar(W, { titulo: 'Paro controlado', texto: 'Para la prensa con el botón de paro de su botonera.',
-  fuente: PROC, tipo: 'paro', resaltar: [EQ.paro], trampas: [TRAMPA],
+  fuente: F.paro, tipo: 'paro', resaltar: [EQ.paro], trampas: [TRAMPA],
   alTocar: () => { W.bien('Prensa detenida.', PROC); W.siguiente(); } });
 
 const pasoAire = pasoTocar(W, { titulo: 'Aísla el aire comprimido', texto: 'Cierra la válvula V-1 de la línea de aire.',
-  fuente: N04, tipo: 'valvula_aire', resaltar: [VA.manija],
+  fuente: F.aislar, tipo: 'valvula_aire', resaltar: [VA.manija],
   trampas: [TRAMPA, { tipo: 'manometro', critico: false, una: true, txt: 'Todavía no hay nada que verificar: primero hay que aislar.', f: N04 }],
   alTocar: async () => { await VA.cerrar(); W.bien('Válvula V-1 cerrada: aire aislado.', N04); W.siguiente(); } });
 
 const pasoAceite = pasoTocar(W, { titulo: 'Aísla el circuito hidráulico', texto: 'Cierra la válvula V-2 de la unidad de potencia.',
-  fuente: N04, tipo: 'valvula_aceite', resaltar: [VH.manija], trampas: [TRAMPA],
+  fuente: F.aislar, tipo: 'valvula_aceite', resaltar: [VH.manija], trampas: [TRAMPA],
   alTocar: async () => { await VH.cerrar(); upCuerpo.material.color.set(0x37474F); W.bien('Válvula V-2 cerrada: circuito hidráulico aislado.', N04); W.siguiente(); } });
 
-const pasoDispositivo = { titulo: '¿Con qué bloqueas?', texto: 'Las dos válvulas ya están cerradas. Elige el dispositivo.', fuente: N04, puntos: 10,
+const pasoDispositivo = { titulo: '¿Con qué bloqueas?', texto: 'Las dos válvulas ya están cerradas. Elige el dispositivo.', fuente: F.bloquear, puntos: 10,
   iniciar() { W.resaltar([CAND.g, CAND2.g]);
     decidir(W, '🔒 ¿Cómo bloqueas las válvulas de bola ya cerradas?', [
       { t: 'Un bloqueo de válvula de bola en cada una, y en cada uno mi candado personal', ok: true, fb: 'Cada punto de aislamiento se bloquea por separado.', f: N04 },
@@ -123,30 +124,30 @@ const pasoDispositivo = { titulo: '¿Con qué bloqueas?', texto: 'Las dos válvu
     ], () => W.siguiente()); } };
 
 const pasoBloquear = pasoTocar(W, { titulo: 'Bloquea las válvulas', texto: 'Toma tus candados y colócalos en los dos puntos de aislamiento.',
-  fuente: N04, tipo: 'candado', resaltar: [CAND.g], trampas: [TRAMPA,
+  fuente: F.bloquear, tipo: 'candado', resaltar: [CAND.g], trampas: [TRAMPA,
     { tipo: 'tarjeta', critico: false, una: true, txt: 'La tarjeta va después del candado.', f: N04 }],
   alTocar: () => { CAND.colocar(VA.punto[0], VA.punto[1], VA.punto[2]); CAND2.colocar(VH.punto[0], VH.punto[1], VH.punto[2]);
     W.bien('Las dos válvulas quedaron bloqueadas con candado.', N04); W.siguiente(); } });
 
 const pasoEtiquetar = pasoTocar(W, { titulo: 'Coloca la tarjeta', texto: 'Identifica quién bloqueó y por qué.',
-  fuente: N04, tipo: 'tarjeta', resaltar: [TARJ.g], trampas: [TRAMPA],
+  fuente: F.etiquetar, tipo: 'tarjeta', resaltar: [TARJ.g], trampas: [TRAMPA],
   alTocar: () => { TARJ.colocar(VA.punto[0] + 0.12, VA.punto[1] - 0.08, VA.punto[2]); W.bien('Tarjeta colocada.', N04); W.siguiente(); } });
 
 const pasoAcumulador = pasoTocar(W, { titulo: 'Descarga el acumulador', texto: 'El acumulador sigue con presión aunque las válvulas estén cerradas. Ábrele la purga.',
-  fuente: N04, tipo: 'purga', resaltar: [AC.purga],
+  fuente: F.disiparOtras, tipo: 'purga', resaltar: [AC.purga],
   trampas: [TRAMPA, { tipo: 'manometro', critico: false, una: true, txt: 'Antes de verificar hay que liberar la energía almacenada: el acumulador sigue cargado.', f: N04 }],
   alTocar: async () => { await AC.despresurizar(); W.bien('Acumulador despresurizado por su purga.', N04); W.siguiente(); } });
 
 const pasoLinea = pasoTocar(W, { titulo: 'Libera la presión residual', texto: 'Falta el aire atrapado entre la válvula y el equipo: abre la purga de línea.',
-  fuente: N04, tipo: 'purgalinea', resaltar: [PUR], trampas: [TRAMPA],
+  fuente: F.disiparOtras, tipo: 'purgalinea', resaltar: [PUR], trampas: [TRAMPA],
   alTocar: async () => { await W.animar(800, k => { manAguja.rotation.z = -1.5 * k; });
     W.bien('Línea purgada: la presión residual salió.', N04); W.siguiente(); } });
 
 const pasoVerificar = pasoTocar(W, { titulo: 'Verifica la condición segura', texto: 'Comprueba en el manómetro de la línea que la presión está en cero.',
-  fuente: N04, tipo: 'manometro', resaltar: [manCara], trampas: [TRAMPA],
+  fuente: F.verificarOtras, tipo: 'manometro', resaltar: [manCara], trampas: [TRAMPA],
   alTocar: () => { W.bien('El manómetro de la línea marca cero.', N04); W.siguiente(); } });
 
-const pasoPuntoCorrecto = { titulo: '¿Dónde se verifica?', texto: 'Una pregunta sobre lo que acabas de hacer.', fuente: N04, puntos: 10,
+const pasoPuntoCorrecto = { titulo: '¿Dónde se verifica?', texto: 'Una pregunta sobre lo que acabas de hacer.', fuente: F.verificarOtras, puntos: 10,
   iniciar() { W.resaltar([]);
     decidir(W, '📍 ¿Por qué se verifica en el manómetro de la LÍNEA y no en el de la unidad de potencia?', [
       { t: 'Porque hay que medir donde va a quedar expuesta la persona que trabaja', ok: true, fb: 'La verificación se hace en el punto que importa: donde se va a intervenir.', f: N04 },
@@ -155,10 +156,10 @@ const pasoPuntoCorrecto = { titulo: '¿Dónde se verifica?', texto: 'Una pregunt
     ], () => W.siguiente()); } };
 
 const pasoArranque = pasoTocar(W, { titulo: 'Intento de arranque', texto: 'Confirma apretando el arranque: la prensa no debe moverse.',
-  fuente: PROC, tipo: 'arranque', resaltar: [EQ.arranque], trampas: [TRAMPA],
+  fuente: F.arranque, tipo: 'arranque', resaltar: [EQ.arranque], trampas: [TRAMPA],
   alTocar: () => { W.globo('No se mueve', EQ.g, 2200, 1.9); W.bien('Sin movimiento: condición segura confirmada.', PROC); W.siguiente(); } });
 
-const pasoAutorizar = { titulo: 'Autoriza la intervención', texto: 'Decide si se puede entrar al mantenimiento.', fuente: PROC, puntos: 10,
+const pasoAutorizar = { titulo: 'Autoriza la intervención', texto: 'Decide si se puede entrar al mantenimiento.', fuente: F.autorizar, puntos: 10,
   iniciar() { W.resaltar([EQ.zona]);
     decidir(W, '✅ ¿Se puede iniciar el mantenimiento?', [
       { t: 'Sí: las dos fuentes aisladas y bloqueadas, acumulador y línea descargados, manómetro en cero', ok: true, fb: 'Se cumplen las condiciones del procedimiento.', f: PROC },
@@ -172,7 +173,7 @@ const pasoCierre = { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', 
       <p>Lo que esta celda enseña y casi nadie hace: <b>cerrar la válvula no quita la energía</b>. Quedaban el
       acumulador cargado y la presión residual de la línea, y la verificación tenía que hacerse en el punto
       donde se va a trabajar.</p>
-      <p class="ficticio">Fundamento normativo en revisión: la vigencia y los numerales se verifican en el DOF antes de darlos por ciertos.</p>`,
+      <p class="ficticio">Fundamento verificado en el DOF (matriz normativa del curso, 22/10/2026). Lo señalado como buena práctica no es obligatorio en México; comprobar el instrumento antes y después se enseña sin numeral porque el de NFPA 70E sigue sin verificar.</p>`,
       () => W.siguiente(), 'Ver resultado'); } };
 
 W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel resalta en azul lo que toca' },
@@ -183,7 +184,7 @@ W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel 
     <p>⛔ Si metes la mano al equipo antes de terminar, se registra como <b>error crítico</b> y no se aprueba.</p>`, FIC),
     pasoFuentes, pasoAvisar, pasoParo, pasoAire, pasoAceite, pasoDispositivo, pasoBloquear, pasoEtiquetar,
     pasoAcumulador, pasoLinea, pasoVerificar, pasoPuntoCorrecto, pasoArranque, pasoAutorizar, pasoCierre]; },
-  'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento normativo (NOM-004-STPS-1999): vigencia y numerales POR VERIFICAR en el DOF. 🥽 En visor: botón VR.');
+  'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento verificado en el DOF: NOM-004-STPS-1999 (31/05/1999) y NOM-029-STPS-2011 (29/12/2011), vigentes; la Aclaración DOF 16/07/1999 no toca el 7.2.2 c) ni el Apéndice A. Lo marcado como buena práctica (OSHA 1910.147) NO es obligatorio en México. 🥽 En visor: botón VR.');
 
 if (location.search.includes('qa')) window.__qa = { MK, EQ, VA, VH, AC, MAN, PUR, TR, CAND, TARJ, tocar: W.tocar, estado: W.qa };
 </script>

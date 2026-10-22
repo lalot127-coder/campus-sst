@@ -20,9 +20,10 @@ import { Props } from '../../../motor/props.js';
 // Celda 1 del Edificio LOTO: aislamiento eléctrico de la prensa P-02, ejecutado paso por paso.
 // El corazón del ejercicio es la VERIFICACIÓN DE AUSENCIA DE TENSIÓN: instrumento adecuado, comprobado antes y
 // después de medir, en el punto correcto, más el intento de arranque. Es el paso que más se omite en la realidad.
-// FUNDAMENTO NORMATIVO: por verificar en el DOF y en la STPS (ANEXO_TECNICO_LOTO.md §8.2).
+// FUNDAMENTO NORMATIVO VERIFICADO (22/10/2026) contra el DOF: ver la matriz del curso en
+// 03_cursos/BASE_loto_bloqueo_etiquetado_8h/01_diseno/MATRIZ_NORMATIVA_LOTO.md
 const { N29, PROC, BP, FIC, tablero, equipo, candado, tarjeta, detector, pasoTocar, conTrampas, trampaIntervenir,
-  mesaDispositivos, estacion, aPie, setModo, guiar } = window.LOTO;
+  mesaDispositivos, estacion, aPie, setModo, guiar, perchero, senalesTablero, senalesConsultables, F } = window.LOTO;
 const { nave, trabajador, marcador } = window.Alturas;
 const { decidir, encuentra, intro } = window.Riesgo;
 
@@ -60,6 +61,8 @@ const rotT = letrero('Operador de la prensa', 0.7, 0.11, '#0E3A6B'); rotT.positi
 
 const MESA = mesaDispositivos(W, { x: -1.0, z: 1.6 });
 estacion(W, { x: -5.0, z: -7.8 });   // tablero de pared con candados, pinza multibloqueo y etiquetas
+const PER = perchero(W, { x: -3.9, z: 0.4, ry: 0.9 });            // EPP: lo adecuado y lo que no sirve
+const SEN = senalesTablero(W, { x: TB.g.position.x, y: 1.95, z: TB.g.position.z + 0.2, ry: 0.35, volts: '440 V' });
 
 // Recorrido a pie (anexo §5 y §11): toca el piso para caminar; al tocar algo lejano el avatar va hasta ahí
 // antes de inspeccionarlo. Habilita además el botón 🧍 de vista a la altura de los ojos.
@@ -83,7 +86,7 @@ const trampaTarjeta = { tipo: 'tarjeta', critico: false, una: true,
 // --------------------------------------------------------------- pasos
 const pasoFuentes = encuentra(W, {
   titulo: 'Identifica las fuentes de energía', texto: 'Toca las fuentes de energía peligrosa que alimentan a la prensa P-02.',
-  fuente: N29,
+  fuente: F.identificar,
   buenas: [
     { tipo: 'm_alim', nombre: 'Alimentación de fuerza', fb: 'Se aísla en el interruptor del tablero TB-7.', f: N29, obj: MK.alim },
     { tipo: 'm_cap', nombre: 'Banco de capacitores', fb: 'Guarda energía: sigue cargado después de abrir el interruptor.', f: N29, obj: MK.cap },
@@ -95,36 +98,60 @@ pasoFuentes.iniciar = () => guiar(W, Object.values(MK).map(m => m.marco));
 conTrampas(W, pasoFuentes, [TRAMPA]);   // meter la mano al equipo es crítico también mientras se identifican las fuentes
 
 const pasoAvisar = pasoTocar(W, { titulo: 'Avisa al personal afectado', texto: 'Antes de parar el equipo, avisa a quien lo opera.',
-  fuente: PROC, tipo: 'companero', resaltar: [TR.torso],
+  fuente: F.notificar, tipo: 'companero', resaltar: [TR.torso],
   trampas: [TRAMPA, { tipo: 'palanca', critico: false, una: true, txt: 'Todavía no: primero se avisa y se para el equipo con su procedimiento.', f: PROC }],
   alTocar: () => { W.globo('Entendido, ya lo detengo', TR.g, 2400, 1.9); W.bien('Avisaste al personal afectado.', PROC); W.siguiente(); } });
 
 const pasoParo = pasoTocar(W, { titulo: 'Paro controlado', texto: 'Para la prensa con su propio procedimiento: botón de paro de la botonera.',
-  fuente: PROC, tipo: 'paro', resaltar: [EQ.paro], trampas: [TRAMPA],
+  fuente: F.paro, tipo: 'paro', resaltar: [EQ.paro], trampas: [TRAMPA],
   alTocar: () => { EQ.motor.material.color.set(0x37474F); W.bien('Prensa detenida con el paro de la botonera.', PROC); W.siguiente(); } });
 
+// EPP antes de acercarse al tablero: se eligen las piezas adecuadas al trabajo eléctrico y se descarta lo que no sirve.
+const EPP_PUESTO = new Set();
+const pasoEPP = pasoTocar(W, { titulo: 'Ponte el equipo de protección', fuente: F.epp, puntos: 40,   // 4 piezas x 10
+  texto: 'Antes de tocar el tablero, toma del perchero <b>las tres piezas adecuadas</b> para trabajo eléctrico y párate en el tapete. <b>(0/4)</b>',
+  tipo: '__ninguno__', resaltar: [PER.piezas.guantes, PER.piezas.careta, PER.piezas.herramienta, PER.piezas.tapete],
+  trampas: [TRAMPA,
+    { tipo: 'epp_carnaza', critico: false, una: true, txt: 'Los guantes de carnaza no son dieléctricos: no protegen del riesgo eléctrico.', f: 'NOM-017-STPS-2024, equipo de protección personal' },
+    { tipo: 'palanca', critico: false, una: true, txt: 'Todavía no: primero el equipo de protección.', f: F.epp }],
+  pista: 'Toma los guantes dieléctricos, la careta y la herramienta aislada, y párate en el tapete.' });
+pasoEPP.tocar = (o => {   // se envuelve para contar las cuatro piezas correctas
+  const orig = pasoEPP.tocar;
+  return x => {
+    const t = x.userData.tipo, buenas = ['epp_guantes', 'epp_careta', 'epp_herramienta', 'epp_tapete'];
+    if (!buenas.includes(t)) return orig(x);
+    if (EPP_PUESTO.has(t)) return;
+    EPP_PUESTO.add(t);
+    const nombres = { epp_guantes: 'Guantes dieléctricos puestos.', epp_careta: 'Careta puesta.',
+      epp_herramienta: 'Tomaste la herramienta aislada.', epp_tapete: 'Estás sobre el tapete dieléctrico.' };
+    W.bien(nombres[t], F.epp);
+    const n = W.$('pTxt').querySelector('b'); if (n) n.textContent = `(${EPP_PUESTO.size}/4)`;
+    if (EPP_PUESTO.size === 4) setTimeout(() => W.siguiente(), 700);
+  };
+})();
+
 const pasoAislar = pasoTocar(W, { titulo: 'Aísla la energía', texto: 'Acciona el dispositivo de aislamiento: la palanca del interruptor del TB-7.',
-  fuente: N29, tipo: 'palanca', resaltar: [TB.mango],
+  fuente: F.aislar, tipo: 'palanca', resaltar: [TB.mango],
   trampas: [TRAMPA, trampaTarjeta, { tipo: 'candado', critico: false, una: true, txt: 'El candado va sobre el dispositivo YA abierto. Primero abre el interruptor.', f: N29 }],
   alTocar: async () => { await TB.abrir(); W.bien('Interruptor abierto: la alimentación quedó aislada.', N29); W.siguiente(); } });
 
 const pasoBloquear = pasoTocar(W, { titulo: 'Bloquea con tu candado', texto: 'Toma tu candado personal y colócalo en el interruptor aislado.',
-  fuente: N29, tipo: 'candado', resaltar: [CAND.g], trampas: [TRAMPA, trampaTarjeta],
+  fuente: F.bloquear, tipo: 'candado', resaltar: [CAND.g], trampas: [TRAMPA, trampaTarjeta],
   alTocar: () => { CAND.colocar(TB.punto[0], TB.punto[1], TB.punto[2]);
     W.bien('Candado personal colocado: el interruptor ya no se puede volver a cerrar.', N29); W.siguiente(); } });
 
 const pasoEtiquetar = pasoTocar(W, { titulo: 'Coloca la tarjeta', texto: 'Ahora sí: identifica quién bloqueó y por qué.',
-  fuente: N29, tipo: 'tarjeta', resaltar: [TARJ.g], trampas: [TRAMPA],
+  fuente: F.etiquetar, tipo: 'tarjeta', resaltar: [TARJ.g], trampas: [TRAMPA],
   alTocar: () => { TARJ.colocar(TB.punto[0] + 0.12, TB.punto[1] - 0.05, TB.punto[2]);
     W.bien('Tarjeta colocada junto al candado.', N29); W.siguiente(); } });
 
 const pasoCapacitores = pasoTocar(W, { titulo: 'Controla la energía almacenada', texto: 'El banco de capacitores sigue cargado. Descárgalo según el procedimiento.',
-  fuente: N29, tipo: 'capacitores', resaltar: capBotes,
+  fuente: F.disiparElectrico, tipo: 'capacitores', resaltar: capBotes,
   trampas: [TRAMPA, { tipo: 'puntomedida', critico: false, una: true, txt: 'Antes de medir hay que descargar la energía almacenada.', f: N29 }],
   alTocar: async () => { await W.animar(900, k => capBotes.forEach(c => c.material.color.setRGB(1 - 0.55 * k, 0.70 - 0.24 * k, 0.0 + 0.46 * k)));
     W.bien('Capacitores descargados conforme al procedimiento.', N29); W.siguiente(); } });
 
-const pasoInstrumento = { titulo: 'Elige cómo verificar', texto: '¿Con qué vas a comprobar que ya no hay tensión?', fuente: N29, puntos: 10,
+const pasoInstrumento = { titulo: 'Elige cómo verificar', texto: '¿Con qué vas a comprobar que ya no hay tensión?', fuente: F.verificarElectrico, puntos: 10,
   iniciar() { W.resaltar([DET.g]);
     decidir(W, '🔎 ¿Cómo compruebas la ausencia de tensión?', [
       { t: 'Con un detector de ausencia de tensión adecuado al nivel de tensión', ok: true, fb: 'Instrumento adecuado al trabajo y al nivel de tensión.', f: N29 },
@@ -134,25 +161,25 @@ const pasoInstrumento = { titulo: 'Elige cómo verificar', texto: '¿Con qué va
     ], () => W.siguiente()); } };
 
 const pasoProbarAntes = pasoTocar(W, { titulo: 'Comprueba el instrumento (antes)', texto: 'Prueba el detector en la toma de prueba energizada: tiene que marcar presencia de tensión.',
-  fuente: N29, tipo: 'fuenteconocida', resaltar: [fcCuerpo],
+  fuente: F.instrumento, tipo: 'fuenteconocida', resaltar: [fcCuerpo],
   trampas: [TRAMPA, { tipo: 'puntomedida', critico: true, txt: 'Mediste sin comprobar antes el instrumento. Si el detector está averiado, un equipo energizado te va a parecer seguro.', f: N29 }],
   alTocar: () => { DET.encender(true); W.bien('El detector marca tensión: el instrumento sirve.', N29); W.siguiente(); } });
 
 const pasoMedir = pasoTocar(W, { titulo: 'Verifica en el punto correcto', texto: 'Mide en los bornes del motor, donde se va a trabajar.',
-  fuente: N29, tipo: 'puntomedida', resaltar: [PM], trampas: [TRAMPA],
+  fuente: F.verificarElectrico, tipo: 'puntomedida', resaltar: [PM], trampas: [TRAMPA],
   alTocar: () => { DET.encender(false); W.bien('El detector no marca tensión en los bornes.', N29); W.siguiente(); } });
 
 const pasoProbarDespues = pasoTocar(W, { titulo: 'Comprueba el instrumento (después)', texto: 'Vuelve a probar el detector en la toma energizada: así sabes que no se averió durante la medición.',
-  fuente: N29, tipo: 'fuenteconocida', resaltar: [fcCuerpo],
+  fuente: F.instrumento, tipo: 'fuenteconocida', resaltar: [fcCuerpo],
   trampas: [TRAMPA, { tipo: 'arranque', critico: false, una: true, txt: 'Falta cerrar la verificación: vuelve a comprobar el instrumento.', f: N29 }],
   alTocar: () => { DET.encender(true); setTimeout(() => DET.encender(false), 1200);
     W.bien('El instrumento sigue funcionando: la medición es válida.', N29); W.siguiente(); } });
 
 const pasoArranque = pasoTocar(W, { titulo: 'Intento de arranque', texto: 'Confirma apretando el botón de arranque: el equipo no debe responder.',
-  fuente: PROC, tipo: 'arranque', resaltar: [EQ.arranque], trampas: [TRAMPA],
+  fuente: F.arranque, tipo: 'arranque', resaltar: [EQ.arranque], trampas: [TRAMPA],
   alTocar: () => { W.globo('No responde', EQ.g, 2200, 1.9); W.bien('El equipo no arranca: condición de energía cero confirmada.', PROC); W.siguiente(); } });
 
-const pasoAutorizar = { titulo: 'Autoriza la intervención', texto: 'Ya se puede entrar al mantenimiento. Decide.', fuente: PROC, puntos: 10,
+const pasoAutorizar = { titulo: 'Autoriza la intervención', texto: 'Ya se puede entrar al mantenimiento. Decide.', fuente: F.autorizarElectrico, puntos: 10,
   iniciar() { W.resaltar([EQ.zona]);
     decidir(W, '✅ ¿Se puede iniciar el mantenimiento?', [
       { t: 'Sí: fuentes aisladas y bloqueadas, energía almacenada controlada y ausencia de tensión verificada', ok: true, fb: 'Se cumplen las condiciones del procedimiento.', f: PROC },
@@ -166,7 +193,7 @@ const pasoCierre = { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', 
       <p>Ejecutaste el procedimiento completo: identificar, avisar, parar, <b>aislar</b>, <b>bloquear</b>, <b>etiquetar</b>,
       controlar la energía almacenada, <b>verificar</b> con el instrumento comprobado antes y después, e intento de arranque.</p>
       <p>El orden y los puntos de aislamiento salen del procedimiento de ESTA máquina. En otra máquina serán otros.</p>
-      <p class="ficticio">Fundamento normativo en revisión: la vigencia y los numerales se verifican en el DOF antes de darlos por ciertos.</p>`,
+      <p class="ficticio">Fundamento verificado en el DOF (matriz normativa del curso, 22/10/2026). Lo señalado como buena práctica no es obligatorio en México; comprobar el instrumento antes y después se enseña sin numeral porque el de NFPA 70E sigue sin verificar.</p>`,
       () => W.siguiente(), 'Ver resultado'); } };
 
 W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel resalta en azul lo que toca' },
@@ -175,11 +202,12 @@ W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel 
   sel => { setModo(sel); return [intro(W, `<h2>⚡ Celda 1: Aislamiento eléctrico</h2><p>Eres personal de mantenimiento. Hay que intervenir la <b>prensa P-02</b> del área de troquelado.</p>
     <p>Ejecuta el procedimiento de bloqueo y etiquetado <b>paso por paso</b>. El panel de abajo te dice qué toca; toca en la escena el objeto correcto.</p>
     <p>⛔ Si metes la mano al equipo antes de terminar, se registra como <b>error crítico</b> y no se aprueba.</p>`, FIC),
-    pasoFuentes, pasoAvisar, pasoParo, pasoAislar, pasoBloquear, pasoEtiquetar, pasoCapacitores,
-    pasoInstrumento, pasoProbarAntes, pasoMedir, pasoProbarDespues, pasoArranque, pasoAutorizar, pasoCierre]; },
-  'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento normativo (NOM-029-STPS-2011): vigencia y numerales POR VERIFICAR en el DOF. 🥽 En visor: botón VR.');
+    ...senalesConsultables(W, [pasoFuentes, pasoAvisar, pasoParo, pasoEPP, pasoAislar, pasoBloquear, pasoEtiquetar,
+      pasoCapacitores, pasoInstrumento, pasoProbarAntes, pasoMedir, pasoProbarDespues, pasoArranque, pasoAutorizar],
+      SEN.volts), pasoCierre]; },
+  'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento verificado en el DOF: NOM-004-STPS-1999 (31/05/1999) y NOM-029-STPS-2011 (29/12/2011), vigentes; la Aclaración DOF 16/07/1999 no toca el 7.2.2 c) ni el Apéndice A. Lo marcado como buena práctica (OSHA 1910.147) NO es obligatorio en México. 🥽 En visor: botón VR.');
 
-if (location.search.includes('qa')) window.__qa = { MK, EQ, TB, CAP, FC, PM, TR, CAND, TARJ, DET, tocar: W.tocar, estado: W.qa };
+if (location.search.includes('qa')) window.__qa = { MK, EQ, TB, CAP, FC, PM, TR, CAND, TARJ, DET, PER, SEN, tocar: W.tocar, estado: W.qa };
 </script>
 </body>
 </html>

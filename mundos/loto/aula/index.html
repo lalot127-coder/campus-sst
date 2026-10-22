@@ -19,13 +19,14 @@ import { Props } from '../../../motor/props.js';
 
 // Aula del Edificio LOTO: reconocer antes de actuar. Tres ejercicios: encontrar las energías de una máquina,
 // ordenar la secuencia del procedimiento y elegir el dispositivo de bloqueo de cada punto.
-// FUNDAMENTO NORMATIVO: por verificar en el DOF y en la STPS (ANEXO_TECNICO_LOTO.md §8.2). Aquí no se afirma
-// ningún numeral: lo que manda la secuencia es el procedimiento de la máquina (ficticio).
+// FUNDAMENTO NORMATIVO VERIFICADO (22/10/2026) contra el DOF: ver la matriz del curso en
+// 03_cursos/BASE_loto_bloqueo_etiquetado_8h/01_diseno/MATRIZ_NORMATIVA_LOTO.md
 const { N04, N29, PROC, BP, FIC, tablero, valvula, acumulador, volante, cargaElevada, equipo,
-  candado, tarjeta, detector, ordenar, mesaDispositivos, estacion } = window.LOTO;
+  candado, tarjeta, detector, ordenar, mesaDispositivos, estacion , F } = window.LOTO;
 const { nave, marcador } = window.Alturas;
 const { decidir, encuentra, intro } = window.Riesgo;
 
+const DISTINCION = `${N04}, 7.2.2 c) 4), 5) y 6)`;   // la norma separa aislar, etiquetar y candar en incisos distintos
 const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Aula LOTO: energías y dispositivos', icono: '🎓',
   clave: 'loto_aula', criterio: { pct: 80, sinCriticos: true }, fondo: 0xDDE3E8,
   vistas: [[[0, 3.2, 6.2], [0, 1.2, -1]], [[-4.2, 2.2, 2.2], [-1.6, 1.0, -1]], [[4.2, 2.2, 2.2], [1.6, 1.0, -1]]] });
@@ -67,7 +68,7 @@ const rotM = letrero('DISPOSITIVOS DE BLOQUEO', 0.9, 0.12, '#0E3A6B'); rotM.posi
 // --------------------------------------------------------------- 1) encuentra las energías
 const pasoEnergias = encuentra(W, {
   titulo: 'Encuentra las energías de la máquina', texto: 'Toca cada fuente de energía peligrosa que haya que controlar.',
-  fuente: PROC,
+  fuente: F.identificar,
   buenas: [
     { tipo: 'm_electrica', nombre: 'Energía eléctrica', fb: 'Se aísla en el tablero TB-7.', f: N29, obj: MK.electrica },
     { tipo: 'm_neumatica', nombre: 'Aire comprimido', fb: 'Se aísla en la válvula V-1 y hay que purgar la línea.', f: N04, obj: MK.neumatica },
@@ -99,14 +100,14 @@ const pasoSecuencia = { titulo: 'Ordena la secuencia', texto: 'Arma el procedimi
       alTerminar: () => W.siguiente() }); } };
 
 // --------------------------------------------------------------- 3) elige el dispositivo
-const pasoDispositivo1 = { titulo: 'Elige el dispositivo (1 de 3)', texto: 'Punto de aislamiento: interruptor de palanca del tablero TB-7.', fuente: N29, puntos: 10,
+const pasoDispositivo1 = { titulo: 'Elige el dispositivo (1 de 3)', texto: 'Punto de aislamiento: interruptor de palanca del tablero TB-7.', fuente: F.bloquear, puntos: 10,
   iniciar() { W.resaltar([TB.palanca]);
     decidir(W, '⚡ ¿Con qué bloqueas el interruptor de palanca?', [
       { t: 'Pinza de bloqueo para interruptor, y encima el candado personal', ok: true, fb: 'La pinza sujeta la palanca en posición abierta y recibe el candado.', f: N29 },
       { t: 'Solo la tarjeta de NO OPERAR colgada de la palanca', ok: false, crit: true, fb: 'La etiqueta avisa, pero no impide accionar la palanca. Nunca sustituye al bloqueo físico.', f: N29 },
       { t: 'Cinta de peligro alrededor del tablero', ok: false, fb: 'Delimita, pero no bloquea el dispositivo de aislamiento.', f: BP },
     ], () => W.siguiente()); } };
-const pasoDispositivo2 = { titulo: 'Elige el dispositivo (2 de 3)', texto: 'Punto de aislamiento: válvula de bola del aire comprimido.', fuente: N04, puntos: 10,
+const pasoDispositivo2 = { titulo: 'Elige el dispositivo (2 de 3)', texto: 'Punto de aislamiento: válvula de bola del aire comprimido.', fuente: F.bloquear, puntos: 10,
   iniciar() { W.resaltar([VA.manija]);
     decidir(W, '💨 ¿Con qué bloqueas la válvula de bola V-1?', [
       { t: 'Bloqueo de válvula de bola que abraza la manija, con candado', ok: true, fb: 'Impide que la manija vuelva a girar a abierto.', f: N04 },
@@ -128,7 +129,7 @@ const DIST = ['Aislar: accionar el dispositivo que corta el paso de la energía'
   'Verificar: comprobar con un método adecuado que ya no hay energía',
   'Etiquetar es suficiente cuando el trabajo es corto',
   'Verificar es apretar el botón de arranque y ver que no prenda la luz del tablero'];
-const pasoDistincion = { titulo: 'Aislar, bloquear, etiquetar, verificar', texto: 'Marca TODAS las afirmaciones correctas.', fuente: PROC, puntos: 10,
+const pasoDistincion = { titulo: 'Aislar, bloquear, etiquetar, verificar', texto: 'Marca TODAS las afirmaciones correctas.', fuente: DISTINCION, puntos: 10,
   iniciar() { W.resaltar([]);
     W.pregunta('🧠 ¿Cuáles son correctas?', DIST, [0, 1, 2, 3], PROC, () => W.siguiente(), true,
       'Son cuatro cosas distintas y ninguna sustituye a otra.'); } };
@@ -141,7 +142,7 @@ const pasoCierre = { titulo: 'Listo para las celdas', texto: 'Ya puedes entrar a
       <li><b>Aislar ≠ bloquear ≠ etiquetar ≠ verificar.</b> La etiqueta nunca sustituye el bloqueo físico.</li>
       <li>La secuencia válida es la del procedimiento de la máquina.</li></ul>
       <p>En las celdas vas a ejecutarlo tú: eléctrica, neumática e hidráulica, y mecánica con energía almacenada.</p>
-      <p class="ficticio">Fundamento normativo en revisión: la vigencia y los numerales se verifican en el DOF antes de darlos por ciertos.</p>`,
+      <p class="ficticio">Fundamento verificado en el DOF (matriz normativa del curso, 22/10/2026). Lo señalado como buena práctica no es obligatorio en México; comprobar el instrumento antes y después se enseña sin numeral porque el de NFPA 70E sigue sin verificar.</p>`,
       () => W.siguiente(), 'Terminar'); } };
 
 W.inicio([{ id: 'completo', txt: '🎓 <b>Aula completa:</b> energías, secuencia, dispositivos y la distinción clave' }],
@@ -149,7 +150,7 @@ W.inicio([{ id: 'completo', txt: '🎓 <b>Aula completa:</b> energías, secuenci
     <p>En esta aula vas a hacer tres ejercicios sobre la máquina de demostración, y al final las tres celdas te van a pedir ejecutarlo de verdad.</p>
     <p><b>Gira la vista arrastrando</b> y toca los objetos que brillan.</p>`, FIC),
     pasoEnergias, pasoSecuencia, pasoDispositivo1, pasoDispositivo2, pasoDispositivo3, pasoDistincion, pasoCierre],
-  'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento normativo (NOM-004-STPS-1999, NOM-029-STPS-2011): vigencia y numerales POR VERIFICAR en el DOF. 🥽 En visor: botón VR.');
+  'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento verificado en el DOF: NOM-004-STPS-1999 (31/05/1999) y NOM-029-STPS-2011 (29/12/2011), vigentes; la Aclaración DOF 16/07/1999 no toca el 7.2.2 c) ni el Apéndice A. Lo marcado como buena práctica (OSHA 1910.147) NO es obligatorio en México. 🥽 En visor: botón VR.');
 
 if (location.search.includes('qa')) window.__qa = { MK, EQ, TB, VA, VH, AC, VO, CG, tocar: W.tocar, estado: W.qa };
 </script>

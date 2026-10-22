@@ -16,9 +16,9 @@
   const RF = 'RFSST (DOF 13/11/2014)', N30 = 'NOM-030-STPS-2009', N17 = 'NOM-017-STPS-2024', N35 = 'NOM-035-STPS-2018';
   const NIOSH = 'NIOSH, Hierarchy of Controls (10/04/2024), referencia', N02 = 'NOM-002-STPS-2010', N33 = 'NOM-033-STPS-2015';
   const N87 = 'NOM-087-SEMARNAT-SSA1-2002', N45 = 'NOM-045-SSA2-2005', LGPC = 'LGPC art. 2';
-  // LOTO (21/10/2026): se cita la norma SIN numeral porque su vigencia y redacción siguen por verificar en el DOF.
-  const N04V = 'NOM-004-STPS-1999 (vigencia y numerales por verificar en el DOF)';
-  const N29V = 'NOM-029-STPS-2011 (vigencia y numerales por verificar en el DOF)';
+  // LOTO (22/10/2026): numerales VERIFICADOS contra el DOF (matriz del curso BASE_loto_bloqueo_etiquetado_8h).
+  const N04V = 'NOM-004-STPS-1999, 7.2.2 c)';
+  const N29V = 'NOM-029-STPS-2011, 8.1 a)';
   const NO_CUIDADO = { t: 'Pedir que "tengan cuidado" y nada más', ok: false, fb: 'Depende solo de la conducta: es el control menos confiable.', f: NIOSH };
   const SOLO_EPP = { t: 'Solo dar equipo de protección personal', ok: false, fb: 'El EPP es transitorio o complementario, no la primera opción.', f: `${N17}, 5.2` };
 
