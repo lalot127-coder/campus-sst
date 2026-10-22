@@ -227,6 +227,20 @@ const AREAS = [
       { titulo: 'Sala de lectura', icono: '📖', tipo: '3d', url: 'mundos/biblioteca/index.html' },
       { titulo: 'Reto: encuentra la norma', icono: '🔎', tipo: '3d', url: 'mundos/biblioteca/index.html?reto' },
     ] },
+  // Edificio LOTO (21/10/2026): MAQUETA para presentación al cliente. Fachada, puerta e interior con el menú de
+  // las tres celdas y el aula. Las páginas son todavía fichas de lo que contendrá cada celda: NO hay lógica de
+  // evaluación (eso es la Fase 2 de ANEXO_TECNICO_LOTO.md). Los numerales normativos dicen «por verificar» a
+  // propósito: no se escriben como ciertos hasta consultarlos en el DOF (regla 4 y §8.2 del anexo).
+  { id: 'loto', nombre: 'LOTO · Bloqueo y etiquetado', icono: '🔒', color: 0xB7791F, ang: 20, senales: ['salida', 'electrico', 'guantes'],
+    desc: 'Control de energías peligrosas: aula de energías y dispositivos, y tres celdas de simulación (eléctrica, neumática e hidráulica, y mecánica con energía almacenada) · MAQUETA en construcción',
+    modulos: [
+      { titulo: 'Aula: energías y dispositivos', icono: '🎓', tipo: 'sala', url: 'mundos/loto/aula/index.html', nom: 'NOM-004 · NOM-029 (por verificar)', color: 'azul', senal: 'informacion' },
+      { titulo: 'Celda 1: Aislamiento eléctrico', icono: '⚡', tipo: '3d', url: 'mundos/loto/electrica/index.html', nom: 'NOM-029 (por verificar)', color: 'amarillo', senal: 'electrico' },
+      { titulo: 'Celda 2: Neumático e hidráulico', icono: '🫧', tipo: '3d', url: 'mundos/loto/neumatica_hidraulica/index.html', nom: 'NOM-004 (por verificar)', color: 'amarillo', senal: 'guantes' },
+      { titulo: 'Celda 3: Mecánico y energía almacenada', icono: '⚙️', tipo: '3d', url: 'mundos/loto/mecanica/index.html', nom: 'NOM-004 (por verificar)', color: 'amarillo', senal: 'prec_general' },
+      { titulo: 'Examen y constancia con folio', icono: '📄', tipo: '3d', estado: 'pronto', nom: 'Fase 3 del proyecto', color: 'azul' },
+      { titulo: 'Bloqueo grupal y cambio de turno', icono: '👥', tipo: '3d', estado: 'pendiente', nom: 'Fuera de la versión 1', color: 'azul' },
+    ] },
 ];
 // Práctica de cada edificio (14/10/2026): recorrido, peligros, inspección, emergencia y análisis (mundos/practicas/zona, datos_edificios.js).
 const NOM_EDIFICIO = { hospital: 'NOM-045-SSA2-2005 · NOM-002-STPS-2010', industria: 'NOM-004 · NOM-027 · NOM-029-STPS', proteccion: 'NOM-002-STPS-2010 · NOM-003-SEGOB-2011',
@@ -408,8 +422,8 @@ totemBanner(4.6, 20.4, -0.35, 4.6);
 // Desde 05/10/2026 cada edificio tiene una entrada principal: el avatar entra físicamente a un interior caminable
 // (motor/interior.js) con las puertas de sus módulos. Agregar puertas: sigue siendo en "modulos" de AREAS.
 const ED = {}; const ANCHO_ED = 9, ALTO_ED = 6.4;
-const SENAL_AREA = { hospital: 'primeros', proteccion: 'extintor', industria: 'casco', laboral: 'informacion', empresa: 'informacion', cafeteria: 'informacion', biblioteca: 'informacion' };
-const PISO_AREA = { industria: 'concreto', proteccion: 'placa_metal', biblioteca: 'tablones', cafeteria: 'tablones', laboral: 'concreto', empresa: 'concreto', hospital: 'concreto' };
+const SENAL_AREA = { hospital: 'primeros', proteccion: 'extintor', industria: 'casco', laboral: 'informacion', empresa: 'informacion', cafeteria: 'informacion', biblioteca: 'informacion', loto: 'electrico' };
+const PISO_AREA = { industria: 'concreto', proteccion: 'placa_metal', biblioteca: 'tablones', cafeteria: 'tablones', laboral: 'concreto', empresa: 'concreto', hospital: 'concreto', loto: 'placa_metal' };
 AREAS.forEach(a => a.modulos.forEach(m => m.puerta = Acceso.idPuerta(a.id, m.url || '')));
 AREAS.forEach(a => {
   const ancho = ANCHO_ED, alto = ALTO_ED, pos = polar(a.ang, R_EDIF), hex = '#' + a.color.toString(16).padStart(6, '0');
