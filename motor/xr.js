@@ -207,6 +207,9 @@ window.CampusXR = window.CampusXR || (() => { const ua = navigator.userAgent || 
       renderer.xr.setFoveation && renderer.xr.setFoveation(1);   // menos carga en los bordes de la lente (Quest 3S)
       try { sessionStorage.setItem('campus_vr', '1'); } catch (e) { }
       controls.enabled = false;
+      // (22/10/2026) En el visor manda la realidad virtual: se apaga la vista a la altura de los ojos para que sus
+      // flechas y su giro no peleen con el movimiento de la cabeza (el campus ya lo hacia, a los sub-mundos les faltaba).
+      if (W.v1a && W.v1a.activa()) W.v1a.desactivar();
       if (modo === 'immersive-ar') { scene.background = null; (opc.entorno || []).forEach(o => o.visible = false); }
       const [x, z] = opc.inicio || [0, 0];
       setTimeout(() => { if (x || z) irA(x, z); else alFrente(); panel.visible = true; pintar(); }, 300);

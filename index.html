@@ -643,7 +643,7 @@ const v1a = Vista1a.crear({
   THREE, camera, controls, renderer, barra: $('#barra .der'), yo: () => yo,
   libre: (x, z) => navAct().libre(x, z),
   bloqueado: () => $('#inicio').style.display === 'block' || $('#modal').style.display === 'flex',
-  alCambiar: activa => { ruta = []; alLlegar = null; marca.visible = false; if (activa) { levantar(); $('#ayuda').style.display = 'none'; aviso('Vista a la altura de los ojos: gira moviendo el celular o arrastrando; camina con las flechas.'); } else colocarCamara(); }
+  alCambiar: activa => { ruta = []; alLlegar = null; marca.visible = false; if (activa) { levantar(); $('#ayuda').style.display = 'none'; aviso('👁️ Gira moviendo el celular · camina con las flechas'); } else colocarCamara(); }
 });
 
 // ============================================================================ MULTIJUGADOR (servidor de aula en el mismo wifi)

@@ -176,7 +176,10 @@ function crearMundo(THREE, OrbitControls, cfg) {
     const pulso = (Math.sin(reloj.getElapsedTime() * 5) + 1) / 2;
     objetivos.forEach(o => { o.material && o.material.emissive && o.material.emissive.setRGB(0, 0.22 * pulso, 0.32 * pulso); o.scale.setScalar(1 + 0.12 * pulso); });
     cuadro.forEach(f => f(reloj.getElapsedTime()));
-    controls.update(); renderer.render(scene, camera);
+    // (22/10/2026) En el visor NO se toca la cámara: la maneja el casco. OrbitControls.update() la recolocaba en cada
+    // cuadro y peleaba con el movimiento de la cabeza (el campus ya lo hacía así; a los sub-mundos les faltaba).
+    if (!renderer.xr.isPresenting) controls.update();
+    renderer.render(scene, camera);
   });
   addEventListener('campus-liberado', () => renderer.setAnimationLoop(null));   // otra pestaña tomó la sesión (motor/acceso.js)
   addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
@@ -232,14 +235,15 @@ function crearMundo(THREE, OrbitControls, cfg) {
     controls.addEventListener('start', () => { seguir = false; });
     let tPrev = performance.now();
     cuadro.push(() => { const ahora = performance.now(), dt = Math.min(0.05, (ahora - tPrev) / 1000); tPrev = ahora;
-      const p1 = api.v1a && api.v1a.activa(); if (p1) api.v1a.actualizar(dt);   // vista a la altura de los ojos
+      const enVisor = renderer.xr.isPresenting;
+      const p1 = !enVisor && api.v1a && api.v1a.activa(); if (p1) api.v1a.actualizar(dt);   // vista a la altura de los ojos
       if (ruta.length && !p1) { const d = ruta[0].clone().sub(yo.position); d.y = 0; const Ld = d.length();
         if (Ld < 0.06) { ruta.shift(); if (!ruta.length) { marca.visible = false; const f = alLlegar; alLlegar = null; f && f(); } }
         else { d.normalize(); const paso = Math.min(Ld, (o.vel || 2.4) * dt), antes = yo.position.clone(); yo.position.addScaledVector(d, paso); yo.rotation.y = Math.atan2(d.x, d.z); fase += dt * 10; av && av.animar(fase, true);
-          const mov = yo.position.clone().sub(antes); camera.position.add(mov); controls.target.add(mov); } }
+          const mov = yo.position.clone().sub(antes); if (!enVisor) { camera.position.add(mov); controls.target.add(mov); } } }
       else av && av.animar(0, false);
       const anda = ruta.length > 0; if (anda !== recorrido._anda) { recorrido._anda = anda; window.Sonido && Sonido.andar(anda); }
-      if (seguir && !p1) { const obj = yo.position.clone().add(new V(0, 1.2, 0)); controls.target.lerp(obj, Math.min(1, dt * 3)); }
+      if (seguir && !p1 && !enVisor) { const obj = yo.position.clone().add(new V(0, 1.2, 0)); controls.target.lerp(obj, Math.min(1, dt * 3)); }
       if (muros.length) { const tapan = new Set();   // rayos de la cámara al avatar y a su alrededor (lo que hay junto a él también se ve)
         for (const [dx, dz] of [[0, 0], [1.8, 0], [-1.8, 0], [0, -1.8], [0, 1.8]]) { cab.copy(yo.position).add(new V(dx, 1.0, dz)); const dv = cab.clone().sub(camera.position), Ld = dv.length();
           ray2.set(camera.position, dv.normalize()); ray2.far = Ld; ray2.intersectObjects(muros, false).forEach(h => tapan.add(h.object)); }
@@ -252,7 +256,7 @@ function crearMundo(THREE, OrbitControls, cfg) {
         yo: () => yo, libre: (x, z) => nav.libre(x, z), altura: 1.58,
         bloqueado: () => $('modal').style.display === 'flex' || $('conf').style.display === 'flex',
         alCambiar: a => { ruta = []; alLlegar = null; marca.visible = false; seguir = !a;
-          if (a) toast('info', 'Vista a la altura de los ojos: gira moviendo el celular o arrastrando con el dedo; camina con las flechas.'); } });
+          if (a) toast('info', '👁️ Gira moviendo el celular · camina con las flechas'); } });
     });
     return { yo, ir, nav, detener: () => { ruta = []; marca.visible = false; }, seguir: (v = true) => { seguir = v; } };
   };

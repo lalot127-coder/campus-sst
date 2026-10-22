@@ -14,9 +14,9 @@
 // Licencias y autores: assets/INVENTARIO_ASSETS.csv y assets/CREDITOS.md (se muestran en mundos/informacion/creditos.html).
 // El mundo llama una vez a LOTO.init3D(W, {Kit3D, Props}) antes de crear las piezas.
 //
-// Fundamento normativo: PENDIENTE DE VERIFICAR en el DOF y en la STPS (ver ANEXO_TECNICO_LOTO.md §8.2). Mientras tanto
-// las fuentes se muestran con la marca «vigencia por verificar» y los pasos del procedimiento se atribuyen al
-// procedimiento de la máquina (ficticio), que es lo que manda cuando no hay una secuencia universal.
+// Fundamento normativo VERIFICADO el 22/10/2026 contra el DOF (matriz normativa del curso de LOTO). Lo único que
+// sigue sin numeral es comprobar el instrumento antes y después de medir (NFPA 70E, documento de pago): se enseña
+// como buena práctica sin numeral. La secuencia válida la manda el procedimiento de la máquina: no hay una universal.
 (function () {
   // (22/10/2026) Referencias VERIFICADAS. Salen de la matriz normativa del curso, que leyó el texto en el DOF:
   //   03_cursos/BASE_loto_bloqueo_etiquetado_8h/01_diseno/MATRIZ_NORMATIVA_LOTO.md
