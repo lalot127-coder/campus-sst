@@ -748,6 +748,227 @@ window.BANCO_TRIVIA = [
 ]
 },
 {
+"tema": "LOTO Bloqueo Etiquetado 8h",
+"preguntas": [
+{
+"p": "¿Cuál de estas NO es una forma de energía peligrosa que haya que controlar en LOTO?",
+"o": [
+"La energía del contrato de suministro",
+"La energía neumática",
+"La energía gravitacional de una carga elevada",
+"La energía almacenada en un resorte"
+],
+"r": 0,
+"f": "OSHA 29 CFR 1910.147 — referencia técnica, NO obligatoria en México, (b) def. \"energy source\"; NOM-004-STPS-1999, 5.2.1 a)",
+"rf": ""
+},
+{
+"p": "Completa el texto de la norma: \"el bloqueo de energía se realizará ____ el mantenimiento\".",
+"o": [
+"antes y durante",
+"solo antes",
+"solo durante",
+"después de"
+],
+"r": 0,
+"f": "NOM-004-STPS-1999, 7.2.2 c)",
+"rf": ""
+},
+{
+"p": "El candado ____ y la tarjeta ____.",
+"o": [
+"impide / informa",
+"informa / impide",
+"impide / impide",
+"informa / informa"
+],
+"r": 0,
+"f": "NOM-004-STPS-1999, 4 b) y Apéndice A; OSHA 29 CFR 1910.147 — referencia técnica, NO obligatoria en México, (c)(7)(ii)(A)",
+"rf": ""
+},
+{
+"p": "¿Cuál es el paso 1 de la secuencia de bloqueo?",
+"o": [
+"Notificar a los trabajadores involucrados y conocer las energías",
+"Poner el candado",
+"Medir la tensión",
+"Bajar el interruptor"
+],
+"r": 0,
+"f": "NOM-004-STPS-1999, 7.2.2 c) 2)",
+"rf": ""
+},
+{
+"p": "¿Qué paso va inmediatamente DESPUÉS de colocar candados y tarjetas?",
+"o": [
+"Disipar la energía almacenada y residual",
+"Autorizar la intervención",
+"Cerrar el circuito",
+"Firmar el registro"
+],
+"r": 0,
+"f": "OSHA 29 CFR 1910.147 — referencia técnica, NO obligatoria en México, (d)(5)(i); NOM-029-STPS-2011, 8.1 a)",
+"rf": ""
+},
+{
+"p": "\"Dar por comprobada la energía cero sin verificarla\" es un error:",
+"o": [
+"Crítico (impide aprobar)",
+"Mayor (se corrige y se sigue)",
+"Menor (resta puntos)",
+"No es un error"
+],
+"r": 0,
+"f": "Matriz del curso §4, C5; fundamento: NOM-029, 8.1 a) y 9.4 d) 2)",
+"rf": ""
+},
+{
+"p": "¿Cuántos errores críticos tiene el catálogo del curso y del simulador?",
+"o": [
+"Seis",
+"Tres",
+"Diez",
+"Dos"
+],
+"r": 0,
+"f": "ANEXO_TECNICO_LOTO.md §7; matriz del curso §4",
+"rf": ""
+},
+{
+"p": "¿Qué instrumento se usa para comprobar la ausencia de tensión eléctrica?",
+"o": [
+"Un comprobador o discriminador de tensión de la clase y tensión adecuadas al sistema",
+"Un multímetro de cualquier rango",
+"Un desarmador de punta luminosa",
+"La mano con guante dieléctrico"
+],
+"r": 0,
+"f": "NOM-029-STPS-2011, 9.3 c) y 9.4 d) 2)",
+"rf": ""
+},
+{
+"p": "Además de liberar energía almacenada, ¿para qué sirve la puesta a tierra en el bloqueo eléctrico?",
+"o": [
+"Para mantener la instalación en condición segura mientras se trabaja",
+"Para medir la resistencia del piso",
+"Para alimentar la lámpara portátil",
+"Para probar el instrumento"
+],
+"r": 0,
+"f": "NOM-029-STPS-2011, 8.1 a) y f)",
+"rf": ""
+},
+{
+"p": "¿Cuál es el punto de aislamiento de una línea de aire comprimido?",
+"o": [
+"La válvula de corte",
+"El botón de paro del tablero",
+"El manómetro",
+"El filtro regulador"
+],
+"r": 0,
+"f": "NOM-004-STPS-1999, 7.2.2 c) 3)",
+"rf": ""
+},
+{
+"p": "El ruido de la descarga de aire al purgar significa que:",
+"o": [
+"Está saliendo presión, pero no prueba que ya no quede nada",
+"La línea quedó en cero",
+"El bloqueo falló",
+"Hay que cerrar la válvula de nuevo"
+],
+"r": 0,
+"f": "Criterio del curso; OSHA 29 CFR 1910.147 — referencia técnica, NO obligatoria en México, (d)(5)(i)",
+"rf": ""
+},
+{
+"p": "¿Cómo se controla la energía de una carga elevada?",
+"o": [
+"Bajándola al piso o soportándola mecánicamente",
+"Con un candado en el interruptor",
+"Con una tarjeta de aviso",
+"Purgando la línea de aire"
+],
+"r": 0,
+"f": "OSHA 29 CFR 1910.147 — referencia técnica, NO obligatoria en México, (d)(5)(i)",
+"rf": ""
+},
+{
+"p": "Un volante que sigue girando después del paro es energía:",
+"o": [
+"Almacenada por inercia",
+"Eléctrica residual",
+"Neumática",
+"Química"
+],
+"r": 0,
+"f": "NOM-004-STPS-1999, 5.2.1 a); OSHA 29 CFR 1910.147 — referencia técnica, NO obligatoria en México, (d)(5)(i)",
+"rf": ""
+},
+{
+"p": "En el bloqueo grupal con caja de candados, la caja se puede abrir cuando:",
+"o": [
+"Ya no queda ningún candado personal puesto",
+"Lo autoriza el supervisor",
+"Termina el turno",
+"Se acaba la jornada"
+],
+"r": 0,
+"f": "OSHA 29 CFR 1910.147 — referencia técnica, NO obligatoria en México, (f)(3)(ii)(D) — buena práctica",
+"rf": ""
+},
+{
+"p": "¿Quién retira la tarjeta de aviso según la norma mexicana?",
+"o": [
+"El trabajador que la colocó",
+"El jefe de mantenimiento",
+"Quien entra al turno siguiente",
+"El de seguridad industrial"
+],
+"r": 0,
+"f": "NOM-004-STPS-1999, 7.2.2 c) 8)",
+"rf": ""
+},
+{
+"p": "¿Qué se hace primero al devolver el equipo al servicio?",
+"o": [
+"Revisar que el área quedó libre de equipo y herramientas",
+"Cerrar el circuito",
+"Retirar los candados",
+"Arrancar la máquina para probar"
+],
+"r": 0,
+"f": "NOM-029-STPS-2011, 8.1 h) e i)",
+"rf": ""
+},
+{
+"p": "¿Cuál de estas es una obligación de la normativa MEXICANA y no solo buena práctica?",
+"o": [
+"Colocar tarjetas de aviso y candados de seguridad",
+"Usar una caja de candados en el bloqueo grupal",
+"Hacer el intento de arranque",
+"Comprobar el instrumento antes y después de medir"
+],
+"r": 0,
+"f": "NOM-004-STPS-1999, 7.2.2 c) 5) y 6)",
+"rf": ""
+},
+{
+"p": "Si un interruptor SÍ acepta candado y solo le cuelgan una tarjeta, se comete el error crítico:",
+"o": [
+"C3: tratar la etiqueta como sustituto del bloqueo",
+"C1: omitir una fuente de energía",
+"C6: liberación incorrecta",
+"Ninguno, la tarjeta es suficiente"
+],
+"r": 0,
+"f": "NOM-004-STPS-1999, 7.2.2 c) 5) y 6); OSHA 29 CFR 1910.147 — referencia técnica, NO obligatoria en México, (c)(2)(ii)",
+"rf": ""
+}
+]
+},
+{
 "tema": "NOM-035 · Directivos y jefes",
 "preguntas": [
 {

@@ -1,80 +1,175 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Celda 1: Aislamiento eléctrico · Campus SST</title>
-<link rel="stylesheet" href="../maqueta.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Celda 1: Aislamiento eléctrico</title>
+<script type="importmap">{"imports":{"three":"../../../motor/vendor/three/build/three.module.js","three/addons/":"../../../motor/vendor/three/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+<script src="../../construccion/comun.js"></script>
+<script src="../comun.js"></script>
 </head>
 <body>
-<header>
-  <div class="arriba"><span class="ico">⚡</span>
-    <div><h1>Celda 1: Aislamiento eléctrico</h1>
-      <p class="celda">Edificio LOTO · se recorre a pie y con visor de realidad virtual</p></div>
-  </div>
-</header>
-<p class="cinta">MAQUETA · Esta celda todavía no evalúa: muestra lo que contendrá</p>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-<main>
-  <section>
-    <h2>Qué se va a recorrer</h2>
-    <p>Un área con un tablero de distribución, un equipo con motor y su botonera. La persona camina la celda en
-      primera persona (en el celular, girando el teléfono) o con el visor, y ejecuta el procedimiento de la máquina
-      paso a paso. Hay un compañero de trabajo y una persona autorizante a quienes hay que notificar.</p>
-  </section>
+// Celda 1 del Edificio LOTO: aislamiento eléctrico de la prensa P-02, ejecutado paso por paso.
+// El corazón del ejercicio es la VERIFICACIÓN DE AUSENCIA DE TENSIÓN: instrumento adecuado, comprobado antes y
+// después de medir, en el punto correcto, más el intento de arranque. Es el paso que más se omite en la realidad.
+// FUNDAMENTO NORMATIVO: por verificar en el DOF y en la STPS (ANEXO_TECNICO_LOTO.md §8.2).
+const { N29, PROC, BP, FIC, tablero, equipo, candado, tarjeta, detector, pasoTocar, conTrampas, trampaIntervenir,
+  mesaDispositivos } = window.LOTO;
+const { nave, trabajador, marcador } = window.Alturas;
+const { decidir, encuentra, intro } = window.Riesgo;
 
-  <section>
-    <h2>Secuencia que tendrá que ejecutar</h2>
-    <ol class="pasos">
-      <li>Identificar las fuentes y los peligros eléctricos del equipo.</li>
-      <li>Notificar al personal afectado.</li>
-      <li>Reconocer el procedimiento de apagado del equipo y hacer el <strong>paro controlado</strong>.</li>
-      <li>Accionar los <strong>dispositivos de aislamiento</strong> de cada fuente identificada.</li>
-      <li>Colocar el <strong>candado personal</strong> en cada punto de aislamiento.</li>
-      <li>Colocar la <strong>tarjeta</strong> con los datos de quien bloquea.</li>
-      <li>Controlar energías <strong>residuales y almacenadas</strong> (capacitores, bancos, respaldo).</li>
-      <li><strong>Verificar la ausencia de tensión</strong> con el instrumento adecuado
-        <span class="fte">comprobando el instrumento antes y después de la medición, en el punto correcto.</span></li>
-      <li>Hacer el <strong>intento de arranque</strong> para confirmar.</li>
-      <li>Confirmar que se cumplen las condiciones para iniciar el mantenimiento.</li>
-    </ol>
-    <p class="fte" style="margin-top:10px">El orden definitivo sale del procedimiento de la máquina del cliente, no
-      de una secuencia genérica. Se configura en un archivo de datos, no en el código.</p>
-  </section>
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Celda 1: Aislamiento eléctrico', icono: '⚡',
+  clave: 'loto_electrica', criterio: { pct: 80, sinCriticos: true }, fondo: 0xDDE3E8,
+  vistas: [[[0.5, 3.0, 6.0], [0, 1.2, -1]], [[-3.6, 2.0, 1.6], [-2.6, 1.1, -2]], [[3.4, 2.2, 1.0], [1.0, 1.1, -1.4]]] });
+const { scene, caja, cil, letrero } = W; W.controls.maxDistance = 14;
+const N = nave(W, { alto: 6, ancho: 13, fondo: 11, rotulo: 'ÁREA DE TROQUELADO · MANTENIMIENTO INDUSTRIAL DEL CENTRO [FICTICIO]' });
+W.activarXR({ inicio: [0, 2.4], piso: N.piso, entorno: N.entorno });
 
-  <section class="critico">
-    <h2>Errores críticos que esta celda detectará</h2>
-    <ul>
-      <li>Omitir una fuente de energía peligrosa.</li>
-      <li>Intervenir el equipo sin el aislamiento completo.</li>
-      <li>Colgar la tarjeta y tratarla como si fuera el bloqueo.</li>
-      <li>Omitir el control de la energía almacenada o residual.</li>
-      <li>Dar por comprobada la energía cero sin verificarla, o sin comprobar el instrumento.</li>
-      <li>Permitir el retorno al servicio sin cumplir las condiciones de liberación.</li>
-    </ul>
-    <p>Con un error crítico sin corregir <strong>no se aprueba</strong>. La práctica se detiene, se explica el riesgo
-      y se exige repetir las etapas afectadas.</p>
-  </section>
+// --------------------------------------------------------------- escena
+const EQ = equipo(W, { x: 0.8, z: -1.6, rotulo: 'PRENSA P-02' });
+const TB = tablero(W, { x: -2.8, z: -2.4, ry: 0.35, rotulo: 'TABLERO TB-7' });
+caja(2.0, 0.06, 0.06, 0x263238, -1.6, 1.75, -2.0);                               // canalización al equipo
+// banco de capacitores: guarda energía aunque el interruptor ya esté abierto
+const CAP = new THREE.Group(); CAP.position.set(-1.4, 0, -2.6); scene.add(CAP);
+const capCuerpo = caja(0.55, 0.7, 0.3, 0x546E7A, 0, 0.75, 0, CAP);
+const capBotes = [-0.14, 0.14].map(dx => cil(0.07, 0.3, 0xFFB300, dx, 1.2, 0, CAP));
+const rotC = letrero('BANCO DE CAPACITORES', 0.6, 0.12, '#B45309'); rotC.position.set(0, 1.5, 0.16); CAP.add(rotC);
+W.tocable(CAP, 'capacitores', 0.8);
+// toma de prueba energizada: sirve para comprobar que el instrumento funciona
+const FC = new THREE.Group(); FC.position.set(-4.2, 0, -0.6); scene.add(FC);
+const fcCuerpo = caja(0.26, 0.34, 0.16, 0xECEFF1, 0, 1.1, 0, FC); caja(0.1, 0.1, 0.02, 0x263238, 0, 1.12, 0.09, FC);
+const rotF = letrero('TOMA DE PRUEBA (ENERGIZADA)', 0.8, 0.11, '#2E7D32'); rotF.position.set(0, 1.4, 0.1); FC.add(rotF);
+W.tocable(FC, 'fuenteconocida', 0.7);
+// bornes del motor: el punto donde se mide
+const PM = caja(0.22, 0.18, 0.1, 0x37474F, 1.42, 1.25, -1.2);
+const rotP = letrero('BORNES DEL MOTOR', 0.5, 0.1, '#102A43'); rotP.position.set(1.42, 1.45, -1.15); scene.add(rotP);
+W.tocable(PM, 'puntomedida', 0.5);
+// compañero al que hay que avisar
+const TR = trabajador(W, { x: 2.6, z: 0.9, ry: -2.3, arnes: false, ropa: 0x455A64 });
+W.tocable(TR.g, 'companero', 1.0);
+const rotT = letrero('Operador de la prensa', 0.7, 0.11, '#0E3A6B'); rotT.position.set(2.6, 2.0, 0.9); scene.add(rotT);
 
-  <section>
-    <h2>Realidad virtual</h2>
-    <p>La misma celda se recorre con el Meta Quest 3S: teletransporte y giro por pasos, opción sentado o de pie,
-      pausa en cualquier momento, y todas las decisiones en el panel 3D para que se vean dentro del visor. Las
-      acciones de botón tienen equivalente en el panel y en el botón de la muñeca, para quien use las manos libres.</p>
-  </section>
+const MESA = mesaDispositivos(W, { x: -1.0, z: 1.6 });
+const CAND = candado(W, { x: MESA.x - 0.3, y: MESA.y, z: MESA.z });
+const TARJ = tarjeta(W, { x: MESA.x, y: MESA.y + 0.08, z: MESA.z });
+const DET = detector(W, { x: MESA.x + 0.33, y: MESA.y + 0.09, z: MESA.z });
 
-  <section class="aviso">
-    <p><strong>Advertencia.</strong> La simulación complementa, pero no sustituye, la capacitación práctica, los
-      procedimientos autorizados, los dispositivos físicos ni las verificaciones en equipos reales.</p>
-    <p>Documento interno de capacitación: no es un DC-3, no es una certificación oficial de competencia laboral ni
-      una acreditación de la STPS.</p>
-  </section>
+const MK = {
+  alim: marcador(W, { x: -2.8, y: 2.1, z: -2.2, tipo: 'm_alim', icono: '⚡', etiqueta: 'Alimentación de fuerza (TB-7)', escala: 0.8, mira: [0.5, 3.0, 6.0] }),
+  cap: marcador(W, { x: -1.4, y: 1.9, z: -2.6, tipo: 'm_cap', icono: '🧨', etiqueta: 'Banco de capacitores (energía almacenada)', escala: 0.8, mira: [0.5, 3.0, 6.0] }),
+  ctrl: marcador(W, { x: 0.35, y: 1.6, z: -1.1, tipo: 'm_ctrl', icono: '🎛️', etiqueta: 'Circuito de control de la botonera', escala: 0.8, mira: [0.5, 3.0, 6.0] }),
+  luz: marcador(W, { x: 3.6, y: 2.4, z: -2.2, tipo: 'm_luz', icono: '💡', etiqueta: 'Luminaria del área: otro circuito, no es de la prensa', escala: 0.8, mira: [0.5, 3.0, 6.0] }),
+};
+caja(0.7, 0.12, 0.25, 0xECEFF1, 3.6, 2.3, -2.2);
 
-  <p class="pie">Fundamento normativo en revisión: la vigencia y los numerales se verifican en el DOF antes de
-    escribirlos en el contenido (§8.2 del anexo técnico).</p>
-</main>
+const TRAMPA = trampaIntervenir(W);
+const trampaTarjeta = { tipo: 'tarjeta', critico: false, una: true,
+  txt: 'La tarjeta va DESPUÉS del candado. Una etiqueta sola no impide que alguien vuelva a cerrar el interruptor.', f: N29 };
 
-<a class="volver" href="../../../index.html">⬅ Volver al campus</a>
-<script src="../volver.js"></script>
+// --------------------------------------------------------------- pasos
+const pasoFuentes = encuentra(W, {
+  titulo: 'Identifica las fuentes de energía', texto: 'Toca las fuentes de energía peligrosa que alimentan a la prensa P-02.',
+  fuente: N29,
+  buenas: [
+    { tipo: 'm_alim', nombre: 'Alimentación de fuerza', fb: 'Se aísla en el interruptor del tablero TB-7.', f: N29, obj: MK.alim },
+    { tipo: 'm_cap', nombre: 'Banco de capacitores', fb: 'Guarda energía: sigue cargado después de abrir el interruptor.', f: N29, obj: MK.cap },
+    { tipo: 'm_ctrl', nombre: 'Circuito de control', fb: 'Alimenta la botonera; también hay que dejarlo sin tensión.', f: N29, obj: MK.ctrl },
+  ],
+  malas: [{ tipo: 'm_luz', nombre: 'Luminaria del área', fb: 'Está en otro circuito y no alimenta a la prensa: bloquearla no aporta y deja el área a oscuras.', f: BP, obj: MK.luz }],
+  alTerminar: () => W.siguiente() });
+pasoFuentes.iniciar = () => W.resaltar(Object.values(MK).map(m => m.marco));
+conTrampas(W, pasoFuentes, [TRAMPA]);   // meter la mano al equipo es crítico también mientras se identifican las fuentes
+
+const pasoAvisar = pasoTocar(W, { titulo: 'Avisa al personal afectado', texto: 'Antes de parar el equipo, avisa a quien lo opera.',
+  fuente: PROC, tipo: 'companero', resaltar: [TR.torso],
+  trampas: [TRAMPA, { tipo: 'palanca', critico: false, una: true, txt: 'Todavía no: primero se avisa y se para el equipo con su procedimiento.', f: PROC }],
+  alTocar: () => { W.globo('Entendido, ya lo detengo', TR.g, 2400, 1.9); W.bien('Avisaste al personal afectado.', PROC); W.siguiente(); } });
+
+const pasoParo = pasoTocar(W, { titulo: 'Paro controlado', texto: 'Para la prensa con su propio procedimiento: botón de paro de la botonera.',
+  fuente: PROC, tipo: 'paro', resaltar: [EQ.paro], trampas: [TRAMPA],
+  alTocar: () => { EQ.motor.material.color.set(0x37474F); W.bien('Prensa detenida con el paro de la botonera.', PROC); W.siguiente(); } });
+
+const pasoAislar = pasoTocar(W, { titulo: 'Aísla la energía', texto: 'Acciona el dispositivo de aislamiento: la palanca del interruptor del TB-7.',
+  fuente: N29, tipo: 'palanca', resaltar: [TB.mango],
+  trampas: [TRAMPA, trampaTarjeta, { tipo: 'candado', critico: false, una: true, txt: 'El candado va sobre el dispositivo YA abierto. Primero abre el interruptor.', f: N29 }],
+  alTocar: async () => { await TB.abrir(); W.bien('Interruptor abierto: la alimentación quedó aislada.', N29); W.siguiente(); } });
+
+const pasoBloquear = pasoTocar(W, { titulo: 'Bloquea con tu candado', texto: 'Toma tu candado personal y colócalo en el interruptor aislado.',
+  fuente: N29, tipo: 'candado', resaltar: [CAND.g], trampas: [TRAMPA, trampaTarjeta],
+  alTocar: () => { CAND.colocar(TB.punto[0], TB.punto[1], TB.punto[2]);
+    W.bien('Candado personal colocado: el interruptor ya no se puede volver a cerrar.', N29); W.siguiente(); } });
+
+const pasoEtiquetar = pasoTocar(W, { titulo: 'Coloca la tarjeta', texto: 'Ahora sí: identifica quién bloqueó y por qué.',
+  fuente: N29, tipo: 'tarjeta', resaltar: [TARJ.g], trampas: [TRAMPA],
+  alTocar: () => { TARJ.colocar(TB.punto[0] + 0.12, TB.punto[1] - 0.05, TB.punto[2]);
+    W.bien('Tarjeta colocada junto al candado.', N29); W.siguiente(); } });
+
+const pasoCapacitores = pasoTocar(W, { titulo: 'Controla la energía almacenada', texto: 'El banco de capacitores sigue cargado. Descárgalo según el procedimiento.',
+  fuente: N29, tipo: 'capacitores', resaltar: capBotes,
+  trampas: [TRAMPA, { tipo: 'puntomedida', critico: false, una: true, txt: 'Antes de medir hay que descargar la energía almacenada.', f: N29 }],
+  alTocar: async () => { await W.animar(900, k => capBotes.forEach(c => c.material.color.setRGB(1 - 0.55 * k, 0.70 - 0.24 * k, 0.0 + 0.46 * k)));
+    W.bien('Capacitores descargados conforme al procedimiento.', N29); W.siguiente(); } });
+
+const pasoInstrumento = { titulo: 'Elige cómo verificar', texto: '¿Con qué vas a comprobar que ya no hay tensión?', fuente: N29, puntos: 10,
+  iniciar() { W.resaltar([DET.g]);
+    decidir(W, '🔎 ¿Cómo compruebas la ausencia de tensión?', [
+      { t: 'Con un detector de ausencia de tensión adecuado al nivel de tensión', ok: true, fb: 'Instrumento adecuado al trabajo y al nivel de tensión.', f: N29 },
+      { t: 'Viendo que el piloto del tablero ya está apagado', ok: false, crit: true, fb: 'Un piloto apagado no prueba ausencia de tensión: puede estar fundido o en otro circuito.', f: N29 },
+      { t: 'Tocando el borne con el dorso de la mano', ok: false, crit: true, fb: 'Jamás. Usar el cuerpo como instrumento de medición mata.', f: N29 },
+      { t: 'Con un desarmador de los que tienen foquito', ok: false, fb: 'No es un instrumento adecuado ni confiable para esta verificación.', f: BP },
+    ], () => W.siguiente()); } };
+
+const pasoProbarAntes = pasoTocar(W, { titulo: 'Comprueba el instrumento (antes)', texto: 'Prueba el detector en la toma de prueba energizada: tiene que marcar presencia de tensión.',
+  fuente: N29, tipo: 'fuenteconocida', resaltar: [fcCuerpo],
+  trampas: [TRAMPA, { tipo: 'puntomedida', critico: true, txt: 'Mediste sin comprobar antes el instrumento. Si el detector está averiado, un equipo energizado te va a parecer seguro.', f: N29 }],
+  alTocar: () => { DET.encender(true); W.bien('El detector marca tensión: el instrumento sirve.', N29); W.siguiente(); } });
+
+const pasoMedir = pasoTocar(W, { titulo: 'Verifica en el punto correcto', texto: 'Mide en los bornes del motor, donde se va a trabajar.',
+  fuente: N29, tipo: 'puntomedida', resaltar: [PM], trampas: [TRAMPA],
+  alTocar: () => { DET.encender(false); W.bien('El detector no marca tensión en los bornes.', N29); W.siguiente(); } });
+
+const pasoProbarDespues = pasoTocar(W, { titulo: 'Comprueba el instrumento (después)', texto: 'Vuelve a probar el detector en la toma energizada: así sabes que no se averió durante la medición.',
+  fuente: N29, tipo: 'fuenteconocida', resaltar: [fcCuerpo],
+  trampas: [TRAMPA, { tipo: 'arranque', critico: false, una: true, txt: 'Falta cerrar la verificación: vuelve a comprobar el instrumento.', f: N29 }],
+  alTocar: () => { DET.encender(true); setTimeout(() => DET.encender(false), 1200);
+    W.bien('El instrumento sigue funcionando: la medición es válida.', N29); W.siguiente(); } });
+
+const pasoArranque = pasoTocar(W, { titulo: 'Intento de arranque', texto: 'Confirma apretando el botón de arranque: el equipo no debe responder.',
+  fuente: PROC, tipo: 'arranque', resaltar: [EQ.arranque], trampas: [TRAMPA],
+  alTocar: () => { W.globo('No responde', EQ.g, 2200, 1.9); W.bien('El equipo no arranca: condición de energía cero confirmada.', PROC); W.siguiente(); } });
+
+const pasoAutorizar = { titulo: 'Autoriza la intervención', texto: 'Ya se puede entrar al mantenimiento. Decide.', fuente: PROC, puntos: 10,
+  iniciar() { W.resaltar([EQ.zona]);
+    decidir(W, '✅ ¿Se puede iniciar el mantenimiento?', [
+      { t: 'Sí: fuentes aisladas y bloqueadas, energía almacenada controlada y ausencia de tensión verificada', ok: true, fb: 'Se cumplen las condiciones del procedimiento.', f: PROC },
+      { t: 'Sí, pero dejando el candado abierto por si alguien necesita el equipo', ok: false, crit: true, fb: 'Un candado abierto no bloquea nada.', f: N29 },
+      { t: 'Todavía no: falta que el supervisor guarde la llave de mi candado', ok: false, fb: 'Cada quien conserva la llave de su propio candado.', f: BP },
+    ], () => W.siguiente()); } };
+
+const pasoCierre = { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', sinPuntos: true,
+  iniciar() { W.resaltar([]);
+    W.aviso(`<h2>⚡ Celda eléctrica terminada</h2>
+      <p>Ejecutaste el procedimiento completo: identificar, avisar, parar, <b>aislar</b>, <b>bloquear</b>, <b>etiquetar</b>,
+      controlar la energía almacenada, <b>verificar</b> con el instrumento comprobado antes y después, e intento de arranque.</p>
+      <p>El orden y los puntos de aislamiento salen del procedimiento de ESTA máquina. En otra máquina serán otros.</p>
+      <p class="ficticio">Fundamento normativo en revisión: la vigencia y los numerales se verifican en el DOF antes de darlos por ciertos.</p>`,
+      () => W.siguiente(), 'Ver resultado'); } };
+
+W.inicio([{ id: 'completo', txt: '⚡ <b>Caso completo:</b> aislamiento eléctrico de la prensa P-02' }],
+  () => [intro(W, `<h2>⚡ Celda 1: Aislamiento eléctrico</h2><p>Eres personal de mantenimiento. Hay que intervenir la <b>prensa P-02</b> del área de troquelado.</p>
+    <p>Ejecuta el procedimiento de bloqueo y etiquetado <b>paso por paso</b>. El panel de abajo te dice qué toca; toca en la escena el objeto correcto.</p>
+    <p>⛔ Si metes la mano al equipo antes de terminar, se registra como <b>error crítico</b> y no se aprueba.</p>`, FIC),
+    pasoFuentes, pasoAvisar, pasoParo, pasoAislar, pasoBloquear, pasoEtiquetar, pasoCapacitores,
+    pasoInstrumento, pasoProbarAntes, pasoMedir, pasoProbarDespues, pasoArranque, pasoAutorizar, pasoCierre],
+  'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento normativo (NOM-029-STPS-2011): vigencia y numerales POR VERIFICAR en el DOF. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { MK, EQ, TB, CAP, FC, PM, TR, CAND, TARJ, DET, tocar: W.tocar, estado: W.qa };
+</script>
 </body>
 </html>

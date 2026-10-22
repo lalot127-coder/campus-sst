@@ -1,79 +1,167 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Celda 3: Mecánico y energía almacenada · Campus SST</title>
-<link rel="stylesheet" href="../maqueta.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Celda 3: Mecánico y energía almacenada</title>
+<script type="importmap">{"imports":{"three":"../../../motor/vendor/three/build/three.module.js","three/addons/":"../../../motor/vendor/three/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+<script src="../../construccion/comun.js"></script>
+<script src="../comun.js"></script>
 </head>
 <body>
-<header>
-  <div class="arriba"><span class="ico">⚙️</span>
-    <div><h1>Celda 3: Mecánico y energía almacenada</h1>
-      <p class="celda">Edificio LOTO · se recorre a pie y con visor de realidad virtual</p></div>
-  </div>
-</header>
-<p class="cinta">MAQUETA · Esta celda todavía no evalúa: muestra lo que contendrá</p>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-<main>
-  <section>
-    <h2>Qué se va a recorrer</h2>
-    <p>Una máquina con volante de inercia, resortes en tensión, una banda transportadora y un componente elevado
-      sostenido por su propio mecanismo. Es la celda del <strong>movimiento inesperado</strong>: la que enseña que
-      cortar la energía no detiene lo que ya se está moviendo ni baja lo que está arriba.</p>
-  </section>
+// Celda 3 del Edificio LOTO: movimiento inesperado y energía almacenada mecánica.
+// La lección: cortar la energía no detiene lo que ya se está moviendo, no baja lo que está arriba y no destensa
+// lo que está en tensión. Aquí el aislamiento eléctrico es solo el principio.
+// FUNDAMENTO NORMATIVO: por verificar en el DOF y en la STPS (ANEXO_TECNICO_LOTO.md §8.2).
+const { N04, PROC, BP, FIC, tablero, equipo, volante, cargaElevada, candado, tarjeta, pasoTocar, conTrampas,
+  trampaIntervenir, mesaDispositivos } = window.LOTO;
+const { nave, trabajador, marcador } = window.Alturas;
+const { decidir, encuentra, intro } = window.Riesgo;
 
-  <section>
-    <h2>Secuencia que tendrá que ejecutar</h2>
-    <ol class="pasos">
-      <li>Identificar resortes, volantes, componentes elevados e inercia del equipo.</li>
-      <li>Determinar los peligros de <strong>movimiento inesperado</strong> y por gravedad.</li>
-      <li>Notificar al personal afectado y hacer el paro controlado.</li>
-      <li>Aplicar <strong>aislamiento, inmovilización o contención</strong> según corresponda a cada elemento
-        <span class="fte">bloqueo mecánico, calzas, trabas, soportes: no todo se resuelve con un candado en un tablero.</span></li>
-      <li>Colocar candado y tarjeta en los puntos que correspondan.</li>
-      <li><strong>Controlar la energía almacenada</strong>: liberar o retener resortes, dejar que el volante se
-        detenga, descender o soportar el componente elevado.</li>
-      <li>Verificar que <strong>no exista movimiento peligroso posible</strong>.</li>
-      <li>Autorizar la intervención simulada <strong>solo</strong> si se cumplen todos los criterios.</li>
-    </ol>
-    <p class="fte" style="margin-top:10px">El orden definitivo sale del procedimiento de la máquina del cliente, no
-      de una secuencia genérica. Se configura en un archivo de datos, no en el código.</p>
-  </section>
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Celda 3: Mecánico y energía almacenada', icono: '⚙️',
+  clave: 'loto_mecanica', criterio: { pct: 80, sinCriticos: true }, fondo: 0xDDE3E8,
+  vistas: [[[0.4, 3.0, 6.0], [0, 1.4, -1.2]], [[-3.4, 2.0, 1.4], [-1.2, 1.2, -1.8]], [[3.6, 2.2, 1.2], [1.2, 1.4, -1.6]]] });
+const { scene, caja, cil, letrero } = W; W.controls.maxDistance = 14;
+const N = nave(W, { alto: 6, ancho: 13, fondo: 11, rotulo: 'LÍNEA DE TRANSPORTE · MANTENIMIENTO INDUSTRIAL DEL CENTRO [FICTICIO]' });
+W.activarXR({ inicio: [0, 2.4], piso: N.piso, entorno: N.entorno });
 
-  <section class="critico">
-    <h2>Errores críticos que esta celda detectará</h2>
-    <ul>
-      <li>Omitir una fuente de energía peligrosa, incluida la gravedad.</li>
-      <li>Intervenir sin el aislamiento, la inmovilización o la contención completos.</li>
-      <li>Tratar la etiqueta como sustituto del bloqueo o de la inmovilización.</li>
-      <li>Omitir el control de la energía almacenada: resorte en tensión, volante girando, carga elevada.</li>
-      <li>Dar por segura la condición sin verificar que no hay movimiento posible.</li>
-      <li>Permitir el retorno al servicio sin cumplir las condiciones de liberación.</li>
-    </ul>
-    <p>Con un error crítico sin corregir <strong>no se aprueba</strong>. La práctica se detiene, se explica el riesgo
-      y se exige repetir las etapas afectadas.</p>
-  </section>
+// --------------------------------------------------------------- escena
+const EQ = equipo(W, { x: 0.2, z: -1.9, rotulo: 'TRANSPORTADOR T-04' });
+const TB = tablero(W, { x: -3.0, z: -2.4, ry: 0.4, rotulo: 'TABLERO TB-9' });
+const VO = volante(W, { x: 1.55, y: 1.3, z: -1.9, r: 0.38 });
+const rotV = letrero('VOLANTE DE INERCIA', 0.6, 0.11, '#B45309'); rotV.position.set(1.55, 1.95, -1.9); scene.add(rotV);
+const CG = cargaElevada(W, { x: -1.3, z: -0.9, y: 1.9 });
+caja(0.14, 2.1, 0.14, 0x455A64, -1.3, 1.05, -1.25);                        // columna del mecanismo
+const rotCG = letrero('CARGA ELEVADA', 0.5, 0.11, '#B45309'); rotCG.position.set(-1.3, 2.25, -0.9); scene.add(rotCG);
+// resorte de retorno en tensión
+const RS = new THREE.Group(); RS.position.set(2.7, 0.85, -0.7); scene.add(RS);
+const rsBase = caja(0.2, 0.12, 0.2, 0x37474F, 0, -0.2, 0, RS);
+const rsEspiras = [];
+for (let i = 0; i < 7; i++) { const e = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.016, 6, 18), W.M(0x9E9E9E));
+  e.rotation.x = Math.PI / 2; e.position.y = -0.1 + i * 0.045; RS.add(e); rsEspiras.push(e); }
+W.tocable(RS, 'resorte', 0.6);
+const rotRS = letrero('RESORTE EN TENSIÓN', 0.55, 0.11, '#B45309'); rotRS.position.set(2.7, 1.3, -0.7); scene.add(rotRS);
+// señal de piso: distractor
+const SE = caja(0.5, 0.004, 0.5, 0xF2C94C, -3.6, 0.004, 0.8);
+// compañero
+const TR = trabajador(W, { x: 3.1, z: 1.2, ry: -2.4, arnes: false, ropa: 0x455A64 });
+W.tocable(TR.g, 'companero', 1.0);
 
-  <section>
-    <h2>Realidad virtual</h2>
-    <p>La misma celda se recorre con el Meta Quest 3S: teletransporte y giro por pasos, opción sentado o de pie,
-      pausa en cualquier momento, y todas las decisiones en el panel 3D para que se vean dentro del visor. Las
-      acciones de botón tienen equivalente en el panel y en el botón de la muñeca, para quien use las manos libres.</p>
-  </section>
+const MESA = mesaDispositivos(W, { x: -1.0, z: 1.8 });
+const CAND = candado(W, { x: MESA.x - 0.3, y: MESA.y, z: MESA.z });
+const TARJ = tarjeta(W, { x: MESA.x, y: MESA.y + 0.08, z: MESA.z });
 
-  <section class="aviso">
-    <p><strong>Advertencia.</strong> La simulación complementa, pero no sustituye, la capacitación práctica, los
-      procedimientos autorizados, los dispositivos físicos ni las verificaciones en equipos reales.</p>
-    <p>Documento interno de capacitación: no es un DC-3, no es una certificación oficial de competencia laboral ni
-      una acreditación de la STPS.</p>
-  </section>
+const MK = {
+  inercia: marcador(W, { x: 1.55, y: 2.25, z: -1.9, tipo: 'm_inercia', icono: '🌀', etiqueta: 'Volante: sigue girando por inercia', escala: 0.8, mira: [0.4, 3.0, 6.0] }),
+  gravedad: marcador(W, { x: -1.3, y: 2.55, z: -0.9, tipo: 'm_gravedad', icono: '⬇️', etiqueta: 'Carga elevada: puede caer', escala: 0.8, mira: [0.4, 3.0, 6.0] }),
+  resorte: marcador(W, { x: 2.7, y: 1.6, z: -0.7, tipo: 'm_resorte', icono: '🪤', etiqueta: 'Resorte en tensión: puede soltarse de golpe', escala: 0.8, mira: [0.4, 3.0, 6.0] }),
+  electrica: marcador(W, { x: -3.0, y: 2.1, z: -2.2, tipo: 'm_electrica', icono: '⚡', etiqueta: 'Alimentación eléctrica (TB-9)', escala: 0.8, mira: [0.4, 3.0, 6.0] }),
+  senal: marcador(W, { x: -3.6, y: 0.9, z: 0.8, tipo: 'm_senal', icono: '🚸', etiqueta: 'Señal de piso: no es una energía', escala: 0.8, mira: [0.4, 3.0, 6.0] }),
+};
 
-  <p class="pie">Fundamento normativo en revisión: la vigencia y los numerales se verifican en el DOF antes de
-    escribirlos en el contenido (§8.2 del anexo técnico).</p>
-</main>
+const TRAMPA = trampaIntervenir(W);
+const trampaVolante = { tipo: 'volante', critico: true,
+  txt: 'Te acercaste al volante mientras seguía girando. La energía eléctrica ya estaba cortada y aun así te habría alcanzado.', f: N04 };
+const trampaCarga = { tipo: 'carga', critico: true,
+  txt: 'Te metiste debajo de la carga elevada sin bajarla ni apuntalarla. Si el mecanismo cede, cae encima.', f: N04 };
 
-<a class="volver" href="../../../index.html">⬅ Volver al campus</a>
-<script src="../volver.js"></script>
+// --------------------------------------------------------------- pasos
+const pasoFuentes = encuentra(W, {
+  titulo: 'Identifica los peligros de movimiento', texto: 'Toca cada energía que pueda producir un movimiento inesperado.',
+  fuente: N04,
+  buenas: [
+    { tipo: 'm_electrica', nombre: 'Alimentación eléctrica', fb: 'Se aísla en el tablero TB-9, pero no basta.', f: N04, obj: MK.electrica },
+    { tipo: 'm_inercia', nombre: 'Inercia del volante', fb: 'Sigue girando después de cortar la energía.', f: N04, obj: MK.inercia },
+    { tipo: 'm_gravedad', nombre: 'Carga elevada', fb: 'La gravedad no se corta con un interruptor.', f: N04, obj: MK.gravedad },
+    { tipo: 'm_resorte', nombre: 'Resorte en tensión', fb: 'Guarda energía y puede soltarse de golpe.', f: N04, obj: MK.resorte },
+  ],
+  malas: [{ tipo: 'm_senal', nombre: 'Señal de piso', fb: 'Es señalización, no una fuente de energía.', f: BP, obj: MK.senal }],
+  alTerminar: () => W.siguiente() });
+pasoFuentes.iniciar = () => W.resaltar(Object.values(MK).map(m => m.marco));
+conTrampas(W, pasoFuentes, [TRAMPA, trampaVolante, trampaCarga]);
+
+const pasoAvisar = pasoTocar(W, { titulo: 'Avisa al personal afectado', texto: 'Avisa a quien opera el transportador.',
+  fuente: PROC, tipo: 'companero', resaltar: [TR.torso], trampas: [TRAMPA, trampaVolante, trampaCarga],
+  alTocar: () => { W.globo('Enterado', TR.g, 2200, 1.9); W.bien('Personal afectado avisado.', PROC); W.siguiente(); } });
+
+const pasoParo = pasoTocar(W, { titulo: 'Paro controlado', texto: 'Para el transportador con el botón de paro.',
+  fuente: PROC, tipo: 'paro', resaltar: [EQ.paro], trampas: [TRAMPA, trampaVolante, trampaCarga],
+  alTocar: () => { W.bien('Transportador detenido.', PROC); W.siguiente(); } });
+
+const pasoAislar = pasoTocar(W, { titulo: 'Aísla la energía eléctrica', texto: 'Abre el interruptor del tablero TB-9.',
+  fuente: N04, tipo: 'palanca', resaltar: [TB.mango], trampas: [TRAMPA, trampaVolante, trampaCarga],
+  alTocar: async () => { await TB.abrir(); W.bien('Interruptor abierto. Ojo: el volante sigue girando.', N04); W.siguiente(); } });
+
+const pasoBloquear = pasoTocar(W, { titulo: 'Bloquea con tu candado', texto: 'Coloca tu candado personal en el interruptor.',
+  fuente: N04, tipo: 'candado', resaltar: [CAND.g], trampas: [TRAMPA, trampaVolante, trampaCarga],
+  alTocar: () => { CAND.colocar(TB.punto[0], TB.punto[1], TB.punto[2]); W.bien('Candado colocado.', N04); W.siguiente(); } });
+
+const pasoEtiquetar = pasoTocar(W, { titulo: 'Coloca la tarjeta', texto: 'Identifica quién bloqueó y por qué.',
+  fuente: N04, tipo: 'tarjeta', resaltar: [TARJ.g], trampas: [TRAMPA, trampaVolante, trampaCarga],
+  alTocar: () => { TARJ.colocar(TB.punto[0] + 0.12, TB.punto[1] - 0.05, TB.punto[2]); W.bien('Tarjeta colocada.', N04); W.siguiente(); } });
+
+// El paso clave: el volante sigue girando. Tocarlo antes de que se detenga es error crítico.
+const pasoVolante = pasoTocar(W, { titulo: 'Espera a que el volante se detenga', texto: 'La energía ya está cortada y bloqueada, pero el volante conserva su inercia. <b>No lo toques hasta que pare.</b>',
+  fuente: N04, tipo: 'volante', resaltar: [rotV], puntos: 10,
+  trampas: [TRAMPA, trampaCarga],
+  alIniciar: () => { VO.detener(); },
+  alTocar: () => {
+    if (VO.girando()) { W.mal(trampaVolante.txt, trampaVolante.f, true); return; }
+    W.bien('El volante se detuvo por completo: ya no hay movimiento posible por inercia.', N04); W.siguiente(); } });
+
+const pasoCarga = { titulo: 'Controla la carga elevada', texto: 'Falta la energía gravitacional. Decide qué hacer con la carga.', fuente: N04, puntos: 10,
+  iniciar() { W.resaltar([CG.bloque]);
+    decidir(W, '⬇️ ¿Qué haces con la carga elevada?', [
+      { t: 'Bajarla hasta su posición de reposo, o apuntalarla con un soporte mecánico', ok: true, fb: 'La energía gravitacional se controla bajando la carga o soportándola.', f: N04 },
+      { t: 'Dejarla arriba: el mecanismo la sostiene y el equipo ya está bloqueado', ok: false, crit: true, fb: 'El bloqueo eléctrico no sostiene la carga. Si el mecanismo cede, cae.', f: N04 },
+      { t: 'Poner una tarjeta de NO OPERAR en el mando de subida y bajada', ok: false, crit: true, fb: 'Otra vez la etiqueta como control: no cambia nada de la carga suspendida.', f: N04 },
+    ], async () => { await CG.bajar(); await CG.apuntalar(); W.siguiente(); }); } };
+
+const pasoResorte = { titulo: 'Controla el resorte', texto: 'Queda el resorte de retorno, en tensión.', fuente: N04, puntos: 10,
+  iniciar() { W.resaltar(rsEspiras);
+    decidir(W, '🪤 ¿Qué haces con el resorte en tensión?', [
+      { t: 'Liberar su energía de forma controlada, o retenerlo con un dispositivo diseñado para eso', ok: true, fb: 'Liberar o contener: nunca dejarlo cargado a la espera.', f: N04 },
+      { t: 'Cortar el amarre para que se destense de una vez', ok: false, crit: true, fb: 'Se suelta de golpe y proyecta piezas: eso es exactamente el accidente que se quiere evitar.', f: N04 },
+      { t: 'Dejarlo así: un resorte no es una fuente de energía', ok: false, crit: true, fb: 'Es energía almacenada, de las más olvidadas del procedimiento.', f: N04 },
+    ], async () => { await W.animar(900, k => rsEspiras.forEach((e, i) => { e.position.y = -0.1 + i * (0.045 + 0.02 * k); }));
+      W.siguiente(); }); } };
+
+const pasoArranque = pasoTocar(W, { titulo: 'Intento de arranque', texto: 'Confirma apretando el arranque: nada debe moverse.',
+  fuente: PROC, tipo: 'arranque', resaltar: [EQ.arranque], trampas: [TRAMPA],
+  alTocar: () => { W.globo('Nada se mueve', EQ.g, 2200, 1.9); W.bien('Sin movimiento posible: condición segura confirmada.', PROC); W.siguiente(); } });
+
+const pasoAutorizar = { titulo: 'Autoriza la intervención', texto: 'Decide si se puede entrar al mantenimiento.', fuente: PROC, puntos: 10,
+  iniciar() { W.resaltar([EQ.zona]);
+    decidir(W, '✅ ¿Se puede iniciar el mantenimiento?', [
+      { t: 'Sí: aislado y bloqueado, volante detenido, carga apoyada y resorte controlado', ok: true, fb: 'Se controlaron las cuatro energías, no solo la eléctrica.', f: PROC },
+      { t: 'Sí: con el candado en el tablero ya está todo controlado', ok: false, crit: true, fb: 'El candado no detiene la inercia, la gravedad ni un resorte.', f: N04 },
+      { t: 'Todavía no: falta avisar al departamento de compras', ok: false, fb: 'No es una condición del procedimiento.', f: PROC },
+    ], () => W.siguiente()); } };
+
+const pasoCierre = { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', sinPuntos: true,
+  iniciar() { W.resaltar([]);
+    W.aviso(`<h2>⚙️ Celda mecánica terminada</h2>
+      <p>Esta celda es la que más se subestima: el candado en el tablero <b>no</b> detiene un volante que gira,
+      <b>no</b> baja una carga suspendida y <b>no</b> destensa un resorte.</p>
+      <p>Controlar la energía almacenada es parte del bloqueo, no un extra.</p>
+      <p class="ficticio">Fundamento normativo en revisión: la vigencia y los numerales se verifican en el DOF antes de darlos por ciertos.</p>`,
+      () => W.siguiente(), 'Ver resultado'); } };
+
+W.inicio([{ id: 'completo', txt: '⚙️ <b>Caso completo:</b> transportador T-04 con volante, carga elevada y resorte' }],
+  () => [intro(W, `<h2>⚙️ Celda 3: Mecánico y energía almacenada</h2><p>Hay que intervenir el <b>transportador T-04</b>. Tiene volante de inercia, una carga elevada sostenida por su mecanismo y un resorte de retorno en tensión.</p>
+    <p>Corta y bloquea la energía… y después ocúpate de lo que <b>sigue teniendo energía aunque el tablero esté apagado</b>.</p>
+    <p>⛔ Acercarte al volante girando o meterte bajo la carga elevada son <b>errores críticos</b>.</p>`, FIC),
+    pasoFuentes, pasoAvisar, pasoParo, pasoAislar, pasoBloquear, pasoEtiquetar, pasoVolante, pasoCarga,
+    pasoResorte, pasoArranque, pasoAutorizar, pasoCierre],
+  'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento normativo (NOM-004-STPS-1999): vigencia y numerales POR VERIFICAR en el DOF. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { MK, EQ, TB, VO, CG, RS, TR, CAND, TARJ, tocar: W.tocar, estado: W.qa };
+</script>
 </body>
 </html>

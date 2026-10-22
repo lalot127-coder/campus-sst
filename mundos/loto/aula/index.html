@@ -1,76 +1,153 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Aula LOTO: energías y dispositivos · Campus SST</title>
-<link rel="stylesheet" href="../maqueta.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Aula LOTO: energías y dispositivos</title>
+<script type="importmap">{"imports":{"three":"../../../motor/vendor/three/build/three.module.js","three/addons/":"../../../motor/vendor/three/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+<script src="../../construccion/comun.js"></script>
+<script src="../comun.js"></script>
 </head>
 <body>
-<header>
-  <div class="arriba"><span class="ico">🎓</span>
-    <div><h1>Aula: energías y dispositivos</h1>
-      <p class="celda">Edificio LOTO · Bloqueo y etiquetado de energías peligrosas</p></div>
-  </div>
-</header>
-<p class="cinta">MAQUETA · Esta sala todavía no evalúa: muestra lo que contendrá</p>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-<main>
-  <section>
-    <h2>Para qué sirve esta sala</h2>
-    <p>Es la antesala de las tres celdas. Aquí la persona aprende a <strong>reconocer</strong> antes de
-      <strong>actuar</strong>: qué energías hay en una máquina, con qué dispositivo se aisla cada una, y en qué se
-      diferencian aislar, bloquear, etiquetar y verificar.</p>
-  </section>
+// Aula del Edificio LOTO: reconocer antes de actuar. Tres ejercicios: encontrar las energías de una máquina,
+// ordenar la secuencia del procedimiento y elegir el dispositivo de bloqueo de cada punto.
+// FUNDAMENTO NORMATIVO: por verificar en el DOF y en la STPS (ANEXO_TECNICO_LOTO.md §8.2). Aquí no se afirma
+// ningún numeral: lo que manda la secuencia es el procedimiento de la máquina (ficticio).
+const { N04, N29, PROC, BP, FIC, tablero, valvula, acumulador, volante, cargaElevada, equipo,
+  candado, tarjeta, detector, ordenar, mesaDispositivos } = window.LOTO;
+const { nave, marcador } = window.Alturas;
+const { decidir, encuentra, intro } = window.Riesgo;
 
-  <section>
-    <h2>Los tres juegos cortos del aula</h2>
-    <ol class="pasos">
-      <li><strong>Encuentra las energías.</strong> Sobre la máquina en 3D, señalar todas las fuentes: eléctrica,
-        neumática, hidráulica, mecánica, térmica, gravitacional y las almacenadas.
-        <span class="fte">Se aprueba solo si no quedó ninguna fuente sin identificar.</span></li>
-      <li><strong>Ordena la secuencia.</strong> Arrastrar los pasos del procedimiento de esa máquina al orden correcto.
-        <span class="fte">La secuencia correcta es la del procedimiento de la máquina, no una secuencia universal.</span></li>
-      <li><strong>Elige el dispositivo.</strong> Para cada punto de aislamiento, escoger el dispositivo adecuado:
-        pinza de interruptor, bloqueo de válvula, cadena, candado personal, tarjeta.
-        <span class="fte">Con retroalimentación de por qué el dispositivo equivocado no sirve.</span></li>
-    </ol>
-  </section>
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Aula LOTO: energías y dispositivos', icono: '🎓',
+  clave: 'loto_aula', criterio: { pct: 80, sinCriticos: true }, fondo: 0xDDE3E8,
+  vistas: [[[0, 3.2, 6.2], [0, 1.2, -1]], [[-4.2, 2.2, 2.2], [-1.6, 1.0, -1]], [[4.2, 2.2, 2.2], [1.6, 1.0, -1]]] });
+const { scene, caja, letrero } = W; W.controls.maxDistance = 14;
+const N = nave(W, { alto: 6, ancho: 14, fondo: 12, rotulo: 'AULA LOTO · MANTENIMIENTO INDUSTRIAL DEL CENTRO [FICTICIO]' });
+W.activarXR({ inicio: [0, 2.6], piso: N.piso, entorno: N.entorno });
 
-  <section>
-    <h2>Equipo que se muestra y se practica</h2>
-    <div class="etqs">
-      <span class="etq">Candado personal</span><span class="etq">Tarjeta de identificación</span>
-      <span class="etq">Pinza de interruptor</span><span class="etq">Bloqueo de válvula de bola</span>
-      <span class="etq">Bloqueo de válvula de compuerta</span><span class="etq">Cadena y cable</span>
-      <span class="etq">Pinza multicandado</span><span class="etq">Caja de bloqueo grupal</span>
-      <span class="etq">Detector de ausencia de tensión</span><span class="etq">Manómetro</span>
-    </div>
-    <p class="fte" style="margin-top:10px">La caja de bloqueo grupal y la pinza multicandado se muestran como equipo;
-      el <em>escenario</em> de bloqueo grupal está fuera de la versión 1 (se decide con el cliente).</p>
-  </section>
+// --------------------------------------------------------------- máquina de demostración con sus seis energías
+const EQ = equipo(W, { x: 0, z: -1.2, rotulo: 'MÁQUINA DE DEMOSTRACIÓN' });
+const TB = tablero(W, { x: -3.2, z: -2.2, ry: 0.5, rotulo: 'TABLERO TB-7' });
+const VA = valvula(W, { x: 2.3, y: 1.0, z: -2.0, rotulo: 'AIRE V-1' });
+const VH = valvula(W, { x: 3.1, y: 0.7, z: -1.2, ry: Math.PI / 2, rotulo: 'ACEITE V-2' });
+const AC = acumulador(W, { x: 3.9, z: -2.4 });
+const VO = volante(W, { x: -1.35, y: 1.25, z: -1.2, r: 0.3 });
+const CG = cargaElevada(W, { x: 1.2, z: -0.4, y: 1.75 });
+caja(0.12, 1.8, 0.12, 0x455A64, 1.2, 0.9, -0.75);                       // columna que sostiene la carga
+for (const [x1, z1, x2] of [[-3.0, -2.0, -0.8]]) caja(Math.abs(x2 - x1), 0.06, 0.06, 0x263238, (x1 + x2) / 2, 1.5, z1);   // canalización
 
-  <section class="critico">
-    <h2>La distinción que esta sala debe dejar clara</h2>
-    <p><strong>Aislar</strong> (accionar el dispositivo de aislamiento) ·
-      <strong>bloquear y etiquetar</strong> (candado y tarjeta) ·
-      <strong>verificar</strong> (comprobar que ya no hay energía).</p>
-    <p>Son tres cosas distintas. Una etiqueta <strong>nunca</strong> sustituye el aislamiento físico cuando éste es
-      necesario, y una tarjeta colgada no es una verificación.</p>
-  </section>
+const MK = {
+  electrica: marcador(W, { x: -3.2, y: 2.0, z: -2.0, tipo: 'm_electrica', icono: '⚡', etiqueta: 'Alimentación eléctrica (tablero TB-7)', escala: 0.8, mira: [0, 3.2, 6.2] }),
+  neumatica: marcador(W, { x: 2.3, y: 1.5, z: -2.0, tipo: 'm_neumatica', icono: '💨', etiqueta: 'Aire comprimido (válvula V-1)', escala: 0.8, mira: [0, 3.2, 6.2] }),
+  hidraulica: marcador(W, { x: 3.1, y: 1.2, z: -1.2, tipo: 'm_hidraulica', icono: '🛢️', etiqueta: 'Hidráulica (válvula V-2)', escala: 0.8, mira: [0, 3.2, 6.2] }),
+  almacenada: marcador(W, { x: 3.9, y: 1.8, z: -2.4, tipo: 'm_almacenada', icono: '🧨', etiqueta: 'Energía almacenada (acumulador)', escala: 0.8, mira: [0, 3.2, 6.2] }),
+  inercia: marcador(W, { x: -1.35, y: 1.9, z: -1.2, tipo: 'm_inercia', icono: '🌀', etiqueta: 'Inercia del volante', escala: 0.8, mira: [0, 3.2, 6.2] }),
+  gravedad: marcador(W, { x: 1.2, y: 2.3, z: -0.4, tipo: 'm_gravedad', icono: '⬇️', etiqueta: 'Carga elevada (gravedad)', escala: 0.8, mira: [0, 3.2, 6.2] }),
+  extintor: marcador(W, { x: -4.6, y: 1.3, z: 0.6, tipo: 'm_extintor', icono: '🧯', etiqueta: 'Extintor: no es una energía de la máquina', escala: 0.8, mira: [0, 3.2, 6.2] }),
+};
+caja(0.16, 0.5, 0.16, 0xC62828, -4.6, 0.9, 0.6);                        // extintor (distractor)
 
-  <section class="aviso">
-    <p><strong>Advertencia.</strong> La simulación complementa, pero no sustituye, la capacitación práctica, los
-      procedimientos autorizados, los dispositivos físicos ni las verificaciones en equipos reales.</p>
-    <p>Documento interno de capacitación: no es un DC-3, no es una certificación oficial de competencia laboral ni
-      una acreditación de la STPS.</p>
-  </section>
+// mesa con los dispositivos de bloqueo
+const MESA = mesaDispositivos(W, { x: -1.6, z: 2.2 });
+const CAND = candado(W, { x: MESA.x - 0.3, y: MESA.y, z: MESA.z });
+const TARJ = tarjeta(W, { x: MESA.x, y: MESA.y + 0.08, z: MESA.z });
+const DET = detector(W, { x: MESA.x + 0.32, y: MESA.y + 0.09, z: MESA.z });
+const rotM = letrero('DISPOSITIVOS DE BLOQUEO', 0.9, 0.12, '#0E3A6B'); rotM.position.set(MESA.x, 1.25, MESA.z); scene.add(rotM);
 
-  <p class="pie">Fundamento normativo en revisión: la vigencia y los numerales se verifican en el DOF antes de
-    escribirlos en el contenido (§8.2 del anexo técnico).</p>
-</main>
+// --------------------------------------------------------------- 1) encuentra las energías
+const pasoEnergias = encuentra(W, {
+  titulo: 'Encuentra las energías de la máquina', texto: 'Toca cada fuente de energía peligrosa que haya que controlar.',
+  fuente: PROC,
+  buenas: [
+    { tipo: 'm_electrica', nombre: 'Energía eléctrica', fb: 'Se aísla en el tablero TB-7.', f: N29, obj: MK.electrica },
+    { tipo: 'm_neumatica', nombre: 'Aire comprimido', fb: 'Se aísla en la válvula V-1 y hay que purgar la línea.', f: N04, obj: MK.neumatica },
+    { tipo: 'm_hidraulica', nombre: 'Energía hidráulica', fb: 'Se aísla en la válvula V-2 del circuito de aceite.', f: N04, obj: MK.hidraulica },
+    { tipo: 'm_almacenada', nombre: 'Energía almacenada', fb: 'El acumulador sigue con presión aunque cierres la válvula.', f: N04, obj: MK.almacenada },
+    { tipo: 'm_inercia', nombre: 'Inercia', fb: 'El volante sigue girando después de cortar la energía.', f: N04, obj: MK.inercia },
+    { tipo: 'm_gravedad', nombre: 'Gravedad', fb: 'La carga elevada baja sola si se libera el mecanismo.', f: N04, obj: MK.gravedad },
+  ],
+  malas: [{ tipo: 'm_extintor', nombre: 'Extintor', fb: 'Es equipo contra incendio, no una fuente de energía de la máquina.', f: BP, obj: MK.extintor }],
+  alTerminar: () => W.siguiente() });
+pasoEnergias.iniciar = () => W.resaltar(Object.values(MK).map(m => m.marco));
 
-<a class="volver" href="../../../index.html">⬅ Volver al campus</a>
-<script src="../volver.js"></script>
+// --------------------------------------------------------------- 2) ordena la secuencia
+const SECUENCIA = [
+  'Avisar al personal afectado que se va a intervenir el equipo',
+  'Paro controlado del equipo con su propio procedimiento',
+  'Accionar los dispositivos de aislamiento de cada fuente',
+  'Colocar el candado personal en cada punto de aislamiento',
+  'Colocar la tarjeta con los datos de quien bloquea',
+  'Liberar o contener la energía almacenada y residual',
+  'Verificar la ausencia de energía con el instrumento adecuado',
+  'Intento de arranque para confirmar que no responde',
+];
+const pasoSecuencia = { titulo: 'Ordena la secuencia', texto: 'Arma el procedimiento de esta máquina, paso por paso.',
+  fuente: PROC, puntos: SECUENCIA.length * 10,
+  iniciar() { W.resaltar([]);
+    ordenar(W, { titulo: '🔢 ¿En qué orden va el procedimiento?', lista: SECUENCIA, fuente: PROC,
+      contexto: 'Ojo: la secuencia válida es la del procedimiento de ESTA máquina. No existe una secuencia universal.',
+      alTerminar: () => W.siguiente() }); } };
+
+// --------------------------------------------------------------- 3) elige el dispositivo
+const pasoDispositivo1 = { titulo: 'Elige el dispositivo (1 de 3)', texto: 'Punto de aislamiento: interruptor de palanca del tablero TB-7.', fuente: N29, puntos: 10,
+  iniciar() { W.resaltar([TB.palanca]);
+    decidir(W, '⚡ ¿Con qué bloqueas el interruptor de palanca?', [
+      { t: 'Pinza de bloqueo para interruptor, y encima el candado personal', ok: true, fb: 'La pinza sujeta la palanca en posición abierta y recibe el candado.', f: N29 },
+      { t: 'Solo la tarjeta de NO OPERAR colgada de la palanca', ok: false, crit: true, fb: 'La etiqueta avisa, pero no impide accionar la palanca. Nunca sustituye al bloqueo físico.', f: N29 },
+      { t: 'Cinta de peligro alrededor del tablero', ok: false, fb: 'Delimita, pero no bloquea el dispositivo de aislamiento.', f: BP },
+    ], () => W.siguiente()); } };
+const pasoDispositivo2 = { titulo: 'Elige el dispositivo (2 de 3)', texto: 'Punto de aislamiento: válvula de bola del aire comprimido.', fuente: N04, puntos: 10,
+  iniciar() { W.resaltar([VA.manija]);
+    decidir(W, '💨 ¿Con qué bloqueas la válvula de bola V-1?', [
+      { t: 'Bloqueo de válvula de bola que abraza la manija, con candado', ok: true, fb: 'Impide que la manija vuelva a girar a abierto.', f: N04 },
+      { t: 'Amarrar la manija con alambre', ok: false, fb: 'Improvisado: no es un dispositivo de bloqueo y se retira con la mano.', f: BP },
+      { t: 'Cerrar la válvula y confiar en que nadie la abra', ok: false, crit: true, fb: 'Aislar no es bloquear: sin candado cualquiera la reabre.', f: N04 },
+    ], () => W.siguiente()); } };
+const pasoDispositivo3 = { titulo: 'Elige el dispositivo (3 de 3)', texto: 'Van a intervenir tres personas de mantenimiento al mismo tiempo.', fuente: BP, puntos: 10,
+  iniciar() { W.resaltar([CAND.g]);
+    decidir(W, '👥 Tres personas intervienen el mismo equipo. ¿Qué usas?', [
+      { t: 'Pinza multicandado: cada quien pone su propio candado en el mismo punto', ok: true, fb: 'Cada persona conserva su llave y el equipo no se libera hasta que todas retiran el suyo.', f: BP },
+      { t: 'Un solo candado, con la llave en manos del supervisor', ok: false, fb: 'Nadie debe quedar expuesto a que otra persona libere el equipo por él.', f: BP },
+      { t: 'Un candado y dos tarjetas', ok: false, crit: true, fb: 'Otra vez la etiqueta como sustituto: dos de las tres personas quedan sin protección física.', f: BP },
+    ], () => W.siguiente()); } };
+
+// --------------------------------------------------------------- 4) la distinción que debe quedar clara
+const DIST = ['Aislar: accionar el dispositivo que corta el paso de la energía',
+  'Bloquear: poner el candado para que el dispositivo no se pueda volver a accionar',
+  'Etiquetar: identificar quién bloqueó y por qué',
+  'Verificar: comprobar con un método adecuado que ya no hay energía',
+  'Etiquetar es suficiente cuando el trabajo es corto',
+  'Verificar es apretar el botón de arranque y ver que no prenda la luz del tablero'];
+const pasoDistincion = { titulo: 'Aislar, bloquear, etiquetar, verificar', texto: 'Marca TODAS las afirmaciones correctas.', fuente: PROC, puntos: 10,
+  iniciar() { W.resaltar([]);
+    W.pregunta('🧠 ¿Cuáles son correctas?', DIST, [0, 1, 2, 3], PROC, () => W.siguiente(), true,
+      'Son cuatro cosas distintas y ninguna sustituye a otra.'); } };
+
+const pasoCierre = { titulo: 'Listo para las celdas', texto: 'Ya puedes entrar a las tres celdas de simulación.', sinPuntos: true,
+  iniciar() { W.resaltar([]);
+    W.aviso(`<h2>🎓 Lo que te llevas del aula</h2>
+      <ul><li>Las energías de una máquina casi nunca son una sola.</li>
+      <li>La energía <b>almacenada</b> (acumulador, resorte, volante, carga elevada) sigue ahí después de cortar la alimentación.</li>
+      <li><b>Aislar ≠ bloquear ≠ etiquetar ≠ verificar.</b> La etiqueta nunca sustituye el bloqueo físico.</li>
+      <li>La secuencia válida es la del procedimiento de la máquina.</li></ul>
+      <p>En las celdas vas a ejecutarlo tú: eléctrica, neumática e hidráulica, y mecánica con energía almacenada.</p>
+      <p class="ficticio">Fundamento normativo en revisión: la vigencia y los numerales se verifican en el DOF antes de darlos por ciertos.</p>`,
+      () => W.siguiente(), 'Terminar'); } };
+
+W.inicio([{ id: 'completo', txt: '🎓 <b>Aula completa:</b> energías, secuencia, dispositivos y la distinción clave' }],
+  () => [intro(W, `<h2>🎓 Aula LOTO</h2><p>Antes de bloquear una máquina hay que <b>reconocerla</b>: cuántas energías tiene, cómo se aísla cada una y con qué dispositivo.</p>
+    <p>En esta aula vas a hacer tres ejercicios sobre la máquina de demostración, y al final las tres celdas te van a pedir ejecutarlo de verdad.</p>
+    <p><b>Gira la vista arrastrando</b> y toca los objetos que brillan.</p>`, FIC),
+    pasoEnergias, pasoSecuencia, pasoDispositivo1, pasoDispositivo2, pasoDispositivo3, pasoDistincion, pasoCierre],
+  'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento normativo (NOM-004-STPS-1999, NOM-029-STPS-2011): vigencia y numerales POR VERIFICAR en el DOF. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { MK, EQ, TB, VA, VH, AC, VO, CG, tocar: W.tocar, estado: W.qa };
+</script>
 </body>
 </html>

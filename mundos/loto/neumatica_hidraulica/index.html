@@ -1,80 +1,181 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Celda 2: Neumático e hidráulico · Campus SST</title>
-<link rel="stylesheet" href="../maqueta.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Celda 2: Neumático e hidráulico</title>
+<script type="importmap">{"imports":{"three":"../../../motor/vendor/three/build/three.module.js","three/addons/":"../../../motor/vendor/three/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+<script src="../../construccion/comun.js"></script>
+<script src="../comun.js"></script>
 </head>
 <body>
-<header>
-  <div class="arriba"><span class="ico">🫧</span>
-    <div><h1>Celda 2: Neumático e hidráulico</h1>
-      <p class="celda">Edificio LOTO · se recorre a pie y con visor de realidad virtual</p></div>
-  </div>
-</header>
-<p class="cinta">MAQUETA · Esta celda todavía no evalúa: muestra lo que contendrá</p>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-<main>
-  <section>
-    <h2>Qué se va a recorrer</h2>
-    <p>Una prensa con unidad de potencia hidráulica y una línea de aire comprimido: válvulas de corte, filtro
-      regulador, cilindros, mangueras y un <strong>acumulador</strong>. Es la celda donde la energía no se va sola
-      al cerrar la válvula.</p>
-  </section>
+// Celda 2 del Edificio LOTO: aire comprimido y circuito hidráulico de la prensa P-02.
+// La lección de esta celda: cerrar la válvula NO quita la energía. El acumulador sigue con presión y la línea
+// guarda presión residual; hay que liberarla o contenerla y verificar en el punto correcto.
+// FUNDAMENTO NORMATIVO: por verificar en el DOF y en la STPS (ANEXO_TECNICO_LOTO.md §8.2).
+const { N04, PROC, BP, FIC, equipo, valvula, acumulador, candado, tarjeta, pasoTocar, conTrampas,
+  trampaIntervenir, mesaDispositivos } = window.LOTO;
+const { nave, trabajador, marcador } = window.Alturas;
+const { decidir, encuentra, intro } = window.Riesgo;
 
-  <section>
-    <h2>Secuencia que tendrá que ejecutar</h2>
-    <ol class="pasos">
-      <li>Identificar las fuentes de presión del sistema (aire, aceite) y sus peligros.</li>
-      <li>Notificar al personal afectado y hacer el paro controlado.</li>
-      <li>Localizar <strong>todos</strong> los puntos de aislamiento, incluidos los que no están a la vista.</li>
-      <li>Aplicar el procedimiento del sistema según el equipo.</li>
-      <li>Colocar el <strong>dispositivo de bloqueo adecuado a cada tipo de válvula</strong>, más candado y tarjeta.</li>
-      <li><strong>Liberar, descargar o contener la energía almacenada</strong>: purga, venteo, descarga del
-        acumulador, bajar o inmovilizar el elemento sostenido por presión.</li>
-      <li>Considerar la <strong>presión residual</strong> y la posibilidad de movimiento inesperado.</li>
-      <li>Verificar la condición segura con el método adecuado
-        <span class="fte">por ejemplo, lectura en el manómetro del punto correcto, no del que está más a mano.</span></li>
-      <li>Confirmar que se cumplen las condiciones antes de intervenir.</li>
-    </ol>
-    <p class="fte" style="margin-top:10px">El orden definitivo sale del procedimiento de la máquina del cliente, no
-      de una secuencia genérica. Se configura en un archivo de datos, no en el código.</p>
-  </section>
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Celda 2: Neumático e hidráulico', icono: '🫧',
+  clave: 'loto_neumatica_hidraulica', criterio: { pct: 80, sinCriticos: true }, fondo: 0xDDE3E8,
+  vistas: [[[0.6, 3.0, 6.2], [0, 1.2, -1.2]], [[-3.4, 2.0, 1.4], [-1.4, 1.0, -2]], [[3.8, 2.2, 1.2], [1.6, 1.0, -1.8]]] });
+const { scene, caja, cil, letrero } = W; W.controls.maxDistance = 14;
+const N = nave(W, { alto: 6, ancho: 13, fondo: 11, rotulo: 'ÁREA DE TROQUELADO · MANTENIMIENTO INDUSTRIAL DEL CENTRO [FICTICIO]' });
+W.activarXR({ inicio: [0, 2.4], piso: N.piso, entorno: N.entorno });
 
-  <section class="critico">
-    <h2>Errores críticos que esta celda detectará</h2>
-    <ul>
-      <li>Omitir una fuente de presión, o cerrar una válvula y dar por aislado todo el sistema.</li>
-      <li>Intervenir sin el aislamiento completo.</li>
-      <li>Tratar la etiqueta como sustituto del bloqueo.</li>
-      <li>No descargar el acumulador, o ignorar la presión residual.</li>
-      <li>Dar por comprobada la condición segura sin verificarla.</li>
-      <li>Permitir el retorno al servicio sin cumplir las condiciones de liberación.</li>
-    </ul>
-    <p>Con un error crítico sin corregir <strong>no se aprueba</strong>. La práctica se detiene, se explica el riesgo
-      y se exige repetir las etapas afectadas.</p>
-  </section>
+// --------------------------------------------------------------- escena
+const EQ = equipo(W, { x: 0.6, z: -1.8, rotulo: 'PRENSA P-02' });
+const VA = valvula(W, { x: -1.9, y: 1.35, z: -2.4, rotulo: 'AIRE V-1', tipo: 'valvula_aire' });
+const VH = valvula(W, { x: 2.5, y: 0.95, z: -2.4, ry: Math.PI / 2, rotulo: 'ACEITE V-2', tipo: 'valvula_aceite' });
+const AC = acumulador(W, { x: 3.4, z: -2.2 });
+// tuberías
+caja(2.6, 0.07, 0.07, 0xB0BEC5, -0.7, 1.35, -2.4); caja(0.07, 0.5, 0.07, 0xB0BEC5, -1.9, 1.65, -2.4);
+caja(1.6, 0.09, 0.09, 0x90A4AE, 1.7, 0.95, -2.4);
+// unidad de potencia hidráulica
+const UP = new THREE.Group(); UP.position.set(2.5, 0, -1.3); scene.add(UP);
+const upCuerpo = caja(0.7, 0.6, 0.5, 0x455A64, 0, 0.3, 0, UP); cil(0.16, 0.35, 0x37474F, 0.2, 0.75, 0, UP);
+const rotU = letrero('UNIDAD DE POTENCIA', 0.6, 0.11, '#102A43'); rotU.position.set(0, 0.85, 0.26); UP.add(rotU);
+// manómetro de la línea: el punto donde se verifica
+const MAN = new THREE.Group(); MAN.position.set(0.6, 1.5, -1.25); scene.add(MAN);
+const manCara = cil(0.13, 0.04, 0xECEFF1, 0, 0, 0, MAN); manCara.rotation.x = Math.PI / 2;
+const manAguja = caja(0.012, 0.1, 0.008, 0xC62828, 0, 0.045, 0.025, MAN);
+const rotM2 = letrero('MANÓMETRO DE LÍNEA', 0.55, 0.1, '#102A43'); rotM2.position.set(0, 0.22, 0.03); MAN.add(rotM2);
+W.tocable(MAN, 'manometro', 0.5);
+// purga de la línea (además de la del acumulador)
+const PUR = cil(0.035, 0.16, 0xC62828, -0.5, 1.28, -2.4); PUR.rotation.z = Math.PI / 2;
+const rotPu = letrero('PURGA DE LÍNEA', 0.45, 0.1, '#B45309'); rotPu.position.set(-0.5, 1.46, -2.35); scene.add(rotPu);
+W.tocable(PUR, 'purgalinea', 0.45);
+// toma de agua: distractor
+const AG = caja(0.2, 0.3, 0.2, 0x1E88E5, -4.3, 0.9, -0.4);
+// compañero
+const TR = trabajador(W, { x: 2.9, z: 1.1, ry: -2.4, arnes: false, ropa: 0x455A64 });
+W.tocable(TR.g, 'companero', 1.0);
 
-  <section>
-    <h2>Realidad virtual</h2>
-    <p>La misma celda se recorre con el Meta Quest 3S: teletransporte y giro por pasos, opción sentado o de pie,
-      pausa en cualquier momento, y todas las decisiones en el panel 3D para que se vean dentro del visor. Las
-      acciones de botón tienen equivalente en el panel y en el botón de la muñeca, para quien use las manos libres.</p>
-  </section>
+const MESA = mesaDispositivos(W, { x: -1.2, z: 1.6 });
+const CAND = candado(W, { x: MESA.x - 0.3, y: MESA.y, z: MESA.z });
+const CAND2 = candado(W, { x: MESA.x - 0.1, y: MESA.y, z: MESA.z, tipo: 'candado2', color: 0x1565C0 });
+const TARJ = tarjeta(W, { x: MESA.x + 0.18, y: MESA.y + 0.08, z: MESA.z });
 
-  <section class="aviso">
-    <p><strong>Advertencia.</strong> La simulación complementa, pero no sustituye, la capacitación práctica, los
-      procedimientos autorizados, los dispositivos físicos ni las verificaciones en equipos reales.</p>
-    <p>Documento interno de capacitación: no es un DC-3, no es una certificación oficial de competencia laboral ni
-      una acreditación de la STPS.</p>
-  </section>
+const MK = {
+  aire: marcador(W, { x: -1.9, y: 1.95, z: -2.4, tipo: 'm_aire', icono: '💨', etiqueta: 'Aire comprimido (válvula V-1)', escala: 0.8, mira: [0.6, 3.0, 6.2] }),
+  aceite: marcador(W, { x: 2.5, y: 1.55, z: -2.4, tipo: 'm_aceite', icono: '🛢️', etiqueta: 'Circuito hidráulico (válvula V-2)', escala: 0.8, mira: [0.6, 3.0, 6.2] }),
+  acum: marcador(W, { x: 3.4, y: 1.9, z: -2.2, tipo: 'm_acum', icono: '🧨', etiqueta: 'Acumulador: presión almacenada', escala: 0.8, mira: [0.6, 3.0, 6.2] }),
+  residual: marcador(W, { x: -0.5, y: 1.7, z: -2.4, tipo: 'm_residual', icono: '⚠️', etiqueta: 'Presión residual en la línea', escala: 0.8, mira: [0.6, 3.0, 6.2] }),
+  agua: marcador(W, { x: -4.3, y: 1.4, z: -0.4, tipo: 'm_agua', icono: '🚰', etiqueta: 'Toma de agua: no alimenta a la prensa', escala: 0.8, mira: [0.6, 3.0, 6.2] }),
+};
 
-  <p class="pie">Fundamento normativo en revisión: la vigencia y los numerales se verifican en el DOF antes de
-    escribirlos en el contenido (§8.2 del anexo técnico).</p>
-</main>
+const TRAMPA = trampaIntervenir(W);
 
-<a class="volver" href="../../../index.html">⬅ Volver al campus</a>
-<script src="../volver.js"></script>
+// --------------------------------------------------------------- pasos
+const pasoFuentes = encuentra(W, {
+  titulo: 'Identifica las fuentes de presión', texto: 'Toca cada fuente de energía que haya que controlar antes de intervenir la prensa.',
+  fuente: N04,
+  buenas: [
+    { tipo: 'm_aire', nombre: 'Aire comprimido', fb: 'Se aísla en la válvula V-1.', f: N04, obj: MK.aire },
+    { tipo: 'm_aceite', nombre: 'Circuito hidráulico', fb: 'Se aísla en la válvula V-2 de la unidad de potencia.', f: N04, obj: MK.aceite },
+    { tipo: 'm_acum', nombre: 'Acumulador', fb: 'Guarda presión: cerrar la válvula no lo descarga.', f: N04, obj: MK.acum },
+    { tipo: 'm_residual', nombre: 'Presión residual de la línea', fb: 'La línea entre la válvula y el equipo queda con presión atrapada.', f: N04, obj: MK.residual },
+  ],
+  malas: [{ tipo: 'm_agua', nombre: 'Toma de agua', fb: 'No alimenta a la prensa: no es una energía peligrosa de este equipo.', f: BP, obj: MK.agua }],
+  alTerminar: () => W.siguiente() });
+pasoFuentes.iniciar = () => W.resaltar(Object.values(MK).map(m => m.marco));
+conTrampas(W, pasoFuentes, [TRAMPA]);
+
+const pasoAvisar = pasoTocar(W, { titulo: 'Avisa al personal afectado', texto: 'Avisa a quien opera la prensa antes de pararla.',
+  fuente: PROC, tipo: 'companero', resaltar: [TR.torso], trampas: [TRAMPA],
+  alTocar: () => { W.globo('Va, la detengo', TR.g, 2200, 1.9); W.bien('Personal afectado avisado.', PROC); W.siguiente(); } });
+
+const pasoParo = pasoTocar(W, { titulo: 'Paro controlado', texto: 'Para la prensa con el botón de paro de su botonera.',
+  fuente: PROC, tipo: 'paro', resaltar: [EQ.paro], trampas: [TRAMPA],
+  alTocar: () => { W.bien('Prensa detenida.', PROC); W.siguiente(); } });
+
+const pasoAire = pasoTocar(W, { titulo: 'Aísla el aire comprimido', texto: 'Cierra la válvula V-1 de la línea de aire.',
+  fuente: N04, tipo: 'valvula_aire', resaltar: [VA.manija],
+  trampas: [TRAMPA, { tipo: 'manometro', critico: false, una: true, txt: 'Todavía no hay nada que verificar: primero hay que aislar.', f: N04 }],
+  alTocar: async () => { await VA.cerrar(); W.bien('Válvula V-1 cerrada: aire aislado.', N04); W.siguiente(); } });
+
+const pasoAceite = pasoTocar(W, { titulo: 'Aísla el circuito hidráulico', texto: 'Cierra la válvula V-2 de la unidad de potencia.',
+  fuente: N04, tipo: 'valvula_aceite', resaltar: [VH.manija], trampas: [TRAMPA],
+  alTocar: async () => { await VH.cerrar(); upCuerpo.material.color.set(0x37474F); W.bien('Válvula V-2 cerrada: circuito hidráulico aislado.', N04); W.siguiente(); } });
+
+const pasoDispositivo = { titulo: '¿Con qué bloqueas?', texto: 'Las dos válvulas ya están cerradas. Elige el dispositivo.', fuente: N04, puntos: 10,
+  iniciar() { W.resaltar([CAND.g, CAND2.g]);
+    decidir(W, '🔒 ¿Cómo bloqueas las válvulas de bola ya cerradas?', [
+      { t: 'Un bloqueo de válvula de bola en cada una, y en cada uno mi candado personal', ok: true, fb: 'Cada punto de aislamiento se bloquea por separado.', f: N04 },
+      { t: 'Un solo candado en la válvula principal: las dos cuelgan de la misma línea', ok: false, crit: true, fb: 'Son dos puntos de aislamiento distintos. Dejar uno sin bloquear deja viva esa energía.', f: N04 },
+      { t: 'Una tarjeta de NO OPERAR en cada válvula', ok: false, crit: true, fb: 'La etiqueta avisa pero no impide girar la manija: nunca sustituye el bloqueo físico.', f: N04 },
+    ], () => W.siguiente()); } };
+
+const pasoBloquear = pasoTocar(W, { titulo: 'Bloquea las válvulas', texto: 'Toma tus candados y colócalos en los dos puntos de aislamiento.',
+  fuente: N04, tipo: 'candado', resaltar: [CAND.g], trampas: [TRAMPA,
+    { tipo: 'tarjeta', critico: false, una: true, txt: 'La tarjeta va después del candado.', f: N04 }],
+  alTocar: () => { CAND.colocar(VA.punto[0], VA.punto[1], VA.punto[2]); CAND2.colocar(VH.punto[0], VH.punto[1], VH.punto[2]);
+    W.bien('Las dos válvulas quedaron bloqueadas con candado.', N04); W.siguiente(); } });
+
+const pasoEtiquetar = pasoTocar(W, { titulo: 'Coloca la tarjeta', texto: 'Identifica quién bloqueó y por qué.',
+  fuente: N04, tipo: 'tarjeta', resaltar: [TARJ.g], trampas: [TRAMPA],
+  alTocar: () => { TARJ.colocar(VA.punto[0] + 0.12, VA.punto[1] - 0.08, VA.punto[2]); W.bien('Tarjeta colocada.', N04); W.siguiente(); } });
+
+const pasoAcumulador = pasoTocar(W, { titulo: 'Descarga el acumulador', texto: 'El acumulador sigue con presión aunque las válvulas estén cerradas. Ábrele la purga.',
+  fuente: N04, tipo: 'purga', resaltar: [AC.purga],
+  trampas: [TRAMPA, { tipo: 'manometro', critico: false, una: true, txt: 'Antes de verificar hay que liberar la energía almacenada: el acumulador sigue cargado.', f: N04 }],
+  alTocar: async () => { await AC.despresurizar(); W.bien('Acumulador despresurizado por su purga.', N04); W.siguiente(); } });
+
+const pasoLinea = pasoTocar(W, { titulo: 'Libera la presión residual', texto: 'Falta el aire atrapado entre la válvula y el equipo: abre la purga de línea.',
+  fuente: N04, tipo: 'purgalinea', resaltar: [PUR], trampas: [TRAMPA],
+  alTocar: async () => { await W.animar(800, k => { manAguja.rotation.z = -1.5 * k; });
+    W.bien('Línea purgada: la presión residual salió.', N04); W.siguiente(); } });
+
+const pasoVerificar = pasoTocar(W, { titulo: 'Verifica la condición segura', texto: 'Comprueba en el manómetro de la línea que la presión está en cero.',
+  fuente: N04, tipo: 'manometro', resaltar: [manCara], trampas: [TRAMPA],
+  alTocar: () => { W.bien('El manómetro de la línea marca cero.', N04); W.siguiente(); } });
+
+const pasoPuntoCorrecto = { titulo: '¿Dónde se verifica?', texto: 'Una pregunta sobre lo que acabas de hacer.', fuente: N04, puntos: 10,
+  iniciar() { W.resaltar([]);
+    decidir(W, '📍 ¿Por qué se verifica en el manómetro de la LÍNEA y no en el de la unidad de potencia?', [
+      { t: 'Porque hay que medir donde va a quedar expuesta la persona que trabaja', ok: true, fb: 'La verificación se hace en el punto que importa: donde se va a intervenir.', f: N04 },
+      { t: 'Porque el de la unidad de potencia es más difícil de ver', ok: false, fb: 'No es cuestión de comodidad sino del punto donde queda la energía atrapada.', f: BP },
+      { t: 'Da igual cuál se lea: están conectados', ok: false, crit: true, fb: 'Justamente no: con la válvula cerrada, el de aguas arriba puede marcar cero y la línea seguir con presión.', f: N04 },
+    ], () => W.siguiente()); } };
+
+const pasoArranque = pasoTocar(W, { titulo: 'Intento de arranque', texto: 'Confirma apretando el arranque: la prensa no debe moverse.',
+  fuente: PROC, tipo: 'arranque', resaltar: [EQ.arranque], trampas: [TRAMPA],
+  alTocar: () => { W.globo('No se mueve', EQ.g, 2200, 1.9); W.bien('Sin movimiento: condición segura confirmada.', PROC); W.siguiente(); } });
+
+const pasoAutorizar = { titulo: 'Autoriza la intervención', texto: 'Decide si se puede entrar al mantenimiento.', fuente: PROC, puntos: 10,
+  iniciar() { W.resaltar([EQ.zona]);
+    decidir(W, '✅ ¿Se puede iniciar el mantenimiento?', [
+      { t: 'Sí: las dos fuentes aisladas y bloqueadas, acumulador y línea descargados, manómetro en cero', ok: true, fb: 'Se cumplen las condiciones del procedimiento.', f: PROC },
+      { t: 'Sí: con las válvulas cerradas es suficiente', ok: false, crit: true, fb: 'Cerrar no es bloquear, y la energía almacenada seguiría ahí.', f: N04 },
+      { t: 'Todavía no: hay que esperar a que el aceite se enfríe', ok: false, fb: 'No es una condición de este procedimiento; las condiciones ya se cumplieron.', f: PROC },
+    ], () => W.siguiente()); } };
+
+const pasoCierre = { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', sinPuntos: true,
+  iniciar() { W.resaltar([]);
+    W.aviso(`<h2>🫧 Celda neumática e hidráulica terminada</h2>
+      <p>Lo que esta celda enseña y casi nadie hace: <b>cerrar la válvula no quita la energía</b>. Quedaban el
+      acumulador cargado y la presión residual de la línea, y la verificación tenía que hacerse en el punto
+      donde se va a trabajar.</p>
+      <p class="ficticio">Fundamento normativo en revisión: la vigencia y los numerales se verifican en el DOF antes de darlos por ciertos.</p>`,
+      () => W.siguiente(), 'Ver resultado'); } };
+
+W.inicio([{ id: 'completo', txt: '🫧 <b>Caso completo:</b> aire comprimido e hidráulico de la prensa P-02' }],
+  () => [intro(W, `<h2>🫧 Celda 2: Neumático e hidráulico</h2><p>Hay que intervenir la <b>prensa P-02</b>, que trabaja con aire comprimido y con un circuito hidráulico con acumulador.</p>
+    <p>Ejecuta el procedimiento paso por paso. Ojo con lo que queda guardado después de cerrar las válvulas.</p>
+    <p>⛔ Si metes la mano al equipo antes de terminar, se registra como <b>error crítico</b> y no se aprueba.</p>`, FIC),
+    pasoFuentes, pasoAvisar, pasoParo, pasoAire, pasoAceite, pasoDispositivo, pasoBloquear, pasoEtiquetar,
+    pasoAcumulador, pasoLinea, pasoVerificar, pasoPuntoCorrecto, pasoArranque, pasoAutorizar, pasoCierre],
+  'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento normativo (NOM-004-STPS-1999): vigencia y numerales POR VERIFICAR en el DOF. 🥽 En visor: botón VR.');
+
+if (location.search.includes('qa')) window.__qa = { MK, EQ, VA, VH, AC, MAN, PUR, TR, CAND, TARJ, tocar: W.tocar, estado: W.qa };
+</script>
 </body>
 </html>

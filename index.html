@@ -227,14 +227,15 @@ const AREAS = [
       { titulo: 'Sala de lectura', icono: '📖', tipo: '3d', url: 'mundos/biblioteca/index.html' },
       { titulo: 'Reto: encuentra la norma', icono: '🔎', tipo: '3d', url: 'mundos/biblioteca/index.html?reto' },
     ] },
-  // Edificio LOTO (21/10/2026): MAQUETA para presentación al cliente. Fachada, puerta e interior con el menú de
-  // las tres celdas y el aula. Las páginas son todavía fichas de lo que contendrá cada celda: NO hay lógica de
-  // evaluación (eso es la Fase 2 de ANEXO_TECNICO_LOTO.md). Los numerales normativos dicen «por verificar» a
-  // propósito: no se escriben como ciertos hasta consultarlos en el DOF (regla 4 y §8.2 del anexo).
+  // Edificio LOTO (21/10/2026): aula y tres celdas de simulación, con el motor de pasos del campus (mundos/loto/).
+  // Cada celda evalúa de verdad: pasos, errores menores y ERRORES CRÍTICOS que impiden aprobar (meter la mano al
+  // equipo, acercarse al volante girando, tratar la etiqueta como bloqueo). Piezas comunes en mundos/loto/comun.js.
+  // Los numerales normativos dicen «por verificar» a propósito: no se escriben como ciertos hasta consultarlos en
+  // el DOF (regla 4 y §8.2 de ANEXO_TECNICO_LOTO.md).
   { id: 'loto', nombre: 'LOTO · Bloqueo y etiquetado', icono: '🔒', color: 0xB7791F, ang: 20, senales: ['salida', 'electrico', 'guantes'],
-    desc: 'Control de energías peligrosas: aula de energías y dispositivos, y tres celdas de simulación (eléctrica, neumática e hidráulica, y mecánica con energía almacenada) · MAQUETA en construcción',
+    desc: 'Control de energías peligrosas: aula de energías y dispositivos, y tres celdas de simulación (eléctrica, neumática e hidráulica, y mecánica con energía almacenada) · con modo de realidad virtual',
     modulos: [
-      { titulo: 'Aula: energías y dispositivos', icono: '🎓', tipo: 'sala', url: 'mundos/loto/aula/index.html', nom: 'NOM-004 · NOM-029 (por verificar)', color: 'azul', senal: 'informacion' },
+      { titulo: 'Aula: energías y dispositivos', icono: '🎓', tipo: '3d', url: 'mundos/loto/aula/index.html', nom: 'NOM-004 · NOM-029 (por verificar)', color: 'azul', senal: 'informacion' },
       { titulo: 'Celda 1: Aislamiento eléctrico', icono: '⚡', tipo: '3d', url: 'mundos/loto/electrica/index.html', nom: 'NOM-029 (por verificar)', color: 'amarillo', senal: 'electrico' },
       { titulo: 'Celda 2: Neumático e hidráulico', icono: '🫧', tipo: '3d', url: 'mundos/loto/neumatica_hidraulica/index.html', nom: 'NOM-004 (por verificar)', color: 'amarillo', senal: 'guantes' },
       { titulo: 'Celda 3: Mecánico y energía almacenada', icono: '⚙️', tipo: '3d', url: 'mundos/loto/mecanica/index.html', nom: 'NOM-004 (por verificar)', color: 'amarillo', senal: 'prec_general' },
