@@ -16,6 +16,9 @@
   const RF = 'RFSST (DOF 13/11/2014)', N30 = 'NOM-030-STPS-2009', N17 = 'NOM-017-STPS-2024', N35 = 'NOM-035-STPS-2018';
   const NIOSH = 'NIOSH, Hierarchy of Controls (10/04/2024), referencia', N02 = 'NOM-002-STPS-2010', N33 = 'NOM-033-STPS-2015';
   const N87 = 'NOM-087-SEMARNAT-SSA1-2002', N45 = 'NOM-045-SSA2-2005', LGPC = 'LGPC art. 2';
+  // LOTO (21/10/2026): se cita la norma SIN numeral porque su vigencia y redacción siguen por verificar en el DOF.
+  const N04V = 'NOM-004-STPS-1999 (vigencia y numerales por verificar en el DOF)';
+  const N29V = 'NOM-029-STPS-2011 (vigencia y numerales por verificar en el DOF)';
   const NO_CUIDADO = { t: 'Pedir que "tengan cuidado" y nada más', ok: false, fb: 'Depende solo de la conducta: es el control menos confiable.', f: NIOSH };
   const SOLO_EPP = { t: 'Solo dar equipo de protección personal', ok: false, fb: 'El EPP es transitorio o complementario, no la primera opción.', f: `${N17}, 5.2` };
 
@@ -273,6 +276,38 @@
         { t: 'Ninguno', ok: false, fb: 'El RFSST pide analizar los factores ergonómicos.', f: `${RF} art. 42 fr. I` }] } },
       control: [{ t: 'Colocar los archivos a la altura de la cintura y usar un carrito', ok: true, fb: 'Medidas sobre el puesto para mitigar el factor ergonómico.', f: `${RF} art. 42 fr. II` },
         { t: 'Solo darle una faja', ok: false, fb: 'El EPP no sustituye las medidas sobre el puesto.', f: `${N17}, 5.2` }, NO_CUIDADO] },
+  ] },
+
+  // (21/10/2026) Edificio LOTO. Los numerales de NOM-004 y NOM-029 se citan SIN número: su vigencia y su redacción
+  // están pendientes de verificar en el DOF (ANEXO_TECNICO_LOTO.md §8.2). Lo que sostiene cada paso mientras tanto es
+  // el procedimiento de la máquina y la jerarquía de controles.
+  loto: { nombre: 'LOTO · Bloqueo y etiquetado', icono: '🔒', color: 0xB7791F, zonas: [
+    { id: 'aula_loto', titulo: 'Aula de energías y dispositivos', modulos: ['loto/aula'],
+      escena: 'Aula del edificio LOTO con una máquina de demostración y la estación de bloqueo en la pared. [FICTICIO]',
+      riesgos: [
+        { id: 'tablero_abierto', prop: 'tablero', icono: '⚡', nombre: 'Tablero de la máquina de demostración abierto y energizado', real: true, tipo: 'Físico', fb: 'Partes vivas accesibles durante la clase.', f: `${N29V}; ${N30}, 6.1 a)` },
+        { id: 'sin_candados', prop: 'puerta_candado', icono: '🔓', nombre: 'Estación de bloqueo sin candados: se los llevaron y no los regresaron', real: true, tipo: 'Condición de instalaciones', fb: 'Sin dispositivos no se puede bloquear: se improvisa o se omite.', f: `${RF} art. 3 fr. V` },
+        { id: 'cable_suelto', prop: 'cable', icono: '🔌', nombre: 'Cable de alimentación cruzando el paso del aula', real: true, tipo: 'Condición de instalaciones', fb: 'Tropiezo y daño al cable.', f: `${N30}, 6.1 a)` },
+        { id: 'estacion_ok', prop: 'senal_obligacion', icono: '🔵', nombre: 'Señal de uso obligatorio de guantes en la zona de práctica', real: false, fb: 'Es una señal de obligación: comunica una medida de control.', f: 'NOM-026-STPS-2008, Apéndice B' },
+        { id: 'mesa_ok', prop: 'mesa', icono: '🪑', nombre: 'Mesa de trabajo con los dispositivos ordenados', real: false, fb: 'No es un peligro relevante.', f: `${N30}, 3.8` },
+      ],
+      principal: 'tablero_abierto', evalua: { f: 'C', s: 'IV', pista: 'En clase se abre pocas veces, pero el contacto con partes vivas puede ser mortal. [FICTICIO]' },
+      control: [{ t: 'Dejar la máquina de demostración sin alimentación real y usar un tablero didáctico desenergizado', ok: true, fb: 'Elimina el peligro en el origen: para enseñar no hace falta tensión real.', f: NIOSH },
+        SOLO_EPP, NO_CUIDADO] },
+
+    { id: 'celdas_loto', titulo: 'Celdas de simulación (eléctrica, neumática e hidráulica, mecánica)', modulos: ['loto/electrica', 'loto/neumatica_hidraulica', 'loto/mecanica'],
+      escena: 'Las tres celdas de práctica con la prensa P-02 y el transportador T-04 listos para la siguiente sesión. [FICTICIO]',
+      riesgos: [
+        { id: 'etiqueta_sin_candado', prop: 'puerta_candado', icono: '🏷️', nombre: 'Interruptor con tarjeta de NO OPERAR pero sin candado', real: true, tipo: 'Mecánico', fb: 'La etiqueta avisa, pero no impide accionar el dispositivo: no sustituye el bloqueo físico.', f: `${N04V}; ${N29V}` },
+        { id: 'guarda', prop: 'guarda', icono: '⚙️', nombre: 'Guarda de la transmisión retirada y recargada en la pared', real: true, tipo: 'Mecánico', fb: 'Partes móviles accesibles: atrapamiento.', f: N04V },
+        { id: 'acumulador', prop: 'cilindro', icono: '🧨', nombre: 'Acumulador con presión y sin manómetro a la vista', real: true, tipo: 'Físico', fb: 'Energía almacenada que no se puede comprobar antes de intervenir.', f: N04V },
+        { id: 'cadena_ok', prop: 'cilindro_encadenado', icono: '⛓️', nombre: 'Cilindro de respaldo sujeto con cadena', real: false, fb: 'Condición controlada: está asegurado contra caída.', f: 'NOM-005-STPS-1998' },
+        { id: 'franja_ok', prop: 'franja', icono: '🟨', nombre: 'Zona de maniobra delimitada con franja amarilla', real: false, fb: 'El amarillo delimita áreas: está en su lugar.', f: 'NOM-026-STPS-2008, 7.1 Tabla 1' },
+      ],
+      principal: 'etiqueta_sin_candado', evalua: { f: 'B', s: 'IV', pista: 'Pasa seguido cuando faltan candados, y un arranque inesperado durante el mantenimiento puede ser mortal. [FICTICIO]' },
+      control: [{ t: 'Bloquear físicamente el dispositivo de aislamiento con candado (y pinza multicandado si son varias personas), además de la tarjeta', ok: true, fb: 'El bloqueo físico impide accionar el dispositivo; la etiqueta solo informa.', f: `${N04V}; ${NIOSH}` },
+        { t: 'Poner una segunda tarjeta más grande y visible', ok: false, crit: true, fb: 'Dos etiquetas siguen sin impedir que alguien cierre el interruptor.', f: N04V },
+        NO_CUIDADO] },
   ] },
   } };
 

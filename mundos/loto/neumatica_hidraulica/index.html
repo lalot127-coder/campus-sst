@@ -14,19 +14,22 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Kit3D } from '../../../motor/kit3d.js';
+import { Props } from '../../../motor/props.js';
 
 // Celda 2 del Edificio LOTO: aire comprimido y circuito hidráulico de la prensa P-02.
 // La lección de esta celda: cerrar la válvula NO quita la energía. El acumulador sigue con presión y la línea
 // guarda presión residual; hay que liberarla o contenerla y verificar en el punto correcto.
 // FUNDAMENTO NORMATIVO: por verificar en el DOF y en la STPS (ANEXO_TECNICO_LOTO.md §8.2).
 const { N04, PROC, BP, FIC, equipo, valvula, acumulador, candado, tarjeta, pasoTocar, conTrampas,
-  trampaIntervenir, mesaDispositivos } = window.LOTO;
+  trampaIntervenir, mesaDispositivos, estacion } = window.LOTO;
 const { nave, trabajador, marcador } = window.Alturas;
 const { decidir, encuentra, intro } = window.Riesgo;
 
 const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Celda 2: Neumático e hidráulico', icono: '🫧',
   clave: 'loto_neumatica_hidraulica', criterio: { pct: 80, sinCriticos: true }, fondo: 0xDDE3E8,
   vistas: [[[0.6, 3.0, 6.2], [0, 1.2, -1.2]], [[-3.4, 2.0, 1.4], [-1.4, 1.0, -2]], [[3.8, 2.2, 1.2], [1.6, 1.0, -1.8]]] });
+LOTO.init3D(W, { Kit3D, Props });   // modelos .glb CC0 + props propios; si fallan quedan las primitivas
 const { scene, caja, cil, letrero } = W; W.controls.maxDistance = 14;
 const N = nave(W, { alto: 6, ancho: 13, fondo: 11, rotulo: 'ÁREA DE TROQUELADO · MANTENIMIENTO INDUSTRIAL DEL CENTRO [FICTICIO]' });
 W.activarXR({ inicio: [0, 2.4], piso: N.piso, entorno: N.entorno });
@@ -60,6 +63,7 @@ const TR = trabajador(W, { x: 2.9, z: 1.1, ry: -2.4, arnes: false, ropa: 0x455A6
 W.tocable(TR.g, 'companero', 1.0);
 
 const MESA = mesaDispositivos(W, { x: -1.2, z: 1.6 });
+estacion(W, { x: -4.6, z: -7.8 });   // tablero de pared con candados, pinza multibloqueo y etiquetas
 const CAND = candado(W, { x: MESA.x - 0.3, y: MESA.y, z: MESA.z });
 const CAND2 = candado(W, { x: MESA.x - 0.1, y: MESA.y, z: MESA.z, tipo: 'candado2', color: 0x1565C0 });
 const TARJ = tarjeta(W, { x: MESA.x + 0.18, y: MESA.y + 0.08, z: MESA.z });

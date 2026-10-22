@@ -14,19 +14,22 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Kit3D } from '../../../motor/kit3d.js';
+import { Props } from '../../../motor/props.js';
 
 // Celda 3 del Edificio LOTO: movimiento inesperado y energía almacenada mecánica.
 // La lección: cortar la energía no detiene lo que ya se está moviendo, no baja lo que está arriba y no destensa
 // lo que está en tensión. Aquí el aislamiento eléctrico es solo el principio.
 // FUNDAMENTO NORMATIVO: por verificar en el DOF y en la STPS (ANEXO_TECNICO_LOTO.md §8.2).
 const { N04, PROC, BP, FIC, tablero, equipo, volante, cargaElevada, candado, tarjeta, pasoTocar, conTrampas,
-  trampaIntervenir, mesaDispositivos } = window.LOTO;
+  trampaIntervenir, mesaDispositivos, estacion } = window.LOTO;
 const { nave, trabajador, marcador } = window.Alturas;
 const { decidir, encuentra, intro } = window.Riesgo;
 
 const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Celda 3: Mecánico y energía almacenada', icono: '⚙️',
   clave: 'loto_mecanica', criterio: { pct: 80, sinCriticos: true }, fondo: 0xDDE3E8,
   vistas: [[[0.4, 3.0, 6.0], [0, 1.4, -1.2]], [[-3.4, 2.0, 1.4], [-1.2, 1.2, -1.8]], [[3.6, 2.2, 1.2], [1.2, 1.4, -1.6]]] });
+LOTO.init3D(W, { Kit3D, Props });   // modelos .glb CC0 + props propios; si fallan quedan las primitivas
 const { scene, caja, cil, letrero } = W; W.controls.maxDistance = 14;
 const N = nave(W, { alto: 6, ancho: 13, fondo: 11, rotulo: 'LÍNEA DE TRANSPORTE · MANTENIMIENTO INDUSTRIAL DEL CENTRO [FICTICIO]' });
 W.activarXR({ inicio: [0, 2.4], piso: N.piso, entorno: N.entorno });
@@ -54,6 +57,7 @@ const TR = trabajador(W, { x: 3.1, z: 1.2, ry: -2.4, arnes: false, ropa: 0x455A6
 W.tocable(TR.g, 'companero', 1.0);
 
 const MESA = mesaDispositivos(W, { x: -1.0, z: 1.8 });
+estacion(W, { x: -4.6, z: -7.8 });   // tablero de pared con candados, pinza multibloqueo y etiquetas
 const CAND = candado(W, { x: MESA.x - 0.3, y: MESA.y, z: MESA.z });
 const TARJ = tarjeta(W, { x: MESA.x, y: MESA.y + 0.08, z: MESA.z });
 

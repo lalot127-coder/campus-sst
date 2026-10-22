@@ -6,6 +6,14 @@
 //  · Nada de alert/confirm/prompt: todo sale en el panel (W.aviso, W.pregunta, Riesgo.decidir) que el panel 3D lee.
 //  · Nada de requestAnimationFrame para lógica: se usa W.animar y W.cuadro (dentro de VR el rAF de la ventana no corre).
 //
+// MODELOS (21/10/2026): cada pieza se dibuja primero con geometría propia y, si el kit .glb carga, se le encima el
+// modelo real y se oculta la geometría. Así el mundo funciona igual sin conexión o si el kit falla.
+//   assets/loto/loto.glb            → tablero, palanca, valvula, maquina, banda, brazo, candado (Kenney/Poly Pizza, CC0 y CC-BY)
+//   assets/seguridad-electrica/…glb → palanca, caja_fusibles, cable, llave (CC0 y CC-BY)
+//   motor/props.js                  → candado, pinza multibloqueo, etiqueta, estación LOTO, tapete, guantes (propios CERS)
+// Licencias y autores: assets/INVENTARIO_ASSETS.csv y assets/CREDITOS.md (se muestran en mundos/informacion/creditos.html).
+// El mundo llama una vez a LOTO.init3D(W, {Kit3D, Props}) antes de crear las piezas.
+//
 // Fundamento normativo: PENDIENTE DE VERIFICAR en el DOF y en la STPS (ver ANEXO_TECNICO_LOTO.md §8.2). Mientras tanto
 // las fuentes se muestran con la marca «vigencia por verificar» y los pasos del procedimiento se atribuyen al
 // procedimiento de la máquina (ficticio), que es lo que manda cuando no hay una secuencia universal.
@@ -19,14 +27,57 @@
   const COL = { candado: 0xC62828, tarjeta: 0xD32F2F, acero: 0x9AA6AD, tablero: 0x78909C, tubo: 0xB0BEC5,
     aceite: 0x37474F, peligro: 0xF2C94C, ok: 0x2E7D32, cable: 0x263238 };
 
+  // ---------------------------------------------------------------- modos de uso (anexo §5)
+  //   'practica'  guiada: resalta el objeto que toca (el de siempre)
+  //   'evaluacion': no resalta nada; la persona tiene que saber qué sigue
+  //   'demostracion': igual que práctica, para que la persona instructora enseñe el caso
+  let modo = 'practica';
+  const setModo = m => { modo = m || 'practica'; return modo; };
+
+  // ---------------------------------------------------------------- recorrido a pie
+  // Las celdas se recorren caminando (anexo §5 y §11): toca el piso para caminar, toca un objeto lejano y el avatar
+  // va hasta él antes de inspeccionarlo. Además habilita el botón 🧍 de vista a la altura de los ojos.
+  function aPie(W, N, { inicio = [0, 2.2], obstaculos = [], ancho = 13, fondo = 11 } = {}) {
+    return W.recorrido({ piso: N.piso, muros: N.entorno.filter(o => o.isMesh), obstaculos,
+      limites: { x0: -ancho / 2 + 0.6, x1: ancho / 2 - 0.6, z0: -fondo + 3.6, z1: 2.4 },
+      inicio, ry: Math.PI, camara: [3.2, 5.6], alcance: 1.7 });
+  }
+
+  // ---------------------------------------------------------------- modelos 3D (kits .glb y props propios)
+  const D = { kit: null, P: null, THREE: null };
+  // Se llama UNA vez por mundo, antes de crear las piezas:  LOTO.init3D(W, { Kit3D, Props })
+  function init3D(W, { Kit3D, Props, base = '../../../' } = {}) {
+    D.THREE = W.THREE;
+    if (Props) { try { D.P = Props(W.THREE); } catch (e) { console.warn('props.js no disponible', e); } }
+    if (Kit3D) { D.kit = new Kit3D(W.THREE, base); D.kit.precargar(['loto', 'seguridad-electrica']); }
+    return D;
+  }
+  // Encima el modelo del kit sobre la pieza y oculta la geometría de respaldo cuando llega.
+  //   modelo(g, 'loto', 'tablero', { alto: 1.8, y: 0, ry: 0, ocultar: [malla1, malla2] })
+  function modelo(g, kit, clave, { alto, y = 0, z = 0, x = 0, ry = 0, ocultar = [] } = {}) {
+    if (!D.kit) return g;
+    D.kit.pieza(kit, clave).then(m => {
+      if (!m || !m.children.length) return;
+      if (alto) { const b = new D.THREE.Box3().setFromObject(m), h = b.max.y - b.min.y;
+        if (h > 0.001) m.scale.multiplyScalar(alto / h); }
+      m.position.set(x, y, z); m.rotation.y = ry; g.add(m);
+      ocultar.forEach(o => { if (o) o.visible = false; });
+    }).catch(() => { /* sin kit se queda la geometría propia: el mundo sigue jugable */ });
+    return g;
+  }
+  // Pieza de motor/props.js (propias CERS), ya a escala real; devuelve null si props.js no cargó.
+  const prop = (nombre, ...args) => (D.P && D.P[nombre] ? D.P[nombre](...args) : null);
+
   // ---------------------------------------------------------------- dispositivos de bloqueo
   // Candado personal: se crea GUARDADO (en la caja de herramienta) y se coloca con candado.colocar(punto).
   function candado(W, { x = 0, y = 0, z = 0, color = COL.candado, tipo = 'candado', escala = 1 } = {}) {
     const { THREE, caja } = W; const g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(escala); W.scene.add(g);
-    caja(0.09, 0.12, 0.045, color, 0, 0, 0, g);                                                      // cuerpo
+    const cuerpo = caja(0.09, 0.12, 0.045, color, 0, 0, 0, g);                                       // respaldo
     const arco = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.009, 8, 20, Math.PI), W.M(COL.acero));
     arco.position.y = 0.06; g.add(arco);
-    caja(0.022, 0.022, 0.05, 0x263238, 0, -0.01, 0.025, g);                                          // bocallave
+    const boca = caja(0.022, 0.022, 0.05, 0x263238, 0, -0.01, 0.025, g);                             // bocallave
+    const real = prop('candado', color);                       // candado de bloqueo personal (motor/props.js)
+    if (real) { real.scale.setScalar(2.2); real.position.y = -0.06; g.add(real); [cuerpo, arco, boca].forEach(o => o.visible = false); }
     W.tocable(g, tipo, 0.42);
     return { g, colocar: (px, py, pz) => { g.position.set(px, py, pz); }, tipo };
   }
@@ -34,9 +85,11 @@
   // Tarjeta de identificación (no sustituye al candado: eso es justo lo que el simulador debe enseñar)
   function tarjeta(W, { x = 0, y = 0, z = 0, tipo = 'tarjeta', texto = 'NO OPERAR' } = {}) {
     const { THREE, caja, letrero } = W; const g = new THREE.Group(); g.position.set(x, y, z); W.scene.add(g);
-    caja(0.1, 0.16, 0.006, COL.tarjeta, 0, 0, 0, g);
+    const cart = caja(0.1, 0.16, 0.006, COL.tarjeta, 0, 0, 0, g);                                    // respaldo
     const t = letrero(texto, 0.095, 0.045, '#FFFFFF', '#B71C1C'); t.position.set(0, 0.035, 0.005); g.add(t);
-    caja(0.012, 0.012, 0.012, 0xFFFFFF, 0, 0.085, 0, g);                                             // ojal
+    const ojal = caja(0.012, 0.012, 0.012, 0xFFFFFF, 0, 0.085, 0, g);
+    const real = prop('etiqueta');                             // «PELIGRO · NO OPERAR · EQUIPO BLOQUEADO»
+    if (real) { real.scale.setScalar(1.5); real.position.y = -0.1; g.add(real); [cart, t, ojal].forEach(o => o.visible = false); }
     W.tocable(g, tipo, 0.4);
     return { g, colocar: (px, py, pz) => g.position.set(px, py, pz), tipo };
   }
@@ -55,13 +108,15 @@
   // Tablero con interruptor de palanca. abierto=false → energizado. Devuelve {g, palanca, abrir(), punto:[x,y,z]}
   function tablero(W, { x = 0, z = 0, ry = 0, rotulo = 'TABLERO TB-7' } = {}) {
     const { THREE, caja, letrero } = W; const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; W.scene.add(g);
-    caja(0.9, 1.6, 0.35, COL.tablero, 0, 0.9, 0, g);
-    caja(0.8, 1.4, 0.03, 0x90A4AE, 0, 0.9, 0.18, g);
+    const gab = caja(0.9, 1.6, 0.35, COL.tablero, 0, 0.9, 0, g);                                     // respaldo
+    const frente = caja(0.8, 1.4, 0.03, 0x90A4AE, 0, 0.9, 0.18, g);
+    modelo(g, 'loto', 'tablero', { alto: 1.8, ocultar: [gab, frente] });                             // gabinete real (CC0)
     const r = letrero(rotulo, 0.7, 0.14, '#102A43'); r.position.set(0, 1.58, 0.19); g.add(r);
     const piloto = W.esfera(0.035, 0xFF5252, 0.3, 1.35, 0.2, g); piloto.material.emissive = new THREE.Color(0xAA0000);
     const palanca = new THREE.Group(); palanca.position.set(-0.15, 1.1, 0.2); g.add(palanca);
-    caja(0.07, 0.26, 0.06, 0x212121, 0, 0.1, 0, palanca);
+    const vastago = caja(0.07, 0.26, 0.06, 0x212121, 0, 0.1, 0, palanca);
     const mango = caja(0.1, 0.1, 0.1, COL.peligro, 0, 0.22, 0.01, palanca);
+    modelo(palanca, 'seguridad-electrica', 'palanca', { alto: 0.3 });                                // interruptor real (CC0)
     const et = letrero('I / O', 0.16, 0.08, '#FFFFFF', '#102A43'); et.position.set(0.12, 1.1, 0.2); g.add(et);
     W.tocable(palanca, 'palanca', 0.5);
     const punto = new THREE.Vector3(-0.15, 1.1, 0.26); g.localToWorld(punto);
@@ -73,6 +128,7 @@
   function valvula(W, { x = 0, y = 1.0, z = 0, ry = 0, color = COL.tubo, rotulo = '', tipo = 'valvula' } = {}) {
     const { THREE, cil, caja, letrero } = W; const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; W.scene.add(g);
     const cuerpo = cil(0.075, 0.2, color, 0, 0, 0, g); cuerpo.rotation.z = Math.PI / 2;
+    modelo(g, 'loto', 'valvula', { alto: 0.34, y: -0.17, ocultar: [cuerpo] });                       // válvula en tubería (CC0)
     const manija = new THREE.Group(); manija.position.y = 0.08; g.add(manija);
     caja(0.26, 0.035, 0.05, COL.candado, 0.07, 0.03, 0, manija);
     cil(0.016, 0.07, COL.acero, 0, 0, 0, manija);
@@ -119,10 +175,11 @@
   }
 
   // Equipo con botonera de paro y arranque (el intento de arranque confirma la condición segura).
-  function equipo(W, { x = 0, z = 0, ry = 0, rotulo = 'PRENSA P-02' } = {}) {
+  function equipo(W, { x = 0, z = 0, ry = 0, rotulo = 'PRENSA P-02', modeloEquipo = 'maquina' } = {}) {
     const { THREE, caja, cil, letrero } = W; const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; W.scene.add(g);
-    caja(1.5, 1.0, 0.9, 0x607D8B, 0, 0.5, 0, g); caja(1.2, 0.5, 0.7, 0x78909C, 0, 1.2, 0, g);
+    const base1 = caja(1.5, 1.0, 0.9, 0x607D8B, 0, 0.5, 0, g), base2 = caja(1.2, 0.5, 0.7, 0x78909C, 0, 1.2, 0, g);
     const mot = cil(0.22, 0.5, 0x455A64, 0.55, 1.25, 0, g); mot.rotation.z = Math.PI / 2;
+    modelo(g, 'loto', modeloEquipo, { alto: 1.7, ocultar: [base1, base2] });                         // máquina real (CC0)
     const r = letrero(rotulo, 0.7, 0.14, '#102A43'); r.position.set(0, 1.62, 0); g.add(r);
     const bot = new THREE.Group(); bot.position.set(-0.45, 1.1, 0.46); g.add(bot);
     caja(0.3, 0.22, 0.08, 0x37474F, 0, 0, 0, bot);
@@ -139,7 +196,8 @@
   //   pasoTocar(W, {titulo, texto, fuente, tipo, resaltar:[...], alTocar(), exito, pista, trampas:[{tipo,txt,f,critico}]})
   function pasoTocar(W, o) {
     return { titulo: o.titulo, texto: o.texto, fuente: o.fuente, puntos: o.puntos ?? 10,
-      iniciar() { W.resaltar(o.resaltar || []); o.alIniciar && o.alIniciar(); },
+      // En modo evaluación no se resalta nada: la persona tiene que saber qué tocar (anexo §5, modos de uso).
+      iniciar() { W.resaltar(modo === 'evaluacion' ? [] : (o.resaltar || [])); o.alIniciar && o.alIniciar(); },
       tocar(x) {
         const t = x.userData.tipo;
         if (t === o.tipo) { if (o.alTocar) o.alTocar(); else { W.bien(o.exito || 'Hecho.', o.fuente); W.siguiente(); } return; }
@@ -187,6 +245,15 @@
   }
   const barajar = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
+  // Estación de bloqueo de pared (tablero con candados, pinza multibloqueo y etiquetas). Decorado: no es tocable.
+  function estacion(W, { x = 0, z = 0, ry = 0 } = {}) {
+    const g = new W.THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; W.scene.add(g);
+    const real = prop('estacionLOTO');
+    if (real) g.add(real);
+    else { W.caja(0.9, 1.0, 0.06, 0xF4F7FA, 0, 1.3, 0, g); W.caja(0.9, 0.14, 0.07, COL.candado, 0, 1.73, 0, g); }
+    return g;
+  }
+
   // Caja de herramienta con los dispositivos, al alcance de la mano
   function mesaDispositivos(W, { x = 0, z = 0 } = {}) {
     const { caja } = W; caja(1.0, 0.06, 0.6, 0xB89B7A, x, 0.78, z); caja(0.08, 0.78, 0.08, 0x8D6E63, x - 0.42, 0.39, z);
@@ -194,6 +261,10 @@
     return { x, z, y: 0.84 };
   }
 
-  window.LOTO = { PV, N04, N29, PROC, BP, FIC, COL, candado, tarjeta, detector, tablero, valvula, acumulador,
-    volante, cargaElevada, equipo, pasoTocar, conTrampas, trampaIntervenir, ordenar, barajar, mesaDispositivos };
+  // PENDIENTE (21/10/2026): aPie() y setModo() ya están listos pero todavía NO se llaman desde las celdas.
+  // Falta: en cada celda, tras crear la escena → aPie(W, N, { obstaculos: [EQ.g, TB.g, …] }), y en W.inicio()
+  // ofrecer los casos 'practica' | 'evaluacion' | 'demostracion' llamando setModo(sel) dentro de alIniciar.
+  window.LOTO = { PV, N04, N29, PROC, BP, FIC, COL, init3D, modelo, prop, setModo, aPie, candado, tarjeta, detector, tablero,
+    valvula, acumulador, volante, cargaElevada, equipo, estacion, pasoTocar, conTrampas, trampaIntervenir,
+    ordenar, barajar, mesaDispositivos };
 })();

@@ -390,4 +390,65 @@ Z.biblioteca = base({ nombre: 'Biblioteca: sala de lectura y acervo', icono: '�
       ctl(false, 'Usar guantes', 'No corrige la escalera.', NIOSH),
       ctl(false, 'Pegar un letrero', 'No elimina el daño.', NIOSH)] }],
 });
+
+// ============================================================== LOTO · BLOQUEO Y ETIQUETADO
+// (21/10/2026) Práctica del Edificio LOTO. Los numerales de NOM-004 y NOM-029 se citan SIN número porque su vigencia
+// y redacción están pendientes de verificar en el DOF (ANEXO_TECNICO_LOTO.md §8.2); lo que sostiene cada paso mientras
+// tanto es el procedimiento de la máquina, que es además lo correcto: no existe una secuencia universal de LOTO.
+const N04V = 'NOM-004-STPS-1999 (vigencia y numerales por verificar en el DOF)';
+const N29V = 'NOM-029-STPS-2011 (vigencia y numerales por verificar en el DOF)';
+const PROC = 'Procedimiento LOTO de la máquina' + fin;
+Object.assign(FU, {
+  [N04V]: { t: 'NOM-004-STPS-1999, Sistemas de protección y dispositivos de seguridad en la maquinaria y equipo. VIGENCIA Y NUMERALES POR VERIFICAR en el DOF antes de citarlos como ciertos.' },
+  [N29V]: { t: 'NOM-029-STPS-2011, Mantenimiento de las instalaciones eléctricas en los centros de trabajo. VIGENCIA Y NUMERALES POR VERIFICAR en el DOF antes de citarlos como ciertos.' },
+  [PROC]: { t: 'Procedimiento de bloqueo y etiquetado de la máquina. Es el documento de la empresa: define la secuencia, los puntos de aislamiento y los dispositivos de ESA máquina.' },
+});
+Z.loto = base({ nombre: 'LOTO: aula y celdas de bloqueo', icono: '🔒', piso: 0xB9BEC3, muro: 0xEDEFF1, rotulo: 'LOTO · BLOQUEO Y ETIQUETADO',
+  intro: 'Edificio LOTO al terminar la sesión de la mañana: el aula con la máquina de demostración y, al fondo, las celdas con la prensa P-02 y el transportador T-04.' + fin,
+  escena: [['r:tablero', -8.5, -6.5, 0], ['r:prensa', -3.5, -6.2, 0], ['r:compresora', 3.2, -6.8, 0], ['r:cilindro_encadenado', 7.6, -7.0, 0],
+    ['r:mesa', -6.5, 1.2, 0], ['r:silla', -6.5, 2.0, Math.PI], ['r:anaquel', 10.2, -2.5, -Math.PI / 2], ['r:senal_salida', 2.2, 7.85, 0],
+    ['r:franja', 0, -3.4, 0], ['r:senal_obligacion', -10.4, 1.0, Math.PI / 2], ['extintor', 10.3, 3.2, -Math.PI / 2], ['r:cable_canalizado', 0, 4.6, 0],
+    ['letrero', 0, -7.7, 0, { texto: 'CELDAS DE PRÁCTICA', fondo: '#B7791F', color: '#fff' }]],
+  recorrido: [
+    R([-8.5, -4.8], 'Punto de aislamiento', 'El tablero TB-7 es el punto de aislamiento de la prensa: aquí se abre el interruptor, se coloca el candado personal y encima la tarjeta.', `${PROC}; ${N29V}`),
+    R([-3.5, -4.6], 'Aislar no es bloquear', 'Abrir el interruptor aísla; poner el candado bloquea; colgar la tarjeta identifica. Son tres cosas distintas y ninguna sustituye a otra.', `${PROC}; ${N04V}`),
+    R([3.2, -5.2], 'Energía almacenada', 'Cerrar la válvula no descarga el acumulador ni la presión atrapada en la línea: hay que liberarlas o contenerlas antes de intervenir.', N04V),
+    R([7.6, -5.4], 'Cilindros asegurados', 'Los cilindros de gas se mantienen sujetos para que no caigan, con su válvula protegida.', 'NOM-005-STPS-1998'),
+    R([-10.0, 1.0], 'Estación de bloqueo', 'La estación tiene candados personales con llave única, pinza multicandado para el bloqueo grupal y tarjetas. Si no hay dispositivos, la gente improvisa.', PROC),
+    R([0, 3.4], 'Ruta de evacuación', 'Las rutas de evacuación están señalizadas y libres de obstáculos.', `${N02}, 7.15 a) y b)`),
+    R([9.4, 3.2], 'Extintor', 'Los extintores están visibles, de fácil acceso, libres de obstáculos y señalizados.', `${N02}, 7.2 b) y c)`)],
+  peligros: [
+    P('tarjeta_sola', true, ['r:puerta_candado', -6.8, -7.2, 0], '🏷️', 'Interruptor con tarjeta de NO OPERAR pero sin candado', 'La etiqueta avisa, pero no impide accionar el dispositivo: nunca sustituye el bloqueo físico.', `${N04V}; ${N29V}`),
+    P('guarda_fuera', true, ['r:guarda', -1.2, -6.6, 0], '⚙️', 'Guarda de la transmisión retirada y recargada en la pared', 'Partes móviles accesibles: atrapamiento.', N04V),
+    P('acumulador', true, ['r:cilindro', 5.0, -6.9, 0], '🧨', 'Acumulador con presión y sin manómetro a la vista', 'Energía almacenada que no se puede comprobar antes de intervenir.', N04V),
+    P('llave_colgada', true, ['r:multicontacto', 8.6, 1.4, 0], '🔑', 'Llaves de los candados personales colgadas en un tablero común', 'Cada persona conserva la llave de su propio candado: si otro la tiene, puede liberar el equipo mientras tú estás adentro.', PROC),
+    P('cable_piso', true, ['r:cable', -2.0, 2.4, 0], '🔌', 'Cable de alimentación cruzando el paso del aula', 'Tropiezo y daño al cable.', `${N30}, 6.1 a)`),
+    P('franja_ok', false, ['marca', 0, -3.4, 0, { alto: 0.4 }], '🟨', 'Zona de maniobra delimitada con franja amarilla', 'Condición controlada.', `${N26}, 7.1 Tabla 1`),
+    P('cadena_ok', false, ['marca', 7.6, -7.0, 0, { alto: 1.2 }], '⛓️', 'Cilindro de respaldo sujeto con cadena', 'Condición controlada.', 'NOM-005-STPS-1998'),
+    P('salida_ok', false, ['marca', 2.2, 7.85, 0, { alto: 2.6 }], '🟩', 'Señal de salida de emergencia visible', 'Condición controlada.', `${N02}, 7.16 a)`)],
+  inspeccion: [
+    I('tarjeta_sola', '¿Todos los puntos de aislamiento tienen candado, no solo tarjeta?', false, 'No: uno tiene únicamente la tarjeta.', `${N04V}; ${PROC}`),
+    I('guarda_fuera', '¿Las guardas de las partes móviles están colocadas?', false, 'No: una está retirada.', N04V),
+    I('acumulador', '¿Se puede comprobar que el acumulador quedó sin presión?', false, 'No: no tiene manómetro a la vista.', N04V),
+    I('llave_colgada', '¿Cada persona conserva la llave de su candado?', false, 'No: están en un tablero común.', PROC),
+    I('franja_ok', '¿La zona de maniobra está delimitada?', true, 'Sí, con franja amarilla.', `${N26}, 7.1 Tabla 1`),
+    I('salida_ok', '¿La señal de salida es visible?', true, 'Sí.', `${N02}, 7.16 a)`)],
+  emergencia: { intro: 'Durante el mantenimiento de la prensa, alguien del turno siguiente cierra el interruptor del TB-7 para "probar si ya quedó".' + fin, foco: 'tarjeta_sola', efecto: 'alarma', pasos: [
+    E('La prensa arranca con una persona trabajando adentro. ¿Qué haces primero?', ['Accionar el paro de emergencia y cortar la energía', 'Gritar para que se quite', 'Ir a buscar al supervisor'], 0, 'Primero se detiene la energía que está causando el daño; después se atiende a la persona.', PROC, ['globo', 'yo', '¡Paro!']),
+    E('El equipo ya está detenido. ¿Qué sigue?', ['Bloquear el interruptor con candado y verificar ausencia de energía antes de acercarse', 'Entrar de inmediato a sacar a la persona', 'Volver a encender para mover la prensa'], 0, 'Acercarse sin bloquear expone a una segunda víctima; volver a energizar agrava la lesión.', `${PROC}; ${N29V}`, ['ir', 'tarjeta_sola']),
+    E('¿A quién se avisa?', ['Al servicio de emergencia y a la persona responsable del centro de trabajo', 'A nadie, para no asustar', 'Solo al turno siguiente'], 0, 'Se activa la respuesta a emergencias del centro de trabajo.', `${N02}, 8.1`),
+    E('¿Por qué pudo pasar?', ['El punto de aislamiento tenía tarjeta pero no candado, y la llave estaba en un tablero común', 'Porque la prensa es vieja', 'Porque no había señales'], 0, 'La etiqueta no impide accionar el dispositivo, y una llave compartida permite que otro libere el equipo.', `${N04V}; ${PROC}`, ['ir', 'llave_colgada']),
+    E('¿Qué se corrige para que no se repita?', ['Candado personal en cada punto, pinza multicandado para el trabajo en grupo y llave única por persona', 'Poner una tarjeta más grande', 'Pedir que nadie toque el tablero'], 0, 'El bloqueo físico con llave única es la barrera; la etiqueta solo informa.', `${PROC}; ${NIOSH}`),
+    E('Ya controlado, ¿cuándo se devuelve el equipo al servicio?', ['Cuando se retiran los dispositivos por la misma persona que los puso y se verifica que no hay nadie expuesto', 'En cuanto se vayan los de mantenimiento', 'Al día siguiente'], 0, 'El retiro del bloqueo y el retorno al servicio también son parte del procedimiento.', PROC)] },
+  analisis: [
+    { principal: 'tarjeta_sola', riesgo: 'Arranque inesperado durante el mantenimiento por un punto sin bloqueo físico', f: 'B', s: 'IV', pista: 'Pasa seguido cuando faltan candados, y un arranque con alguien adentro puede ser mortal.' + fin, control: [
+      ctl(true, 'Candado personal en cada punto de aislamiento, con llave única, y pinza multicandado cuando trabajan varias personas', 'El bloqueo físico impide accionar el dispositivo.', `${N04V}; ${NIOSH}`),
+      ctl(false, 'Poner una tarjeta más grande y visible', 'La etiqueta informa, pero no impide cerrar el interruptor.', N04V),
+      ctl(false, 'Avisar por radio a todos los turnos', 'Depende de que el mensaje llegue y se recuerde.', NIOSH),
+      ctl(false, 'Dar guantes dieléctricos a quien trabaja', 'El EPP no evita el arranque de la máquina.', `${N17}, 5.2`)] },
+    { principal: 'guarda_fuera', riesgo: 'Atrapamiento por partes móviles sin guarda', f: 'C', s: 'IV', pista: 'La guarda se retira para el mantenimiento y a veces no se repone.' + fin, control: [
+      ctl(true, 'Reponer la guarda antes de devolver el equipo al servicio y verificarlo en la lista de retorno', 'Barrera física entre la persona y la parte móvil.', `${N04V}; ${NIOSH}`),
+      ctl(false, 'Marcar el piso para no acercarse', 'La señalización no detiene la transmisión.', NIOSH),
+      ctl(false, 'Trabajar con más cuidado', 'Depende solo de la conducta.', NIOSH)] }],
+});
 })();

@@ -14,19 +14,22 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Kit3D } from '../../../motor/kit3d.js';
+import { Props } from '../../../motor/props.js';
 
 // Celda 1 del Edificio LOTO: aislamiento eléctrico de la prensa P-02, ejecutado paso por paso.
 // El corazón del ejercicio es la VERIFICACIÓN DE AUSENCIA DE TENSIÓN: instrumento adecuado, comprobado antes y
 // después de medir, en el punto correcto, más el intento de arranque. Es el paso que más se omite en la realidad.
 // FUNDAMENTO NORMATIVO: por verificar en el DOF y en la STPS (ANEXO_TECNICO_LOTO.md §8.2).
 const { N29, PROC, BP, FIC, tablero, equipo, candado, tarjeta, detector, pasoTocar, conTrampas, trampaIntervenir,
-  mesaDispositivos } = window.LOTO;
+  mesaDispositivos, estacion } = window.LOTO;
 const { nave, trabajador, marcador } = window.Alturas;
 const { decidir, encuentra, intro } = window.Riesgo;
 
 const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Celda 1: Aislamiento eléctrico', icono: '⚡',
   clave: 'loto_electrica', criterio: { pct: 80, sinCriticos: true }, fondo: 0xDDE3E8,
   vistas: [[[0.5, 3.0, 6.0], [0, 1.2, -1]], [[-3.6, 2.0, 1.6], [-2.6, 1.1, -2]], [[3.4, 2.2, 1.0], [1.0, 1.1, -1.4]]] });
+LOTO.init3D(W, { Kit3D, Props });   // modelos .glb CC0 + props propios; si fallan quedan las primitivas
 const { scene, caja, cil, letrero } = W; W.controls.maxDistance = 14;
 const N = nave(W, { alto: 6, ancho: 13, fondo: 11, rotulo: 'ÁREA DE TROQUELADO · MANTENIMIENTO INDUSTRIAL DEL CENTRO [FICTICIO]' });
 W.activarXR({ inicio: [0, 2.4], piso: N.piso, entorno: N.entorno });
@@ -56,6 +59,7 @@ W.tocable(TR.g, 'companero', 1.0);
 const rotT = letrero('Operador de la prensa', 0.7, 0.11, '#0E3A6B'); rotT.position.set(2.6, 2.0, 0.9); scene.add(rotT);
 
 const MESA = mesaDispositivos(W, { x: -1.0, z: 1.6 });
+estacion(W, { x: -5.0, z: -7.8 });   // tablero de pared con candados, pinza multibloqueo y etiquetas
 const CAND = candado(W, { x: MESA.x - 0.3, y: MESA.y, z: MESA.z });
 const TARJ = tarjeta(W, { x: MESA.x, y: MESA.y + 0.08, z: MESA.z });
 const DET = detector(W, { x: MESA.x + 0.33, y: MESA.y + 0.09, z: MESA.z });

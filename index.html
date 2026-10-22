@@ -235,6 +235,7 @@ const AREAS = [
   { id: 'loto', nombre: 'LOTO · Bloqueo y etiquetado', icono: '🔒', color: 0xB7791F, ang: 20, senales: ['salida', 'electrico', 'guantes'],
     desc: 'Control de energías peligrosas: aula de energías y dispositivos, y tres celdas de simulación (eléctrica, neumática e hidráulica, y mecánica con energía almacenada) · con modo de realidad virtual',
     modulos: [
+      { titulo: 'Análisis de riesgo del edificio', icono: '🔎', tipo: '3d', url: 'mundos/riesgo/analisis/index.html?e=loto' },
       { titulo: 'Aula: energías y dispositivos', icono: '🎓', tipo: '3d', url: 'mundos/loto/aula/index.html', nom: 'NOM-004 · NOM-029 (por verificar)', color: 'azul', senal: 'informacion' },
       { titulo: 'Celda 1: Aislamiento eléctrico', icono: '⚡', tipo: '3d', url: 'mundos/loto/electrica/index.html', nom: 'NOM-029 (por verificar)', color: 'amarillo', senal: 'electrico' },
       { titulo: 'Celda 2: Neumático e hidráulico', icono: '🫧', tipo: '3d', url: 'mundos/loto/neumatica_hidraulica/index.html', nom: 'NOM-004 (por verificar)', color: 'amarillo', senal: 'guantes' },
@@ -245,7 +246,8 @@ const AREAS = [
 ];
 // Práctica de cada edificio (14/10/2026): recorrido, peligros, inspección, emergencia y análisis (mundos/practicas/zona, datos_edificios.js).
 const NOM_EDIFICIO = { hospital: 'NOM-045-SSA2-2005 · NOM-002-STPS-2010', industria: 'NOM-004 · NOM-027 · NOM-029-STPS', proteccion: 'NOM-002-STPS-2010 · NOM-003-SEGOB-2011',
-  laboral: 'NOM-035-STPS-2018', empresa: 'NOM-001 · NOM-036-1-STPS · AHA 2025', cafeteria: 'NOM-002-STPS-2010 (clase K) · NOM-001-STPS', biblioteca: 'NOM-001-STPS · LGPC (sismo)' };
+  laboral: 'NOM-035-STPS-2018', empresa: 'NOM-001 · NOM-036-1-STPS · AHA 2025', cafeteria: 'NOM-002-STPS-2010 (clase K) · NOM-001-STPS', biblioteca: 'NOM-001-STPS · LGPC (sismo)',
+  loto: 'NOM-004 · NOM-029-STPS (por verificar)' };
 AREAS.forEach(a => { if (!NOM_EDIFICIO[a.id]) return; const i = a.modulos.findIndex(m => /^Análisis de riesgo/.test(m.titulo));
   a.modulos.splice(i + 1, 0, { titulo: 'Práctica del edificio: recorrido, peligros, inspección y emergencia', icono: '🎯', nom: NOM_EDIFICIO[a.id], tipo: '3d', url: `mundos/practicas/zona/index.html?z=${a.id}`, puerta: 'practicas/zona', color: 'amarillo', senal: 'prec_general' }); });
 const POR_PISO = 4, ANCHO_PUERTA = 1.15, PASO_PUERTA = 1.75, ALTO_PISO = 2.7;
