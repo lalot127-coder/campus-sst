@@ -33,14 +33,19 @@
   //   'demostracion': igual que práctica, para que la persona instructora enseñe el caso
   let modo = 'practica';
   const setModo = m => { modo = m || 'practica'; return modo; };
+  // Resalta solo cuando hay guía: en evaluación la persona tiene que ubicar las cosas por su cuenta.
+  const guiar = (W, lista) => W.resaltar(modo === 'evaluacion' ? [] : (lista || []));
 
   // ---------------------------------------------------------------- recorrido a pie
   // Las celdas se recorren caminando (anexo §5 y §11): toca el piso para caminar, toca un objeto lejano y el avatar
   // va hasta él antes de inspeccionarlo. Además habilita el botón 🧍 de vista a la altura de los ojos.
-  function aPie(W, N, { inicio = [0, 2.2], obstaculos = [], ancho = 13, fondo = 11 } = {}) {
-    return W.recorrido({ piso: N.piso, muros: N.entorno.filter(o => o.isMesh), obstaculos,
+  function aPie(W, N, { inicio = [0, 2.0], obstaculos = [], ancho = 13, fondo = 11, retraso = 300 } = {}) {
+    // Se difiere 300 ms, como en mundos/industria/riesgo_*: la escena ya está armada y los obstáculos tienen tamaño.
+    // Muros = solo las cajas altas del entorno (el piso y las armaduras del techo no estorban al caminar).
+    setTimeout(() => W.recorrido({ piso: N.piso, obstaculos,
+      muros: N.entorno.filter(m => m.geometry && m.geometry.type === 'BoxGeometry' && m.geometry.parameters.height > 1),
       limites: { x0: -ancho / 2 + 0.6, x1: ancho / 2 - 0.6, z0: -fondo + 3.6, z1: 2.4 },
-      inicio, ry: Math.PI, camara: [3.2, 5.6], alcance: 1.7 });
+      inicio, ry: Math.PI, camara: [3.2, 5.6], alcance: 1.7 }), retraso);
   }
 
   // ---------------------------------------------------------------- modelos 3D (kits .glb y props propios)
@@ -256,15 +261,15 @@
 
   // Caja de herramienta con los dispositivos, al alcance de la mano
   function mesaDispositivos(W, { x = 0, z = 0 } = {}) {
-    const { caja } = W; caja(1.0, 0.06, 0.6, 0xB89B7A, x, 0.78, z); caja(0.08, 0.78, 0.08, 0x8D6E63, x - 0.42, 0.39, z);
-    caja(0.08, 0.78, 0.08, 0x8D6E63, x + 0.42, 0.39, z);
-    return { x, z, y: 0.84 };
+    const { caja } = W; const tapa = caja(1.0, 0.06, 0.6, 0xB89B7A, x, 0.78, z);
+    caja(0.08, 0.78, 0.08, 0x8D6E63, x - 0.42, 0.39, z); caja(0.08, 0.78, 0.08, 0x8D6E63, x + 0.42, 0.39, z);
+    return { x, z, y: 0.84, tapa };   // tapa = obstáculo para el recorrido a pie
   }
 
   // PENDIENTE (21/10/2026): aPie() y setModo() ya están listos pero todavía NO se llaman desde las celdas.
   // Falta: en cada celda, tras crear la escena → aPie(W, N, { obstaculos: [EQ.g, TB.g, …] }), y en W.inicio()
   // ofrecer los casos 'practica' | 'evaluacion' | 'demostracion' llamando setModo(sel) dentro de alIniciar.
-  window.LOTO = { PV, N04, N29, PROC, BP, FIC, COL, init3D, modelo, prop, setModo, aPie, candado, tarjeta, detector, tablero,
+  window.LOTO = { PV, N04, N29, PROC, BP, FIC, COL, init3D, modelo, prop, setModo, guiar, aPie, candado, tarjeta, detector, tablero,
     valvula, acumulador, volante, cargaElevada, equipo, estacion, pasoTocar, conTrampas, trampaIntervenir,
     ordenar, barajar, mesaDispositivos };
 })();

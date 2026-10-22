@@ -22,7 +22,7 @@ import { Props } from '../../../motor/props.js';
 // después de medir, en el punto correcto, más el intento de arranque. Es el paso que más se omite en la realidad.
 // FUNDAMENTO NORMATIVO: por verificar en el DOF y en la STPS (ANEXO_TECNICO_LOTO.md §8.2).
 const { N29, PROC, BP, FIC, tablero, equipo, candado, tarjeta, detector, pasoTocar, conTrampas, trampaIntervenir,
-  mesaDispositivos, estacion } = window.LOTO;
+  mesaDispositivos, estacion, aPie, setModo, guiar } = window.LOTO;
 const { nave, trabajador, marcador } = window.Alturas;
 const { decidir, encuentra, intro } = window.Riesgo;
 
@@ -60,6 +60,10 @@ const rotT = letrero('Operador de la prensa', 0.7, 0.11, '#0E3A6B'); rotT.positi
 
 const MESA = mesaDispositivos(W, { x: -1.0, z: 1.6 });
 estacion(W, { x: -5.0, z: -7.8 });   // tablero de pared con candados, pinza multibloqueo y etiquetas
+
+// Recorrido a pie (anexo §5 y §11): toca el piso para caminar; al tocar algo lejano el avatar va hasta ahí
+// antes de inspeccionarlo. Habilita además el botón 🧍 de vista a la altura de los ojos.
+aPie(W, N, { obstaculos: [EQ.g, TB.g, CAP, FC, TR.g, MESA.tapa] });
 const CAND = candado(W, { x: MESA.x - 0.3, y: MESA.y, z: MESA.z });
 const TARJ = tarjeta(W, { x: MESA.x, y: MESA.y + 0.08, z: MESA.z });
 const DET = detector(W, { x: MESA.x + 0.33, y: MESA.y + 0.09, z: MESA.z });
@@ -87,7 +91,7 @@ const pasoFuentes = encuentra(W, {
   ],
   malas: [{ tipo: 'm_luz', nombre: 'Luminaria del área', fb: 'Está en otro circuito y no alimenta a la prensa: bloquearla no aporta y deja el área a oscuras.', f: BP, obj: MK.luz }],
   alTerminar: () => W.siguiente() });
-pasoFuentes.iniciar = () => W.resaltar(Object.values(MK).map(m => m.marco));
+pasoFuentes.iniciar = () => guiar(W, Object.values(MK).map(m => m.marco));
 conTrampas(W, pasoFuentes, [TRAMPA]);   // meter la mano al equipo es crítico también mientras se identifican las fuentes
 
 const pasoAvisar = pasoTocar(W, { titulo: 'Avisa al personal afectado', texto: 'Antes de parar el equipo, avisa a quien lo opera.',
@@ -165,12 +169,14 @@ const pasoCierre = { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', 
       <p class="ficticio">Fundamento normativo en revisión: la vigencia y los numerales se verifican en el DOF antes de darlos por ciertos.</p>`,
       () => W.siguiente(), 'Ver resultado'); } };
 
-W.inicio([{ id: 'completo', txt: '⚡ <b>Caso completo:</b> aislamiento eléctrico de la prensa P-02' }],
-  () => [intro(W, `<h2>⚡ Celda 1: Aislamiento eléctrico</h2><p>Eres personal de mantenimiento. Hay que intervenir la <b>prensa P-02</b> del área de troquelado.</p>
+W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel resalta en azul lo que toca' },
+  { id: 'evaluacion', txt: '📝 <b>Evaluación:</b> sin ayudas en pantalla; tú decides qué tocar' },
+  { id: 'demostracion', txt: '🎬 <b>Demostración:</b> para que la persona instructora muestre el caso' }],
+  sel => { setModo(sel); return [intro(W, `<h2>⚡ Celda 1: Aislamiento eléctrico</h2><p>Eres personal de mantenimiento. Hay que intervenir la <b>prensa P-02</b> del área de troquelado.</p>
     <p>Ejecuta el procedimiento de bloqueo y etiquetado <b>paso por paso</b>. El panel de abajo te dice qué toca; toca en la escena el objeto correcto.</p>
     <p>⛔ Si metes la mano al equipo antes de terminar, se registra como <b>error crítico</b> y no se aprueba.</p>`, FIC),
     pasoFuentes, pasoAvisar, pasoParo, pasoAislar, pasoBloquear, pasoEtiquetar, pasoCapacitores,
-    pasoInstrumento, pasoProbarAntes, pasoMedir, pasoProbarDespues, pasoArranque, pasoAutorizar, pasoCierre],
+    pasoInstrumento, pasoProbarAntes, pasoMedir, pasoProbarDespues, pasoArranque, pasoAutorizar, pasoCierre]; },
   'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento normativo (NOM-029-STPS-2011): vigencia y numerales POR VERIFICAR en el DOF. 🥽 En visor: botón VR.');
 
 if (location.search.includes('qa')) window.__qa = { MK, EQ, TB, CAP, FC, PM, TR, CAND, TARJ, DET, tocar: W.tocar, estado: W.qa };
