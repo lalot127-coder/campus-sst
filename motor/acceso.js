@@ -122,7 +122,10 @@ function puede(id) {
 function idPuerta(area, url) {
   const u = String(url || '');
   let m = u.match(/mundos\/modulos\/(?:index\.html)?\?m=([\w-]+)/); if (m) return `${area || 'modulos'}/${m[1]}`;   // salas de modelos 3D (05/10/2026)
-  m = u.match(/mundos\/([^/]+)\/([^/]+)\/index\.html/); if (m) return `${m[1]}/${m[2]}`;
+  // (23/10/2026) Acepta tambien la liga SIN index.html: el sitio publicado redirige '…/modulo/index.html' a
+  // '…/modulo/', y ahi la puerta salia incompleta ('industria/' en vez de 'industria/alturas_autorizacion'),
+  // así que un código para UNA puerta no la reconocía y bloqueaba a quien sí tenía permiso.
+  m = u.match(/mundos\/([^/]+)\/([^/]+)\/(?:index\.html)?(?:[?#]|$)/); if (m) return `${m[1]}/${m[2]}`;
   m = u.match(/mundos\/(cafeteria|biblioteca|informacion)\//); if (m) return m[1];
   m = u.match(/mundos\/([^/]+)\//); if (m) area = m[1];
   return `${area}/${u.split('/').pop().replace(/\.html.*$/, '')}`;
