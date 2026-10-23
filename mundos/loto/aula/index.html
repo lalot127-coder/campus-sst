@@ -22,7 +22,8 @@ import { Props } from '../../../motor/props.js';
 // FUNDAMENTO NORMATIVO VERIFICADO (22/10/2026) contra el DOF: ver la matriz del curso en
 // 03_cursos/BASE_loto_bloqueo_etiquetado_8h/01_diseno/MATRIZ_NORMATIVA_LOTO.md
 const { N04, N29, PROC, BP, FIC, tablero, valvula, acumulador, volante, cargaElevada, equipo,
-  candado, tarjeta, detector, ordenar, mesaDispositivos, estacion , F } = window.LOTO;
+  candado, tarjeta, detector, ordenar, mesaDispositivos, estacion, aPie, setModo, guiar, senalesTablero,
+  senalesConsultables, F } = window.LOTO;
 const { nave, marcador } = window.Alturas;
 const { decidir, encuentra, intro } = window.Riesgo;
 
@@ -60,6 +61,10 @@ caja(0.16, 0.5, 0.16, 0xC62828, -4.6, 0.9, 0.6);                        // extin
 // mesa con los dispositivos de bloqueo
 const MESA = mesaDispositivos(W, { x: -1.6, z: 2.2 });
 estacion(W, { x: -5.2, z: -8.6 });   // tablero de pared con candados, pinza multibloqueo y etiquetas
+// Señalización del tablero de la máquina de demostración (NOM-026: rojo prohíbe, amarillo previene, azul obliga).
+const SEN = senalesTablero(W, { x: TB.g.position.x, y: 1.95, z: TB.g.position.z + 0.2, ry: 0.5, volts: '440 V' });
+// Recorrido a pie, igual que en las celdas: toca el piso para caminar; habilita el botón 🧍 de 1ª persona.
+aPie(W, N, { ancho: 14, fondo: 12, obstaculos: [EQ.g, TB.g, VA.g, VH.g, AC.g, CG.g, MESA.tapa] });
 const CAND = candado(W, { x: MESA.x - 0.3, y: MESA.y, z: MESA.z });
 const TARJ = tarjeta(W, { x: MESA.x, y: MESA.y + 0.08, z: MESA.z });
 const DET = detector(W, { x: MESA.x + 0.32, y: MESA.y + 0.09, z: MESA.z });
@@ -79,7 +84,7 @@ const pasoEnergias = encuentra(W, {
   ],
   malas: [{ tipo: 'm_extintor', nombre: 'Extintor', fb: 'Es equipo contra incendio, no una fuente de energía de la máquina.', f: BP, obj: MK.extintor }],
   alTerminar: () => W.siguiente() });
-pasoEnergias.iniciar = () => W.resaltar(Object.values(MK).map(m => m.marco));
+pasoEnergias.iniciar = () => guiar(W, Object.values(MK).map(m => m.marco));
 
 // --------------------------------------------------------------- 2) ordena la secuencia
 const SECUENCIA = [
@@ -145,14 +150,16 @@ const pasoCierre = { titulo: 'Listo para las celdas', texto: 'Ya puedes entrar a
       <p class="ficticio">Fundamento verificado en el DOF (matriz normativa del curso, 22/10/2026). Lo señalado como buena práctica no es obligatorio en México; comprobar el instrumento antes y después se enseña sin numeral porque el de NFPA 70E sigue sin verificar.</p>`,
       () => W.siguiente(), 'Terminar'); } };
 
-W.inicio([{ id: 'completo', txt: '🎓 <b>Aula completa:</b> energías, secuencia, dispositivos y la distinción clave' }],
-  () => [intro(W, `<h2>🎓 Aula LOTO</h2><p>Antes de bloquear una máquina hay que <b>reconocerla</b>: cuántas energías tiene, cómo se aísla cada una y con qué dispositivo.</p>
+W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel resalta en azul lo que toca' },
+  { id: 'evaluacion', txt: '📝 <b>Evaluación:</b> sin ayudas en pantalla; tú decides qué tocar' },
+  { id: 'demostracion', txt: '🎬 <b>Demostración:</b> para que la persona instructora muestre el aula' }],
+  sel => { setModo(sel); return senalesConsultables(W, [intro(W, `<h2>🎓 Aula LOTO</h2><p>Antes de bloquear una máquina hay que <b>reconocerla</b>: cuántas energías tiene, cómo se aísla cada una y con qué dispositivo.</p>
     <p>En esta aula vas a hacer tres ejercicios sobre la máquina de demostración, y al final las tres celdas te van a pedir ejecutarlo de verdad.</p>
     <p><b>Gira la vista arrastrando</b> y toca los objetos que brillan.</p>`, FIC),
-    pasoEnergias, pasoSecuencia, pasoDispositivo1, pasoDispositivo2, pasoDispositivo3, pasoDistincion, pasoCierre],
+    pasoEnergias, pasoSecuencia, pasoDispositivo1, pasoDispositivo2, pasoDispositivo3, pasoDistincion, pasoCierre], SEN.volts); },
   'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento verificado en el DOF: NOM-004-STPS-1999 (31/05/1999) y NOM-029-STPS-2011 (29/12/2011), vigentes; la Aclaración DOF 16/07/1999 no toca el 7.2.2 c) ni el Apéndice A. Lo marcado como buena práctica (OSHA 1910.147) NO es obligatorio en México. 🥽 En visor: botón VR.');
 
-if (location.search.includes('qa')) window.__qa = { MK, EQ, TB, VA, VH, AC, VO, CG, tocar: W.tocar, estado: W.qa };
+if (location.search.includes('qa')) window.__qa = { MK, EQ, TB, VA, VH, AC, VO, CG, SEN, MESA, tocar: W.tocar, estado: W.qa };
 </script>
 </body>
 </html>
