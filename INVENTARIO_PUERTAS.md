@@ -127,6 +127,23 @@ Actualización 11/10/2026: las puertas «Análisis de riesgo del edificio» son 
 | Análisis de riesgo del edificio | 3d | ✅ activa | Sí | `mundos/riesgo/analisis/index.html?e=biblioteca` |
 | Sala de lectura | 3d | ✅ activa | No (2D en el visor) | `mundos/biblioteca/index.html` |
 | Reto: encuentra la norma | 3d | ✅ activa | No (2D en el visor) | `mundos/biblioteca/index.html?reto` |
+| Libro interactivo: LOTO | doc | ✅ activa | — | `../03_cursos/BASE_loto_bloqueo_etiquetado_8h/05_recursos_digitales/libro3d_loto.html` |
+| Videos explicativos | doc | ✅ activa (sin enlaces aún) | — | `mundos/biblioteca/videos.html` |
+| Presentaciones narradas | doc | ✅ activa (sin enlaces aún) | — | `mundos/biblioteca/presentaciones.html` |
+
+**Las tres puertas de arriba se agregaron el 03/11/2026.** Los videos y las presentaciones **no se
+alojan en el campus**: van a YouTube como «no listado» y estas puertas guardan el enlace. La lista
+vive en `mundos/biblioteca/multimedia.js`; mientras un enlace esté vacío, la puerta muestra ese
+video como «pendiente de subir» en vez de dar una liga rota. Al subir algo a YouTube se pega el
+enlace ahí y en el `INDICE_MULTIMEDIA.md` del curso.
+
+El libro interactivo sí se liga directo al `.html` del curso, con la forma `../03_cursos/...`,
+porque es la única que `publicar_simulador.py` copia a `juegos/` al publicar. Un libro ligado desde
+una página intermedia no se copiaría y la puerta daría 404.
+
+**El edificio LOTO se renombró a «Aula Interactiva»** el mismo día: ahí se van a alojar las prácticas
+inmersivas por curso para el Meta Quest 3S. Su `id` sigue siendo `loto` a propósito, porque lo usan
+el análisis de riesgo (`?e=loto`), `acceso.js`, `SENAL_AREA`, `PISO_AREA` y `NOM_EDIFICIO`.
 
 ## Mina a cielo abierto
 

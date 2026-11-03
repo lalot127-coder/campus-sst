@@ -226,14 +226,35 @@ const AREAS = [
       { titulo: 'Análisis de riesgo del edificio', icono: '🔎', tipo: '3d', url: 'mundos/riesgo/analisis/index.html?e=biblioteca' },
       { titulo: 'Sala de lectura', icono: '📖', tipo: '3d', url: 'mundos/biblioteca/index.html' },
       { titulo: 'Reto: encuentra la norma', icono: '🔎', tipo: '3d', url: 'mundos/biblioteca/index.html?reto' },
+      // (03/11/2026) Tres puertas de material multimedia, por decisión de Carlos.
+      //
+      // LIBROS INTERACTIVOS: la liga va DIRECTA al .html del curso, con la forma '../03_cursos/...'.
+      // Tiene que ser así: publicar_simulador.py solo busca ese patrón en index.html y en
+      // motor/zonas.js, y es lo que copia el libro a juegos/ al publicar. Un libro ligado desde
+      // otra página (una repisa, por ejemplo) NO se copiaría y la puerta daría 404 en el campus.
+      // Cuando haya un segundo libro: se agrega aquí su propia liga '../03_cursos/...' para que se
+      // publique, y entonces sí conviene una página-repisa que las agrupe.
+      //
+      // VIDEOS y PRESENTACIONES: esas dos páginas solo guardan ENLACES a YouTube, así que viven
+      // dentro de mundos/ y se publican con el simulador, sin depender del copiado de juegos/.
+      // Ningún MP4 entra aquí: 04_simulador se publica entero en GitHub.
+      { titulo: 'Libro interactivo: LOTO', icono: '📘', tipo: 'doc', url: 'juegos/libro3d_loto.html', nom: 'NOM-004-STPS-1999 · NOM-029-STPS-2011', color: 'azul' },
+      { titulo: 'Videos explicativos', icono: '🎬', tipo: 'doc', url: 'mundos/biblioteca/videos.html' },
+      { titulo: 'Presentaciones narradas', icono: '🎙️', tipo: 'doc', url: 'mundos/biblioteca/presentaciones.html' },
     ] },
   // Edificio LOTO (21/10/2026): aula y tres celdas de simulación, con el motor de pasos del campus (mundos/loto/).
   // Cada celda evalúa de verdad: pasos, errores menores y ERRORES CRÍTICOS que impiden aprobar (meter la mano al
   // equipo, acercarse al volante girando, tratar la etiqueta como bloqueo). Piezas comunes en mundos/loto/comun.js.
   // Numerales VERIFICADOS el 22/10/2026 contra el DOF: matriz normativa del curso BASE_loto_bloqueo_etiquetado_8h
   // (01_diseno/MATRIZ_NORMATIVA_LOTO.md). Lo que ahí sigue sin verificar NO se escribe en el simulador.
-  { id: 'loto', nombre: 'LOTO · Bloqueo y etiquetado', icono: '🔒', color: 0xB7791F, ang: 20, senales: ['salida', 'electrico', 'guantes'],
-    desc: 'Control de energías peligrosas: aula de energías y dispositivos, y tres celdas de simulación (eléctrica, neumática e hidráulica, y mecánica con energía almacenada) · con modo de realidad virtual',
+  // (03/11/2026) Renombrado a «Aula Interactiva» por decisión de Carlos: aquí se van a alojar las
+  // prácticas inmersivas de cada curso para el Meta Quest 3S, manejadas con las manos. LOTO se queda
+  // como está y es la primera; las demás se agregan a esta misma lista conforme existan.
+  // EL id SIGUE SIENDO 'loto' A PROPÓSITO: lo usan el análisis de riesgo (?e=loto), los permisos de
+  // acceso.js, SENAL_AREA, PISO_AREA y NOM_EDIFICIO. Cambiarlo rompe esas cinco cosas; el nombre que
+  // ve el participante es `nombre`, y es lo único que hay que cambiar.
+  { id: 'loto', nombre: 'Aula Interactiva', icono: '🥽', color: 0xB7791F, ang: 20, senales: ['salida', 'electrico', 'guantes'],
+    desc: 'Prácticas inmersivas por curso para visor (Meta Quest 3S), que se manejan con las manos. Hoy: control de energías peligrosas (LOTO) con aula y tres celdas de simulación —eléctrica, neumática e hidráulica, y mecánica con energía almacenada—',
     modulos: [
       { titulo: 'Análisis de riesgo del edificio', icono: '🔎', tipo: '3d', url: 'mundos/riesgo/analisis/index.html?e=loto' },
       { titulo: 'Aula: energías y dispositivos', icono: '🎓', tipo: '3d', url: 'mundos/loto/aula/index.html', nom: 'NOM-004-STPS-1999 · NOM-029-STPS-2011', color: 'azul', senal: 'informacion' },

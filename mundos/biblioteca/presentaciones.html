@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Presentaciones narradas · Biblioteca del Campus SST</title>
+<style>
+  :root { --marino:#0E3A6B; --agua:#3FA7C6; --claro:#E8F5F9; --papel:#F7F9FB; --tinta:#1A2733; --gris:#5A6B7B; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--papel); color:var(--tinta); font:1rem/1.55 Calibri,Candara,Segoe UI,Arial,sans-serif; }
+  header { background:var(--marino); color:#fff; padding:22px 16px 18px; }
+  .ancho { max-width:860px; margin:0 auto; }
+  header h1 { margin:0 0 6px; font-size:1.6rem; }
+  header p { margin:0; opacity:.92; font-size:.98rem; }
+  .volver { display:inline-block; margin-top:14px; background:var(--agua); color:#fff; text-decoration:none;
+            padding:9px 16px; border-radius:12px; font-weight:700; }
+  main { padding:20px 16px 48px; }
+  .curso { background:#fff; border:1px solid #D9E2EA; border-radius:16px; padding:18px; margin-bottom:20px; }
+  .curso h2 { margin:0 0 4px; font-size:1.18rem; color:var(--marino); }
+  .nota { margin:0 0 14px; color:var(--gris); font-size:.94rem; }
+  ol { list-style:none; margin:0; padding:0; }
+  li { display:flex; gap:12px; align-items:flex-start; padding:11px 0; border-top:1px solid #EDF1F5; }
+  li:first-child { border-top:0; }
+  .n { flex:0 0 30px; height:30px; border-radius:50%; background:var(--claro); color:var(--marino);
+       display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.9rem; }
+  .cuerpo { flex:1 1 auto; min-width:0; }
+  .tit { font-weight:700; }
+  .sub { color:var(--gris); font-size:.92rem; }
+  .dur { color:var(--gris); font-size:.86rem; white-space:nowrap; }
+  .ver { display:inline-block; margin-top:6px; background:var(--marino); color:#fff; text-decoration:none;
+         padding:7px 14px; border-radius:10px; font-weight:700; font-size:.92rem; }
+  .pendiente { display:inline-block; margin-top:6px; background:#F0F3F6; color:var(--gris);
+               padding:7px 14px; border-radius:10px; font-size:.92rem; }
+  .aviso { background:var(--claro); border-left:5px solid var(--agua); padding:12px 14px; border-radius:10px;
+           color:var(--marino); font-size:.94rem; }
+  @media (prefers-color-scheme: dark) {
+    :root { --papel:#121A22; --tinta:#E8EEF4; --gris:#9FB0C0; --claro:#1C2B38; }
+    .curso { background:#18222C; border-color:#2A3845; }
+    li { border-top-color:#2A3845; }
+    .pendiente { background:#202C38; }
+  }
+</style>
+</head>
+<body>
+<header><div class="ancho">
+  <h1>🎙️ Presentaciones narradas</h1>
+  <p>Las láminas del curso con la voz de Carlos, por módulo. Se ven en YouTube; aquí está el acceso directo.</p>
+  <a class="volver" href="../../index.html?mundo=biblioteca">← Volver a la Biblioteca</a>
+</div></header>
+
+<main class="ancho" id="lista"></main>
+
+<script src="multimedia.js"></script>
+<script>
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+
+  const cursos = (window.MULTIMEDIA && window.MULTIMEDIA.presentaciones) || [];
+  const caja = document.getElementById('lista');
+
+  if (!cursos.length) {
+    caja.innerHTML = '<p class="aviso">Todavía no hay presentaciones registradas.</p>';
+  } else {
+    caja.innerHTML = cursos.map(c => {
+      const faltan = c.lista.filter(v => !v.yt).length;
+      const filas = c.lista.map(v => `
+        <li>
+          <span class="n">${esc(v.n)}</span>
+          <span class="cuerpo">
+            <span class="tit">${esc(v.titulo)}</span>
+            ${v.sub ? `<br><span class="sub">${esc(v.sub)}</span>` : ''}
+            <br>${v.yt
+              ? `<a class="ver" href="${esc(v.yt)}" target="_blank" rel="noopener">▶ Ver en YouTube</a>`
+              : '<span class="pendiente">Pendiente de subir</span>'}
+          </span>
+          <span class="dur">${esc(v.dur || '')}</span>
+        </li>`).join('');
+      return `<section class="curso">
+          <h2>${esc(c.curso)}</h2>
+          ${c.nota ? `<p class="nota">${esc(c.nota)}${c.aula ? ` <a href="../../${esc(c.aula)}">Abrir el aula del campus →</a>` : ''}</p>` : ''}
+          <ol>${filas}</ol>
+          ${faltan ? `<p class="aviso" style="margin-top:14px">${faltan} de ${c.lista.length} todavía no están en YouTube. Se activan solos en cuanto se pegue su enlace en <code>multimedia.js</code>.</p>` : ''}
+        </section>`;
+    }).join('');
+  }
+</script>
+</body>
+</html>
