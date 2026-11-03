@@ -463,9 +463,7 @@
       "bloque": "CIERRE",
       "img": "slides/56.webp",
       "audio": "audio/56.mp3",
-      "texto": "",
-      "texto_no_narrado": "Estas son las fuentes y la bibliografía, verificadas contra fuentes primarias al tres de octubre de dos mil veintiséis: los decretos publicados en el Diario Oficial el tres de marzo y el uno de mayo de dos mil veintiséis, la Ley Federal del Trabajo vigente, la Ley General en materia de Trata de Personas, y las normas oficiales mexicanas cero treinta y cinco y cero treinta y seis uno de la Secretaría del Trabajo.",
-      "_": "Bibliografia: no se narra (decision de Carlos, 03/11/2026). El audio es silencio de 10 s a proposito: si se le quita el campo \"audio\", aula.js lo leeria con la voz del navegador, que es lo que se quiere evitar."
+      "texto": "Estas son las fuentes y la bibliografía, verificadas contra fuentes primarias al tres de octubre de dos mil veintiséis: los decretos publicados en el Diario Oficial el tres de marzo y el uno de mayo de dos mil veintiséis, la Ley Federal del Trabajo vigente, la Ley General en materia de Trata de Personas, y las normas oficiales mexicanas cero treinta y cinco y cero treinta y seis uno de la Secretaría del Trabajo."
     },
     {
       "n": 57,
@@ -473,9 +471,7 @@
       "bloque": "CIERRE",
       "img": "slides/57.webp",
       "audio": "audio/57.mp3",
-      "texto": "",
-      "texto_no_narrado": "Y también las preguntas frecuentes de la Secretaría del Trabajo, el valor de la UMA publicado por el INEGI, el estudio de la OMS y la OIT, la memoria estadística del Seguro Social, el estudio publicado en Nature Human Behaviour y la nota de país de la OCDE. Recuerda revisar el Diario Oficial vigente, porque las cifras y los criterios pueden cambiar. Aquí termina el curso. Gracias.",
-      "_": "Bibliografia: no se narra (decision de Carlos, 03/11/2026). El audio es silencio de 10 s a proposito: si se le quita el campo \"audio\", aula.js lo leeria con la voz del navegador, que es lo que se quiere evitar."
+      "texto": "Y también las preguntas frecuentes de la Secretaría del Trabajo, el valor de la UMA publicado por el INEGI, el estudio de la OMS y la OIT, la memoria estadística del Seguro Social, el estudio publicado en Nature Human Behaviour y la nota de país de la OCDE. Recuerda revisar el Diario Oficial vigente, porque las cifras y los criterios pueden cambiar. Aquí termina el curso. Gracias."
     }
   ]
 }
