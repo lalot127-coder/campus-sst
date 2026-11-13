@@ -103,6 +103,14 @@ function crearMundo(THREE, OrbitControls, cfg) {
   $('bAtrasM').onclick = confirmar(() => alCampus());            // al edificio de su área
   $('bInicioM').onclick = confirmar(() => alCampus('?plaza'));   // a la entrada del campus
   $('bCampus').onclick = confirmar(() => alCampus('?salir'));    // a la pantalla de inicio (salir)
+  // (12/11/2026) Botón "Atrás" del navegador o del celular: antes sacaba del campus por completo. Ahora cierra
+  // primero la ventana abierta y, si no hay ninguna, regresa al edificio del área (preguntando si hay partida).
+  history.pushState({ sim: 1 }, '');
+  addEventListener('popstate', () => {
+    history.pushState({ sim: 1 }, '');   // se repone el escalón: nunca se sale del sitio con "Atrás"
+    if ($('conf').style.display === 'flex') return;   // ya hay una confirmación abierta
+    confirmar(() => alCampus())();
+  });
   $('bCompM').onclick = () => { const u = new URL(location.href); u.searchParams.delete('qa');
     if (window.Compartir) Compartir.abrir(u.href, `${cfg.icono} ${cfg.titulo} · Campus SST`); else { navigator.clipboard && navigator.clipboard.writeText(u.href); toast('info', '🔗 Enlace copiado: ' + u.href); } };
   if (!window.Compartir) { const s = document.createElement('script'); s.src = new URL('compartir.js', BASE_MOTOR).href; document.head.appendChild(s); }
@@ -164,6 +172,59 @@ function crearMundo(THREE, OrbitControls, cfg) {
     return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tx, side: THREE.DoubleSide }));
   }
 
+  // ---------------------------------------------------------------- muros que estorban (12/11/2026)
+  // Al girar la cámara, la pared que quedaba entre la cámara y lo que se está mirando tapaba toda la pantalla
+  // ("las paredes se sobreponen"). Aquí se vuelve casi transparente mientras estorba y se recupera sola.
+  // Las paredes se reconocen solas: cajas altas, largas y delgadas (muros, divisiones, barandales). No se tocan
+  // las que ya administra recorrido() (userData.op) ni los objetos inspeccionables (userData.tipo).
+  const VELO = { ray: new THREE.Raycaster(), lista: [], t: -9, der: new THREE.Vector3(), c: new THREE.Vector3(), dv: new THREE.Vector3(),
+    b1: new THREE.Box3(), b2: new THREE.Box3() };
+  // 0 = no es muro · 1 = muro o división · 2 = ventana o mampara (se desvanece junto con su muro)
+  const esMuro = m => {
+    if (m.userData._muro !== undefined) return m.userData._muro;
+    let r = 0; const g = m.geometry;
+    if (m.isMesh && g && g.type === 'BoxGeometry' && !m.userData.tipo && m.userData.op === undefined && !m.userData.noMuro) {
+      const p = g.parameters, e = m.getWorldScale(new THREE.Vector3());
+      const sx = p.width * e.x, sy = p.height * e.y, sz = p.depth * e.z;
+      if (sy >= 1.2 && Math.max(sx, sz) >= 2.2 && Math.min(sx, sz) <= 0.8) r = 1;
+      else if (sy >= 0.9 && Math.max(sx, sz) >= 1.4 && Math.min(sx, sz) <= 0.3) r = 2;
+    }
+    m.userData._muro = r; return r;
+  };
+  function velo(t) {
+    if (renderer.xr.isPresenting) return;
+    if (t - VELO.t > 2) {
+      VELO.t = t; VELO.lista.length = 0; const paneles = [];
+      scene.traverse(m => { const k = esMuro(m); if (k === 1) VELO.lista.push(m); else if (k === 2) paneles.push(m); });
+      // cada ventana o mampara se amarra al muro donde está encajada: así se van juntas y no quedan losas flotando
+      for (const p of paneles) { p.updateMatrixWorld(true); VELO.b2.setFromObject(p).expandByScalar(0.25); p.userData._padre = null;
+        for (const w of VELO.lista) { w.updateMatrixWorld(true); VELO.b1.setFromObject(w);
+          if (VELO.b1.intersectsBox(VELO.b2)) { p.userData._padre = w; break; } } }
+      paneles.forEach(p => VELO.lista.push(p));
+    }
+    if (!VELO.lista.length) return;
+    const tapan = new Set(), dist = camera.position.distanceTo(controls.target);
+    if (dist > 0.5) {
+      VELO.der.set(1, 0, 0).applyQuaternion(camera.quaternion).setY(0);
+      if (VELO.der.lengthSq() < 1e-4) VELO.der.set(1, 0, 0); else VELO.der.normalize();
+      for (const [dx, dy] of [[0, 0.2], [1.6, 0.2], [-1.6, 0.2], [0, 1.5]]) {
+        VELO.c.copy(controls.target).addScaledVector(VELO.der, dx); VELO.c.y += dy;
+        VELO.dv.copy(VELO.c).sub(camera.position); const L = VELO.dv.length(); if (L < 0.4) continue;
+        VELO.ray.set(camera.position, VELO.dv.normalize()); VELO.ray.far = L - 0.25;
+        VELO.ray.intersectObjects(VELO.lista, false).forEach(h => tapan.add(h.object));
+      }
+    }
+    for (const m of VELO.lista) {
+      // el material se clona una sola vez y nace transparente: cambiar "transparent" después obliga a recompilar
+      // el shader (material.needsUpdate) y la pared se quedaba opaca
+      if (m.userData._mat !== m.material) { m.material = m.material.clone(); m.material.transparent = true; m.material.needsUpdate = true; m.userData._mat = m.material; if (m.userData._op === undefined) m.userData._op = 1; }
+      const estorba = tapan.has(m) || (m.userData._padre && tapan.has(m.userData._padre));
+      const meta = estorba ? 0.12 : 1, v = m.userData._op + (meta - m.userData._op) * 0.14;
+      m.userData._op = Math.abs(v - meta) < 0.01 ? meta : v;
+      m.material.opacity = m.userData._op; m.material.depthWrite = m.userData._op > 0.9;
+    }
+  }
+
   // ---------------------------------------------------------------- animación, resaltado y toques
   const tweens = [];
   const mover = (v, destino, ms) => new Promise(res => tweens.push({ v, de: v.clone(), a: destino.clone ? destino.clone() : destino, t0: performance.now(), ms, res }));
@@ -176,6 +237,7 @@ function crearMundo(THREE, OrbitControls, cfg) {
     const pulso = (Math.sin(reloj.getElapsedTime() * 5) + 1) / 2;
     objetivos.forEach(o => { o.material && o.material.emissive && o.material.emissive.setRGB(0, 0.22 * pulso, 0.32 * pulso); o.scale.setScalar(1 + 0.12 * pulso); });
     cuadro.forEach(f => f(reloj.getElapsedTime()));
+    velo(reloj.getElapsedTime());   // las paredes que tapan lo que se mira se hacen transparentes
     // (22/10/2026) En el visor NO se toca la cámara: la maneja el casco. OrbitControls.update() la recolocaba en cada
     // cuadro y peleaba con el movimiento de la cabeza (el campus ya lo hacía así; a los sub-mundos les faltaba).
     if (!renderer.xr.isPresenting) controls.update();
@@ -231,7 +293,8 @@ function crearMundo(THREE, OrbitControls, cfg) {
       return ir(dest.x, dest.z, () => { yo.rotation.y = Math.atan2(c.x - yo.position.x, c.z - yo.position.z); tocar(obj); }); };
     // muros transparentes entre la cámara y el avatar
     const muros = (o.muros || []).filter(m => m.isMesh), ray2 = new THREE.Raycaster(), cab = new V();
-    muros.forEach(m => { m.material = m.material.clone(); m.material.transparent = true; m.userData.op = 1; });
+    muros.forEach(m => { m.material = m.material.clone(); m.material.transparent = true; m.userData.op = 1; m.userData._muro = false; });   // _muro = false: los administra este recorrido, no velo()
+    VELO.t = -9;   // que velo() rehaga su lista sin estos muros
     controls.addEventListener('start', () => { seguir = false; });
     let tPrev = performance.now();
     cuadro.push(() => { const ahora = performance.now(), dt = Math.min(0.05, (ahora - tPrev) / 1000); tPrev = ahora;
@@ -334,7 +397,7 @@ function crearMundo(THREE, OrbitControls, cfg) {
   const qa = () => ({ paso: nPaso, titulo: paso && paso.titulo, pts: S.pts, criticos: S.criticos, errores: S.errores.length });
 
   const api = { THREE, scene, camera, controls, renderer, M, caja, cil, esfera, capsula, tocable, letrero, mover, resaltar, irVista, cuadro,
-    toast, bien, mal, botones, pregunta, aviso, siguiente, inicio, qa, tocar, $, estado: () => S };
+    toast, bien, mal, botones, pregunta, aviso, siguiente, inicio, qa, tocar, $, estado: () => S, velarMuros: velo };
   // Animaciones para que la escena «haga lo que dice la respuesta» (12/10/2026)
   //   await api.animar(ms, k => {...})  k de 0 a 1 · api.globo(texto, objeto, ms) globo de diálogo · api.cara(cabeza, opc)
   api.cara = (cab, o) => cara(THREE, cab, o); api.recorrido = recorrido;
@@ -369,6 +432,7 @@ function crearMundo(THREE, OrbitControls, cfg) {
     scene.traverse(m => { const p = m.geometry && m.geometry.parameters; if (!m.isMesh || !p || m.geometry.type !== 'PlaneGeometry' || Math.abs(Math.abs(m.rotation.x) - Math.PI / 2) > 0.01) return;
       const s = new THREE.Vector3(); m.getWorldScale(s); const a = p.width * s.x * p.height * s.y; if (a > mayor && m.getWorldPosition(new THREE.Vector3()).y < 0.3) { mayor = a; piso = m; } });
     const [c, t] = VISTAS[0]; api.activarXR({ inicio: [(c[0] + t[0]) / 2, (c[2] + t[2]) / 2], piso, entorno: piso ? [piso] : [] }); }, 1500);
+  if (location.search.includes('qa')) window.__W = api;   // pruebas: consola del navegador
   return api;
 }
 

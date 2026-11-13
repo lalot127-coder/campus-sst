@@ -293,6 +293,9 @@ function arrancar(cfg) {
   $('auAtras').onclick = () => { pausar(); location.href = volver; };
   $('auInicio').onclick = () => { pausar(); location.href = new URL('../index.html?plaza', BASE_MOTOR).href; };
   $('auSalir').onclick = () => { pausar(); location.href = new URL('../index.html?salir', BASE_MOTOR).href; };
+  // (12/11/2026) "Atrás" del navegador o del celular: regresa al edificio del curso, no se sale del campus.
+  history.pushState({ aula: 1 }, '');
+  addEventListener('popstate', () => { history.pushState({ aula: 1 }, ''); pausar(); location.href = volver; });
   $('auComp').onclick = () => { const u = location.href.split('#')[0];
     if (window.Compartir) Compartir.abrir(u, `🎓 Aula · ${cfg.titulo} · Campus SST`); else { navigator.clipboard && navigator.clipboard.writeText(u); aviso('🔗 Enlace copiado'); } };
   if (!window.Compartir) { const s = document.createElement('script'); s.src = new URL('compartir.js', BASE_MOTOR).href; document.head.appendChild(s); }

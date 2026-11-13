@@ -526,19 +526,25 @@ function entrarEdificio(id) {
     I = INTERIORES[id]; dentro = id; escena = I.escena; if (scene.environment && !escena.environment) escena.environment = scene.environment;   // mismos reflejos adentro
     levantar(); ruta = []; alLlegar = null; escena.add(yo); escena.add(marca); marca.visible = false;
     yo.position.copy(I.entrada); yo.rotation.y = Math.PI; colocarCamara(); controls.maxDistance = 26;
-    history.replaceState(null, '', '?mundo=' + id + (QA ? '&qa' : ''));
+    // (12/11/2026) pushState y no replaceState: entrar a un edificio deja un escalón en el historial, para que el
+    // botón "Atrás" del navegador o del celular salga del edificio en lugar de salirse del campus por completo.
+    if (!(history.state && history.state.edificio === id)) history.pushState({ edificio: id }, '', '?mundo=' + id + (QA ? '&qa' : ''));
     $('#dTit').innerHTML = `${a.icono} ${a.nombre}<small>Camina por el pasillo y toca una puerta · siéntate en la sala de espera · toca las señales</small>`; $('#dentro').style.display = 'flex'; $('#ayuda').style.display = 'none';
     crearEtiquetasPuertas(); if (xr.activo()) xr.colocar(yo.position, 0); $('#fundido').style.opacity = 0; }, 380);
 }
-function salirEdificio(rapido) {
+function salirEdificio(rapido, desdeHistorial) {
   if (!dentro) return; const id = dentro, e = ED[id], z = Z.ZONAS.find(q => q.id === id), fuera = e ? e.frente : z.puertaMundo;
+  // si el escalón del historial es de este edificio, se sale con history.back(): así el botón "Atrás" y el botón
+  // "Salir del edificio" dejan el historial igual y no se acumulan escalones (12/11/2026)
+  if (!desdeHistorial && history.state && history.state.edificio === id) return history.back();
   const go = () => { levantar(); I.puertas.forEach(p => p.cerrar()); dentro = null; I = null; escena = scene; scene.add(yo); scene.add(marca); limpiarEtiquetasPuertas();
-    $('#dentro').style.display = 'none'; controls.maxDistance = 38; history.replaceState(null, '', location.pathname + (QA ? '?qa' : ''));
+    $('#dentro').style.display = 'none'; controls.maxDistance = 38;
+    if (!desdeHistorial) history.replaceState(null, '', location.pathname + (QA ? '?qa' : ''));
     yo.position.copy(fuera); const d = e ? fuera.clone().sub(e.g.position) : new THREE.Vector3(0, 0, 1); yo.rotation.y = Math.atan2(d.x, d.z); colocarCamara();
     if (xr.activo()) xr.colocar(yo.position, yo.rotation.y + Math.PI); $('#fundido').style.opacity = 0; };
   if (rapido) return go(); $('#fundido').style.opacity = 1; setTimeout(go, 380);
 }
-function reiniciar() { salirEdificio(true); tweens.length = 0; ruta = []; marca.visible = false; pila.length = 0; controls.enabled = !xr.activo(); camModo = 'seguir'; levantar();
+function reiniciar() { salirEdificio(true, true); history.replaceState(null, '', location.pathname + (QA ? '?qa' : '')); tweens.length = 0; ruta = []; marca.visible = false; pila.length = 0; controls.enabled = !xr.activo(); camModo = 'seguir'; levantar();
   yo.position.copy(INICIO); yo.rotation.y = Math.PI; colocarCamara(); if (xr.activo()) xr.colocar(yo.position, 0); $('#ayuda').style.display = 'block'; aviso('Regresaste al inicio del campus.'); }
 function atras() { if (dentro) return salirEdificio(); const p = pila.pop(); if (!p) return aviso('Ya estás en el punto de partida. Usa ↺ Inicio para reiniciar.'); caminarA(p, null, false); aviso('Regresando al lugar anterior…'); }
 // la puerta de entrada ya no saca del edificio con un toque accidental: pide confirmación
@@ -571,6 +577,10 @@ function fichaSenal(id) { const s = Senales.POR_ID[id];
   modal(`<h2>${s.nombre}</h2><img class="senal" src="${Senales.dataURL(id, 256)}" alt="${s.nombre}"><p><b>Tipo:</b> ${s.tipo}</p><p>${s.significado}</p>
     <p class="fuente">Fuente: ${s.norma}. Colores: rojo = alto, prohibición y equipo contra incendio; amarillo = precaución; verde = condición segura y primeros auxilios; azul = obligación (NOM-026-STPS-2008, Tabla 1; NOM-003-SEGOB-2011, 6.2).</p>`); }
 $('#bSalirEdif').onclick = () => salirEdificio();
+// (12/11/2026) "Atrás" del navegador o del celular: sale del edificio (o vuelve a entrar al avanzar), nunca del campus.
+addEventListener('popstate', () => { const st = history.state;
+  if (st && st.edificio) { if (dentro !== st.edificio) { if (dentro) salirEdificio(true, true); entrarEdificio(st.edificio); } }
+  else if (dentro) { salirEdificio(false, true); if (P.get('mundo')) history.replaceState(null, '', location.pathname + (QA ? '?qa' : '')); } });
 $('#bAtras').onclick = atras; $('#bReiniciar').onclick = reiniciar;
 $('#bInfo').onclick = abrirInfo;
 $('#bAyuda').onclick = () => modal(`<h2>❔ Cómo moverte</h2><p>• Toca el piso para caminar (el avatar sigue los caminos y rodea obstáculos); toca un edificio para ir y <b>entrar caminando</b>; adentro, toca una puerta.<br>• Toca una <b>silla</b> para sentarte y una <b>señal</b> para pararte frente a ella.<br>• En computadora: flechas o W A S D; arrastra para girar la vista y usa la rueda para acercar.<br>
