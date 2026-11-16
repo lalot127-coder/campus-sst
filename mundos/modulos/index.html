@@ -28,7 +28,7 @@ button{font-family:inherit;cursor:pointer}.sec{background:var(--hielo);color:var
 <script type="importmap">{"imports":{"three":"../../motor/vendor/three/build/three.module.js","three/addons/":"../../motor/vendor/three/examples/jsm/"}}</script>
 </head>
 <body>
-<div id="barra"><img src="../../recursos/logo_CERS.jpeg" alt="CERS"><div><b id="tit">Sala de módulo</b><small id="sub">Campus de Simulación SST</small></div>
+<div id="barra"><img src="../../recursos/logo_cers.png" alt="CERS"><div><b id="tit">Sala de módulo</b><small id="sub">Campus de Simulación SST</small></div>
 <div class="der" id="der"><button class="sec" id="bAtras" title="Regresar al edificio">⬅<span class="txt"> Atrás</span></button><button class="sec" id="bInicio" title="Inicio del campus">🏠<span class="txt"> Inicio</span></button>
 <button class="sec" id="bComp">🔗<span class="txt"> Compartir</span></button><button class="sec rojo" id="bSalir">✖<span class="txt"> Salir</span></button></div></div>
 <div id="ayuda">Toca un equipo para ver su ficha · toca una silla para sentarte · toca el piso para caminar<small>Computadora: W A S D o flechas · arrastra para girar la vista</small></div>
@@ -81,7 +81,7 @@ const SEN = { 'primeros-auxilios': ['primeros', 'salida', 'guantes'], 'extintore
   'espacios-confinados': ['prec_general', 'respiratoria', 'no_paso'], 'seguridad-electrica': ['electrico', 'guantes', 'cara'], loto: ['electrico', 'guantes', 'prec_general'] }[ID] || ['salida'];
 SEN.forEach((id, k) => senal(id, .7, -W / 2 + .12, 2.3, -3 + k * 2.2, Math.PI / 2));
 senal('salida', 1, 0, 2.95, D / 2 + 1.94, Math.PI); senal('extintor', .55, 2.2, 1.9, D / 2 + 1.94, Math.PI);
-const logo = new THREE.TextureLoader().load('../../recursos/logo_CERS.jpeg'); logo.colorSpace = THREE.SRGBColorSpace;
+const logo = new THREE.TextureLoader().load('../../recursos/logo_cers.png'); logo.colorSpace = THREE.SRGBColorSpace;
 const lg = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.2), new THREE.MeshBasicMaterial({ map: logo })); lg.position.set(W / 2 - .12, 2.4, -5.5); lg.rotation.y = -Math.PI / 2; scene.add(lg);
 // pantalla del fondo con título, norma e introducción
 { const cv = document.createElement('canvas'); cv.width = 1280; cv.height = 620; const g = cv.getContext('2d'); g.fillStyle = '#0E3A6B'; g.fillRect(0, 0, 1280, 620); g.fillStyle = '#' + col.toString(16).padStart(6, '0'); g.fillRect(0, 0, 1280, 26);

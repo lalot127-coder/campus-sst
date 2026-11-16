@@ -165,6 +165,9 @@ window.CampusXR = window.CampusXR || (() => { const ua = navigator.userAgent || 
       const c = renderer.xr.getController(i); scene.add(c);
       const linea = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x9CC5A1 })); linea.scale.z = 4; c.add(linea);
       c.addEventListener('selectstart', () => { try {
+        // (16/11/2026) Celdas que se manejan con las manos (motor/manos.js): si esta mano trae una pieza o tiene
+        // una al alcance, el gatillo es para agarrarla o usarla y el rayo del panel no debe tocar nada más.
+        if (W.manos && W.manos.ocupado(c)) return;
         const r = golpe(c); if (!r) return;
         if (r.tipo === 'muneca') { alFrente(); return; }
         if (r.tipo === 'panel') { const u = r.h.uv, px = u.x * ANCHO, py = (1 - u.y) * ALTO;

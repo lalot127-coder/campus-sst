@@ -129,18 +129,7 @@ body.movil .pasos{flex-direction:column}
   <button id="bSon" title="Sonido" aria-label="Sonido" class="on"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10zM16 9a4 4 0 010 6"/></svg></button>
   <button id="bTema" title="Modo claro / oscuro" aria-label="Tema"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 000 16z" fill="currentColor"/></svg></button>
   <button id="bEval" title="Evaluación" aria-label="Evaluación"><svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg></button>
-  <button id="bSalir" title="Salir al campus" aria-label="Salir al campus" style="color:#c0392b"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
 </div>
-<script>
-// (12/11/2026) Esta página no tenía salida: no había botón de regreso y el "Atrás" del navegador sacaba del campus.
-(function () {
-  var volver = new URLSearchParams(location.search).get('volver') || '../index.html?mundo=loto';
-  var ir = function () { location.href = volver; };
-  document.getElementById('bSalir').onclick = ir;
-  history.pushState({ libro: 1 }, '');
-  addEventListener('popstate', function () { history.pushState({ libro: 1 }, ''); ir(); });
-})();
-</script>
 <div class="capa" id="capaIndice"><div class="panel" id="panelIndice"></div></div>
 <div class="capa" id="capaEval"><div class="panel" id="panelEval"></div></div>
 

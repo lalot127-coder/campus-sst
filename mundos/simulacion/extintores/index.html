@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulación inmersiva · Extintores</title>
+<script type="importmap">{"imports":{"three":"../../../motor/vendor/three/build/three.module.js","three/addons/":"../../../motor/vendor/three/examples/jsm/"}}</script>
+<script src="../../../motor/senales.js"></script>
+<script src="../../../motor/realismo.js"></script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../../motor/manos.js"></script>
+<script src="../../../motor/fuego.js"></script>
+<style>
+#medidor{position:fixed;right:12px;top:calc(var(--barraH,60px) + 10px);z-index:4;background:rgba(255,255,255,.96);border-radius:14px;padding:10px 12px;width:214px;display:none;box-shadow:0 6px 20px rgba(0,0,0,.2);font-weight:700;color:#0E3A6B}
+#medidor .b{height:12px;border-radius:6px;background:#E8F5F9;overflow:hidden;margin:3px 0 7px}#medidor .b i{display:block;height:100%}
+#palanca{position:fixed;right:18px;bottom:110px;z-index:6;width:118px;height:118px;border-radius:50%;border:5px solid #fff;background:radial-gradient(circle at 35% 30%,#ef5350,#b71c1c);color:#fff;font-weight:900;font-size:.95rem;line-height:1.1;box-shadow:0 8px 24px rgba(0,0,0,.35);display:none;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+#palanca.on{transform:scale(.93);background:radial-gradient(circle at 35% 30%,#ff8a65,#d84315);box-shadow:0 0 0 8px rgba(255,138,101,.45)}
+@media (max-width:700px){#medidor{width:168px;padding:7px 9px;font-size:.84rem}#palanca{width:104px;height:104px;bottom:96px}}
+</style>
+</head>
+<body>
+<button id="palanca" aria-label="Mantén presionado para apretar la palanca del extintor">🧯<br>MANTÉN<br>PARA<br>DESCARGAR</button>
+<div id="medidor">🔥 Fuego<div class="b"><i id="mFuego" style="background:#E65100;width:100%"></i></div>🧯 Agente<div class="b"><i id="mAgente" style="background:#1F6FB2;width:100%"></i></div><small id="mZona">Apunta a la base del fuego</small></div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Kit3D } from '../../../motor/kit3d.js';
+import { Props } from '../../../motor/props.js';
+import { Personas } from '../../../motor/personas3d.js';
+
+// =====================================================================================================
+// CELDA INMERSIVA DE EXTINTORES — Edificio de Simulación Inmersiva (16/11/2026)
+//
+// Qué la hace distinta de mundos/proteccion/extintores (que sigue existiendo y NO se tocó):
+//   · Se maneja AGARRANDO: el extintor se toma de la repisa con la mano (motor/manos.js), el seguro se jala
+//     con la otra y la palanca se aprieta con el gatillo. En pantalla todo eso se hace tocando y con el botón
+//     rojo, para que la celda también sirva sin visor.
+//   · Entorno con modelos .glb reales y texturas PBR (motor/realismo.js) en lugar de cajas de color.
+//   · El fuego vive en motor/fuego.js, compartido: las demás celdas del edificio lo van a reutilizar.
+//
+// FUENTES: son las MISMAS que ya estaban verificadas en mundos/proteccion/extintores (registro_fuentes.md,
+// consulta 03/10/2026). No se agregó ningún numeral nuevo:
+//   NOM-002-STPS-2010  4.11 clases de fuego · 7.2 revisión (sello, manómetro, capacidad, etiqueta) ·
+//   8.1 c) alertamiento · 4.19 mantenimiento y recarga · Guía de Referencia VII, Tabla VII.1 (agente por
+//   clase), Tabla VII.2 (PQS alcance mínimo 3.0 m), VII.3.2 (CO2 de 1 a 2.5 m), Tabla VII.3 (agua hasta 9 m).
+//   La TÉCNICA de descarga no está en la NOM: se enseña como instrucción general que siempre se confirma con
+//   la etiqueta del extintor (7.2 l) 3).
+//
+// PENDIENTE DE CALIBRAR EN EL VISOR (no se puede ajustar desde la computadora): la POSE con la que el extintor
+// queda sujeto en la mano (POSE_EXT) y el radio para alcanzarlo (R_AGARRE). Se ven bien en pantalla, pero la
+// altura real del brazo solo se comprueba con el Quest 3S puesto.
+// =====================================================================================================
+const F26 = 'NOM-002-STPS-2010', T71 = `${F26}, Guía de Referencia VII, Tabla VII.1`;
+const TECNICA = 'Instrucción general de uso; confirma siempre con la etiqueta del extintor (NOM-002-STPS-2010, 7.2 l) 3).';
+const POSE_EXT = [0.02, -0.55, -0.16, -0.30, -2.40, 0], R_AGARRE = 0.42;
+
+const W = MotorSim.crearMundo(THREE, OrbitControls, {
+  titulo: 'Extintores: fuego real en el visor', icono: '🧯', clave: 'sim_extintores',
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xC9D6DF, piso: 'concreto_pulido', xr: false,
+  campus: '../../../index.html?mundo=loto',   // el edificio sigue teniendo el id 'loto' (ver index.html)
+  vistas: [[[0, 2.5, 4.4], [0, 0.9, -2.6]], [[-3.0, 1.8, 1.0], [-5.2, 1.0, -0.4]], [[2.6, 1.8, 0.6], [5.2, 1.3, -0.8]],
+    [[0, 6.2, 2.2], [0, 0, -2.6]], [[0.3, 1.6, 0.2], [0, 0.7, -3.2]]],
+  radioSombra: 12 });
+const { scene, camera, controls, renderer, caja, cil, tocable, letrero, M } = W;
+const $ = s => document.getElementById(s);
+const P3 = Props(THREE), kit = new Kit3D(THREE, '../../../'), gente = new Personas(THREE, '../../../');
+camera.far = 90; camera.updateProjectionMatrix(); controls.maxDistance = 18;
+
+// ------------------------------------------------------------------ nave industrial (se oculta en realidad mixta)
+const entorno = new THREE.Group(); scene.add(entorno);
+const piso = new THREE.Mesh(new THREE.PlaneGeometry(14, 13), M(0xA9B1B8)); piso.rotation.x = -Math.PI / 2; piso.position.z = -2.5; entorno.add(piso);
+// muros: cajas delgadas y altas → motor/realismo.js les pone la textura de yeso solo
+caja(14, 3.6, 0.16, 0xE3E8EC, 0, 1.8, -9, entorno);
+caja(0.16, 3.6, 13, 0xDDE3E8, -7, 1.8, -2.5, entorno);
+caja(0.16, 3.6, 8.2, 0xDDE3E8, 7, 1.8, -5.4, entorno);
+caja(0.16, 3.6, 2.4, 0xDDE3E8, 7, 1.8, 2.8, entorno);
+caja(0.16, 1.0, 2.2, 0xDDE3E8, 7, 3.1, 0.5, entorno);                        // dintel del hueco de la salida
+{ const h = caja(1.2, 2.2, 0.06, 0x2E7D32, 7.4, 1.1, 0.5, entorno); h.rotation.y = -1.2; }   // puerta de emergencia abierta
+for (let i = 0; i < 5; i++) { const v = caja(0.18, 3.6, 0.18, 0xB9C2C9, -6.3 + i * 3.2, 1.8, -8.8, entorno); v.userData.sinTextura = true; }
+// franjas amarillas de circulación en el piso
+for (let z = -7.5; z <= 2.5; z += 2.5) { const l = new THREE.Mesh(new THREE.PlaneGeometry(13.4, 0.1), M(0xE9C13A)); l.rotation.x = -Math.PI / 2; l.position.set(0, 0.006, z); entorno.add(l); }
+
+const senal = (id, w, x, y, z, ry) => { const cv = Senales.canvas(id, 256); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w * cv.height / cv.width), new THREE.MeshBasicMaterial({ map: t, transparent: true }));
+  m.position.set(x, y, z); m.rotation.y = ry; entorno.add(m); return m; };
+senal('extintor', 0.6, -6.9, 2.2, -0.6, Math.PI / 2); senal('ruta', 0.9, 6.9, 2.3, -2.2, -Math.PI / 2);
+const sSalida = senal('salida', 1.05, 6.9, 2.7, 0.5, -Math.PI / 2); tocable(sSalida, 'salida', 0.9);
+const tit = letrero('ÁREA DE PRÁCTICA · USO DE EXTINTORES', 4.2, 0.34, '#B71C1C'); tit.position.set(0, 3.1, -8.9); entorno.add(tit);
+
+// botón de alarma, a la altura de la mano (en el visor se alcanza caminando)
+const alarma = caja(0.16, 0.3, 0.26, 0xD3122A, 6.88, 1.3, -2.2, entorno); tocable(alarma, 'alarma', 0.55);
+const luzAlarma = new THREE.PointLight(0xff2222, 0, 8); luzAlarma.position.set(6.2, 3.0, -2.2); scene.add(luzAlarma);
+
+// modelos .glb de libre uso (CC0 / CC-BY: assets/INVENTARIO_ASSETS.csv): dan la sensación de nave de verdad
+kit.precargar(['extintores-fuego', 'construccion']);
+const poner = (k, c, x, z, ry = 0, s = 1) => kit.poner({ kit: k, clave: c, x, z, ry, s, padre: entorno }).catch(() => { });
+poner('construccion', 'tarima', -4.2, -7.4); poner('construccion', 'tarima', -2.6, -7.4);
+poner('construccion', 'ladrillos', -4.2, -7.4, 0.3, 0.9); poner('extintores-fuego', 'caja', -2.6, -7.4, 0.5, 1.1);
+poner('extintores-fuego', 'tambo', 4.6, -7.6); poner('extintores-fuego', 'tambo', 5.3, -7.0, 0.7);
+// el 'tanque' del kit mide 7.8 m de ancho (es de patio, no de nave): aquí van tambos, que sí caben
+poner('extintores-fuego', 'tambo_abierto', 5.8, -4.6, 0.3); poner('extintores-fuego', 'tambo', 5.4, -5.4, -0.5);
+poner('extintores-fuego', 'hidrante', -6.3, 1.4, Math.PI / 2);
+poner('construccion', 'cono', 2.2, -0.6); poner('construccion', 'cono', -2.2, -0.6);
+poner('construccion', 'barrera', 3.9, 1.6, Math.PI / 2); poner('construccion', 'malla', -5.0, -8.6);
+
+// compañero de brigada [FICTICIO]
+let brigada = null;
+gente.crear({ modelo: 'hombre-c', x: 4.4, z: 1.8, ry: -2.3, padre: entorno, chaleco: 0xF57C00, etiqueta: 'BRIGADA', colorEtiqueta: '#E65100' })
+  .then(p => { brigada = p; }).catch(() => { });
+
+// ------------------------------------------------------------------ repisa con los cuatro extintores
+// AGENTES: nombre, clases que apaga y alcance. Cada dato con su fuente verificada (Guía de Referencia VII).
+const AGENTES = {
+  agua: { nombre: 'Agua', chorro: 0x4FC3F7, clases: ['A'], alcance: 'hasta 9 m (agua hasta 10 L)', fAlc: `${F26}, Guía VII, Tabla VII.3`, dist: 3.0 },
+  pqs: { nombre: 'Polvo químico seco ABC', chorro: 0xFFF8E1, clases: ['A', 'B', 'C'], alcance: 'alcance mínimo 3.0 m (4.5 a 27.2 kg)', fAlc: `${F26}, Guía VII, Tabla VII.2`, dist: 3.0 },
+  co2: { nombre: 'Bióxido de carbono (CO₂)', chorro: 0xFFFFFF, clases: ['B', 'C'], alcance: 'de 1 a 2.5 m; no usar al aire libre ni con corrientes de aire', fAlc: `${F26}, Guía VII, VII.3.2`, dist: 2.0 },
+  k: { nombre: 'Químico húmedo (clase K)', chorro: 0xE0F7FA, clases: ['A', 'B', 'K'], alcance: 'el que indica su etiqueta', fAlc: `${F26}, 7.2 l) 3)`, dist: 2.5 },
+};
+const ORDEN = ['agua', 'pqs', 'co2', 'k'], EXT = {};
+caja(0.4, 0.08, 3.2, 0x6C7A86, -6.5, 0.82, -1.4, entorno);                      // repisa
+[0, 1].forEach(i => caja(0.1, 0.82, 0.1, 0x55606B, -6.5, 0.41, -2.8 + i * 2.8, entorno));
+ORDEN.forEach((t, i) => {
+  const g = P3.extintor(t); g.position.set(-6.45, 0.86, -2.6 + i * 0.82); g.rotation.y = Math.PI / 2; entorno.add(g);
+  // props.js reutiliza materiales entre objetos: sin clonar, W.resaltar prendería TODO lo rojo de la escena.
+  g.traverse(o => { if (o.isMesh && o.material && !Array.isArray(o.material)) o.material = o.material.clone(); });
+  // aro del seguro, grande y visible: es lo que se jala con la otra mano (el de props.js es diminuto)
+  const chico = []; g.traverse(o => { if (o.geometry && o.geometry.type === 'TorusGeometry') chico.push(o); });
+  const alto = chico.length ? chico[0].position.y : 0.62;
+  chico.forEach(o => { o.visible = false; });
+  const aro = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.009, 8, 18), M(0xFDD835, { metalness: .6, roughness: .35 }));
+  aro.position.set(-0.05, alto, 0.03); aro.rotation.y = Math.PI / 2; g.add(aro);
+  EXT[t] = { g, aro, tipo: t };
+  tocable(g, 'ext_' + t, 0.5); tocable(aro, 'seguro_' + t, 0.18);
+});
+
+// ------------------------------------------------------------------ fuego y escenarios [FICTICIOS]
+const CASOS = {
+  A: { txt: '📦 <b>Clase A:</b> cajas de cartón y tarimas de madera en el almacén', clase: 'A', base: 0.55, radio: 0.6, alto: 1.4, def: 'material combustible sólido, generalmente de naturaleza orgánica, que forma brasas' },
+  B: { txt: '🛢️ <b>Clase B:</b> charola con disolvente derramado en el taller', clase: 'B', base: 0.08, radio: 0.65, alto: 1.3, def: 'líquidos combustibles e inflamables y gases inflamables' },
+  C: { txt: '⚡ <b>Clase C:</b> tablero eléctrico energizado', clase: 'C', base: 0.7, radio: 0.4, alto: 1.0, def: 'aparatos, equipos e instalaciones eléctricas energizadas' },
+  K: { txt: '🍟 <b>Clase K:</b> freidora con aceite en la cocina del comedor', clase: 'K', base: 1.0, radio: 0.38, alto: 1.0, def: 'instalaciones de cocina con aceites y grasas vegetales o animales' },
+};
+const FZ = -3.4, objetos = new THREE.Group(); scene.add(objetos);
+function armarEscenario(c) {
+  objetos.clear();
+  if (c === 'A') { caja(1.3, 0.14, 1.1, 0x8B6B4A, 0, 0.07, FZ, objetos); [[-.3, -.2], [.3, -.2], [0, .25], [-.25, .25]].forEach(([x, z], i) => caja(0.52, 0.46, 0.44, 0xB98D5A, x, 0.37 + (i > 2 ? 0.46 : 0), FZ + z, objetos)); }
+  if (c === 'B') { caja(1.4, 0.08, 1.0, 0x78909C, 0, 0.04, FZ, objetos); const l = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.9), M(0x5D4037, { roughness: .1 })); l.rotation.x = -Math.PI / 2; l.position.set(0, 0.085, FZ); objetos.add(l); cil(0.17, 0.5, 0x1565C0, 1.0, 0.25, FZ + 0.5, objetos); }
+  if (c === 'C') { caja(0.95, 1.7, 0.42, 0x90A4AE, 0, 0.85, FZ - 0.2, objetos); caja(0.75, 0.95, 0.02, 0x546E7A, 0, 1.05, FZ + 0.02, objetos);
+    const cv = Senales.canvas('electrico', 256), t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+    const s = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.3 * cv.height / cv.width), new THREE.MeshBasicMaterial({ map: t, transparent: true })); s.position.set(0, 1.52, FZ + 0.04); objetos.add(s); }
+  if (c === 'K') { caja(1.7, 0.95, 0.75, 0xB0BEC5, 0, 0.47, FZ, objetos); caja(0.62, 0.26, 0.48, 0x78909C, 0, 1.05, FZ, objetos);
+    const ac = new THREE.Mesh(new THREE.PlaneGeometry(0.52, 0.38), M(0xC49A2C, { roughness: .1 })); ac.rotation.x = -Math.PI / 2; ac.position.set(0, 1.16, FZ); objetos.add(ac); }
+}
+const F = Fuego.crear(W, { x: 0, z: FZ, base: 0.55, radio: 0.6, alto: 1.4 });
+
+// ------------------------------------------------------------------ manos (visor) y palanca (pantalla)
+const manos = Manos.activar(W);
+const estado = { agente: null, seguro: false, revisado: false, descargando: false, aEvaluar: null };
+ORDEN.forEach(t => manos.agarrable(EXT[t].g, { r: R_AGARRE, pose: POSE_EXT,
+  alAgarrar: () => { if (estado.aEvaluar) estado.aEvaluar(t); },
+  alUsar: si => { estado.descargando = si && estado.seguro; $('palanca').classList.toggle('on', estado.descargando); } }));
+
+// Pantalla: el botón rojo hace lo que el gatillo en el visor. Se apunta girando la vista (arrastrar).
+const apretar = si => { const g = estado.agente && EXT[estado.agente].g; if (!g || !manos.enMano(g)) return;
+  manos.usarPantalla(si); estado.descargando = si && estado.seguro; $('palanca').classList.toggle('on', estado.descargando); };
+$('palanca').addEventListener('pointerdown', e => { e.preventDefault(); try { $('palanca').setPointerCapture(e.pointerId); } catch (x) { } apretar(true); });
+$('palanca').addEventListener('pointerup', () => apretar(false));
+$('palanca').addEventListener('pointercancel', () => apretar(false));
+$('palanca').addEventListener('contextmenu', e => e.preventDefault());
+addEventListener('keydown', e => { if (e.code === 'Space' && !e.repeat) { e.preventDefault(); apretar(true); } });
+addEventListener('keyup', e => { if (e.code === 'Space') apretar(false); });
+
+// sonidos: alarma, crepitar del fuego y siseo de la descarga
+const SND = {};
+W.cuadro.push(() => {
+  const q = { alarma: !!estado.alarma, fuego: F.S.activo && F.S.I > 0.03, chorro: F.S.rociando };
+  for (const k of ['alarma', 'fuego', 'chorro']) {
+    if (q[k] && !SND[k]) SND[k] = W.sonido(k === 'chorro' ? 'fuga' : k, k === 'fuego' ? F.luz : null, k === 'fuego' ? { vol: 1, alcance: 14 } : { vol: k === 'alarma' ? 0.45 : 0.8 });
+    else if (!q[k] && SND[k]) { SND[k].detener(); SND[k] = null; }
+  }
+  luzAlarma.intensity = estado.alarma ? (Math.sin(performance.now() / 80) > 0 ? 8 : 0) : 0;
+});
+
+// descarga: mientras se aprieta la palanca, el chorro sale de la mano (visor) o de la cámara (pantalla)
+const vCam = new THREE.Vector3();
+W.cuadro.push(() => {
+  const g = estado.agente && EXT[estado.agente].g;
+  if (estado.descargando && g && F.S.carga > 0) {
+    const o = manos.origen(g) || camera;
+    if (o === camera && !renderer.xr.isPresenting) { camera.getWorldDirection(vCam); F.rociar(camera.getWorldPosition(new THREE.Vector3()), vCam.clone(), AGENTES[estado.agente].chorro); }
+    else F.rociar(o, null, AGENTES[estado.agente].chorro);
+  } else F.soltar();
+  if ($('medidor').style.display === 'block') {
+    $('mFuego').style.width = Math.round(F.S.I * 100) + '%'; $('mAgente').style.width = Math.round(F.S.carga * 100) + '%';
+    $('mZona').textContent = !F.S.rociando ? 'Aprieta la palanca y apunta a la base' : F.S.zona === 'base' ? '✅ Apuntas a la base del fuego'
+      : F.S.zona === 'llamas' ? '⚠️ Apunta más abajo: a la base' : '❌ No alcanzas el fuego';
+  }
+});
+
+// ------------------------------------------------------------------ marcas de distancia en el piso
+const MARCAS = [];
+function marcas(agente) {
+  MARCAS.forEach(m => scene.remove(m)); MARCAS.length = 0; const a = AGENTES[agente];
+  [[8, 'lejos'], [a.dist, 'ok'], [0.8, 'cerca']].forEach(([d, t]) => {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.03, 32), M(t === 'ok' ? 0x2E7D32 : 0x1F6FB2));
+    m.position.set(0, 0.02, FZ + d); scene.add(m); tocable(m, 'marca_' + t, 0.8); MARCAS.push(m);
+    const l = letrero(`${d} m`, 0.5, 0.18, '#FFFFFF', '#0E3A6B'); l.position.set(0.66, 0.15, FZ + d); l.rotation.x = -Math.PI / 2; scene.add(l); MARCAS.push(l);
+  });
+}
+// En el visor la persona CAMINA hasta la marca: se comprueba dónde está parada, no qué tocó.
+const dondeEstoy = () => { const c = renderer.xr.isPresenting ? renderer.xr.getCamera() : camera; c.getWorldPosition(vCam); return Math.hypot(vCam.x, vCam.z - FZ); };
+
+// ------------------------------------------------------------------ elegir entre opciones (ventana que el panel 3D lee)
+function elegir(titulo, ops, fuente, ok) {
+  W.$('mCont').innerHTML = `<h2>${titulo}</h2><div id="ops"></div>`;
+  [...ops].sort(() => Math.random() - .5).forEach(o => { const b = document.createElement('button'); b.className = 'op'; b.textContent = o.t;
+    b.onclick = () => { W.$('modal').style.display = 'none'; if (o.ok) { W.bien(o.fb || 'Correcto.', fuente); ok && ok(); } else { W.mal(o.fb, fuente, !!o.critico); setTimeout(() => elegir(titulo, ops, fuente, ok), 900); } };
+    W.$('ops').appendChild(b); });
+  W.$('modal').style.display = 'flex'; if (location.search.includes('qa')) window.__ops = ops;
+}
+
+// ------------------------------------------------------------------ pasos
+function pasos(c) {
+  const caso = CASOS[c];
+  return [
+    { titulo: 'Se declara un fuego', texto: caso.txt + ' <span class="ficticio">[FICTICIO]</span>', sinPuntos: true,
+      iniciar() { armarEscenario(c); F.cambiarForma({ base: caso.base, radio: caso.radio, alto: caso.alto }); F.encender(0.55); W.irVista(0);
+        W.aviso(`<h2>🔥 ¡Fuego!</h2><p>${caso.txt}.</p>
+          <p><b>En el visor:</b> camina con el joystick izquierdo, acerca la mano al extintor y aprieta el <b>gatillo</b> o el botón lateral para tomarlo. Con manos libres, <b>pellizca</b>. Ya con el extintor en la mano, el gatillo aprieta la <b>palanca</b>.</p>
+          <p><b>En pantalla:</b> toca el extintor para tomarlo, arrastra para apuntar y <b>mantén el botón rojo 🧯</b> (o la barra espaciadora).</p>
+          <p class="ficticio">Escenario [FICTICIO – ejercicio didáctico]. El fuego es virtual.</p>`, () => W.siguiente(), 'Empezar'); } },
+
+    { titulo: '1 · Da la alarma', texto: 'Antes de intentar apagar nada, avisa. Toca el <b>botón rojo de alarma</b> del muro derecho (brilla en azul); en el visor, camina hasta él y tócalo con el rayo o con la mano.',
+      fuente: `${F26}, 8.1 c) procedimiento de alertamiento`,
+      iniciar() { W.irVista(2); W.resaltar([alarma]); },
+      tocar(o) { if (o.userData.tipo !== 'alarma') return W.toast('info', 'Primero da la alarma.');
+        estado.alarma = true; W.resaltar([]); W.bien('Alarma activada: la brigada y el personal se enteran, y quien no participa empieza a evacuar.', `${F26}, 8.1 c)`);
+        if (brigada) brigada.caminar([[4.4, 0.2], [2.6, -0.6]], { vel: 1.3 }).then(() => brigada.mirarA(0, FZ));
+        W.siguiente(); } },
+
+    { titulo: '2 · ¿Qué clase de fuego es?', texto: 'Identifica la clase de fuego: de eso depende el agente que sirve.', fuente: `${F26}, 4.11`,
+      iniciar() { W.irVista(0); elegir(`${caso.txt.replace(/<[^>]+>/g, '')}: ¿qué clase de fuego es?`,
+        ['A', 'B', 'C', 'K'].map(k => ({ t: `Clase ${k}`, ok: k === caso.clase, fb: k === caso.clase ? `Clase ${k}: ${caso.def}.` : `No. Este fuego es de ${caso.def}.` })), `${F26}, 4.11`, () => W.siguiente()); } },
+
+    { titulo: '3 · Toma el extintor correcto', texto: 'En la repisa hay cuatro. <b>Tómalo con la mano</b> (en pantalla, tócalo). Si eliges el que no es, cuenta como error grave.', fuente: T71,
+      iniciar() { W.irVista(1); W.resaltar(ORDEN.map(t => EXT[t].g));
+        // agarrar con la mano en el visor entra por aquí; tocar en pantalla entra por tocar()
+        estado.aEvaluar = t => this.evaluar(t); },
+      evaluar(t) {
+        const a = AGENTES[t]; if (!a || estado.agente) return;
+        if (!a.clases.includes(caso.clase)) {
+          manos.soltar(EXT[t].g);
+          return W.mal(`${a.nombre} NO aplica a fuego clase ${caso.clase} (Tabla VII.1: solo ${a.clases.join(', ')}). ${t === 'agua' && caso.clase !== 'A' ? 'Con agua el fuego puede propagarse o hay riesgo eléctrico.' : ''}`, T71, true);
+        }
+        estado.agente = t; estado.aEvaluar = null; W.resaltar([]);
+        if (!manos.enMano(EXT[t].g)) manos.tomar(EXT[t].g);
+        W.bien(`${a.nombre}: sirve para fuegos clase ${a.clases.join(', ')}. Ya lo traes en la mano.`, T71); W.siguiente();
+      },
+      tocar(o) { const t = (o.userData.tipo || '').replace('ext_', ''); if (AGENTES[t]) this.evaluar(t); } },
+
+    { titulo: '4 · Revísalo antes de usarlo', texto: 'Acerca el extintor a tus ojos para verlo de cerca (en pantalla, usa el botón) y comprueba que esté listo para operar.', fuente: `${F26}, 7.2`,
+      iniciar() { W.irVista(4);
+        const preguntar = () => { if (estado.revisado) return; estado.revisado = true; const co2 = estado.agente === 'co2';
+          elegir(co2 ? 'Extintor de CO₂: ¿qué le revisas?' : '¿Qué revisas en el manómetro y el sello?', co2 ? [
+            { t: 'Que conserve la capacidad nominal de la etiqueta (peso) y que el sello o fleje esté sin violar', ok: true, fb: 'Correcto: los de CO₂ no tienen manómetro; se revisa su capacidad.' },
+            { t: 'Que la aguja del manómetro esté en verde', fb: 'Los extintores de CO₂ no se revisan por manómetro sino por su capacidad (peso).' },
+            { t: 'Nada, se usa de inmediato', fb: 'Un extintor sin revisar puede fallar justo cuando lo necesitas.' }] : [
+            { t: 'Aguja del manómetro en la zona verde (operable) y sello o fleje sin violar', ok: true, fb: 'Correcto: está listo para operar.' },
+            { t: 'Aguja en la zona roja: está bien cargado', fb: 'La zona operable es la verde.' },
+            { t: 'Que esté pintado de rojo', fb: 'El color no indica que funcione.' }], `${F26}, 7.2 d), e) y f)`, () => W.siguiente()); };
+        W.botones([['🔍 Acercar el manómetro a los ojos', preguntar, 'prim']]);
+        // en el visor basta con subir el extintor hasta la cara: el gesto vale como «acercarlo»
+        const g = EXT[estado.agente].g, pos = new THREE.Vector3();
+        this._mirar = () => { if (estado.revisado || !renderer.xr.isPresenting) return;
+          g.getWorldPosition(pos); renderer.xr.getCamera().getWorldPosition(vCam); if (pos.distanceTo(vCam) < 0.45) preguntar(); };
+        W.cuadro.push(this._mirar); } },
+
+    { titulo: '5 · Jala el seguro', texto: 'Con la <b>otra mano</b> toma el <b>aro amarillo</b> y jálalo (en pantalla, tócalo). Sin quitarlo, la palanca no baja.', fuente: `${F26}, 7.2 l) 3) instrucciones de operación en la etiqueta`,
+      iniciar() { const e = EXT[estado.agente]; W.resaltar([e.aro]);
+        // el aro también se puede agarrar con la mano libre: al tomarlo, sale del extintor
+        manos.agarrable(e.aro, { r: 0.22, pose: [0, -0.04, -0.06, 0, 0, 0], alAgarrar: () => this.quitar() }); },
+      quitar() { if (estado.seguro) return; estado.seguro = true; const e = EXT[estado.agente];
+        manos.soltar(e.aro, scene); e.aro.visible = false; W.resaltar([]);
+        W.bien('Seguro retirado: la palanca ya se puede accionar.', `${F26}, 7.2 l) 3)`); W.siguiente(); },
+      tocar(o) { if ((o.userData.tipo || '').startsWith('seguro_')) this.quitar(); } },
+
+    { titulo: '6 · Colócate a la distancia correcta', texto: 'Ponte donde el fuego quede dentro del alcance del extintor, sin acercarte a las llamas. <b>En el visor camina</b> hasta el círculo verde; en pantalla, tócalo.',
+      fuente: AGENTES.pqs.fAlc,
+      iniciar() { const a = AGENTES[estado.agente]; this.fuente = a.fAlc; W.$('pFuente').textContent = 'Fuente: ' + a.fAlc;
+        marcas(estado.agente); W.irVista(3); W.resaltar(MARCAS.filter(m => m.userData.tipo));
+        this._pasos = 0;
+        this._andar = () => { if (this._listo || !renderer.xr.isPresenting) return; const d = dondeEstoy();
+          if (Math.abs(d - a.dist) < 0.55) this.bien(); else if (d < 1.3 && ++this._pasos > 90) { this._pasos = -600; W.mal('Demasiado cerca: te expones al calor y a las llamas.', a.fAlc, true); } };
+        W.cuadro.push(this._andar); },
+      bien() { if (this._listo) return; this._listo = true; const a = AGENTES[estado.agente]; W.resaltar([]);
+        W.bien(`A ${a.dist} m: el fuego queda dentro del alcance (${a.alcance}).`, a.fAlc);
+        if (!renderer.xr.isPresenting) { W.mover(camera.position, new THREE.Vector3(0.3, 1.58, FZ + a.dist), 800); W.mover(controls.target, F.centro().add(new THREE.Vector3(0, 0.25, 0)), 800); }
+        W.siguiente(); },
+      tocar(o) { const t = o.userData.tipo || ''; if (!t.startsWith('marca_')) return; const a = AGENTES[estado.agente];
+        if (t === 'marca_ok') this.bien();
+        else if (t === 'marca_cerca') W.mal('Demasiado cerca: te expones al calor y a las llamas.', a.fAlc, true);
+        else W.mal(`Demasiado lejos: el agente no alcanza el fuego (${a.alcance}).`, a.fAlc); } },
+
+    { titulo: '7 · Aprieta la palanca y ataca la BASE', puntos: 10, fuente: TECNICA,
+      texto: '<b>Visor:</b> aprieta el gatillo de la mano que trae el extintor y apunta a la <b>base</b> de las llamas, barriendo de lado a lado.<br><b>Pantalla:</b> arrastra para apuntar y mantén el botón rojo 🧯 (o la barra espaciadora).',
+      iniciar() { F.recargar(); F.encender(Math.max(F.S.I, 0.85)); $('medidor').style.display = 'block';
+        if (!renderer.xr.isPresenting) $('palanca').style.display = 'block';
+        if (innerWidth < 700) { W.$('panel').classList.add('mini'); W.$('bMin').textContent = '▴'; }
+        const agotar = () => { W.mal('Se agotó el agente antes de apagar el fuego: apunta a la BASE, no a las llamas. Toma otro extintor y continúa.', TECNICA); F.recargar(); F.alAgotarse(agotar); };
+        F.alAgotarse(agotar);
+        F.alApagarse(() => { estado.descargando = false; $('medidor').style.display = 'none'; $('palanca').style.display = 'none'; $('palanca').classList.remove('on');
+          W.bien('¡Fuego extinguido! Apuntaste a la base del fuego.', TECNICA); W.siguiente(); }); } },
+
+    { titulo: '8 · Ya apagado, ¿qué sigue?', texto: 'Una última decisión.', fuente: `${F26}, 4.19 y 7.2`,
+      iniciar() { W.irVista(0); elegir('El fuego se apagó. ¿Qué haces con el extintor y con la emergencia?', [
+        { t: 'Vigilo que no se reavive, aviso a la brigada y reporto el extintor usado para su mantenimiento y recarga', ok: true, fb: 'Correcto: un extintor usado debe recargarse antes de volver a su lugar.' },
+        { t: 'Regreso el extintor a su lugar aunque esté descargado', critico: true, fb: 'Un extintor descargado deja el área sin protección: el siguiente que lo tome se queda sin nada.' },
+        { t: 'Sigo trabajando sin avisar', fb: 'Hay que avisar a la brigada y revisar el área.' }], `${F26}, 4.19 (el mantenimiento incluye la recarga) y 7.2`, () => {
+          const g = estado.agente && EXT[estado.agente].g; if (g) manos.soltar(g);
+          W.siguiente(); }); } },
+  ];
+}
+
+W.inicio(Object.keys(CASOS).map(k => ({ id: k, txt: CASOS[k].txt })), c => pasos(c),
+  `Basado en la ${F26} (DOF 09/12/2010): clases de fuego 4.11, revisión 7.2, Guía de Referencia VII Tabla VII.1. Escenarios ficticios; el fuego es virtual. ` +
+  'Esta celda está hecha para el Meta Quest 3S: ábrela en el navegador del visor y entra con 🥽 VR. La evacuación completa hasta el punto de reunión está en Protección Civil.');
+
+armarEscenario('A'); F.encender(0.4);
+// VR de la celda: el panel 3D del motor (xr.js) más las manos que agarran (manos.js)
+W.activarXR({ inicio: [0, 1.6], piso, entorno: entorno.children });
+
+if (location.search.includes('qa')) window.__qa = { W, F, EXT, AGENTES, MARCAS, manos, estado, alarma, sSalida,
+  tocar: W.tocar, qa: W.qa, apretar, dondeEstoy,
+  rociar: (zona = 'base') => { const c = F.centro(); F.rociar(new THREE.Vector3(0, 1.3, FZ + 3), c.clone().sub(new THREE.Vector3(0, 1.3, FZ + 3)).normalize(), 0xFFF8E1); F.S.zona = zona; } };
+</script>
+</body>
+</html>

@@ -76,7 +76,7 @@ button{font-family:inherit;cursor:pointer}.sec{background:var(--hielo);color:var
 (function () { function fallo(m) { var c = document.getElementById('cargando'); if (!c || c.dataset.ok) return; document.getElementById('cargaTxt').textContent = m; document.getElementById('cargaRe').style.display = 'inline-block'; }
   addEventListener('error', function (e) { fallo('No se pudo cargar una parte del campus (' + (e.message || 'archivo') + '). Revisa tu conexión y vuelve a cargar.'); }, true);
   setTimeout(function () { fallo('Está tardando más de lo normal. Si no avanza, vuelve a cargar.'); }, 30000); })();</script>
-<div id="barra"><div class="logos"><img src="recursos/logo_CERS.jpeg" alt="CERS"></div>
+<div id="barra"><div class="logos"><img src="recursos/logo_cers.png" alt="CERS"></div>
 <div><b>Campus de Simulación SST</b><small>Aprende haciendo · computadora, tablet, celular y visor</small></div>
 <div class="der"><button class="sec" id="bAtras" title="Regresar al lugar anterior">⬅<span class="txt"> Atrás</span></button><button class="sec" id="bReiniciar" title="Volver al inicio del campus">↺<span class="txt"> Inicio</span></button>
 <button class="sec" id="bAvatar" title="Cambiar mi avatar">👤<span class="txt"> Avatar</span></button><button class="sec" id="bJug" title="Jugadores en el campus">👥 <span id="nJug">1</span></button><button class="sec" id="bChat" title="Mensajes y emojis para los demás jugadores">💬<span class="txt"> Chat</span></button>
@@ -86,7 +86,7 @@ button{font-family:inherit;cursor:pointer}.sec{background:var(--hielo);color:var
 <div id="etiquetas"></div><div id="aviso"></div><div id="fundido"></div>
 <div class="modal" id="modal"><div class="caja" id="mCont"></div></div>
 <div id="inicio"><div class="marco">
-  <div><div class="logos"><img src="recursos/logo_CERS.jpeg" alt="CERS"></div>
+  <div><div class="logos"><img src="recursos/logo_cers.png" alt="CERS"></div>
     <h1>Campus de Simulación en Seguridad y Salud en el Trabajo</h1>
     <p>Elige tu nombre y arma tu avatar. Recorre los edificios: simuladores 3D, biblioteca normativa y cafetería con juegos.</p>
     <canvas id="prev"></canvas>
@@ -165,6 +165,13 @@ const AREAS = [
       { titulo: 'Espacios confinados', icono: '🕳️', tipo: 'sala', url: 'mundos/modulos/index.html?m=espacios-confinados', nom: 'NOM-033-STPS-2015', color: 'amarillo', senal: 'prec_general' },
       { titulo: 'Seguridad eléctrica', icono: '⚡', tipo: 'sala', url: 'mundos/modulos/index.html?m=seguridad-electrica', nom: 'NOM-029-STPS-2011', color: 'amarillo', senal: 'electrico' },
       { titulo: 'Bloqueo y etiquetado (LOTO)', icono: '🔒', tipo: 'sala', url: 'mundos/modulos/index.html?m=loto', nom: 'NOM-004-STPS-1999 · NOM-029-STPS-2011', color: 'azul', senal: 'guantes' },
+      // (16/11/2026) Mudadas desde el edificio de simulación, que se vació para las prácticas inmersivas del Quest 3S.
+      // Son las mismas páginas de mundos/loto/: no se movió ningún archivo, solo la puerta de entrada.
+      { titulo: 'LOTO · Aula: energías y dispositivos', icono: '🎓', tipo: '3d', url: 'mundos/loto/aula/index.html', nom: 'NOM-004-STPS-1999 · NOM-029-STPS-2011', color: 'azul', senal: 'informacion' },
+      { titulo: 'LOTO · Celda 1: Aislamiento eléctrico', icono: '⚡', tipo: '3d', url: 'mundos/loto/electrica/index.html', nom: 'NOM-029-STPS-2011, 8.1 a) y 9.4 d) 2)', color: 'amarillo', senal: 'electrico' },
+      { titulo: 'LOTO · Celda 2: Neumático e hidráulico', icono: '🫧', tipo: '3d', url: 'mundos/loto/neumatica_hidraulica/index.html', nom: 'NOM-004-STPS-1999, 7.2.2 c)', color: 'amarillo', senal: 'guantes' },
+      { titulo: 'LOTO · Celda 3: Mecánico y energía almacenada', icono: '⚙️', tipo: '3d', url: 'mundos/loto/mecanica/index.html', nom: 'NOM-004-STPS-1999, 7.2.2 c)', color: 'amarillo', senal: 'prec_general' },
+      { titulo: 'LOTO · Bloqueo grupal y cambio de turno', icono: '👥', tipo: '3d', estado: 'pendiente', nom: 'Fuera de la versión 1', color: 'azul' },
       { titulo: 'NOM-004-STPS Maquinaria', icono: '⚙️', tipo: '3d', estado: 'pronto', nom: 'NOM-004-STPS-1999', color: 'amarillo' },
       { titulo: 'NOM-036-1-STPS Cargas', icono: '📦', tipo: '3d', estado: 'pronto', nom: 'NOM-036-1-STPS-2018', color: 'amarillo' },
       { titulo: 'Sustancias químicas peligrosas', icono: '🧪', tipo: '3d', estado: 'pendiente', nom: 'NOM-005-STPS', color: 'amarillo' },
@@ -242,33 +249,30 @@ const AREAS = [
       { titulo: 'Videos explicativos', icono: '🎬', tipo: 'doc', url: 'mundos/biblioteca/videos.html' },
       { titulo: 'Presentaciones narradas', icono: '🎙️', tipo: 'doc', url: 'mundos/biblioteca/presentaciones.html' },
     ] },
-  // Edificio LOTO (21/10/2026): aula y tres celdas de simulación, con el motor de pasos del campus (mundos/loto/).
-  // Cada celda evalúa de verdad: pasos, errores menores y ERRORES CRÍTICOS que impiden aprobar (meter la mano al
-  // equipo, acercarse al volante girando, tratar la etiqueta como bloqueo). Piezas comunes en mundos/loto/comun.js.
-  // Numerales VERIFICADOS el 22/10/2026 contra el DOF: matriz normativa del curso BASE_loto_bloqueo_etiquetado_8h
-  // (01_diseno/MATRIZ_NORMATIVA_LOTO.md). Lo que ahí sigue sin verificar NO se escribe en el simulador.
-  // (03/11/2026) Renombrado a «Aula Interactiva» por decisión de Carlos: aquí se van a alojar las
-  // prácticas inmersivas de cada curso para el Meta Quest 3S, manejadas con las manos. LOTO se queda
-  // como está y es la primera; las demás se agregan a esta misma lista conforme existan.
-  // EL id SIGUE SIENDO 'loto' A PROPÓSITO: lo usan el análisis de riesgo (?e=loto), los permisos de
-  // acceso.js, SENAL_AREA, PISO_AREA y NOM_EDIFICIO. Cambiarlo rompe esas cinco cosas; el nombre que
-  // ve el participante es `nombre`, y es lo único que hay que cambiar.
-  { id: 'loto', nombre: 'Aula Interactiva', icono: '🥽', color: 0xB7791F, ang: 20, senales: ['salida', 'electrico', 'guantes'],
-    desc: 'Prácticas inmersivas por curso para visor (Meta Quest 3S), que se manejan con las manos. Hoy: control de energías peligrosas (LOTO) con aula y tres celdas de simulación —eléctrica, neumática e hidráulica, y mecánica con energía almacenada—',
+  // Edificio de SIMULACIÓN INMERSIVA (16/11/2026). Carlos pidió prácticas en 3D lo más reales posible para el
+  // Meta Quest 3S, de siete temas. Lo que vivía aquí —el aula de LOTO y sus tres celdas, hechas para pantalla—
+  // se mudó a Industria, que ya tenía la sala de LOTO y las NOM-004 / NOM-029. Los archivos NO se movieron: siguen
+  // en mundos/loto/ y solo cambió de edificio la puerta. La puerta «Examen y constancia con folio» se borró.
+  // Cada celda nueva vive en mundos/simulacion/<tema>/ y se maneja con las manos (motor/manos.js).
+  // EL id SIGUE SIENDO 'loto' A PROPÓSITO: lo usan el análisis de riesgo (?e=loto), los permisos de acceso.js,
+  // SENAL_AREA, PISO_AREA y NOM_EDIFICIO. Cambiarlo rompe esas cinco cosas; el nombre que ve el participante es `nombre`.
+  { id: 'loto', nombre: 'Simulación Inmersiva', icono: '🥽', color: 0xB7791F, ang: 20, senales: ['salida', 'extintor', 'casco'],
+    desc: 'Prácticas inmersivas en 3D para visor Meta Quest 3S: se agarran las cosas con las manos y se evalúa lo que haces. Siete temas: extintores, primeros auxilios, LOTO, EPP, espacios confinados, trabajos en altura y comunicación de peligros (SGH)',
     modulos: [
       { titulo: 'Análisis de riesgo del edificio', icono: '🔎', tipo: '3d', url: 'mundos/riesgo/analisis/index.html?e=loto' },
-      { titulo: 'Aula: energías y dispositivos', icono: '🎓', tipo: '3d', url: 'mundos/loto/aula/index.html', nom: 'NOM-004-STPS-1999 · NOM-029-STPS-2011', color: 'azul', senal: 'informacion' },
-      { titulo: 'Celda 1: Aislamiento eléctrico', icono: '⚡', tipo: '3d', url: 'mundos/loto/electrica/index.html', nom: 'NOM-029-STPS-2011, 8.1 a) y 9.4 d) 2)', color: 'amarillo', senal: 'electrico' },
-      { titulo: 'Celda 2: Neumático e hidráulico', icono: '🫧', tipo: '3d', url: 'mundos/loto/neumatica_hidraulica/index.html', nom: 'NOM-004-STPS-1999, 7.2.2 c)', color: 'amarillo', senal: 'guantes' },
-      { titulo: 'Celda 3: Mecánico y energía almacenada', icono: '⚙️', tipo: '3d', url: 'mundos/loto/mecanica/index.html', nom: 'NOM-004-STPS-1999, 7.2.2 c)', color: 'amarillo', senal: 'prec_general' },
-      { titulo: 'Examen y constancia con folio', icono: '📄', tipo: '3d', estado: 'pronto', nom: 'Fase 3 del proyecto', color: 'azul' },
-      { titulo: 'Bloqueo grupal y cambio de turno', icono: '👥', tipo: '3d', estado: 'pendiente', nom: 'Fuera de la versión 1', color: 'azul' },
+      { titulo: 'Extintores: fuego real en el visor', icono: '🧯', tipo: '3d', url: 'mundos/simulacion/extintores/index.html', nom: 'NOM-002-STPS-2010', color: 'amarillo', senal: 'extintor' },
+      { titulo: 'Primeros auxilios: atiendo a la persona', icono: '⛑️', tipo: '3d', estado: 'pronto', nom: 'Primeros auxilios (AHA 2025)', color: 'azul', senal: 'primeros' },
+      { titulo: 'LOTO: bloqueo con las manos', icono: '🔒', tipo: '3d', estado: 'pronto', nom: 'NOM-004-STPS-1999 · NOM-029-STPS-2011', color: 'amarillo', senal: 'electrico' },
+      { titulo: 'EPP: elijo y me lo pongo', icono: '🦺', tipo: '3d', estado: 'pronto', nom: 'NOM-017-STPS-2024', color: 'azul', senal: 'casco' },
+      { titulo: 'Espacios confinados: entrada segura', icono: '🕳️', tipo: '3d', estado: 'pronto', nom: 'NOM-033-STPS-2015', color: 'amarillo', senal: 'respiratoria' },
+      { titulo: 'Trabajos en altura: arnés y anclaje', icono: '🪜', tipo: '3d', estado: 'pronto', nom: 'NOM-009-STPS-2011', color: 'amarillo', senal: 'arnes' },
+      { titulo: 'SGH: etiqueta y hoja de datos de seguridad', icono: '🏷️', tipo: '3d', estado: 'pronto', nom: 'NOM-018-STPS-2015', color: 'amarillo', senal: 'inflamable' },
     ] },
 ];
 // Práctica de cada edificio (14/10/2026): recorrido, peligros, inspección, emergencia y análisis (mundos/practicas/zona, datos_edificios.js).
 const NOM_EDIFICIO = { hospital: 'NOM-045-SSA2-2005 · NOM-002-STPS-2010', industria: 'NOM-004 · NOM-027 · NOM-029-STPS', proteccion: 'NOM-002-STPS-2010 · NOM-003-SEGOB-2011',
   laboral: 'NOM-035-STPS-2018', empresa: 'NOM-001 · NOM-036-1-STPS · AHA 2025', cafeteria: 'NOM-002-STPS-2010 (clase K) · NOM-001-STPS', biblioteca: 'NOM-001-STPS · LGPC (sismo)',
-  loto: 'NOM-004-STPS-1999 · NOM-029-STPS-2011' };
+  loto: 'NOM-002 · NOM-009 · NOM-017 · NOM-018 · NOM-033-STPS' };
 AREAS.forEach(a => { if (!NOM_EDIFICIO[a.id]) return; const i = a.modulos.findIndex(m => /^Análisis de riesgo/.test(m.titulo));
   a.modulos.splice(i + 1, 0, { titulo: 'Práctica del edificio: recorrido, peligros, inspección y emergencia', icono: '🎯', nom: NOM_EDIFICIO[a.id], tipo: '3d', url: `mundos/practicas/zona/index.html?z=${a.id}`, puerta: 'practicas/zona', color: 'amarillo', senal: 'prec_general' }); });
 const POR_PISO = 4, ANCHO_PUERTA = 1.15, PASO_PUERTA = 1.75, ALTO_PISO = 2.7;
@@ -303,7 +307,7 @@ function cartel(texto, w, h, fondo = '#154F90', color = '#fff', tam = 0.55) {
   const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4;
   return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tx, side: THREE.DoubleSide }));
 }
-const logoCERS = tex('recursos/logo_CERS.jpeg'), banner = tex('recursos/banner_AMISI_CERS.jpg');
+const logoCERS = tex('recursos/logo_cers.png'), banner = tex('recursos/banner_AMISI_CERS.jpg');
 const plano = (w, h, map, x, y, z, p = scene, ry = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map })); m.position.set(x, y, z); m.rotation.y = ry; p.add(m); return m; };
 const tocables = [], obstaculos = [];
 // Navegación del mundo exterior (rejilla de 1 m, radio 175 m): el avatar rodea obstáculos y prefiere plaza, anillo y caminos
@@ -526,25 +530,19 @@ function entrarEdificio(id) {
     I = INTERIORES[id]; dentro = id; escena = I.escena; if (scene.environment && !escena.environment) escena.environment = scene.environment;   // mismos reflejos adentro
     levantar(); ruta = []; alLlegar = null; escena.add(yo); escena.add(marca); marca.visible = false;
     yo.position.copy(I.entrada); yo.rotation.y = Math.PI; colocarCamara(); controls.maxDistance = 26;
-    // (12/11/2026) pushState y no replaceState: entrar a un edificio deja un escalón en el historial, para que el
-    // botón "Atrás" del navegador o del celular salga del edificio en lugar de salirse del campus por completo.
-    if (!(history.state && history.state.edificio === id)) history.pushState({ edificio: id }, '', '?mundo=' + id + (QA ? '&qa' : ''));
+    history.replaceState(null, '', '?mundo=' + id + (QA ? '&qa' : ''));
     $('#dTit').innerHTML = `${a.icono} ${a.nombre}<small>Camina por el pasillo y toca una puerta · siéntate en la sala de espera · toca las señales</small>`; $('#dentro').style.display = 'flex'; $('#ayuda').style.display = 'none';
     crearEtiquetasPuertas(); if (xr.activo()) xr.colocar(yo.position, 0); $('#fundido').style.opacity = 0; }, 380);
 }
-function salirEdificio(rapido, desdeHistorial) {
+function salirEdificio(rapido) {
   if (!dentro) return; const id = dentro, e = ED[id], z = Z.ZONAS.find(q => q.id === id), fuera = e ? e.frente : z.puertaMundo;
-  // si el escalón del historial es de este edificio, se sale con history.back(): así el botón "Atrás" y el botón
-  // "Salir del edificio" dejan el historial igual y no se acumulan escalones (12/11/2026)
-  if (!desdeHistorial && history.state && history.state.edificio === id) return history.back();
   const go = () => { levantar(); I.puertas.forEach(p => p.cerrar()); dentro = null; I = null; escena = scene; scene.add(yo); scene.add(marca); limpiarEtiquetasPuertas();
-    $('#dentro').style.display = 'none'; controls.maxDistance = 38;
-    if (!desdeHistorial) history.replaceState(null, '', location.pathname + (QA ? '?qa' : ''));
+    $('#dentro').style.display = 'none'; controls.maxDistance = 38; history.replaceState(null, '', location.pathname + (QA ? '?qa' : ''));
     yo.position.copy(fuera); const d = e ? fuera.clone().sub(e.g.position) : new THREE.Vector3(0, 0, 1); yo.rotation.y = Math.atan2(d.x, d.z); colocarCamara();
     if (xr.activo()) xr.colocar(yo.position, yo.rotation.y + Math.PI); $('#fundido').style.opacity = 0; };
   if (rapido) return go(); $('#fundido').style.opacity = 1; setTimeout(go, 380);
 }
-function reiniciar() { salirEdificio(true, true); history.replaceState(null, '', location.pathname + (QA ? '?qa' : '')); tweens.length = 0; ruta = []; marca.visible = false; pila.length = 0; controls.enabled = !xr.activo(); camModo = 'seguir'; levantar();
+function reiniciar() { salirEdificio(true); tweens.length = 0; ruta = []; marca.visible = false; pila.length = 0; controls.enabled = !xr.activo(); camModo = 'seguir'; levantar();
   yo.position.copy(INICIO); yo.rotation.y = Math.PI; colocarCamara(); if (xr.activo()) xr.colocar(yo.position, 0); $('#ayuda').style.display = 'block'; aviso('Regresaste al inicio del campus.'); }
 function atras() { if (dentro) return salirEdificio(); const p = pila.pop(); if (!p) return aviso('Ya estás en el punto de partida. Usa ↺ Inicio para reiniciar.'); caminarA(p, null, false); aviso('Regresando al lugar anterior…'); }
 // la puerta de entrada ya no saca del edificio con un toque accidental: pide confirmación
@@ -577,10 +575,6 @@ function fichaSenal(id) { const s = Senales.POR_ID[id];
   modal(`<h2>${s.nombre}</h2><img class="senal" src="${Senales.dataURL(id, 256)}" alt="${s.nombre}"><p><b>Tipo:</b> ${s.tipo}</p><p>${s.significado}</p>
     <p class="fuente">Fuente: ${s.norma}. Colores: rojo = alto, prohibición y equipo contra incendio; amarillo = precaución; verde = condición segura y primeros auxilios; azul = obligación (NOM-026-STPS-2008, Tabla 1; NOM-003-SEGOB-2011, 6.2).</p>`); }
 $('#bSalirEdif').onclick = () => salirEdificio();
-// (12/11/2026) "Atrás" del navegador o del celular: sale del edificio (o vuelve a entrar al avanzar), nunca del campus.
-addEventListener('popstate', () => { const st = history.state;
-  if (st && st.edificio) { if (dentro !== st.edificio) { if (dentro) salirEdificio(true, true); entrarEdificio(st.edificio); } }
-  else if (dentro) { salirEdificio(false, true); if (P.get('mundo')) history.replaceState(null, '', location.pathname + (QA ? '?qa' : '')); } });
 $('#bAtras').onclick = atras; $('#bReiniciar').onclick = reiniciar;
 $('#bInfo').onclick = abrirInfo;
 $('#bAyuda').onclick = () => modal(`<h2>❔ Cómo moverte</h2><p>• Toca el piso para caminar (el avatar sigue los caminos y rodea obstáculos); toca un edificio para ir y <b>entrar caminando</b>; adentro, toca una puerta.<br>• Toca una <b>silla</b> para sentarte y una <b>señal</b> para pararte frente a ella.<br>• En computadora: flechas o W A S D; arrastra para girar la vista y usa la rueda para acercar.<br>

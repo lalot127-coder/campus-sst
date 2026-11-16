@@ -112,7 +112,7 @@ function construirAula(sc, cfg) {
   caja(5.85, 3.36, 0.08, '#1B2633', 0, 1.95, -6.9);
   const pantalla = e('a-plane', { id: 'auPantalla', width: 5.6, height: 3.15, position: '0 1.95 -6.85', material: 'shader:flat;color:#FFFFFF' });
   // logo CERS sobre la pantalla (recurso del campus)
-  e('a-plane', { width: 0.6, height: 0.6, position: '-3.75 2.9 -6.94', material: `shader:flat;src:url(${new URL('../recursos/logo_CERS.jpeg', BASE_MOTOR).href})` });
+  e('a-plane', { width: 0.6, height: 0.6, position: '-3.75 2.9 -6.94', material: `shader:flat;src:url(${new URL('../recursos/logo_cers.png', BASE_MOTOR).href})` });
   // atril
   caja(0.7, 1.05, 0.45, '#5D4037', 2.6, 0.72, -5.4); caja(0.8, 0.06, 0.55, '#6D4C41', 2.6, 1.27, -5.4);
   // filas de sillas y mesas
@@ -293,9 +293,6 @@ function arrancar(cfg) {
   $('auAtras').onclick = () => { pausar(); location.href = volver; };
   $('auInicio').onclick = () => { pausar(); location.href = new URL('../index.html?plaza', BASE_MOTOR).href; };
   $('auSalir').onclick = () => { pausar(); location.href = new URL('../index.html?salir', BASE_MOTOR).href; };
-  // (12/11/2026) "Atrás" del navegador o del celular: regresa al edificio del curso, no se sale del campus.
-  history.pushState({ aula: 1 }, '');
-  addEventListener('popstate', () => { history.pushState({ aula: 1 }, ''); pausar(); location.href = volver; });
   $('auComp').onclick = () => { const u = location.href.split('#')[0];
     if (window.Compartir) Compartir.abrir(u, `🎓 Aula · ${cfg.titulo} · Campus SST`); else { navigator.clipboard && navigator.clipboard.writeText(u); aviso('🔗 Enlace copiado'); } };
   if (!window.Compartir) { const s = document.createElement('script'); s.src = new URL('compartir.js', BASE_MOTOR).href; document.head.appendChild(s); }

@@ -133,11 +133,9 @@ Z.forEach((zona, i) => {
     const ry = lateral ? lateral * Math.PI / 2 : (s.lado < 0 ? 0 : Math.PI);   // de frente a la puerta / al centro de la sala
     const g = R.prop(W, r.prop, x, z, ry); g.scale.setScalar(1.12); OBST.push(g);
     const b = new THREE.Box3().setFromObject(g), tam = b.getSize(new THREE.Vector3()), cen = b.getCenter(new THREE.Vector3());
-    // (12/11/2026) zona de toque más amplia: en celular y tablet costaba mucho atinarle al objeto
-    const hit = new THREE.Mesh(new THREE.BoxGeometry(Math.max(1.0, tam.x + 0.35), Math.max(1.0, tam.y + 0.25), Math.max(1.0, tam.z + 0.35)), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+    const hit = new THREE.Mesh(new THREE.BoxGeometry(Math.max(0.7, tam.x + 0.2), Math.max(0.7, tam.y + 0.2), Math.max(0.7, tam.z + 0.2)), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
     hit.position.copy(cen); scene.add(hit); const tipo = zona.id + ':' + r.id; hit.userData = { tipo, ref: hit }; hit.userData.sinSombra = true;
     const mk = marcador(cen.x, b.max.y + 0.5, cen.z, r.icono, r.nombre); mk.g = g;
-    mk.marco.userData = { tipo, ref: hit };   // el aro flotante también se puede tocar (es lo que se ve de lejos)
     // aro en el piso para resaltar el riesgo principal (W.resaltar necesita una malla con material)
     const aro = new THREE.Mesh(new THREE.RingGeometry(Math.max(0.45, Math.max(tam.x, tam.z) * 0.6), Math.max(0.55, Math.max(tam.x, tam.z) * 0.6 + 0.12), 40), M(0x1F6FB2, { emissive: 0x000000, side: THREE.DoubleSide }));
     aro.rotation.x = -Math.PI / 2; aro.position.set(cen.x, 0.03, cen.z); aro.visible = false; aro.userData.sinSombra = true; scene.add(aro); mk.aro = aro; mk.hit = hit; mk.zona = zona.id; mk.sala = i; S[tipo] = mk; ITEMS.push({ tipo, r, mk });
@@ -162,17 +160,6 @@ const salaDe = () => celda(yo.position.x, yo.position.z);
 function irASala(zid) { const i = Z.findIndex(z => z.id === zid), s = sala(i); return new Promise(ok => { if (salaDe() === i) { ok(); return; } caminarA(s.xc, s.zPuerta + s.lado * 2.6, ok); }); }
 W.cuadro.push((t) => gente.actualizar(0.016));
 
-// (12/11/2026) Antes nada indicaba qué se podía inspeccionar: la persona giraba la cámara sin saber dónde tocar.
-// Ahora, en la sala donde estás, cada objeto inspeccionable lleva un aro tenue hasta que lo revisas. Lo llevan
-// todos por igual (riesgos y condiciones controladas), así que no delata la respuesta: solo dice dónde tocar.
-let salaGuia = -9;
-function guia(forzar) {
-  const i = salaDe(); if (!forzar && i === salaGuia) return; salaGuia = i;
-  ITEMS.forEach(({ mk }) => { if (mk._visto) return; const aqui = mk.sala === i;
-    mk.marco.visible = aqui; mk.marco.material.color.set(0x1F6FB2); mk.marco.material.opacity = aqui ? 0.5 : 1; });
-}
-W.cuadro.push(() => guia());
-
 // ------------------------------------------------------------------ HUD: avance por sala, pista y plano
 const $ = s => document.getElementById(s);
 const hallados = new Set();
@@ -187,10 +174,10 @@ function hud(buenas) {
 }
 $('bHud').onclick = () => { $('hud').classList.toggle('mini'); $('bHud').textContent = $('hud').classList.contains('mini') ? '▴' : '▾'; };
 $('bGeneral').onclick = () => { RC.seguir(false); W.irVista(1); };
-$('bPista').onclick = () => { const i = salaDe(); const lista = ITEMS.filter(it => it.mk.sala === i && !it.mk._visto);
+$('bPista').onclick = () => { const i = salaDe(); const lista = ITEMS.filter(it => it.mk.sala === i && !it.mk.marco.visible);
   if (!lista.length) { W.toast('info', i < 0 ? 'Entra a una sala para usar la pista.' : 'Ya inspeccionaste todo en esta sala.'); return; }
-  lista.forEach(it => { it.mk.marco.material.color.set(0xF2A900); it.mk.marco.material.opacity = 1; it.mk.marco.visible = true; }); W.toast('info', `🔍 En esta sala hay ${lista.length} objeto(s) por inspeccionar: decide cuáles son riesgos sin control.`);
-  setTimeout(() => guia(true), 3500); };
+  lista.forEach(it => { it.mk.marco.material.color.set(0x7FB3D5); it.mk.marco.visible = true; }); W.toast('info', `🔍 En esta sala hay ${lista.length} objeto(s) por inspeccionar: decide cuáles son riesgos sin control.`);
+  setTimeout(() => lista.forEach(it => { if (!it.mk._visto) { it.mk.marco.visible = false; it.mk.marco.material.color.set(0x1F6FB2); } }), 3500); };
 
 // ------------------------------------------------------------------ pasos
 const FREQ = ['A', 'B', 'C', 'D', 'E'], SEVS = ['I', 'II', 'III', 'IV'], NIVELES = ['Grave', 'Elevado', 'Medio', 'Bajo', 'Mínimo'];

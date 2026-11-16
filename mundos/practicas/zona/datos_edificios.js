@@ -403,8 +403,10 @@ Object.assign(FU, {
   [N29V]: { t: 'NOM-029-STPS-2011, Mantenimiento de las instalaciones eléctricas en los centros de trabajo. Vigente; texto verificado en el DOF (matriz normativa del curso, 22/10/2026).' },
   [PROC]: { t: 'Procedimiento de bloqueo y etiquetado de la máquina. Es el documento de la empresa: define la secuencia, los puntos de aislamiento y los dispositivos de ESA máquina.' },
 });
-Z.loto = base({ nombre: 'LOTO: aula y celdas de bloqueo', icono: '🔒', piso: 0xB9BEC3, muro: 0xEDEFF1, rotulo: 'LOTO · BLOQUEO Y ETIQUETADO',
-  intro: 'Edificio LOTO al terminar la sesión de la mañana: el aula con la máquina de demostración y, al fondo, las celdas con la prensa P-02 y el transportador T-04.' + fin,
+// (16/11/2026) El edificio pasó a llamarse «Simulación Inmersiva» y las puertas de LOTO se mudaron a Industria.
+// La planta de esta práctica NO cambió (sigue siendo el taller con la prensa y el tablero): solo su nombre y su rótulo.
+Z.loto = base({ nombre: 'Taller de simulación: celdas de práctica', icono: '🥽', piso: 0xB9BEC3, muro: 0xEDEFF1, rotulo: 'TALLER DE SIMULACIÓN',
+  intro: 'Taller del edificio de simulación al terminar la sesión de la mañana: la máquina de demostración y, al fondo, las celdas con la prensa P-02 y el transportador T-04.' + fin,
   escena: [['r:tablero', -8.5, -6.5, 0], ['r:prensa', -3.5, -6.2, 0], ['r:compresora', 3.2, -6.8, 0], ['r:cilindro_encadenado', 7.6, -7.0, 0],
     ['r:mesa', -6.5, 1.2, 0], ['r:silla', -6.5, 2.0, Math.PI], ['r:anaquel', 10.2, -2.5, -Math.PI / 2], ['r:senal_salida', 2.2, 7.85, 0],
     ['r:franja', 0, -3.4, 0], ['r:senal_obligacion', -10.4, 1.0, Math.PI / 2], ['extintor', 10.3, 3.2, -Math.PI / 2], ['r:cable_canalizado', 0, 4.6, 0],

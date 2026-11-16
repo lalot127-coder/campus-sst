@@ -22,7 +22,7 @@ h1{color:var(--navy);margin:.2rem 0 .4rem;font-size:1.45rem}.tenue{color:var(--t
 const base = location.pathname.includes('/mundos/') ? '../../' : './';
 function iniciar(cfg) {
   document.head.insertAdjacentHTML('beforeend', `<style>${CSS}</style>`);
-  document.body.insertAdjacentHTML('afterbegin', `<div id="jBarra"><img src="${base}recursos/logo_CERS.jpeg" alt="CERS"><b>${cfg.icono} ${cfg.titulo}</b>
+  document.body.insertAdjacentHTML('afterbegin', `<div id="jBarra"><img src="${base}recursos/logo_cers.png" alt="CERS"><b>${cfg.icono} ${cfg.titulo}</b>
    <div class="der"><button class="sec" id="jAtras" title="Regresar a la cafetería">⬅<span class="txt"> Atrás</span></button><button class="sec" id="jReini" title="Reiniciar el juego">↺<span class="txt"> Reiniciar</span></button>
    <button class="sec" id="jInicio" title="Inicio del campus">🏠<span class="txt"> Inicio</span></button><button class="sec" id="jComp" title="Compartir">🔗</button><button class="sec rojo" id="jSalir" title="Salir">✖<span class="txt"> Salir</span></button></div></div>
    <div id="jToast"></div><div id="jModal"><div class="caja" id="jCaja"></div></div>`);
