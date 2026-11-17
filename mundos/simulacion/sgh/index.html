@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulación inmersiva · SGH</title>
+<script type="importmap">{"imports":{"three":"../../../motor/vendor/three/build/three.module.js","three/addons/":"../../../motor/vendor/three/examples/jsm/"}}</script>
+<script src="../../../motor/realismo.js"></script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../../motor/manos.js"></script>
+<script src="../../riesgo/comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// =====================================================================================================
+// CELDA INMERSIVA DE SGH — Edificio de Simulación Inmersiva (17/11/2026). La séptima y última.
+//
+// Lo que se hace con las manos: ARMAR la etiqueta del recipiente, elemento por elemento, llevando cada uno
+// al tambo. Es un trabajo que en papel se resuelve marcando casillas y que aquí obliga a decidir pieza por
+// pieza, con dos trampas que son errores reales: poner a la vez "Peligro" y "Atención", y añadir el signo de
+// exclamación cuando ya hay calavera.
+//
+// FUENTES: NOM-018-STPS-2015. Los numerales 6.4 y 6.5 ya estaban en el registro de fuentes verificadas.
+// Los demás se leyeron el 17/11/2026 DIRECTAMENTE del texto oficial guardado en
+// 02_fuentes_verificadas/documentos_oficiales/analisis_riesgo/NOM-018-STPS-2015.txt:
+//   10.5 a)-d) elementos de la señalización (nombre, palabra de advertencia, pictogramas, código H e
+//     indicación de peligro); en la etiqueta se añaden los códigos P y los consejos de prudencia.
+//   10.5 b) cuando se utilice "Peligro" NO deberá aparecer "Atención".
+//   10.6 no usar el signo de exclamación cuando se utilice calavera y tibias cruzadas, corrosión para
+//     irritación cutánea u ocular, o sensibilización respiratoria.
+//   10.2 los elementos de la señalización deben coincidir con la información de la HDS.
+//   9.2 la hoja de datos de seguridad debe contar con 16 secciones.
+//   6.6 informar a trabajadores y contratistas sobre los elementos de la HDS.
+// PENDIENTE: pasar estos numerales al registro de fuentes verificadas (hoy solo tiene 6.4 y 6.5).
+//
+// PENDIENTE DE CALIBRAR EN EL VISOR: la pose con la que cada placa queda sujeta en la mano.
+// =====================================================================================================
+const N18 = 'NOM-018-STPS-2015';
+const F = {
+  elementos: `${N18}, 10.5 a)-d)`,
+  advertencia: `${N18}, 10.5 b) (si se usa "Peligro" no debe aparecer "Atención")`,
+  exclamacion: `${N18}, 10.6 (sin signo de exclamación si hay calavera y tibias cruzadas)`,
+  coincide: `${N18}, 10.2 (la señalización coincide con la HDS)`,
+  hds: `${N18}, 9.2 (la HDS cuenta con 16 secciones)`,
+  informar: `${N18}, 6.6 (informar a trabajadores y contratistas)`,
+  recipientes: `${N18}, 6.4 y 6.5 (señalización e identificación de recipientes)`,
+};
+const FIC = 'Almacén, empresa y sustancia ficticios, para ejercicio didáctico.';
+const POSE = [0, -0.04, -0.10, -0.3, 0, 0], R_AGARRE = 0.36, R_COLOCAR = 0.42;
+
+const W = MotorSim.crearMundo(THREE, OrbitControls, {
+  titulo: 'SGH: etiqueta y hoja de datos de seguridad', icono: '🏷️', clave: 'sim_sgh',
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xD2D9DF, piso: 'concreto_pulido', xr: false,
+  campus: '../../../index.html?mundo=loto',   // el edificio sigue teniendo el id 'loto' (ver index.html)
+  vistas: [[[0, 1.8, 3.2], [0, 1.0, -0.4]], [[-2.0, 1.6, 1.4], [-2.4, 1.1, -0.6]],
+    [[1.0, 1.5, 1.5], [0.6, 0.9, -0.3]], [[2.4, 1.6, 1.4], [2.8, 1.1, -0.6]]],
+  radioSombra: 10 });
+const { scene, camera, renderer, caja, cil, tocable, letrero, M } = W;
+const { decidir, intro } = window.Riesgo;
+W.controls.maxDistance = 12;
+
+// ------------------------------------------------------------------ almacén
+const entorno = new THREE.Group(); scene.add(entorno);
+const piso = new THREE.Mesh(new THREE.PlaneGeometry(12, 10), M(0xAEB8C0)); piso.rotation.x = -Math.PI / 2; entorno.add(piso);
+caja(12, 3.2, 0.14, 0xE4E9ED, 0, 1.6, -5, entorno);
+const rot = letrero('ALMACÉN DE SUSTANCIAS QUÍMICAS [FICTICIO]', 2.6, 0.28, '#B45309');
+rot.position.set(0, 2.5, -4.92); entorno.add(rot);
+
+// el tambo que hay que etiquetar
+const TAMBO = new THREE.Group(); TAMBO.position.set(0, 0, -0.5); scene.add(TAMBO);
+cil(0.32, 0.9, 0x1565C0, 0, 0.45, 0, TAMBO);
+[0.18, 0.72].forEach(y => { const a = new THREE.Mesh(new THREE.TorusGeometry(0.325, 0.02, 8, 24), M(0x0D47A1)); a.rotation.x = Math.PI / 2; a.position.y = y; TAMBO.add(a); });
+cil(0.3, 0.03, 0x0D47A1, 0, 0.91, 0, TAMBO);
+const PANEL = caja(0.46, 0.5, 0.01, 0xFFFFFF, 0, 0.5, 0.325, TAMBO);
+tocable(PANEL, 'etiqueta', 0.55);
+const rotT = letrero('TAMBO SIN IDENTIFICAR', 0.9, 0.12, '#B01824'); rotT.position.set(0, 1.12, -0.5); scene.add(rotT);
+
+// ------------------------------------------------------------------ pictogramas del SGH, dibujados a mano
+// Rombo de borde rojo sobre fondo blanco con el símbolo dentro (definición 4.39 de la norma).
+function rombo(simbolo) {
+  const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+  x.clearRect(0, 0, 256, 256);
+  x.save(); x.translate(128, 128); x.rotate(Math.PI / 4);
+  x.fillStyle = '#FFFFFF'; x.fillRect(-82, -82, 164, 164);
+  x.lineWidth = 16; x.strokeStyle = '#D32F2F'; x.strokeRect(-82, -82, 164, 164); x.restore();
+  x.font = '900 104px Arial, Helvetica, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillStyle = '#111111'; x.fillText(simbolo, 128, 132);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(0.17, 0.17), new THREE.MeshBasicMaterial({ map: t, transparent: true }));
+  const g = new THREE.Group(); g.add(m); return g;
+}
+
+// ------------------------------------------------------------------ las placas de la mesa
+const mesa = caja(2.4, 0.06, 0.6, 0x8D6E63, -2.4, 0.9, -0.6, entorno);
+[[-3.5, -0.85], [-1.3, -0.85], [-3.5, -0.35], [-1.3, -0.35]].forEach(([x, z]) => caja(0.07, 0.9, 0.07, 0x6D4C41, x, 0.45, z, entorno));
+
+// ok: va en la etiqueta · crit: ponerlo es error crítico
+const ELEMENTOS = [
+  { id: 'nombre', n: 'Nombre de la sustancia', ok: true, hacer: () => letrero('METANOL', 0.26, 0.07, '#FFFFFF', '#263238'),
+    fb: 'El nombre de la sustancia: sin él, la etiqueta no identifica nada.' },
+  { id: 'peligro', n: 'Palabra: PELIGRO', ok: true, hacer: () => letrero('PELIGRO', 0.22, 0.07, '#FFFFFF', '#C62828'),
+    fb: 'La palabra de advertencia que corresponde a la categoría de peligro de esta sustancia.' },
+  { id: 'calavera', n: 'Pictograma: calavera', ok: true, hacer: () => rombo('☠'),
+    fb: 'Pictograma de toxicidad aguda: el metanol es tóxico por ingestión, piel e inhalación.' },
+  { id: 'llama', n: 'Pictograma: llama', ok: true, hacer: () => rombo('🔥'),
+    fb: 'Pictograma de inflamable: el metanol es un líquido inflamable. Una sustancia puede llevar varios pictogramas.' },
+  { id: 'codigoH', n: 'Código H e indicación', ok: true, hacer: () => letrero('H225 · H301', 0.26, 0.07, '#FFFFFF', '#0E3A6B'),
+    fb: 'El código de identificación de peligro H con su indicación de peligro, del Apéndice C de la norma.' },
+  { id: 'atencion', n: 'Palabra: ATENCIÓN', ok: false, crit: false, hacer: () => letrero('ATENCIÓN', 0.24, 0.07, '#111111', '#FFC107'),
+    fb: 'No van las dos: cuando se utiliza "Peligro", NO debe aparecer "Atención". Son dos grados distintos del mismo aviso.' },
+  { id: 'exclamacion', n: 'Pictograma: exclamación', ok: false, crit: true, hacer: () => rombo('❗'),
+    fb: 'No se debe usar el signo de exclamación cuando ya se utiliza la calavera y tibias cruzadas. Juntos, el aviso leve le quita fuerza al grave: quien lee ve el signo suave y baja la guardia ante algo que mata.' },
+];
+
+const manos = Manos.activar(W);
+const OBJ = {};
+ELEMENTOS.forEach((e, i) => {
+  const g = e.hacer(); const col = i % 4, fil = i < 4 ? 0 : 1;
+  g.position.set(-3.25 + col * 0.56, 0.98 + fil * 0.0, -0.6 - fil * 0.28);
+  scene.add(g); OBJ[e.id] = g;
+  g.rotation.x = -1.1;
+  tocable(g, 'el_' + e.id, 0.26);
+  manos.agarrable(g, { r: R_AGARRE, pose: POSE });
+  const l = letrero(e.n, 0.46, 0.075, '#FFFFFF', '#455A64');
+  l.position.set(g.position.x, g.position.y + 0.005, g.position.z + 0.2); l.rotation.x = -1.3; scene.add(l);
+});
+
+// la HDS en el atril
+const atril = caja(0.5, 0.04, 0.36, 0x546E7A, 2.6, 0.95, -0.6, entorno); atril.rotation.x = -0.4;
+caja(0.08, 0.9, 0.08, 0x455A64, 2.6, 0.47, -0.6, entorno);
+const HDS = caja(0.34, 0.005, 0.26, 0xFFFFFF, 2.6, 0.99, -0.58, entorno); HDS.rotation.x = -0.4;
+tocable(HDS, 'hds', 0.5);
+const rotH = letrero('HOJA DE DATOS DE SEGURIDAD', 0.9, 0.1, '#0E3A6B'); rotH.position.set(2.6, 1.3, -0.6); entorno.add(rotH);
+
+// ------------------------------------------------------------------ llevar una placa a la etiqueta
+const vO = new THREE.Vector3(), vD = new THREE.Vector3();
+const ETQ_P = [0, 0.5, -0.17];   // el panel blanco del tambo, en el mundo
+function alLlevar(id, fn) {
+  let hecho = false;
+  W.cuadro.push(() => {
+    if (hecho || !renderer.xr.isPresenting || !manos.enMano(OBJ[id])) return;
+    OBJ[id].getWorldPosition(vO);
+    if (vO.distanceTo(vD.set(ETQ_P[0], ETQ_P[1], ETQ_P[2])) > R_COLOCAR) return;
+    hecho = true; fn();
+  });
+}
+const setModo = sel => { if (sel === 'evaluacion') W.resaltar = () => { }; };
+const puestos = new Set();
+
+// ------------------------------------------------------------------ pasos
+function pasos() {
+  return [
+    intro(W, `<h2>🏷️ SGH: etiqueta y hoja de datos</h2>
+      <p>Llegó un <b>tambo de metanol</b> al almacén y viene sin identificar. Hay que señalizarlo.</p>
+      <p><b>En el visor:</b> acerca la mano a la placa de la mesa y aprieta el <b>gatillo</b> o el botón lateral
+      para tomarla; con manos libres, <b>pellizca</b>. Luego <b>llévala al panel blanco del tambo</b>.</p>
+      <p><b>En pantalla:</b> toca la placa para tomarla y después toca el panel del tambo.</p>
+      <p>En la mesa hay siete placas y <b>no todas van</b>. Dos de ellas son errores que se ven todos los días en
+      almacenes reales.</p>`, FIC),
+
+    { titulo: '1 · ¿De dónde sale lo que va en la etiqueta?', texto: 'Antes de pegar nada.', fuente: F.coincide,
+      iniciar() { W.irVista(3); W.resaltar([HDS]);
+        decidir(W, '¿De dónde tomas los datos para señalizar el tambo?', [
+          { t: 'De la hoja de datos de seguridad de esa sustancia: la señalización tiene que coincidir con ella', ok: true, fb: 'Si la etiqueta dice una cosa y la HDS otra, quien la lea no sabe a cuál hacerle caso.', f: F.coincide },
+          { t: 'De lo que diga el proveedor por teléfono', ok: false, fb: 'Lo que vale es la HDS de la sustancia, que además debe estar disponible.', f: F.coincide },
+          { t: 'De otra etiqueta parecida que ya tengamos en el almacén', ok: false, crit: true, fb: 'Copiar la etiqueta de otra sustancia es cómo se termina con un tambo de tóxico marcado como si fuera inocuo.', f: F.coincide },
+        ], () => { W.resaltar([]); W.siguiente(); }); } },
+
+    { titulo: '2 · Arma la etiqueta', puntos: 50, fuente: F.elementos,
+      texto: 'Lleva al panel del tambo <b>los cinco elementos que sí van</b>. Las otras dos placas son trampas. <b>(0/5)</b>',
+      iniciar() { W.irVista(1); W.resaltar(ELEMENTOS.filter(e => e.ok).map(e => OBJ[e.id]));
+        ELEMENTOS.forEach(e => alLlevar(e.id, () => this.pegar(e.id))); },
+      pegar(id) {
+        const e = ELEMENTOS.find(x => x.id === id); if (!e || puestos.has(id)) return;
+        if (!e.ok) { manos.soltar(OBJ[id]);
+          return W.mal(e.fb, id === 'exclamacion' ? F.exclamacion : F.advertencia, !!e.crit); }
+        puestos.add(id); manos.soltar(OBJ[id], TAMBO);
+        const k = puestos.size - 1;
+        OBJ[id].position.set(k < 3 ? -0.12 + k * 0.12 : -0.09 + (k - 3) * 0.18, 0.66 - Math.floor(k / 3) * 0.17, 0.335);
+        OBJ[id].rotation.set(0, 0, 0);
+        W.bien(e.fb, F.elementos);
+        const bs = W.$('pTxt').querySelectorAll('b'); const n = bs[bs.length - 1];
+        if (n) n.textContent = `(${puestos.size}/5)`;
+        if (puestos.size === 5) { W.resaltar([]); rotT.visible = false; setTimeout(() => W.siguiente(), 700); } },
+      tocar(o) { const t = (o.userData.tipo || '');
+        if (t.startsWith('el_')) { const id = t.slice(3); if (puestos.has(id)) return;
+          manos.tomar(OBJ[id]); return W.toast('ok', 'En la mano: llévala al panel del tambo.'); }
+        if (t !== 'etiqueta') return;
+        const e = ELEMENTOS.find(x => manos.enMano(OBJ[x.id]));
+        if (!e) return W.toast('info', 'Toma primero una placa de la mesa.');
+        this.pegar(e.id); } },
+
+    { titulo: '3 · La hoja de datos de seguridad', texto: 'El tambo ya quedó identificado. Ahora el documento.',
+      fuente: F.hds,
+      iniciar() { W.irVista(3); W.resaltar([HDS]);
+        decidir(W, '¿Con cuántas secciones debe contar la hoja de datos de seguridad?', [
+          { t: '16 secciones', ok: true, fb: 'Dieciséis, siempre en el mismo orden: por eso cualquiera encuentra rápido lo que busca, venga de donde venga la hoja.', f: F.hds },
+          { t: 'Las que considere el fabricante', ok: false, fb: 'El orden y el número están fijados: esa es la parte "armonizada" del sistema.', f: F.hds },
+          { t: '4 secciones: identificación, peligros, primeros auxilios y contacto', ok: false, fb: 'Son 16. Las que mencionas están entre ellas, pero faltan doce.', f: F.hds },
+        ], () => { W.resaltar([]); W.siguiente(); }); } },
+
+    { titulo: '4 · Llega un contratista', texto: 'Va a trabajar una semana en este almacén.', fuente: F.informar,
+      iniciar() { W.irVista(0);
+        decidir(W, 'Un contratista externo va a manejar estas sustancias. ¿Qué corresponde?', [
+          { t: 'Informarle sobre los elementos de la hoja de datos de seguridad, igual que a los trabajadores', ok: true, fb: 'La norma incluye expresamente a los contratistas: el riesgo no distingue quién firma la nómina.', f: F.informar },
+          { t: 'Nada: es de otra empresa y su patrón verá', ok: false, crit: true, fb: 'Quien maneja la sustancia tiene que saber a qué se expone, sea de planta o contratista.', f: F.informar },
+          { t: 'Darle una copia de la HDS y que la lea por su cuenta', ok: false, fb: 'Entregar el papel no es informar: hay que explicarle los elementos de la hoja.', f: F.informar },
+        ], () => W.siguiente()); } },
+
+    { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', sinPuntos: true,
+      iniciar() { W.resaltar([]);
+        W.aviso(`<h2>🏷️ Celda terminada</h2>
+          <p>Armaste la señalización del tambo con sus elementos: <b>nombre</b>, <b>palabra de advertencia</b>,
+          <b>pictogramas</b> y <b>código H con su indicación de peligro</b>, tomados de la HDS.</p>
+          <p>Las dos trampas eran las de siempre: poner <b>"Peligro" y "Atención" juntas</b>, y añadir el
+          <b>signo de exclamación</b> donde ya hay calavera. La segunda es la grave: el aviso leve junto al grave
+          hace que quien lee baje la guardia.</p>
+          <p class="ficticio">${FIC} Basado en ${N18}: 6.4, 6.5, 6.6, 9.2, 10.2, 10.5 a)-d) y 10.6.</p>`,
+          () => W.siguiente(), 'Ver resultado'); } },
+  ];
+}
+
+W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel resalta en azul lo que toca' },
+  { id: 'evaluacion', txt: '📝 <b>Evaluación:</b> sin ayudas en pantalla; tú decides qué hacer' }],
+  sel => { setModo(sel); return pasos(); },
+  `Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Basado en ${N18}: 6.4, 6.5, 6.6, 9.2, 10.2, 10.5 a)-d) y 10.6. Almacén y sustancia ficticios. ` +
+  'Esta celda está hecha para el Meta Quest 3S: ábrela en el navegador del visor y entra con 🥽 VR.');
+
+W.activarXR({ inicio: [0, 1.6], piso, entorno: entorno.children });
+
+if (location.search.includes('qa')) window.__qa = { W, TAMBO, PANEL, OBJ, ELEMENTOS, HDS, manos, puestos,
+  tocar: W.tocar, qa: W.qa };
+</script>
+</body>
+</html>

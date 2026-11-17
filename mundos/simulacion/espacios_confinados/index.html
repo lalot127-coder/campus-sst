@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulación inmersiva · Espacios confinados</title>
+<script type="importmap">{"imports":{"three":"../../../motor/vendor/three/build/three.module.js","three/addons/":"../../../motor/vendor/three/examples/jsm/"}}</script>
+<script src="../../../motor/senales.js"></script>
+<script src="../../../motor/realismo.js"></script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../../motor/manos.js"></script>
+<script src="../../riesgo/comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Props } from '../../../motor/props.js';
+
+// =====================================================================================================
+// CELDA INMERSIVA DE ESPACIOS CONFINADOS — Edificio de Simulación Inmersiva (17/11/2026)
+//
+// La séptima y última celda del edificio. Lo que se practica con las manos es lo que de verdad mata cuando se
+// omite: VENTILAR y MEDIR antes de entrar. Se toma el ventilador y se lleva a la boca del tanque; se toma el
+// detector y se baja al interior. Equivocarse de ventilador (el de gasolina) es error crítico.
+//
+// FUENTES: NOM-033-STPS-2015 (DOF 31/08/2015). SOLO se usan los numerales VERIFICADOS en
+// 02_fuentes_verificadas/registro_fuentes.md: 4.1 definición; 5.2 análisis previo por personal capacitado;
+// 7.1 evitar el ingreso preferentemente; 7.4 análisis por espacio y por trabajo; 7.5 a)-j) contenido del
+// análisis; 7.7 medidas de prevención y control; 7.8 disponible y firmado; 9.1 x) prohibido el trabajo
+// individual; 9.1 z) prohibido introducir equipos de combustión interna; 9.3 a) y b) ventilación/purga y
+// control de la atmósfera.
+// NO se citan numerales para el permiso de entrada, el orden de medición de gases ni el equipo de rescate:
+// esos NO están verificados. Lo que se enseña sin numeral va marcado como buena práctica.
+//
+// PENDIENTE DE CALIBRAR EN EL VISOR: la pose con la que el ventilador y el detector quedan sujetos en la mano.
+// El radio para colocar (R_COLOCAR) ya se probó con el Quest el 17/11/2026.
+// =====================================================================================================
+const N33 = 'NOM-033-STPS-2015';
+const F = {
+  def: `${N33}, 4.1 (definición de espacio confinado)`,
+  evitar: `${N33}, 7.1 (evitar el ingreso, preferentemente)`,
+  analisis: `${N33}, 5.2 (análisis previo por personal capacitado) y 7.4 (por espacio y por trabajo)`,
+  contenido: `${N33}, 7.5 a)-j) (contenido del análisis)`,
+  firmado: `${N33}, 7.8 (análisis disponible y firmado)`,
+  medidas: `${N33}, 7.7 (medidas de prevención y control)`,
+  atmosfera: `${N33}, 9.3 a) y b) (ventilación o purga y control de la atmósfera)`,
+  combustion: `${N33}, 9.1 z) (prohibido introducir equipos de combustión interna)`,
+  solo: `${N33}, 9.1 x) (prohibido el trabajo individual)`,
+  bp: 'Buena práctica técnica (sin numeral verificado)',
+};
+const FIC = 'Planta, tanque, personas y análisis de riesgos ficticios, para ejercicio didáctico.';
+const POSE_VENT = [0, -0.10, -0.22, -0.3, 0, 0], POSE_DET = [0, -0.05, -0.11, -0.4, 0, 0];
+const R_AGARRE = 0.42, R_COLOCAR = 0.40;   // R_COLOCAR probado con el Quest el 17/11/2026
+
+const W = MotorSim.crearMundo(THREE, OrbitControls, {
+  titulo: 'Espacios confinados: entrada segura', icono: '🕳️', clave: 'sim_espacios_confinados',
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xCBD5DC, piso: 'concreto', xr: false,
+  campus: '../../../index.html?mundo=loto',   // el edificio sigue teniendo el id 'loto' (ver index.html)
+  vistas: [[[0, 2.4, 5.2], [0, 1.0, -0.6]], [[-2.6, 1.8, 1.8], [-3.2, 1.2, -0.6]],
+    [[1.2, 2.8, 2.0], [0, 1.5, -0.4]], [[2.8, 1.8, 1.6], [3.4, 1.2, -0.2]]],
+  radioSombra: 12 });
+const { scene, camera, renderer, caja, cil, esfera, tocable, letrero, M } = W;
+const { decidir, intro } = window.Riesgo;
+const P3 = Props(THREE);
+W.controls.maxDistance = 16;
+
+// ------------------------------------------------------------------ patio de la planta
+const entorno = new THREE.Group(); scene.add(entorno);
+const piso = new THREE.Mesh(new THREE.PlaneGeometry(16, 14), M(0x9FA8AE)); piso.rotation.x = -Math.PI / 2; entorno.add(piso);
+caja(16, 3.4, 0.16, 0xDDE3E8, 0, 1.7, -7, entorno);
+const rot = letrero('PLANTA · TANQUE TK-14 [FICTICIO]', 2.6, 0.3, '#B45309'); rot.position.set(0, 2.9, -6.9); entorno.add(rot);
+
+// El tanque: cilindro acostado con una boca de hombre arriba. Esa boca es el espacio confinado.
+const TK = new THREE.Group(); TK.position.set(0, 0, -1.2); scene.add(TK);
+const cuerpo = cil(1.3, 4.2, 0x8C99A4, 0, 1.45, 0, TK); cuerpo.rotation.z = Math.PI / 2;
+[-2.1, 2.1].forEach(x => { const t = cil(1.3, 0.1, 0x7A868F, x, 1.45, 0, TK); t.rotation.z = Math.PI / 2; });
+[-1.3, 1.3].forEach(x => caja(0.3, 0.3, 1.2, 0x6D7B85, x, 0.15, 0, TK));
+const BOCA = cil(0.33, 0.18, 0x5D6B75, 0, 2.78, 0, TK);
+const aro = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.035, 8, 24), M(0xB0BEC5, { metalness: .7 }));
+aro.rotation.x = Math.PI / 2; aro.position.set(0, 2.87, 0); TK.add(aro);
+tocable(BOCA, 'boca', 0.6);
+const rotB = letrero('BOCA DE HOMBRE', 0.8, 0.12, '#B01824'); rotB.position.set(0, 3.15, 0); TK.add(rotB);
+const BOCA_P = [0, 2.9, -1.2];   // en coordenadas del mundo
+
+// señal de la NOM-026 y escalerilla
+const cv = Senales.canvas('respiratoria', 256), tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+const sen = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5 * cv.height / cv.width), new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
+sen.position.set(0.9, 2.1, 0.1); TK.add(sen);
+for (let i = 0; i < 6; i++) caja(0.5, 0.04, 0.04, 0xB0BEC5, 0, 0.5 + i * 0.42, 1.28, TK);
+
+// tripié de rescate junto a la boca (decorativo: su numeral NO está verificado, así que no se evalúa)
+const trip = P3.tripie(); trip.position.set(1.7, 0, 0.9); trip.scale.setScalar(0.6);   // de pie en el patio, junto al tanque scene.add(trip);
+
+// ------------------------------------------------------------------ el tablero con el análisis de riesgos
+const tablero = caja(1.0, 0.75, 0.06, 0xECEFF1, -3.2, 1.3, -0.6, entorno);
+const hoja = caja(0.8, 0.58, 0.01, 0xFFFFFF, -3.2, 1.3, -0.56, entorno);
+tocable(hoja, 'analisis', 0.6);
+const rotA = letrero('ANÁLISIS DE RIESGOS · TK-14', 0.9, 0.11, '#0E3A6B'); rotA.position.set(-3.2, 1.78, -0.56); entorno.add(rotA);
+
+// ------------------------------------------------------------------ el vigía
+const VIG = new THREE.Group(); VIG.position.set(2.6, 0, 0.4); scene.add(VIG);
+cil(0.17, 0.72, 0xF57C00, 0, 0.76, 0, VIG, 0.2); esfera(0.12, 0xD9A47E, 0, 1.28, 0, VIG);
+[-1, 1].forEach(s => cil(0.05, 0.62, 0xF57C00, 0.22 * s, 0.82, 0, VIG));
+tocable(VIG, 'vigia', 0.9);
+const rotV = letrero('COMPAÑERO', 0.5, 0.12, '#E65100'); rotV.position.set(2.6, 1.62, 0.4); scene.add(rotV);
+
+// ------------------------------------------------------------------ equipo que se agarra
+const VENT = P3.ventilador(); VENT.position.set(-1.9, 0, 1.6); VENT.scale.setScalar(0.5); scene.add(VENT);
+tocable(VENT, 'ventilador', 0.5);
+const rotVe = letrero('VENTILADOR ELÉCTRICO', 0.9, 0.11, '#2E7D32'); rotVe.position.set(-1.9, 0.6, 1.6); scene.add(rotVe);
+
+// El ventilador de gasolina: la trampa del 9.1 z)
+const GAS = new THREE.Group(); GAS.position.set(-0.6, 0, 2.0); scene.add(GAS);
+const gc = cil(0.2, 0.28, 0xC62828, 0, 0.3, 0, GAS); gc.rotation.x = Math.PI / 2;
+caja(0.22, 0.2, 0.26, 0x37474F, 0, 0.32, -0.26, GAS); cil(0.03, 0.22, 0x263238, 0.1, 0.52, -0.26, GAS);
+caja(0.16, 0.2, 0.12, 0xE53935, -0.3, 0.1, -0.1, GAS);   // bidón de gasolina
+tocable(GAS, 'ventilador_gasolina', 0.5);
+const rotGa = letrero('VENTILADOR DE GASOLINA', 0.95, 0.11, '#B01824'); rotGa.position.set(-0.6, 0.72, 2.0); scene.add(rotGa);
+
+const DET = P3.detectorGases(); DET.position.set(-3.2, 0.95, -0.2); scene.add(DET);
+tocable(DET, 'detector', 0.32);
+const rotD = letrero('DETECTOR MULTIGÁS', 0.75, 0.11, '#0E3A6B'); rotD.position.set(-3.2, 0.9, 0.05); scene.add(rotD);
+const mesita = caja(0.7, 0.05, 0.5, 0x8D6E63, -3.2, 0.92, -0.2, entorno);
+
+const manos = Manos.activar(W);
+manos.agarrable(VENT, { r: R_AGARRE, pose: POSE_VENT });
+manos.agarrable(GAS, { r: R_AGARRE, pose: POSE_VENT });
+manos.agarrable(DET, { r: R_AGARRE, pose: POSE_DET });
+
+// Llevar algo agarrado a la boca del tanque. En el VISOR se coloca solo al acercarlo; en PANTALLA se coloca
+// tocando la boca, porque la pieza cuelga de la cámara y llegaría sola al caminar.
+const vO = new THREE.Vector3(), vD = new THREE.Vector3();
+function alLlevar(obj, fn) {
+  let hecho = false;
+  W.cuadro.push(() => {
+    if (hecho || !renderer.xr.isPresenting || !manos.enMano(obj)) return;
+    obj.getWorldPosition(vO);
+    if (vO.distanceTo(vD.set(BOCA_P[0], BOCA_P[1], BOCA_P[2])) > R_COLOCAR + 0.3) return;
+    hecho = true; fn();
+  });
+}
+const setModo = sel => { if (sel === 'evaluacion') W.resaltar = () => { }; };
+const estado = { ventilado: false, medido: false };
+
+// lectura del detector, que cambia al ventilar
+const lectura = letrero('O₂ 17.2 %   LEL 12 %   H₂S 15 ppm', 1.5, 0.16, '#FFFFFF', '#B01824');
+lectura.position.set(0, 3.55, -1.2); lectura.visible = false; scene.add(lectura);
+
+// ------------------------------------------------------------------ pasos
+function pasos() {
+  return [
+    intro(W, `<h2>🕳️ Espacios confinados: entrada segura</h2>
+      <p>Hay que limpiar por dentro el <b>tanque TK-14</b>. Un espacio confinado es un lugar con entradas y
+      salidas limitadas, no pensado para estar dentro, donde la atmósfera puede ser peligrosa.</p>
+      <p><b>En el visor:</b> acerca la mano al equipo y aprieta el <b>gatillo</b> o el botón lateral para tomarlo;
+      con manos libres, <b>pellizca</b>. Luego <b>llévalo a la boca del tanque</b>.</p>
+      <p><b>En pantalla:</b> toca el equipo para tomarlo y después toca la boca de hombre.</p>
+      <p>Esta es la práctica donde más gente muere por querer ahorrarse un paso.</p>`, FIC),
+
+    { titulo: '1 · ¿De verdad hay que entrar?', texto: 'La primera pregunta no es cómo entrar.', fuente: F.evitar,
+      iniciar() { W.irVista(0); W.resaltar([BOCA]);
+        decidir(W, 'El trabajo es limpiar el interior del TK-14. ¿Por dónde empiezas?', [
+          { t: 'Veo primero si el trabajo se puede hacer SIN entrar: la norma pide evitar el ingreso, preferentemente', ok: true, fb: 'La entrada que no ocurre es la única cien por ciento segura. Si se puede limpiar desde fuera, se limpia desde fuera.', f: F.evitar },
+          { t: 'Entro rápido: son cinco minutos y ya he entrado otras veces', ok: false, crit: true, fb: 'La mayoría de las muertes en espacios confinados ocurren en entradas «de cinco minutos», y una parte grande son de quien entra a rescatar.', f: F.evitar },
+          { t: 'Pido autorización al jefe y entro con lo que haya', ok: false, crit: true, fb: 'Una autorización no cambia la atmósfera de adentro. Antes van el análisis, la ventilación y la medición.', f: F.medidas },
+        ], () => { W.resaltar([]); W.siguiente(); }); } },
+
+    { titulo: '2 · El análisis de riesgos', texto: 'No se puede entrar sin él. Toca la hoja del tablero para revisarlo.',
+      fuente: F.analisis,
+      iniciar() { W.irVista(1); W.resaltar([hoja]); },
+      tocar(o) { const t = o.userData.tipo;
+        if (t === 'boca') return W.mal('Te asomaste a la boca antes de revisar el análisis y antes de ventilar.', F.medidas, true);
+        if (t !== 'analisis') return W.toast('info', 'Revisa el análisis de riesgos del tablero.');
+        W.resaltar([]);
+        W.bien('El análisis es de ESTE espacio y de ESTE trabajo, lo hizo personal capacitado, está disponible y firmado, y cubre atmósferas peligrosas, riesgos físicos, biológicos, mecánicos y eléctricos, las actividades y las emergencias.', `${F.analisis}; ${F.contenido}; ${F.firmado}`);
+        W.siguiente(); } },
+
+    { titulo: '3 · Ventila antes de medir', puntos: 10, fuente: F.atmosfera,
+      texto: 'Hay dos ventiladores en el patio. <b>Toma el que corresponde y llévalo a la boca del tanque.</b>',
+      iniciar() { W.irVista(2); W.resaltar([VENT, GAS]);
+        alLlevar(VENT, () => this.poner('ventilador'));
+        alLlevar(GAS, () => this.poner('ventilador_gasolina')); },
+      poner(t) {
+        if (this._listo) return;
+        if (t === 'ventilador_gasolina') { manos.soltar(GAS);
+          return W.mal('Es de combustión interna: está prohibido introducirlo. Su escape mete monóxido de carbono justo en el espacio que querías limpiar, y ese gas no se ve ni se huele.', F.combustion, true); }
+        this._listo = true; manos.soltar(VENT, scene);
+        VENT.position.set(0.5, 1.9, -0.4); VENT.rotation.set(0, 1.2, 0);
+        estado.ventilado = true; W.resaltar([]);
+        W.bien('Ventilador eléctrico en la boca: se ventila o se purga el espacio antes de pensar en entrar.', F.atmosfera);
+        W.siguiente(); },
+      tocar(o) { const t = o.userData.tipo;
+        if (t === 'boca') { const g = manos.enMano(GAS) ? 'ventilador_gasolina' : manos.enMano(VENT) ? 'ventilador' : null;
+          if (!g) return W.toast('info', 'Toma primero un ventilador.'); return this.poner(g); }
+        if (t === 'ventilador') { manos.tomar(VENT); return W.toast('ok', 'En la mano: llévalo a la boca del tanque.'); }
+        if (t === 'ventilador_gasolina') { manos.tomar(GAS); return W.toast('ok', 'En la mano: llévalo a la boca del tanque.'); } } },
+
+    { titulo: '4 · Mide la atmósfera', puntos: 10, fuente: F.atmosfera,
+      texto: '<b>Toma el detector multigás y bájalo por la boca.</b> Ventilar no basta: hay que comprobar qué quedó dentro.',
+      iniciar() { W.irVista(3); W.resaltar([DET]);
+        alLlevar(DET, () => this.medir()); },
+      medir() { if (this._listo) return; this._listo = true;
+        manos.soltar(DET, scene); DET.position.set(0.1, 2.5, -1.2);
+        estado.medido = true; W.resaltar([]);
+        lectura.visible = true;
+        W.animar(900, k => { lectura.position.y = 3.55 + 0.05 * Math.sin(k * 9); });
+        setTimeout(() => { lectura.visible = false; }, 4200);
+        W.bien('Medición hecha con el espacio ya ventilado. La atmósfera se comprueba antes de entrar y se sigue controlando mientras haya alguien dentro.', F.atmosfera);
+        W.siguiente(); },
+      tocar(o) { const t = o.userData.tipo;
+        if (t === 'detector') { manos.tomar(DET); return W.toast('ok', 'Detector en la mano: bájalo por la boca.'); }
+        if (t === 'boca') { if (!manos.enMano(DET)) return W.toast('info', 'Toma primero el detector.'); this.medir(); } } },
+
+    { titulo: '5 · Nunca solo', texto: 'Ya ventilado y medido. Falta lo que la norma prohíbe de plano.',
+      fuente: F.solo,
+      iniciar() { W.irVista(0); W.resaltar([VIG]);
+        decidir(W, 'Tu compañero se tiene que ir a otra tarea. ¿Entras tú al tanque?', [
+          { t: 'No entro: el trabajo individual en espacios confinados está prohibido. Sin alguien afuera, no hay entrada', ok: true, fb: 'Quien se queda afuera no es un acompañante: es quien da la alarma y quien impide que otros entren a rescatar sin equipo.', f: F.solo },
+          { t: 'Entro: ya está ventilado y medido, el riesgo ya se controló', ok: false, crit: true, fb: 'Ventilar y medir no sustituyen al vigía. Si algo pasa dentro, nadie se entera.', f: F.solo },
+          { t: 'Entro y le aviso por radio cada diez minutos', ok: false, crit: true, fb: 'Una radio no te saca. La prohibición del trabajo individual no admite ese arreglo.', f: F.solo },
+        ], () => { W.resaltar([]); W.siguiente(); }); } },
+
+    { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', sinPuntos: true,
+      iniciar() { W.resaltar([]);
+        W.aviso(`<h2>🕳️ Celda terminada</h2>
+          <p>Preguntaste primero si se podía <b>evitar entrar</b>, revisaste el <b>análisis firmado</b> de ese
+          espacio y ese trabajo, <b>ventilaste</b> con el equipo correcto, <b>mediste</b> la atmósfera y te
+          negaste a entrar <b>sin vigía</b>.</p>
+          <p>Las dos trampas de esta celda son las dos que más matan: meter un equipo de <b>combustión interna</b>
+          a ventilar, y entrar <b>solo</b> «porque ya estaba medido».</p>
+          <p class="ficticio">${FIC} Basado en ${N33} (DOF 31/08/2015), numerales 4.1, 5.2, 7.1, 7.4, 7.5 a)-j),
+          7.7, 7.8, 9.1 x), 9.1 z) y 9.3 a)-b). El permiso de entrada, el orden de medición de gases y el equipo
+          de rescate NO se citan con numeral aquí porque no están verificados: consúltalos en el texto de la norma.</p>`,
+          () => W.siguiente(), 'Ver resultado'); } },
+  ];
+}
+
+W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel resalta en azul lo que toca' },
+  { id: 'evaluacion', txt: '📝 <b>Evaluación:</b> sin ayudas en pantalla; tú decides qué hacer' }],
+  sel => { setModo(sel); return pasos(); },
+  `Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Basado en ${N33} (DOF 31/08/2015): 4.1, 5.2, 7.1, 7.4, 7.5, 7.7, 7.8, 9.1 x) y z), 9.3 a)-b). Planta, tanque y análisis ficticios. ` +
+  'Esta celda está hecha para el Meta Quest 3S: ábrela en el navegador del visor y entra con 🥽 VR.');
+
+W.activarXR({ inicio: [0, 2.6], piso, entorno: entorno.children });
+
+if (location.search.includes('qa')) window.__qa = { W, TK, BOCA, VENT, GAS, DET, VIG, hoja, manos, estado,
+  tocar: W.tocar, qa: W.qa };
+</script>
+</body>
+</html>
