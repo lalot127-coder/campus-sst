@@ -24,6 +24,27 @@
       if (!mt || mt.transparent || mt.type === 'MeshBasicMaterial' || mt.type === 'SpriteMaterial') return;
       m.castShadow = true; m.receiveShadow = true; });
   }
+  // Nitidez (16/11/2026): los letreros, pizarrones y pisos que se dibujan con lienzo (canvas) nacen con anisotropía 1 y
+  // de canto —que es justo como se ve el piso al caminar— quedan lavados. Subirla es el cambio más barato que mejora
+  // TODOS los mundos a la vez. Solo sube, nunca baja, así que no pelea con quien ya la puso más alta, y con la
+  // comparación '<' cada textura se vuelve a subir a la tarjeta una sola vez.
+  const MAPAS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'aoMap'];
+  function nitidez(THREE, renderer, scene) {
+    const n = Math.min(calidad === 'alta' ? 8 : 4, renderer.capabilities.getMaxAnisotropy());
+    THREE.Texture.DEFAULT_ANISOTROPY = n;   // las que se creen a partir de aquí (modelos .glb, lienzos) ya nacen nítidas
+    scene.traverse(o => {
+      if (!o.isMesh) return;   // los sprites (fuego, humo) miran siempre de frente: no ganan nada y se volverían a subir
+      (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => {
+        if (!m) return;
+        MAPAS.forEach(k => {
+          const t = m[k];
+          // needsUpdate con la imagen a medio bajar hace que Three.js suba una textura vacía y avise por consola:
+          // esas se quedan para la pasada de 1.5 s / 4 s, cuando ya tienen imagen.
+          if (t && t.anisotropy < n && t.image && t.image.complete !== false) { t.anisotropy = n; t.needsUpdate = true; }
+        });
+      });
+    });
+  }
   async function aplicar(THREE, renderer, scene, o = {}) {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = o.exposicion ?? 1.08;
@@ -44,6 +65,7 @@
       const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; pm.dispose();
       if (o.hemi) o.hemi.intensity *= 0.65;   // el entorno ya aporta luz ambiental
     } catch (e) { }
+    nitidez(THREE, renderer, scene); [1500, 4000].forEach(ms => setTimeout(() => nitidez(THREE, renderer, scene), ms));
   }
   // ---- texturas PBR (ambientCG, CC0; ver assets/INVENTARIO_ASSETS.csv): pisos y muros grandes de color liso pasan a tener
   // material real (color + relieve + rugosidad). Conserva el color original como tinte. base = ruta a la raíz del simulador.
@@ -59,6 +81,10 @@
     if (COPIA) return mat;   // copias parciales del simulador en otros repositorios: no traen las texturas
     if (calidad === 'baja' || !mat || !mat.isMeshStandardMaterial || mat.map || mat.userData.pbr) return mat;
     const m = mat.clone(); m.userData.pbr = nombre;
+    // Clonar aquí una textura que todavía se está bajando hace que Three.js avise por consola «Texture marked for
+    // update but no image data found» durante unos cuadros, en algo más de un tercio de las puertas (medido el
+    // 16/11/2026). Es pasajero y la textura acaba viéndose bien; retrasar la copia hasta la descarga NO lo quita, así
+    // que el origen es otro y queda pendiente. No perseguirlo de nuevo sin volver a medir.
     const rep = t => { const c = t.clone(); c.needsUpdate = true; c.repeat.set(rx, ry); return c; };
     if (conColor) { m.map = rep(cargar(THREE, nombre, 'color')); m.color.lerp(new THREE.Color(0xffffff), 0.55); }
     m.normalMap = rep(cargar(THREE, nombre, 'normal')); m.normalScale = new THREE.Vector2(0.8, 0.8);
@@ -89,5 +115,5 @@
     });
     return n;
   }
-  window.Realismo = { aplicar, sombras, cielo, texturizar, material, calidad: () => calidad };
+  window.Realismo = { aplicar, sombras, nitidez, cielo, texturizar, material, calidad: () => calidad };
 })();

@@ -40,6 +40,7 @@ button{font-family:inherit;cursor:pointer}.sec{background:var(--hielo);color:var
 <script src="../../motor/compartir.js"></script>
 <script src="../../biblioteca/catalogo.js"></script>
 <script src="../../motor/acceso.js"></script>
+<script src="../../motor/realismo.js"></script>
 <script type="importmap">{"imports":{"three":"../../motor/vendor/three/build/three.module.js","three/addons/":"../../motor/vendor/three/examples/jsm/"}}</script>
 </head>
 <body>
@@ -67,7 +68,12 @@ const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixel
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x3E2F24);
 const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 80);
 const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 2; controls.maxDistance = 20; controls.enablePan = false;
-scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a66, 1.2)); const sol = new THREE.DirectionalLight(0xffffff, 1.0); sol.position.set(3, 9, 6); scene.add(sol);
+const hemi = new THREE.HemisphereLight(0xffffff, 0x8a7a66, 1.2); scene.add(hemi);
+const sol = new THREE.DirectionalLight(0xffffff, 1.0); sol.position.set(3, 9, 6); scene.add(sol);
+// (16/11/2026) faltaban las mejoras de motor/realismo.js. La exposición va un poco arriba porque los letreros y
+// lomos de libro son texturas de lienzo sin luz (MeshBasicMaterial) y el tono ACES los apaga.
+if (window.Realismo) { Realismo.aplicar(THREE, renderer, scene, { sol, hemi, radio: 10, exposicion: 1.2 });
+  [300, 2500].forEach(ms => setTimeout(() => Realismo.texturizar(THREE, scene, { piso: 'madera', muro: 'yeso' }), ms)); }
 const MATS = {}; const M = c => MATS[c] || (MATS[c] = new THREE.MeshStandardMaterial({ color: c, roughness: .75 }));
 const caja = (w, h, d, c, x, y, z, p = scene) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(c)); m.position.set(x, y, z); p.add(m); return m; };
 const cil = (r, h, c, x, y, z, p = scene) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 20), M(c)); m.position.set(x, y, z); p.add(m); return m; };
