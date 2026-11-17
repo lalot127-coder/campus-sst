@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulación inmersiva · EPP</title>
+<script type="importmap">{"imports":{"three":"../../../motor/vendor/three/build/three.module.js","three/addons/":"../../../motor/vendor/three/examples/jsm/"}}</script>
+<script src="../../../motor/realismo.js"></script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../../motor/manos.js"></script>
+<script src="../../riesgo/comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Props } from '../../../motor/props.js';
+
+// =====================================================================================================
+// CELDA INMERSIVA DE EPP — Edificio de Simulación Inmersiva (17/11/2026)
+//
+// La idea que enseña: el EPP NO se elige por costumbre, se elige por el RIESGO DEL PUESTO. Por eso el trabajo
+// de esta celda es esmerilado, no eléctrico: aquí los guantes de carnaza son los CORRECTOS y los dieléctricos
+// son el error, justo al revés que en la celda de LOTO. Quien aprenda "carnaza = malo" se equivoca aquí.
+// Lo inmersivo es que cada pieza se TOMA del estante y se LLEVA al cuerpo: equivocarse cuesta ir por ella.
+//
+// FUENTES: NOM-017-STPS-2024 (DOF 28/03/2025), numerales VERIFICADOS en
+// 02_fuentes_verificadas/registro_fuentes.md: 5.1 (identificar y analizar riesgos por puesto y área; tipos
+// 1 físicos, 2 mecánicos, 3 químicos, 4 biológicos), 5.2 a) b) c) (el EPP como medida transitoria, complemento
+// y protección ante la falla de otras medidas), 5.9 (capacitación: uso, revisión, limitaciones, reposición) y
+// el Cap. 6 (obligaciones de los trabajadores). El Apéndice I de la norma NO es normativo y así se dice.
+// La jerarquía de controles de NIOSH se cita como referencia de EUA, no obligatoria en México.
+// El análisis de riesgos del puesto de esta celda es FICTICIO: en un centro real manda el análisis propio.
+//
+// PENDIENTE DE CALIBRAR EN EL VISOR: la pose con la que cada pieza queda sujeta en la mano, igual que en las
+// demás celdas. El radio para colocar (R_COLOCAR) ya se probó con el Quest el 17/11/2026.
+// =====================================================================================================
+const N17 = 'NOM-017-STPS-2024';
+const F = {
+  cuando: `${N17}, 5.2 a), b) y c)`,
+  riesgos: `${N17}, 5.1 (tipos de riesgo por puesto y área)`,
+  selec: `${N17}, 5.1; Apéndice I (NO normativo) y el análisis de riesgos del puesto [FICTICIO]`,
+  capac: `${N17}, 5.9 (uso, revisión, limitaciones, reposición)`,
+  trab: `${N17}, Cap. 6 (obligaciones de los trabajadores)`,
+  niosh: 'NIOSH, Hierarchy of Controls (EUA): referencia, no obligatoria en México',
+};
+const FIC = 'Taller, empresa y análisis de riesgos ficticios, para ejercicio didáctico.';
+const POSE = [0, -0.05, -0.11, -0.3, 0, 0], R_AGARRE = 0.38, R_PONER = 0.40;   // R_PONER probado con el Quest el 17/11/2026
+
+const W = MotorSim.crearMundo(THREE, OrbitControls, {
+  titulo: 'EPP: elijo y me lo pongo', icono: '🦺', clave: 'sim_epp',
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xD7DEE4, piso: 'placa_metal', xr: false,
+  campus: '../../../index.html?mundo=loto',   // el edificio sigue teniendo el id 'loto' (ver index.html)
+  vistas: [[[0, 1.9, 3.4], [0, 1.1, -0.4]], [[-1.9, 1.7, 1.0], [-2.4, 1.2, -1.4]],
+    [[1.6, 1.7, 1.4], [1.6, 1.1, -1.2]], [[0.2, 1.6, 0.9], [0.2, 1.3, -0.2]]],
+  radioSombra: 10 });
+const { scene, camera, renderer, caja, cil, esfera, tocable, letrero, M } = W;
+const { decidir, intro } = window.Riesgo;
+const P3 = Props(THREE);
+W.controls.maxDistance = 12;
+
+// ------------------------------------------------------------------ taller
+const entorno = new THREE.Group(); scene.add(entorno);
+const piso = new THREE.Mesh(new THREE.PlaneGeometry(12, 10), M(0x8E9AA3)); piso.rotation.x = -Math.PI / 2; entorno.add(piso);
+caja(12, 3.2, 0.14, 0xDCE3E8, 0, 1.6, -5, entorno);
+caja(0.14, 3.2, 10, 0xD4DBE1, -6, 1.6, 0, entorno);
+const rot = letrero('TALLER · CORTE Y ESMERILADO DE METAL [FICTICIO]', 3.0, 0.3, '#B45309');
+rot.position.set(0, 2.6, -4.92); entorno.add(rot);
+
+// banco de trabajo con la pieza a esmerilar
+const banco = caja(2.0, 0.08, 0.8, 0x6D7B85, 1.6, 0.9, -1.4, entorno);
+[[0.7, -1.1], [2.5, -1.1], [0.7, -1.7], [2.5, -1.7]].forEach(([x, z]) => caja(0.08, 0.9, 0.08, 0x55606B, x, 0.45, z, entorno));
+const esmeril = caja(0.3, 0.26, 0.2, 0xF57C00, 1.6, 1.07, -1.4, entorno);
+cil(0.13, 0.025, 0x455A64, 1.78, 1.07, -1.4, entorno).rotation.z = Math.PI / 2;
+const rotE = letrero('ESMERIL DE BANCO', 0.7, 0.12, '#B45309'); rotE.position.set(1.6, 1.32, -1.4); entorno.add(rotE);
+
+// ------------------------------------------------------------------ tú
+const YO = new THREE.Group(); YO.position.set(0.2, 0, 0.2); scene.add(YO);
+const cuerpo = cil(0.17, 0.72, 0x37474F, 0, 0.76, 0, YO, 0.2);
+const cabezaYo = esfera(0.12, 0xD9A47E, 0, 1.28, 0, YO);
+[-1, 1].forEach(s => cil(0.05, 0.62, 0x37474F, 0.22 * s, 0.82, 0, YO));
+const rotY = letrero('TÚ', 0.3, 0.14, '#0E3A6B'); rotY.position.set(0.2, 1.62, 0.2); scene.add(rotY);
+tocable(YO, 'yo', 0.8);
+
+// ------------------------------------------------------------------ estante con el EPP
+const estante = caja(2.6, 0.07, 0.5, 0x8D6E63, -2.6, 1.05, -1.6, entorno);
+caja(2.6, 0.07, 0.5, 0x8D6E63, -2.6, 0.6, -1.6, entorno);
+[[-3.85, -1.6], [-1.35, -1.6]].forEach(([x, z]) => caja(0.08, 1.1, 0.5, 0x6D4C41, x, 0.55, z, entorno));
+const rotEs = letrero('EQUIPO DE PROTECCIÓN PERSONAL', 1.6, 0.16, '#5D4037'); rotEs.position.set(-2.6, 1.5, -1.6); entorno.add(rotEs);
+
+// Cada pieza: si SIRVE para esmerilar y por qué. Lo que aquí es correcto NO lo es en trabajo eléctrico.
+const PIEZAS = [
+  { id: 'careta', n: 'Careta facial', ok: true, obj: () => P3.careta(),
+    fb: 'Careta facial: protege toda la cara de la proyección de partículas y chispas.' },
+  { id: 'lentes', n: 'Lentes de seguridad', ok: true, obj: () => lentes(),
+    fb: 'Lentes de seguridad DEBAJO de la careta: la careta sola no sella alrededor de los ojos.' },
+  { id: 'carnaza', n: 'Guantes de carnaza', ok: true, obj: () => P3.guantes(0xC8A165),
+    fb: 'Guantes de carnaza: resisten la abrasión y el calor de las chispas. Para ESTE trabajo son los correctos.' },
+  { id: 'auditiva', n: 'Protección auditiva', ok: true, obj: () => orejeras(),
+    fb: 'Protección auditiva: el esmerilado es un riesgo físico por ruido.' },
+  { id: 'respirador', n: 'Respirador para partículas', ok: true, obj: () => respirador(),
+    fb: 'Respirador para partículas: el polvo metálico es un riesgo químico que se respira.' },
+  { id: 'dielectricos', n: 'Guantes dieléctricos', ok: false, crit: true, obj: () => P3.guantes(0xC62828),
+    fb: 'Los guantes dieléctricos son para riesgo ELÉCTRICO. Aquí no protegen de la abrasión ni del calor, y las chispas los dañan: el día que los uses en lo eléctrico ya no te protegerán.' },
+  { id: 'arnes', n: 'Arnés de cuerpo completo', ok: false, crit: false, obj: () => arnesChico(),
+    fb: 'El arnés es para riesgo de caída de altura. En este puesto no aplica: el EPP se elige por el riesgo del puesto, no por costumbre.' },
+];
+
+// piezas que props.js no trae, con primitivas
+function lentes() { const g = new THREE.Group();
+  const v = caja(0.15, 0.045, 0.02, 0x9AD9F0, 0, 0, 0, g); v.material.transparent = true; v.material.opacity = 0.65;
+  caja(0.17, 0.01, 0.012, 0x212121, 0, 0.022, 0, g); [-1, 1].forEach(s => caja(0.012, 0.012, 0.1, 0x212121, 0.078 * s, 0.01, -0.05, g)); return g; }
+function orejeras() { const g = new THREE.Group();
+  [-1, 1].forEach(s => { const c = cil(0.045, 0.05, 0xE53935, 0.075 * s, 0, 0, g); c.rotation.z = Math.PI / 2; });
+  const arco = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.009, 8, 20, Math.PI), M(0x212121)); arco.rotation.y = Math.PI / 2; arco.position.y = 0.01; g.add(arco); return g; }
+function respirador() { const g = new THREE.Group();
+  const c = esfera(0.07, 0xECEFF1, 0, 0, 0, g); c.scale.set(1, 0.75, 0.6);
+  caja(0.1, 0.012, 0.012, 0x90A4AE, 0, 0.03, 0.02, g); cil(0.028, 0.02, 0x455A64, 0, -0.02, 0.045, g).rotation.x = Math.PI / 2; return g; }
+function arnesChico() { const g = new THREE.Group();
+  [-1, 1].forEach(s => caja(0.03, 0.26, 0.02, 0xF57C00, 0.06 * s, 0, 0, g));
+  caja(0.16, 0.025, 0.02, 0xF57C00, 0, 0.05, 0, g);
+  const a = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 8, 16), M(0xB0BEC5, { metalness: .8 })); a.position.set(0, -0.14, 0); g.add(a); return g; }
+
+const manos = Manos.activar(W);
+const OBJ = {};
+PIEZAS.forEach((p, i) => {
+  const g = p.obj(); const fila = i < 4 ? 0 : 1;
+  g.position.set(-3.6 + (i % 4) * 0.67, fila ? 1.18 : 0.73, -1.6);
+  scene.add(g); OBJ[p.id] = g;
+  tocable(g, 'epp_' + p.id, 0.3);
+  manos.agarrable(g, { r: R_AGARRE, pose: POSE });
+  const l = letrero(p.n, 0.52, 0.09, '#FFFFFF', '#37474F'); l.position.set(g.position.x, g.position.y - 0.16, -1.34); scene.add(l);
+});
+
+// Llevarse una pieza al cuerpo. En el VISOR cuenta acercarla a TU cabeza (el gesto de ponértela); en PANTALLA
+// se toca el muñeco, porque la pieza cuelga de la cámara y se la pondría sola al caminar.
+const vO = new THREE.Vector3(), vC = new THREE.Vector3();
+function alPonerse(id, fn) {
+  let hecho = false;
+  W.cuadro.push(() => {
+    if (hecho || !renderer.xr.isPresenting || !manos.enMano(OBJ[id])) return;
+    const c = renderer.xr.getCamera(); c.getWorldPosition(vC); OBJ[id].getWorldPosition(vO);
+    if (vO.distanceTo(vC) > R_PONER) return;
+    hecho = true; fn();
+  });
+}
+const setModo = sel => { if (sel === 'evaluacion') W.resaltar = () => { }; };
+const puestas = new Set();
+
+// ------------------------------------------------------------------ pasos
+function pasos() {
+  return [
+    intro(W, `<h2>🦺 EPP: elijo y me lo pongo</h2>
+      <p>Hoy te toca <b>cortar y esmerilar metal</b> en el banco del taller.</p>
+      <p><b>En el visor:</b> acerca la mano a la pieza del estante y aprieta el <b>gatillo</b> o el botón lateral
+      para tomarla; con manos libres, <b>pellizca</b>. Para ponértela, <b>acércala a tu cabeza</b>.</p>
+      <p><b>En pantalla:</b> toca la pieza para tomarla y luego toca el muñeco marcado «TÚ».</p>
+      <p>Ojo: el EPP se elige por el <b>riesgo de este puesto</b>. Lo que sirve aquí puede ser un error en otro
+      trabajo, y al revés.</p>`, FIC),
+
+    { titulo: '1 · ¿Cuándo toca usar EPP?', texto: 'Antes de elegir nada, lo de fondo.', fuente: F.cuando,
+      iniciar() { W.irVista(0);
+        decidir(W, '¿Qué lugar ocupa el equipo de protección personal entre las medidas de seguridad?', [
+          { t: 'Va como medida transitoria, como complemento de otras medidas y para protegerme si esas otras fallan', ok: true, fb: 'Así lo plantea la norma: el EPP no sustituye a eliminar o controlar el riesgo en su origen.', f: F.cuando },
+          { t: 'Es la primera medida: con EPP ya se puede trabajar en cualquier condición', ok: false, crit: true, fb: 'Es justo al revés. Si el riesgo se puede eliminar o controlar en su origen, eso va primero; el EPP es lo último, no el permiso para trabajar en malas condiciones.', f: `${F.cuando}; ${F.niosh}` },
+          { t: 'Solo se usa cuando lo pide una inspección', ok: false, fb: 'Se usa cuando el análisis de riesgos del puesto lo determina, no cuando viene alguien a revisar.', f: F.riesgos },
+        ], () => W.siguiente()); } },
+
+    { titulo: '2 · ¿A qué te expone este trabajo?', texto: 'El EPP sale del riesgo del puesto, no del catálogo del almacén.',
+      fuente: F.riesgos,
+      iniciar() { W.irVista(2); W.resaltar([esmeril]);
+        decidir(W, 'Esmerilar metal en el banco. ¿A qué tipos de riesgo te expone?', [
+          { t: 'Mecánico por proyección de partículas y chispas, físico por ruido y químico por el polvo metálico que se respira', ok: true, fb: 'Tres tipos a la vez: por eso no basta una sola pieza de EPP.', f: F.riesgos },
+          { t: 'Solo mecánico: saltan chispas', ok: false, fb: 'También hay ruido y polvo metálico. Si solo ves las chispas, te faltan dos piezas de EPP.', f: F.riesgos },
+          { t: 'Ninguno si trabajo con cuidado', ok: false, crit: true, fb: 'El cuidado no sustituye al equipo: una partícula a alta velocidad no avisa.', f: F.riesgos },
+        ], () => { W.resaltar([]); W.siguiente(); }); } },
+
+    { titulo: '3 · Elige y ponte el EPP', puntos: 50, fuente: F.selec,
+      texto: 'En el estante hay siete piezas. <b>Toma las cinco que sí protegen en este trabajo</b> y llévatelas al cuerpo. <b>(0/5)</b>',
+      iniciar() { W.irVista(1); W.resaltar(PIEZAS.filter(p => p.ok).map(p => OBJ[p.id]));
+        PIEZAS.forEach(p => alPonerse(p.id, () => this.poner(p.id))); },
+      poner(id) {
+        const p = PIEZAS.find(x => x.id === id); if (!p || puestas.has(id)) return;
+        if (!p.ok) { manos.soltar(OBJ[id]); return W.mal(p.fb, F.selec, !!p.crit); }
+        puestas.add(id); manos.soltar(OBJ[id], YO);
+        OBJ[id].position.set(0, 1.3 - puestas.size * 0.06, 0.18); OBJ[id].rotation.set(0, 0, 0);
+        W.bien(p.fb, F.selec);
+        const bs = W.$('pTxt').querySelectorAll('b'); const n = bs[bs.length - 1]; if (n) n.textContent = `(${puestas.size}/5)`;   // el contador es el ÚLTIMO <b> del texto
+        if (puestas.size === 5) { W.resaltar([]); setTimeout(() => W.siguiente(), 700); } },
+      tocar(o) { const t = (o.userData.tipo || '');
+        if (t.startsWith('epp_')) { const id = t.slice(4);
+          if (puestas.has(id)) return; manos.tomar(OBJ[id]);
+          return W.toast('ok', 'En la mano: ahora llévatela al cuerpo (toca «TÚ»).'); }
+        if (t !== 'yo') return;
+        const enMano = PIEZAS.find(p => manos.enMano(OBJ[p.id]));
+        if (!enMano) return W.toast('info', 'Toma primero una pieza del estante.');
+        this.poner(enMano.id); } },
+
+    { titulo: '4 · Antes de cada uso', texto: 'Ya lo traes puesto. Una cosa más.', fuente: F.capac,
+      iniciar() { W.irVista(3);
+        decidir(W, '¿Qué tienes que saber hacer con tu EPP, además de ponértelo?', [
+          { t: 'Revisarlo antes de usarlo, conocer sus limitaciones, limpiarlo, guardarlo y saber cuándo se repone', ok: true, fb: 'La capacitación obligatoria incluye todo eso, no solo cómo se pone.', f: F.capac },
+          { t: 'Nada más: para eso lo entrega la empresa ya listo', ok: false, fb: 'Quien lo usa lo revisa. Un EPP dañado da una protección que no existe.', f: `${F.capac}; ${F.trab}` },
+          { t: 'Únicamente lavarlo al final de la jornada', ok: false, fb: 'La limpieza es parte, pero falta la revisión previa y conocer sus limitaciones.', f: F.capac },
+        ], () => W.siguiente()); } },
+
+    { titulo: '5 · La careta viene estrellada', texto: 'Al revisarla ves una fisura en el visor.', fuente: F.trab,
+      iniciar() { decidir(W, 'Encuentras tu careta con el visor estrellado y hay trabajo pendiente. ¿Qué haces?', [
+          { t: 'No la uso, la reporto y pido su reposición antes de empezar', ok: true, fb: 'Reportar el deterioro y no usar equipo dañado es obligación de quien lo usa.', f: F.trab },
+          { t: 'La uso hoy y la cambio mañana: la fisura es chiquita', ok: false, crit: true, fb: 'Una fisura es por donde entra la partícula. Un EPP dañado da sensación de protección, que es peor que no tener nada.', f: F.trab },
+          { t: 'Trabajo sin careta pero con lentes, para no parar', ok: false, crit: true, fb: 'Los lentes no sustituyen a la careta: protegen los ojos, no la cara.', f: F.selec },
+        ], () => W.siguiente()); } },
+
+    { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', sinPuntos: true,
+      iniciar() { W.resaltar([]);
+        W.aviso(`<h2>🦺 Celda terminada</h2>
+          <p>Elegiste el EPP a partir de los <b>riesgos de este puesto</b>: mecánico, físico y químico, tres a la
+          vez. Y lo llevaste al cuerpo pieza por pieza.</p>
+          <p>Lo importante de esta celda: <b>los guantes de carnaza son los correctos aquí</b> y los dieléctricos
+          son el error. En la celda de LOTO es exactamente al revés. No hay EPP «bueno»: hay EPP adecuado al
+          riesgo del puesto.</p>
+          <p class="ficticio">${FIC} Basado en ${N17}, numerales 5.1, 5.2 a)-c), 5.9 y Cap. 6. El Apéndice I de la
+          norma NO es normativo. La jerarquía de controles de NIOSH es referencia de EUA, no obligatoria en México.</p>`,
+          () => W.siguiente(), 'Ver resultado'); } },
+  ];
+}
+
+W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel resalta en azul lo que toca' },
+  { id: 'evaluacion', txt: '📝 <b>Evaluación:</b> sin ayudas en pantalla; tú decides qué hacer' }],
+  sel => { setModo(sel); return pasos(); },
+  `Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Basado en ${N17} (DOF 28/03/2025): 5.1, 5.2 a)-c), 5.9 y Cap. 6; el Apéndice I NO es normativo. Taller y análisis de riesgos ficticios. ` +
+  'Esta celda está hecha para el Meta Quest 3S: ábrela en el navegador del visor y entra con 🥽 VR.');
+
+W.activarXR({ inicio: [0.2, 1.4], piso, entorno: entorno.children });
+
+if (location.search.includes('qa')) window.__qa = { W, OBJ, PIEZAS, YO, manos, puestas, tocar: W.tocar, qa: W.qa };
+</script>
+</body>
+</html>

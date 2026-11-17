@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulación inmersiva · Primeros auxilios</title>
+<script type="importmap">{"imports":{"three":"../../../motor/vendor/three/build/three.module.js","three/addons/":"../../../motor/vendor/three/examples/jsm/"}}</script>
+<script src="../../../motor/realismo.js"></script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../../motor/manos.js"></script>
+<script src="../../riesgo/comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// =====================================================================================================
+// CELDA INMERSIVA DE PRIMEROS AUXILIOS — Edificio de Simulación Inmersiva (17/11/2026)
+//
+// Qué la hace distinta de mundos/hospital/rcp_dea (que sigue existiendo y NO se tocó): allá todo se resuelve
+// TOCANDO y decidiendo. Aquí las tres cosas que se hacen con el cuerpo se hacen con el cuerpo:
+//   · llevar la MANO al punto correcto del pecho (el error clásico es comprimir sobre la boca del estómago),
+//   · ir por el DEA y traerlo junto a la persona,
+//   · colocar los DOS parches, cada uno en su sitio.
+// Lo que es decisión (seguridad de la escena, ritmo y profundidad, qué hacer al indicar descarga) sigue siendo
+// decisión: no todo se gana convirtiéndolo en gesto.
+//
+// FUENTES: NO se inventó nada. Las citas son las MISMAS que ya estaban verificadas en mundos/hospital/rcp_dea
+// (02_fuentes_verificadas/registro_fuentes.md y extractos/primeros_auxilios_AHA2025_IFRC2025.md, consulta
+// 04/10/2026). No existe una NOM mexicana exclusiva de primeros auxilios: se enseña con las guías AHA/IFRC.
+//
+// PENDIENTE DE CALIBRAR EN EL VISOR: la pose con la que los parches y el DEA quedan sujetos en la mano, igual
+// que en las otras celdas. El radio para colocar (R_COLOCAR) ya se probó con el Quest el 17/11/2026.
+// =====================================================================================================
+const F = {
+  seg: 'IFRC 2025, p. 114 (seguridad)',
+  eval: 'IFRC 2025, p. 153 (responde/respira, máx. 10 s)',
+  act: 'AHA 2025, Parte 7 (activar emergencias y empezar RCP)',
+  mano: 'AHA 2025, Parte 7 (talón de la mano, mitad inferior del esternón)',
+  cal: 'AHA 2025, Parte 7 (100-120/min, 5-6 cm, reexpansión)',
+  dea: 'AHA 2025, Parte 7 (algoritmo para legos: parches, indicaciones, reanudar RCP 2 min)',
+};
+const FIC = 'Escena, oficina y personas ficticias, para ejercicio didáctico.';
+const POSE_DEA = [0, -0.08, -0.16, -0.35, 0, 0], POSE_PARCHE = [0, -0.03, -0.08, -0.2, 0, 0];
+const R_AGARRE = 0.38, R_COLOCAR = 0.40;   // R_COLOCAR probado con el Quest el 17/11/2026
+
+const W = MotorSim.crearMundo(THREE, OrbitControls, {
+  titulo: 'Primeros auxilios: atiendo a la persona', icono: '⛑️', clave: 'sim_primeros_auxilios',
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xE9EEF2, piso: 'concreto_pulido', xr: false,
+  campus: '../../../index.html?mundo=loto',   // el edificio sigue teniendo el id 'loto' (ver index.html)
+  vistas: [[[2.2, 2.0, 2.4], [0, 0.3, 0]], [[0, 2.4, 0.9], [0, 0.25, 0]],
+    [[-2.6, 1.7, 1.6], [-3.4, 1.1, -1.2]], [[0.9, 1.1, 1.3], [0, 0.35, 0]]],
+  radioSombra: 10 });
+const { scene, camera, renderer, caja, cil, esfera, capsula, tocable, letrero, M } = W;
+const { decidir, intro } = window.Riesgo;
+W.controls.maxDistance = 12;
+
+// ------------------------------------------------------------------ oficina
+const entorno = new THREE.Group(); scene.add(entorno);
+const piso = new THREE.Mesh(new THREE.PlaneGeometry(11, 9), M(0xC9D3DB)); piso.rotation.x = -Math.PI / 2; entorno.add(piso);
+caja(11, 3, 0.12, 0xF4F1EC, 0, 1.5, -4.5, entorno);
+caja(0.12, 3, 9, 0xF4F1EC, -5.5, 1.5, 0, entorno);
+const esc = caja(1.6, 0.06, 0.8, 0x9C7A5B, 2.4, 0.75, -2.2, entorno);
+caja(0.06, 0.72, 0.7, 0x7A5C40, 1.65, 0.37, -2.2, entorno); caja(0.06, 0.72, 0.7, 0x7A5C40, 3.15, 0.37, -2.2, entorno);
+const rot = letrero('OFICINA · PISO 2 [FICTICIO]', 1.8, 0.3, '#B01824'); rot.position.set(0, 2.4, -4.42); entorno.add(rot);
+
+// teléfono del escritorio: desde ahí se activan las emergencias
+const tel = caja(0.22, 0.08, 0.16, 0x263238, 2.4, 0.82, -2.2, entorno);
+tocable(tel, 'telefono', 0.45);
+const rotT = letrero('TELÉFONO', 0.4, 0.1, '#0E3A6B'); rotT.position.set(2.4, 1.0, -2.2); entorno.add(rotT);
+
+// ------------------------------------------------------------------ la persona, tendida boca arriba
+const V = new THREE.Group(); scene.add(V);
+const torso = caja(0.42, 0.18, 0.62, 0x3F6DAA, 0, 0.11, -0.05, V);
+const cabeza = esfera(0.115, 0xD9A47E, 0, 0.13, 0.42, V);
+const cad = caja(0.38, 0.17, 0.22, 0x37474F, 0, 0.11, -0.45, V);
+// capsula(r, largo, color) solo devuelve la malla: ni la coloca ni la cuelga de nadie (motor.js:149).
+[-1, 1].forEach(s => {
+  const pierna = capsula(0.055, 0.42, 0x37474F); pierna.position.set(0.11 * s, 0.1, -0.78); pierna.rotation.x = Math.PI / 2; V.add(pierna);
+  const brazo = capsula(0.05, 0.34, 0xD9A47E); brazo.position.set(0.27 * s, 0.09, 0.02); brazo.rotation.x = Math.PI / 2; V.add(brazo);
+});
+const rotV = letrero('PERSONA INCONSCIENTE [FICTICIO]', 1.0, 0.11, '#B01824'); rotV.position.set(0, 0.42, 0.62); rotV.rotation.x = -0.5; scene.add(rotV);
+tocable(V, 'victima', 0.7);
+
+// Los tres puntos del pecho. Solo UNO es el correcto; los otros dos son los errores reales.
+// El esternón va de z≈+0.22 (arriba) a z≈-0.12 (abajo): la mitad inferior queda alrededor de z = 0.02.
+const punto = (x, z, tipo, color) => { const m = new THREE.Mesh(new THREE.CircleGeometry(0.075, 20), M(color));
+  m.rotation.x = -Math.PI / 2; m.position.set(x, 0.205, z); m.material.transparent = true; m.material.opacity = 0.55;
+  V.add(m); tocable(m, tipo, 0.3); return m; };
+const P_BIEN = punto(0, 0.02, 'p_esternon', 0x2E7D32);
+const P_ESTOMAGO = punto(0, -0.26, 'p_estomago', 0xB0BEC5);
+const P_COSTILLA = punto(0.16, 0.06, 'p_costilla', 0xB0BEC5);
+
+// ------------------------------------------------------------------ gabinete del DEA y los parches
+const gab = caja(0.4, 0.5, 0.22, 0xE8EDF1, -3.4, 1.25, -4.3, entorno);
+caja(0.34, 0.1, 0.02, 0x2E7D32, -3.4, 1.55, -4.18, entorno);
+const rotG = letrero('DEA', 0.3, 0.14, '#FFFFFF', '#2E7D32'); rotG.position.set(-3.4, 1.42, -4.17); entorno.add(rotG);
+
+const DEA = new THREE.Group(); DEA.position.set(-3.4, 1.2, -4.12); scene.add(DEA);
+caja(0.3, 0.22, 0.12, 0xF9A825, 0, 0, 0, DEA); caja(0.12, 0.07, 0.01, 0x212121, 0, 0.04, 0.065, DEA);
+tocable(DEA, 'dea', 0.42);
+
+// Dos parches. Cada uno va a UN sitio: no son intercambiables (así lo dibuja el propio parche).
+const parche = (x, y, z, tipo) => { const g = new THREE.Group(); g.position.set(x, y, z); scene.add(g);
+  caja(0.11, 0.015, 0.11, 0xECEFF1, 0, 0, 0, g); caja(0.05, 0.004, 0.05, 0xD32F2F, 0, 0.01, 0, g);
+  tocable(g, tipo, 0.26); return g; };
+const PAR_D = parche(-3.6, 1.34, -4.1, 'parche_d');   // bajo la clavícula derecha
+const PAR_I = parche(-3.2, 1.34, -4.1, 'parche_i');   // costado izquierdo, bajo la axila
+// Dónde va cada parche sobre el pecho (coordenadas del mundo: la persona está en el origen)
+const DEST_D = [-0.13, 0.22, 0.2], DEST_I = [0.17, 0.2, -0.16];
+const marcaDest = (p, c) => { const m = new THREE.Mesh(new THREE.RingGeometry(0.06, 0.08, 20), M(c));
+  m.rotation.x = -Math.PI / 2; m.position.set(p[0], p[1] + 0.01, p[2]); m.material.transparent = true;
+  m.material.opacity = 0; scene.add(m); return m; };
+const MK_D = marcaDest(DEST_D, 0x1565C0), MK_I = marcaDest(DEST_I, 0x1565C0);
+
+// ------------------------------------------------------------------ manos
+const manos = Manos.activar(W);
+manos.agarrable(DEA, { r: R_AGARRE, pose: POSE_DEA });
+manos.agarrable(PAR_D, { r: R_AGARRE, pose: POSE_PARCHE });
+manos.agarrable(PAR_I, { r: R_AGARRE, pose: POSE_PARCHE });
+
+const vO = new THREE.Vector3(), vD = new THREE.Vector3();
+// Llevar algo agarrado hasta un punto. En el VISOR se coloca solo al acercarlo; en PANTALLA se coloca tocando
+// el destino, porque la pieza cuelga de la cámara y se colocaría al caminar sin querer.
+function alLlevar(obj, punto, fn) {
+  let hecho = false;
+  W.cuadro.push(() => {
+    if (hecho || !renderer.xr.isPresenting || !manos.enMano(obj)) return;
+    obj.getWorldPosition(vO);
+    if (vO.distanceTo(vD.set(punto[0], punto[1], punto[2])) > R_COLOCAR) return;
+    hecho = true; fn();
+  });
+}
+// La MANO desnuda (sin traer nada) llevada al pecho: así se practica el punto de compresión.
+function manoAlPecho(fn) {
+  let hecho = false;
+  W.cuadro.push(() => {
+    if (hecho || !renderer.xr.isPresenting) return;
+    for (const m of [0, 1]) {
+      const c = renderer.xr.getController(m); if (!c) continue;
+      c.getWorldPosition(vO); if (vO.distanceTo(vD.set(0, 0.2, 0.02)) > 0.22) continue;
+      hecho = true; fn(); return;
+    }
+  });
+}
+const setModo = sel => { if (sel === 'evaluacion') W.resaltar = () => { }; };
+const estado = { dea: false, parches: 0 };
+
+// ------------------------------------------------------------------ pasos
+function pasos() {
+  return [
+    intro(W, `<h2>⛑️ Atiendo a la persona</h2>
+      <p>Una persona se desploma en la oficina. Tú eres quien está más cerca.</p>
+      <p><b>En el visor:</b> acerca la mano a lo que quieras tomar y aprieta el <b>gatillo</b> o el botón lateral;
+      con manos libres, <b>pellizca</b>. Para comprimir, lleva la <b>mano abierta</b> al punto del pecho.</p>
+      <p><b>En pantalla:</b> toca para tomar y vuelve a tocar donde va.</p>
+      <p>No existe una NOM mexicana exclusiva de primeros auxilios: esto se enseña con las guías
+      <b>AHA 2025</b> e <b>IFRC 2025</b>, que son las que cita cada paso.</p>`, FIC),
+
+    { titulo: '1 · Antes de acercarte', texto: 'Lo primero no es la víctima.', fuente: F.seg,
+      iniciar() { W.irVista(0);
+        decidir(W, '¿Qué haces ANTES de acercarte a la persona?', [
+          { t: 'Compruebo que la escena sea segura para mí y para los demás', ok: true, fb: 'Si te lesionas, dejas de poder ayudar y aumentas el número de víctimas.', f: F.seg },
+          { t: 'Corro a ver qué tiene: cada segundo cuenta', ok: false, crit: true, fb: 'Sí cuentan los segundos, pero entrar a una escena insegura convierte al auxiliador en la segunda víctima.', f: F.seg },
+          { t: 'Busco primero a alguien con más experiencia', ok: false, fb: 'Se pide ayuda, pero sin dejar de actuar: tú ya estás ahí.', f: F.act },
+        ], () => W.siguiente()); } },
+
+    { titulo: '2 · ¿Responde? ¿Respira?', texto: 'Toca a la persona para comprobarlo. Son <b>10 segundos como máximo</b>: no más.',
+      fuente: F.eval,
+      iniciar() { W.irVista(0); W.resaltar([torso]); },
+      tocar(o) { if (o.userData.tipo !== 'victima' && o.userData.tipo !== 'p_esternon') return W.toast('info', 'Comprueba primero a la persona.');
+        W.resaltar([]);
+        W.bien('No responde y no respira con normalidad: para quien da primeros auxilios, eso es un paro cardiaco.', F.eval);
+        W.siguiente(); } },
+
+    { titulo: '3 · Pide ayuda', texto: 'Activa los servicios de emergencia y que alguien traiga el DEA. Toca el <b>teléfono</b>.',
+      fuente: F.act,
+      iniciar() { W.irVista(2); W.resaltar([tel]); },
+      tocar(o) { if (o.userData.tipo !== 'telefono') return W.toast('info', 'Activa las emergencias desde el teléfono.');
+        W.resaltar([]); W.globo('Van en camino', tel, 2400, 0.5);
+        W.bien('Emergencias activadas y alguien va por el DEA. Ahora empiezas tú: no esperes al DEA para comprimir.', F.act);
+        W.siguiente(); } },
+
+    { titulo: '4 · Dónde van tus manos', fuente: F.mano,
+      texto: 'Lleva la <b>mano</b> al punto donde se comprime. Hay tres marcados; solo uno es el correcto.',
+      iniciar() { W.irVista(1); W.resaltar([P_BIEN, P_ESTOMAGO, P_COSTILLA]);
+        manoAlPecho(() => this.poner('p_esternon')); },
+      poner(t) {
+        if (this._listo) return;
+        if (t === 'p_estomago') return W.mal('Ahí está la boca del estómago. Comprimir ahí no bombea sangre y puede dañar el hígado o provocar vómito.', F.mano, true);
+        if (t === 'p_costilla') return W.mal('Estás sobre las costillas, a un lado del esternón. La compresión pierde eficacia y aumenta el riesgo de fractura.', F.mano, true);
+        this._listo = true; W.resaltar([]); P_BIEN.material.opacity = 0.9;
+        W.bien('Correcto: el talón de la mano en la mitad inferior del esternón, al centro del pecho.', F.mano);
+        W.siguiente(); },
+      tocar(o) { const t = o.userData.tipo; if (t && t.startsWith('p_')) this.poner(t); } },
+
+    { titulo: '5 · Cómo se comprime', texto: 'Ya con las manos en su sitio, decide cómo.', fuente: F.cal,
+      iniciar() { decidir(W, '¿A qué ritmo y profundidad comprimes en una persona adulta?', [
+          { t: 'De 100 a 120 por minuto, de 5 a 6 cm, dejando que el pecho vuelva a subir del todo', ok: true, fb: 'Y lo que más se olvida es dejar que el pecho se reexpanda: si no sube, el corazón no se vuelve a llenar.', f: F.cal },
+          { t: 'Lo más rápido y fuerte que pueda', ok: false, fb: 'Más rápido no es mejor: por encima de 120 no da tiempo a que el corazón se llene.', f: F.cal },
+          { t: 'Unas 60 por minuto, suave para no lastimar', ok: false, crit: true, fb: 'Demasiado lento y superficial no hace circular la sangre. El daño por no comprimir es mayor que el de una costilla rota.', f: F.cal },
+        ], () => W.siguiente()); } },
+
+    { titulo: '6 · Trae el DEA', texto: 'Ya llegó el DEA al gabinete de la pared. <b>Tómalo y tráelo junto a la persona.</b>',
+      fuente: F.dea,
+      iniciar() { W.irVista(2); W.resaltar([DEA]);
+        alLlevar(DEA, [0.45, 0.15, 0], () => this.traer()); },
+      traer() { if (this._listo) return; this._listo = true;
+        manos.soltar(DEA, scene); DEA.position.set(0.45, 0.12, 0); estado.dea = true; W.resaltar([]);
+        MK_D.material.opacity = 0.75; MK_I.material.opacity = 0.75;
+        W.bien('DEA junto a la persona. En cuanto esté encendido, hay que seguir lo que va diciendo.', F.dea);
+        W.siguiente(); },
+      tocar(o) { const t = o.userData.tipo;
+        if (t === 'dea') { manos.tomar(DEA); return W.toast('ok', 'DEA en la mano: llévalo junto a la persona.'); }
+        if (t === 'victima' && manos.enMano(DEA)) this.traer(); } },
+
+    { titulo: '7 · Coloca los dos parches', puntos: 20, fuente: F.dea,
+      texto: 'Cada parche va en <b>su</b> sitio, en el pecho desnudo: uno bajo la clavícula derecha y el otro en el costado izquierdo, bajo la axila. Llévalos a los dos aros azules.',
+      iniciar() { W.resaltar([PAR_D, PAR_I, MK_D, MK_I]);
+        alLlevar(PAR_D, DEST_D, () => this.pegar('parche_d'));
+        alLlevar(PAR_I, DEST_I, () => this.pegar('parche_i')); },
+      pegar(t) {
+        if (this['_' + t]) return; this['_' + t] = true;
+        const g = t === 'parche_d' ? PAR_D : PAR_I, d = t === 'parche_d' ? DEST_D : DEST_I;
+        manos.soltar(g, scene); g.position.set(d[0], d[1], d[2]);
+        (t === 'parche_d' ? MK_D : MK_I).material.opacity = 0;
+        estado.parches++;
+        W.bien(t === 'parche_d' ? 'Parche derecho colocado bajo la clavícula.' : 'Parche izquierdo colocado en el costado, bajo la axila.', F.dea);
+        if (estado.parches === 2) { W.resaltar([]); W.siguiente(); } },
+      tocar(o) { const t = o.userData.tipo;
+        if (t === 'parche_d' || t === 'parche_i') { manos.tomar(t === 'parche_d' ? PAR_D : PAR_I); return W.toast('ok', 'Parche en la mano: llévalo a su aro azul.'); }
+        if (t !== 'victima' && !(t || '').startsWith('p_')) return;
+        if (manos.enMano(PAR_D)) this.pegar('parche_d'); else if (manos.enMano(PAR_I)) this.pegar('parche_i');
+        else W.toast('info', 'Toma un parche primero.'); } },
+
+    { titulo: '8 · El DEA dice: descarga indicada', texto: 'El aparato ya analizó. Última decisión.', fuente: F.dea,
+      iniciar() { W.irVista(0);
+        decidir(W, 'El DEA indica descarga. ¿Qué haces?', [
+          { t: 'Aviso en voz alta, compruebo que nadie toque a la persona, aprieto el botón y reanudo las compresiones enseguida', ok: true, fb: 'Y se sigue dos minutos antes de que el DEA vuelva a analizar.', f: F.dea },
+          { t: 'Aprieto el botón de inmediato para no perder tiempo', ok: false, crit: true, fb: 'Sin apartar a todos, la descarga puede alcanzar a quien esté tocando a la persona.', f: F.dea },
+          { t: 'Espero a que llegue la ambulancia para que lo hagan ellos', ok: false, crit: true, fb: 'Cada minuto sin desfibrilar reduce mucho la probabilidad de sobrevivir. El DEA está hecho para que lo use cualquiera.', f: F.dea },
+        ], () => W.siguiente()); } },
+
+    { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', sinPuntos: true,
+      iniciar() { W.resaltar([]);
+        W.aviso(`<h2>⛑️ Celda terminada</h2>
+          <p>Comprobaste la escena, reconociste el paro, activaste emergencias, pusiste <b>la mano en la mitad
+          inferior del esternón</b>, trajiste el DEA y colocaste <b>los dos parches</b> en su sitio.</p>
+          <p>Lo que más se falla en la realidad es justo lo que aquí hiciste con la mano: comprimir demasiado abajo,
+          sobre la boca del estómago, y no dejar que el pecho vuelva a subir entre compresión y compresión.</p>
+          <p class="ficticio">${FIC} Guías AHA 2025 e IFRC 2025. No existe una NOM mexicana exclusiva de primeros
+          auxilios; la LFT obliga a tener material de curación y personal adiestrado.</p>`, () => W.siguiente(), 'Ver resultado'); } },
+  ];
+}
+
+W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel resalta en azul lo que toca' },
+  { id: 'evaluacion', txt: '📝 <b>Evaluación:</b> sin ayudas en pantalla; tú decides qué hacer' }],
+  sel => { setModo(sel); return pasos(); },
+  'Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Basado en las guías AHA 2025 (Parte 7) e IFRC 2025. No existe una NOM mexicana exclusiva de primeros auxilios. Escena y personas ficticias. ' +
+  'Esta celda está hecha para el Meta Quest 3S: ábrela en el navegador del visor y entra con 🥽 VR.');
+
+W.activarXR({ inicio: [0, 1.3], piso, entorno: entorno.children });
+
+if (location.search.includes('qa')) window.__qa = { W, V, DEA, PAR_D, PAR_I, P_BIEN, P_ESTOMAGO, P_COSTILLA,
+  manos, estado, tocar: W.tocar, qa: W.qa };
+</script>
+</body>
+</html>
