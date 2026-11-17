@@ -49,7 +49,7 @@ const POSE = [0, -0.05, -0.11, -0.3, 0, 0], R_AGARRE = 0.38, R_PONER = 0.40;   /
 
 const W = MotorSim.crearMundo(THREE, OrbitControls, {
   titulo: 'EPP: elijo y me lo pongo', icono: '🦺', clave: 'sim_epp',
-  criterio: { pct: 80, sinCriticos: true }, fondo: 0xD7DEE4, piso: 'placa_metal', xr: false,
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xD7DEE4, piso: 'concreto_pulido', xr: false,   // 'placa_metal' NO existe como textura PBR (17/11/2026)
   campus: '../../../index.html?mundo=loto',   // el edificio sigue teniendo el id 'loto' (ver index.html)
   vistas: [[[0, 1.9, 3.4], [0, 1.1, -0.4]], [[-1.9, 1.7, 1.0], [-2.4, 1.2, -1.4]],
     [[1.6, 1.7, 1.4], [1.6, 1.1, -1.2]], [[0.2, 1.6, 0.9], [0.2, 1.3, -0.2]]],
@@ -90,7 +90,7 @@ const rotEs = letrero('EQUIPO DE PROTECCIÓN PERSONAL', 1.6, 0.16, '#5D4037'); r
 
 // Cada pieza: si SIRVE para esmerilar y por qué. Lo que aquí es correcto NO lo es en trabajo eléctrico.
 const PIEZAS = [
-  { id: 'careta', n: 'Careta facial', ok: true, obj: () => P3.careta(),
+  { id: 'careta', n: 'Careta facial', ok: true, obj: () => { const c = P3.careta(); c.scale.setScalar(.72); return c; },   // cabe en el entrepaño
     fb: 'Careta facial: protege toda la cara de la proyección de partículas y chispas.' },
   { id: 'lentes', n: 'Lentes de seguridad', ok: true, obj: () => lentes(),
     fb: 'Lentes de seguridad DEBAJO de la careta: la careta sola no sella alrededor de los ojos.' },
@@ -107,19 +107,49 @@ const PIEZAS = [
 ];
 
 // piezas que props.js no trae, con primitivas
+// (17/11/2026) Eran cajas planas y se veían como calcomanías. Ahora cada una tiene la forma que de verdad
+// tiene el equipo: mica curva, copas con almohadilla y mascarilla con sello, válvula y tirantes.
+const arcoCil = (r, h, th, mat) => new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 24, 1, true, -th / 2, th), mat);
 function lentes() { const g = new THREE.Group();
-  const v = caja(0.15, 0.045, 0.02, 0x9AD9F0, 0, 0, 0, g); v.material.transparent = true; v.material.opacity = 0.65;
-  caja(0.17, 0.01, 0.012, 0x212121, 0, 0.022, 0, g); [-1, 1].forEach(s => caja(0.012, 0.012, 0.1, 0x212121, 0.078 * s, 0.01, -0.05, g)); return g; }
+  const v = arcoCil(0.078, 0.038, 1.9, M(0x5EC2E8, { roughness: .12, metalness: .15, transparent: true, opacity: .55, depthWrite: false, side: THREE.DoubleSide }));
+  g.add(v);
+  [[0.025, 0.012], [-0.022, 0.009]].forEach(([y, h]) => { const a = arcoCil(0.0805, h, 2.0, M(0x212121, { side: THREE.DoubleSide })); a.position.y = y; g.add(a); });
+  caja(0.022, 0.014, 0.012, 0x212121, 0, -0.021, 0.076, g);
+  [-1, 1].forEach(s => { const p = caja(0.011, 0.012, 0.115, 0x212121, 0.068 * s, 0.02, -0.015, g); p.rotation.y = -0.2 * s; });
+  return g; }
 function orejeras() { const g = new THREE.Group();
-  [-1, 1].forEach(s => { const c = cil(0.045, 0.05, 0xE53935, 0.075 * s, 0, 0, g); c.rotation.z = Math.PI / 2; });
-  const arco = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.009, 8, 20, Math.PI), M(0x212121)); arco.rotation.y = Math.PI / 2; arco.position.y = 0.01; g.add(arco); return g; }
+  [-1, 1].forEach(s => {
+    const c = cil(0.047, 0.046, 0xE53935, 0.078 * s, 0, 0, g); c.rotation.z = Math.PI / 2;
+    const alm = new THREE.Mesh(new THREE.TorusGeometry(0.038, 0.013, 10, 20), M(0x263238, { roughness: .95 }));
+    alm.position.set(0.054 * s, 0, 0); alm.rotation.y = Math.PI / 2; g.add(alm);
+    const varilla = cil(0.005, 0.055, 0xB0BEC5, 0.078 * s, 0.034, 0, g); varilla.material = M(0xB0BEC5, { metalness: .8, roughness: .25 });
+  });
+  const arco = new THREE.Mesh(new THREE.TorusGeometry(0.078, 0.009, 10, 24, Math.PI), M(0x212121)); g.add(arco);
+  const diadema = new THREE.Mesh(new THREE.TorusGeometry(0.078, 0.014, 10, 16, 1.4), M(0x37474F, { roughness: .95 }));
+  diadema.rotation.z = (Math.PI - 1.4) / 2; g.add(diadema);
+  return g; }
 function respirador() { const g = new THREE.Group();
-  const c = esfera(0.07, 0xECEFF1, 0, 0, 0, g); c.scale.set(1, 0.75, 0.6);
-  caja(0.1, 0.012, 0.012, 0x90A4AE, 0, 0.03, 0.02, g); cil(0.028, 0.02, 0x455A64, 0, -0.02, 0.045, g).rotation.x = Math.PI / 2; return g; }
+  const c = esfera(0.075, 0xECEFF1, 0, 0, 0, g); c.scale.set(1, 0.8, 0.62); c.material = M(0xECEFF1, { roughness: .85 });
+  const sello = new THREE.Mesh(new THREE.TorusGeometry(0.072, 0.009, 10, 24), M(0xCFD8DC, { roughness: .95 }));
+  sello.scale.set(1, 0.8, 1); sello.position.z = -0.022; g.add(sello);
+  caja(0.055, 0.011, 0.014, 0x90A4AE, 0, 0.044, 0.018, g);
+  const val = cil(0.023, 0.016, 0x455A64, 0, -0.018, 0.045, g); val.rotation.x = Math.PI / 2;
+  const tapa = cil(0.026, 0.005, 0x263238, 0, -0.018, 0.053, g); tapa.rotation.x = Math.PI / 2;
+  [-1, 1].forEach(s => [0.028, -0.03].forEach(y => { const t = caja(0.01, 0.011, 0.085, 0xE0E0E0, 0.062 * s, y, -0.042, g); t.rotation.y = 0.25 * s; }));
+  return g; }
 function arnesChico() { const g = new THREE.Group();
-  [-1, 1].forEach(s => caja(0.03, 0.26, 0.02, 0xF57C00, 0.06 * s, 0, 0, g));
-  caja(0.16, 0.025, 0.02, 0xF57C00, 0, 0.05, 0, g);
-  const a = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 8, 16), M(0xB0BEC5, { metalness: .8 })); a.position.set(0, -0.14, 0); g.add(a); return g; }
+  const cinta = (w, h, x, y, z, rz) => { const c = caja(w, h, 0.016, 0xF57C00, x, y, z, g); c.rotation.z = rz || 0; return c; };
+  // Los tirantes se ABREN hacia los hombros y las perneras hacia abajo: con la inclinación al revés el arnés
+  // se leía como una letra A.
+  [-1, 1].forEach(s => { cinta(0.028, 0.21, 0.055 * s, 0.05, 0, -0.35 * s);
+    cinta(0.026, 0.12, 0.085 * s, -0.135, 0, 0.22 * s);
+    caja(0.05, 0.03, 0.024, 0xEF6C00, 0.095 * s, 0.148, 0, g);
+    caja(0.03, 0.022, 0.022, 0x9E9E9E, 0.075 * s, -0.072, 0.005, g); });
+  cinta(0.13, 0.024, 0, 0.055, 0.006);
+  cinta(0.19, 0.026, 0, -0.072, 0);
+  const d = new THREE.Mesh(new THREE.TorusGeometry(0.026, 0.0065, 8, 18), M(0xB0BEC5, { metalness: .85, roughness: .25 }));
+  d.position.set(0, 0.1, -0.014); g.add(d);
+  return g; }
 
 const manos = Manos.activar(W);
 const OBJ = {};

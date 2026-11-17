@@ -39,7 +39,9 @@ export function Props(THREE) {
   }
   function extintor(tipo = 'pqs') {
     const g = new THREE.Group(); const alto = tipo === 'agua' ? .66 : tipo === 'co2' ? .6 : .5, r = tipo === 'co2' ? .085 : .09;
-    const CUERPO = tipo === 'k' ? 0xC9D1D6 : ROJO, mt = tipo === 'k' ? { roughness: .25, metalness: .85 } : { roughness: .35, metalness: .3 };
+    const CUERPO = tipo === 'k' ? 0xC9D1D6 : ROJO, mt = tipo === 'k' ? { roughness: .38, metalness: .55, envMapIntensity: 1.4 } : { roughness: .28, metalness: .04, envMapIntensity: 1.25 };
+    // (17/11/2026) El cuerpo rojo es acero PINTADO: con metalness .3 el entorno lo teñía y parecía plástico sucio.
+    // El de clase K sí es acero inoxidable desnudo y conserva su metalness alta.
     cil(r, alto, CUERPO, 0, alto / 2 + .02, 0, g, r, 20, mt);
     mesh(new THREE.SphereGeometry(r, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), CUERPO, 0, alto + .02, 0, g, mt);
     cil(r * .95, .03, NEGRO, 0, .015, 0, g);   // base
@@ -97,10 +99,27 @@ export function Props(THREE) {
   // ---------------------------------------------------------------- SEGURIDAD ELÉCTRICA
   function tapete(l = 1.2, a = .9) { const g = new THREE.Group(); caja(l, .01, a, 0x222222, 0, .005, 0, g, { roughness: .95 }); for (let k = -4; k <= 4; k++) caja(l * .95, .012, .01, 0x2D2D2D, 0, .006, k * a / 10, g);
     g.userData.nombre = 'Tapete dieléctrico'; return g; }
-  function guantes(c = ROJO) { const g = new THREE.Group(); [-.07, .07].forEach((x, i) => { const m = new THREE.Group(); m.position.set(x, .02, 0); m.rotation.y = i ? -.2 : .2; g.add(m);
-    caja(.09, .02, .14, c, 0, 0, 0, m); for (let k = 0; k < 4; k++) caja(.018, .018, .08, c, -.03 + k * .02, 0, -.1, m); caja(.12, .022, .12, NEGRO, 0, 0, .12, m); }); g.userData.nombre = 'Guantes dieléctricos'; return g; }
+  function guantes(c = ROJO) { const g = new THREE.Group(); [-.07, .07].forEach((x, i) => { const m = new THREE.Group(); m.position.set(x, .018, 0); m.rotation.y = i ? .18 : -.18; m.scale.set(1, .6, 1); g.add(m);
+    // (17/11/2026) La mano va APLASTADA (escala .6 en Y) y con los DEDOS HACIA +Z, como el frente de los demás props.
+    // Antes era una caja plana; con cápsulas sueltas y los dedos hacia atrás parecía una botella con tapa negra.
+    mesh(new THREE.CapsuleGeometry(.05, .075, 4, 12), c, 0, 0, .02, m, { roughness: .75 }).rotation.x = Math.PI / 2;
+    for (let k = 0; k < 4; k++) { const d = mesh(new THREE.CapsuleGeometry(.0115, .05, 3, 8), c, -.033 + k * .022, 0, .105, m, { roughness: .75 });
+      d.rotation.x = Math.PI / 2; d.rotation.z = (k - 1.5) * .07; }
+    const pul = mesh(new THREE.CapsuleGeometry(.0135, .042, 3, 8), c, .055 * (i ? 1 : -1), 0, .045, m, { roughness: .75 });
+    pul.rotation.x = Math.PI / 2; pul.rotation.z = (i ? 1 : -1) * 1;
+    cil(.048, .075, c, 0, 0, -.058, m, .056, 16, { roughness: .8 }).rotation.x = Math.PI / 2;      // puño acampanado
+    cil(.058, .008, NEGRO, 0, 0, -.098, m, .058, 16).rotation.x = Math.PI / 2; });                 // vivo del puño
+    g.userData.nombre = 'Guantes dieléctricos'; return g; }
   function careta() { const g = new THREE.Group(); const v = mesh(new THREE.CylinderGeometry(.13, .13, .26, 20, 1, true, -Math.PI * .45, Math.PI * .9), 0x7FD3FF, 0, .2, 0, g, { transparent: true, opacity: .45, side: THREE.DoubleSide, metalness: .2 });
-    v.material.depthWrite = false; tubo([[-.12, .33, 0], [0, .38, -.12], [.12, .33, 0]], .015, NEGRO, g); caja(.24, .03, .04, NEGRO, 0, .33, .1, g); g.userData.nombre = 'Careta de protección facial'; return g; }
+    v.material.depthWrite = false;
+    // (17/11/2026) arnés de cabeza: antes el visor flotaba solo y no se entendía cómo se sujeta.
+    tubo([[-.12, .33, 0], [0, .38, -.12], [.12, .33, 0]], .015, NEGRO, g);                          // corona
+    tubo([[-.125, .3, .02], [-.13, .34, -.07], [-.125, .3, -.14]], .012, NEGRO, g);                 // sien izquierda
+    tubo([[.125, .3, .02], [.13, .34, -.07], [.125, .3, -.14]], .012, NEGRO, g);                    // sien derecha
+    caja(.24, .035, .045, NEGRO, 0, .33, .095, g, { roughness: .7 });                               // banda frontal
+    const cr = cil(.028, .022, 0x37474F, 0, .335, -.135, g, .028, 14, { roughness: .5 }); cr.rotation.x = Math.PI / 2;   // cremallera de ajuste
+    [-.1, .1].forEach(x => { const piv = cil(.012, .016, 0x9AA3AA, x, .3, -.01, g, .012, 10, { metalness: .7, roughness: .35 }); piv.rotation.z = Math.PI / 2; });   // pivotes
+    g.userData.nombre = 'Careta de protección facial'; return g; }
   function herramientaAislada() { const g = new THREE.Group(); const d = new THREE.Group(); g.add(d); cil(.012, .1, ROJO, 0, .05, 0, d, .014); cil(.015, .03, AMAR, 0, .11, 0, d); cil(.004, .12, GRIS, 0, .18, 0, d, .004, 6, { metalness: .9 });
     d.rotation.z = Math.PI / 2; d.position.set(-.06, .02, 0); const p = new THREE.Group(); p.position.set(.08, .015, .02); g.add(p);
     [-.012, .012].forEach((x, i) => { const b = caja(.02, .02, .14, ROJO, x, 0, .05, p); b.rotation.y = i ? .12 : -.12; caja(.012, .015, .05, GRIS, x * .5, 0, -.05, p, { metalness: .9 }); });

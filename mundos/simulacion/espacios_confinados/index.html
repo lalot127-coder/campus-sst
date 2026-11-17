@@ -55,7 +55,7 @@ const R_AGARRE = 0.42, R_COLOCAR = 0.40;   // R_COLOCAR probado con el Quest el 
 
 const W = MotorSim.crearMundo(THREE, OrbitControls, {
   titulo: 'Espacios confinados: entrada segura', icono: '🕳️', clave: 'sim_espacios_confinados',
-  criterio: { pct: 80, sinCriticos: true }, fondo: 0xCBD5DC, piso: 'concreto', xr: false,
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xCBD5DC, piso: 'asfalto', xr: false,   // 'concreto' NO existe; el patio de una planta es asfalto
   campus: '../../../index.html?mundo=loto',   // el edificio sigue teniendo el id 'loto' (ver index.html)
   vistas: [[[0, 2.4, 5.2], [0, 1.0, -0.6]], [[-2.6, 1.8, 1.8], [-3.2, 1.2, -0.6]],
     [[1.2, 2.8, 2.0], [0, 1.5, -0.4]], [[2.8, 1.8, 1.6], [3.4, 1.2, -0.2]]],

@@ -77,8 +77,14 @@
       t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; if (tipo === 'color') t.colorSpace = THREE.SRGBColorSpace; cacheTex[k] = t; }
     return cacheTex[k];
   }
+  // Las únicas texturas PBR que existen en assets/texturas/pbr/. Pedir otra NO daba error: el servidor devuelve la
+  // página de inicio con código 200 y Three.js se queda con un mapa SIN IMAGEN, o sea un piso muerto. Pasó el
+  // 17/11/2026 con 'placa_metal' y 'concreto'. Ojo: los `piso:` de modulos.js y zonas.js son de OTRO sistema
+  // (motor/interior.js) y usan otros nombres; esta lista es solo la de aquí.
+  const PBR = ['alfombra', 'asfalto', 'azulejo', 'concreto_pulido', 'madera', 'pasto', 'yeso'];
   function material(THREE, mat, nombre, rx, ry, conColor = true) {
     if (COPIA) return mat;   // copias parciales del simulador en otros repositorios: no traen las texturas
+    if (!PBR.includes(nombre)) { console.warn(`Realismo: no existe la textura "${nombre}". Hay: ${PBR.join(', ')}`); return mat; }
     if (calidad === 'baja' || !mat || !mat.isMeshStandardMaterial || mat.map || mat.userData.pbr) return mat;
     const m = mat.clone(); m.userData.pbr = nombre;
     // Clonar aquí una textura que todavía se está bajando hace que Three.js avise por consola «Texture marked for

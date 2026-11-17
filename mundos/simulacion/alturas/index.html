@@ -44,13 +44,18 @@ const INSTR = `Instructivo del fabricante "Arnés AR-4" ${FIC}`;
 
 const W = MotorSim.crearMundo(THREE, OrbitControls, {
   titulo: 'Trabajos en altura: arnés y anclaje', icono: '🪜', clave: 'sim_alturas',
-  criterio: { pct: 80, sinCriticos: true }, fondo: 0xBFD9EC, xr: false,
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xBFD9EC, xr: false, piso: 'asfalto', radioSombra: 14,
   campus: '../../../index.html?mundo=loto',   // el edificio sigue teniendo el id 'loto' (ver index.html)
   vistas: [[[0, 1.9, 4.6], [0, 1.3, -0.6]], [[-2.2, 1.7, 1.6], [-2.2, 1.2, 0.2]],
     [[1.2, 2.6, 2.2], [0.6, 3.1, -1.0]], [[0, 2.2, 1.2], [0, 1.4, -3.4]]] });
 const { scene, camera, renderer, caja, letrero } = W;
 W.controls.maxDistance = 16;
-exterior(W);
+// exterior() crea su PROPIO sol con sombras y las enciende incluso en el visor, donde la regla del proyecto dice
+// que no van (cada cuadro se dibuja dos veces y se va a saltos). Con `sombras: false` conserva el sol y la niebla
+// pero deja las sombras al sol de motor.js, que sí respeta la calidad y usa el radio de `radioSombra`.
+exterior(W, { sombras: false });
+// Cielo con degradado en vez del color plano: es la única celda al aire libre y ahí sí se nota.
+if (window.Realismo) scene.background = Realismo.cielo(THREE);
 const O = obra(W, { altura: 4, bordeZ: -3.5 });
 const P3 = Props(THREE);
 
