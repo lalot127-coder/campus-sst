@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulación inmersiva · LOTO con las manos</title>
+<script type="importmap">{"imports":{"three":"../../../motor/vendor/three/build/three.module.js","three/addons/":"../../../motor/vendor/three/examples/jsm/"}}</script>
+<script src="../../../motor/senales.js"></script>
+<script src="../../../motor/realismo.js"></script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../../motor/manos.js"></script>
+<script src="../../riesgo/comun.js"></script>
+<script src="../../construccion/comun.js"></script>
+<script src="../../loto/comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Kit3D } from '../../../motor/kit3d.js';
+import { Props } from '../../../motor/props.js';
+
+// =====================================================================================================
+// CELDA INMERSIVA DE LOTO — Edificio de Simulación Inmersiva (17/11/2026)
+//
+// Qué la hace distinta de mundos/loto/electrica (que sigue existiendo y NO se tocó): allá el procedimiento
+// se ejecuta TOCANDO objetos; aquí se ejecuta AGARRÁNDOLOS. El candado, la tarjeta y el detector se toman
+// con la mano (motor/manos.js) y se LLEVAN hasta donde van. Esa es la práctica que no se puede hacer con el
+// dedo en una pantalla: la persona recorre la distancia con el dispositivo en la mano.
+//
+// FUENTES: NO se agregó ningún numeral nuevo. Todas las citas salen de window.LOTO.F, verificadas contra el
+// DOF el 22/10/2026 (matriz normativa del curso: 03_cursos/BASE_loto_bloqueo_etiquetado_8h/01_diseno/
+// MATRIZ_NORMATIVA_LOTO.md). NOM-004-STPS-1999 y NOM-029-STPS-2011, ambas vigentes. Lo que allá está marcado
+// como buena práctica (OSHA, instrumento comprobado antes y después) aquí se marca igual.
+//
+// PENDIENTE DE CALIBRAR EN EL VISOR (no se puede ajustar desde la computadora): la POSE con la que cada pieza
+// queda sujeta en la mano y el radio para alcanzarla. Se ven bien en pantalla, pero la altura real del brazo
+// solo se comprueba con el Quest 3S puesto. Mismo pendiente que la celda de extintores.
+// =====================================================================================================
+const { N04, N29, PROC, BP, FIC, F, init3D, tablero, equipo, candado, tarjeta, detector,
+  estacion, mesaDispositivos, aPie, setModo } = window.LOTO;
+const { nave, trabajador } = window.Alturas;
+const { decidir, intro } = window.Riesgo;
+
+// Pose y alcance de cada pieza en la mano. CALIBRAR CON EL VISOR PUESTO (ver cabecera).
+const POSE_CAND = [0, -0.05, -0.10, -0.35, 0, 0], POSE_TARJ = [0, -0.04, -0.09, -0.25, 0, 0];
+const POSE_DET = [0, -0.06, -0.13, -0.50, 0, 0], R_AGARRE = 0.38;
+const R_COLOCAR = 0.40;   // qué tan cerca hay que llevar la pieza para que se coloque sola en el visor
+// OJO al puntaje: motor.js suma 10 por cada W.bien() y el `puntos` del paso solo fija el MÁXIMO. Un paso que
+// llama bien() una vez debe dejar el valor por omisión; si declara más, una ronda perfecta no llega al 100%.
+
+const W = MotorSim.crearMundo(THREE, OrbitControls, {
+  titulo: 'LOTO: bloqueo con las manos', icono: '🔒', clave: 'sim_loto',
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xDDE3E8, xr: false,
+  campus: '../../../index.html?mundo=loto',   // el edificio sigue teniendo el id 'loto' (ver index.html)
+  vistas: [[[0.5, 3.0, 6.0], [0, 1.2, -1]], [[-3.6, 2.0, 1.6], [-2.8, 1.2, -2.2]],
+    [[2.8, 2.0, 1.2], [1.2, 1.2, -1.4]], [[-1.2, 1.7, 2.6], [-1.2, 0.9, 1.4]]],
+  radioSombra: 12 });
+init3D(W, { Kit3D, Props });   // modelos .glb CC0/CC-BY + props propios; si fallan quedan las primitivas
+const { scene, camera, renderer, caja, letrero } = W;
+W.controls.maxDistance = 16;
+
+// ------------------------------------------------------------------ escena
+const N = nave(W, { alto: 6, ancho: 13, fondo: 11, rotulo: 'ÁREA DE TROQUELADO · MANTENIMIENTO [FICTICIO]' });
+const EQ = equipo(W, { x: 1.0, z: -1.6, rotulo: 'PRENSA P-02' });
+const TB = tablero(W, { x: -2.8, z: -2.4, ry: 0.35, rotulo: 'TABLERO TB-7' });
+estacion(W, { x: -5.0, z: -7.8 });                      // tablero de pared con candados y etiquetas
+const MESA = mesaDispositivos(W, { x: -1.2, z: 1.6 });  // de aquí se TOMAN las piezas con la mano
+
+// Punto de bloqueo: el aro del dispositivo de aislamiento, donde entra el candado. Se dibuja aparte para que
+// se vea a dónde hay que llevarlo (en el visor es el blanco al que se acerca la mano).
+const PB = TB.punto;
+const aroPB = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.012, 8, 20), W.M(0xFDD835, { metalness: .6, roughness: .35 }));
+aroPB.position.set(PB[0], PB[1], PB[2]); aroPB.rotation.y = 0.35; scene.add(aroPB);
+W.tocable(aroPB, 'punto_bloqueo', 0.45);
+
+// Toma de prueba energizada: sirve para comprobar que el detector funciona, antes y después de medir.
+const FC = new THREE.Group(); FC.position.set(-4.4, 0, -0.6); scene.add(FC);
+caja(0.26, 0.34, 0.16, 0xECEFF1, 0, 1.1, 0, FC); caja(0.1, 0.1, 0.02, 0x263238, 0, 1.12, 0.09, FC);
+const rotF = letrero('TOMA DE PRUEBA (ENERGIZADA)', 0.8, 0.11, '#2E7D32'); rotF.position.set(0, 1.4, 0.1); FC.add(rotF);
+W.tocable(FC, 'fuenteconocida', 0.7);
+const FC_P = [-4.4, 1.12, -0.5];
+
+// Bornes del motor: el punto donde de verdad se mide, porque es donde se va a trabajar.
+const PM = caja(0.22, 0.18, 0.1, 0x37474F, 1.62, 1.25, -1.2);
+const rotP = letrero('BORNES DEL MOTOR', 0.5, 0.1, '#102A43'); rotP.position.set(1.62, 1.45, -1.14); scene.add(rotP);
+W.tocable(PM, 'puntomedida', 0.5);
+const PM_P = [1.62, 1.25, -1.1];
+
+// Operador de la prensa: hay que avisarle antes de parar nada.
+const TR = trabajador(W, { x: 2.8, z: 1.0, ry: -2.3, arnes: false, ropa: 0x455A64 });
+W.tocable(TR.g, 'companero', 1.0);
+const rotT = letrero('Operador de la prensa', 0.7, 0.11, '#0E3A6B'); rotT.position.set(2.8, 2.0, 1.0); scene.add(rotT);
+
+// Recorrido a pie: tocar el piso camina. En el visor se camina con el joystick izquierdo.
+aPie(W, N, { obstaculos: [EQ.g, TB.g, FC, TR.g, MESA.tapa] });
+
+// ------------------------------------------------------------------ piezas que se agarran
+const CAND = candado(W, { x: MESA.x - 0.3, y: MESA.y, z: MESA.z });
+const TARJ = tarjeta(W, { x: MESA.x, y: MESA.y + 0.08, z: MESA.z });
+const DET = detector(W, { x: MESA.x + 0.33, y: MESA.y + 0.09, z: MESA.z });
+
+const manos = Manos.activar(W);
+manos.agarrable(CAND.g, { r: R_AGARRE, pose: POSE_CAND });
+manos.agarrable(TARJ.g, { r: R_AGARRE, pose: POSE_TARJ });
+manos.agarrable(DET.g, { r: R_AGARRE, pose: POSE_DET });
+
+// Llevar una pieza agarrada hasta un punto. En el VISOR se coloca sola al acercarla (es el gesto que se está
+// enseñando); EN PANTALLA no, porque la pieza cuelga de la cámara y se colocaría al caminar sin querer: ahí se
+// coloca tocando el destino. Devuelve la función para W.cuadro.
+const vA = new THREE.Vector3(), vB = new THREE.Vector3();
+function alLlevar(obj, punto, fn) {
+  let hecho = false;
+  const f = () => {
+    if (hecho || !renderer.xr.isPresenting || !manos.enMano(obj)) return;
+    obj.getWorldPosition(vA);
+    if (vA.distanceTo(vB.set(punto[0], punto[1], punto[2])) > R_COLOCAR) return;
+    hecho = true; fn();
+  };
+  W.cuadro.push(f); return f;
+}
+// Deja la pieza quieta en el punto, salga de la mano o de la pantalla.
+const soltarEn = (pieza, punto) => { manos.soltar(pieza.g, scene); pieza.colocar(punto[0], punto[1], punto[2]); };
+
+// Meter la mano a la prensa antes de dejarla bloqueada y verificada es ERROR CRÍTICO, en CUALQUIER paso. Está
+// en un solo lugar a propósito: con una copia por paso, el 1 y el 6 se habían quedado sin ella.
+const trampa = o => { if (o.userData.tipo !== 'intervenir') return false;
+  W.mal('Metiste la mano a la prensa antes de dejarla bloqueada y verificada.', PROC, true); return true; };
+
+// ¿Trae la pieza en la mano? Si no, se lo decimos en vez de dejarlo adivinar.
+const exigeEnMano = (pieza, nombre) => {
+  if (manos.enMano(pieza.g)) return true;
+  W.toast('info', `Primero toma ${nombre} de la mesa.`); return false;
+};
+
+// ------------------------------------------------------------------ pasos
+function pasos() {
+  return [
+    intro(W, `<h2>🔒 LOTO con las manos</h2>
+      <p>Eres personal de mantenimiento. Hay que intervenir la <b>prensa P-02</b>, y antes de meter la mano
+      hay que dejarla sin energía y bloqueada.</p>
+      <p><b>En el visor:</b> camina con el joystick izquierdo, acerca la mano a la pieza y aprieta el
+      <b>gatillo</b> o el botón lateral para tomarla; con manos libres, <b>pellizca</b>. Ya con la pieza en la
+      mano, <b>llévala</b> hasta donde va y se coloca sola.</p>
+      <p><b>En pantalla:</b> toca la pieza para tomarla y luego toca el lugar donde va.</p>
+      <p>⛔ Si metes la mano a la prensa antes de terminar, se registra como <b>error crítico</b>.</p>`, FIC),
+
+    { titulo: '1 · Avisa al personal afectado', texto: 'Antes de parar el equipo, avisa a quien lo opera.',
+      fuente: F.notificar,
+      iniciar() { W.irVista(0); W.resaltar([TR.torso]); },
+      tocar(o) { if (trampa(o)) return;
+        if (o.userData.tipo !== 'companero') return W.toast('info', 'Primero avisa al operador.');
+        W.resaltar([]); W.globo('Entendido, ya lo detengo', TR.g, 2400, 1.9);
+        W.bien('Avisaste al personal afectado antes de intervenir el equipo.', F.notificar); W.siguiente(); } },
+
+    { titulo: '2 · Paro controlado', texto: 'Para la prensa con su propio procedimiento: el botón de paro de la botonera.',
+      fuente: F.paro,
+      iniciar() { W.irVista(2); W.resaltar([EQ.paro]); },
+      tocar(o) { if (trampa(o)) return;
+        if (o.userData.tipo !== 'paro') return W.toast('info', 'Usa el botón de paro de la botonera.');
+        EQ.motor.material.color.set(0x37474F); W.resaltar([]);
+        W.bien('Prensa detenida con su propio procedimiento de paro.', F.paro); W.siguiente(); } },
+
+    { titulo: '3 · Aísla la energía', texto: 'Abre el dispositivo de aislamiento: la palanca del interruptor del TB-7.',
+      fuente: F.aislar,
+      iniciar() { W.irVista(1); W.resaltar([TB.mango]); },
+      async tocar(o) { const t = o.userData.tipo;
+        if (trampa(o)) return;
+        if (t === 'punto_bloqueo') return W.toast('info', 'El candado va sobre el interruptor YA abierto. Primero ábrelo.');
+        if (t !== 'palanca') return W.toast('info', 'Abre la palanca del interruptor.');
+        W.resaltar([]); await TB.abrir();
+        W.bien('Interruptor abierto: la alimentación quedó aislada.', F.aislar); W.siguiente(); } },
+
+    { titulo: '4 · Bloquea con TU candado', fuente: F.bloquear,
+      texto: '<b>Toma tu candado</b> de la mesa y <b>llévalo</b> hasta el aro amarillo del interruptor. En el visor, acércalo con la mano; en pantalla, toca el candado y luego el aro.',
+      iniciar() { W.irVista(3); W.resaltar([CAND.g, aroPB]);
+        this._f = alLlevar(CAND.g, PB, () => this.poner()); },
+      poner() { if (this._listo) return; this._listo = true;
+        soltarEn(CAND, PB); W.resaltar([]);
+        W.bien('Candado personal colocado: el interruptor ya no se puede volver a cerrar. Cada quien conserva su llave.', F.bloquear);
+        W.siguiente(); },
+      tocar(o) { const t = o.userData.tipo;
+        if (trampa(o)) return;
+        if (t === 'tarjeta') return W.toast('info', 'La tarjeta va DESPUÉS del candado.');
+        if (t === 'candado') { manos.tomar(CAND.g); return W.toast('ok', 'Candado en la mano: llévalo al aro amarillo.'); }
+        if (t === 'punto_bloqueo' && exigeEnMano(CAND, 'tu candado')) this.poner(); } },
+
+    { titulo: '5 · Coloca la tarjeta', fuente: F.etiquetar,
+      texto: 'Ahora sí la tarjeta: identifica <b>quién</b> bloqueó y <b>por qué</b>. Tómala y llévala junto al candado.',
+      iniciar() { W.resaltar([TARJ.g]);
+        this._dest = [PB[0] + 0.14, PB[1] - 0.06, PB[2]];
+        this._f = alLlevar(TARJ.g, this._dest, () => this.poner()); },
+      poner() { if (this._listo) return; this._listo = true;
+        soltarEn(TARJ, this._dest); W.resaltar([]);
+        W.bien('Tarjeta colocada junto al candado. Una tarjeta sola no bloquea: acompaña al candado.', F.etiquetar);
+        W.siguiente(); },
+      tocar(o) { const t = o.userData.tipo;
+        if (trampa(o)) return;
+        if (t === 'tarjeta') { manos.tomar(TARJ.g); return W.toast('ok', 'Tarjeta en la mano: llévala junto al candado.'); }
+        if (t === 'punto_bloqueo' && exigeEnMano(TARJ, 'la tarjeta')) this.poner(); } },
+
+    { titulo: '6 · Elige cómo verificar', texto: 'Falta lo más importante: comprobar que de verdad ya no hay tensión.',
+      fuente: F.verificarElectrico,
+      iniciar() { W.resaltar([DET.g]);
+        decidir(W, '🔎 ¿Cómo compruebas la ausencia de tensión?', [
+          { t: 'Con un detector de ausencia de tensión adecuado al nivel de tensión', ok: true, fb: 'Instrumento adecuado al trabajo y al nivel de tensión.', f: F.verificarElectrico },
+          { t: 'Viendo que el piloto del tablero ya está apagado', ok: false, crit: true, fb: 'Un piloto apagado no prueba ausencia de tensión: puede estar fundido o en otro circuito.', f: F.verificarElectrico },
+          { t: 'Tocando el borne con el dorso de la mano', ok: false, crit: true, fb: 'Jamás. Usar el cuerpo como instrumento de medición mata.', f: F.verificarElectrico },
+          { t: 'Con un desarmador de los que tienen foquito', ok: false, fb: 'No es un instrumento adecuado ni confiable para esta verificación.', f: BP },
+        ], () => W.siguiente()); },
+      tocar(o) { trampa(o); } },
+
+    { titulo: '7 · Comprueba el instrumento (antes)', fuente: F.instrumento,
+      texto: '<b>Toma el detector</b> y llévalo a la <b>toma de prueba energizada</b>: tiene que marcar tensión. Si no marca, el detector está averiado y te mentiría.',
+      iniciar() { W.irVista(1); W.resaltar([DET.g, FC]);
+        this._f = alLlevar(DET.g, FC_P, () => this.probar()); },
+      probar() { if (this._listo) return; this._listo = true;
+        DET.encender(true); W.resaltar([]);
+        W.bien('El detector marca tensión: el instrumento sirve.', F.instrumento); W.siguiente(); },
+      tocar(o) { const t = o.userData.tipo;
+        if (trampa(o)) return;
+        if (t === 'puntomedida') return W.mal('Mediste sin comprobar antes el instrumento. Si el detector está averiado, un equipo energizado te va a parecer seguro.', F.instrumento, true);
+        if (t === 'detector') { manos.tomar(DET.g); return W.toast('ok', 'Detector en la mano: llévalo a la toma de prueba.'); }
+        if (t === 'fuenteconocida' && exigeEnMano(DET, 'el detector')) this.probar(); } },
+
+    { titulo: '8 · Verifica en el punto correcto', fuente: F.verificarElectrico,
+      texto: 'Lleva el detector a los <b>bornes del motor</b>, que es donde se va a trabajar. No basta medir en el tablero.',
+      iniciar() { W.irVista(2); W.resaltar([PM]);
+        this._f = alLlevar(DET.g, PM_P, () => this.medir()); },
+      medir() { if (this._listo) return; this._listo = true;
+        DET.encender(false); W.resaltar([]);
+        W.bien('El detector no marca tensión en los bornes del motor.', F.verificarElectrico); W.siguiente(); },
+      tocar(o) { const t = o.userData.tipo;
+        if (trampa(o)) return;
+        if (t === 'detector') { manos.tomar(DET.g); return W.toast('ok', 'Detector en la mano: llévalo a los bornes.'); }
+        if (t === 'puntomedida' && exigeEnMano(DET, 'el detector')) this.medir(); } },
+
+    { titulo: '9 · Comprueba el instrumento (después)', fuente: F.instrumento,
+      texto: 'Vuelve a la toma energizada: si el detector se averió <b>durante</b> la medición, el cero que acabas de leer no vale nada.',
+      iniciar() { W.resaltar([FC]);
+        this._f = alLlevar(DET.g, FC_P, () => this.probar()); },
+      probar() { if (this._listo) return; this._listo = true;
+        DET.encender(true); setTimeout(() => DET.encender(false), 1200); W.resaltar([]);
+        W.bien('El instrumento sigue funcionando: la medición es válida.', F.instrumento);
+        manos.soltar(DET.g); W.siguiente(); },
+      tocar(o) { const t = o.userData.tipo;
+        if (trampa(o)) return;
+        if (t === 'detector') { manos.tomar(DET.g); return W.toast('ok', 'Detector en la mano: vuelve a la toma de prueba.'); }
+        if (t === 'fuenteconocida' && exigeEnMano(DET, 'el detector')) this.probar(); } },
+
+    { titulo: '10 · Intento de arranque', fuente: F.arranque,
+      texto: 'Última confirmación: aprieta el botón de arranque. El equipo no debe responder.',
+      iniciar() { W.irVista(2); W.resaltar([EQ.arranque]); },
+      tocar(o) { if (o.userData.tipo !== 'arranque') return W.toast('info', 'Aprieta el botón de arranque de la botonera.');
+        W.resaltar([]); W.globo('No responde', EQ.g, 2200, 1.9);
+        W.bien('El equipo no arranca: condición de energía cero confirmada.', F.arranque); W.siguiente(); } },
+
+    { titulo: '11 · Libera el equipo', puntos: 40, fuente: F.liberar,   // 4 aciertos x 10: la pregunta, el candado, la tarjeta y devolver al servicio
+      texto: 'Terminó el mantenimiento. <b>Quita TU candado y TU tarjeta</b> (tómalos con la mano y déjalos en la mesa) y devuelve el interruptor al servicio.',
+      iniciar() { W.irVista(3); W.resaltar([CAND.g, TARJ.g]); this._q = 0;
+        decidir(W, '🔑 ¿Quién puede retirar tu candado?', [
+          { t: 'Solo yo, que lo coloqué y conservo la llave', ok: true, fb: 'Correcto: es la razón de ser del candado personal.', f: F.liberar },
+          { t: 'El supervisor, con la llave maestra, si yo ya me fui', ok: false, crit: true, fb: 'Retirar el candado de otra persona puede energizar el equipo con alguien dentro.', f: F.liberar },
+          { t: 'Cualquiera del turno siguiente', ok: false, crit: true, fb: 'Nadie retira un bloqueo ajeno.', f: F.liberar },
+        ], () => { W.toast('info', 'Ahora retira tu candado y tu tarjeta, y cierra el interruptor.'); }); },
+      quitar(pieza, nombre, destino) {
+        if (this['_' + nombre]) return; this['_' + nombre] = true;
+        soltarEn(pieza, destino); this._q++;
+        W.bien(`Retiraste ${nombre === 'cand' ? 'tu candado' : 'tu tarjeta'}.`, F.liberar);
+        if (this._q === 2) { W.resaltar([TB.mango]); W.toast('info', 'Falta devolver el interruptor al servicio.'); } },
+      async tocar(o) { const t = o.userData.tipo;
+        if (t === 'candado') return this.quitar(CAND, 'cand', [MESA.x - 0.3, MESA.y, MESA.z]);
+        if (t === 'tarjeta') return this.quitar(TARJ, 'tarj', [MESA.x, MESA.y + 0.08, MESA.z]);
+        if (t !== 'palanca') return;
+        if (this._q < 2) return W.toast('info', 'Primero retira tu candado y tu tarjeta.');
+        W.resaltar([]); await TB.cerrar();
+        W.bien('Interruptor devuelto al servicio. El equipo vuelve a operar.', F.liberar); W.siguiente(); } },
+
+    { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', sinPuntos: true,
+      iniciar() { W.resaltar([]);
+        W.aviso(`<h2>🔒 Celda terminada</h2>
+          <p>Ejecutaste el procedimiento llevando los dispositivos <b>con la mano</b>: avisar, parar,
+          <b>aislar</b>, <b>bloquear</b>, <b>etiquetar</b>, verificar con el instrumento comprobado antes y
+          después, intento de arranque y <b>liberación</b>.</p>
+          <p>El orden y los puntos de aislamiento los manda el procedimiento de ESTA máquina. En otra máquina
+          serán otros.</p>
+          <p class="ficticio">Fundamento verificado en el DOF (matriz normativa del curso, 22/10/2026). Lo
+          señalado como buena práctica no es obligatorio en México; comprobar el instrumento antes y después se
+          enseña sin numeral porque el de NFPA 70E sigue sin verificar.</p>`, () => W.siguiente(), 'Ver resultado'); } },
+  ];
+}
+
+W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel resalta en azul lo que toca' },
+  { id: 'evaluacion', txt: '📝 <b>Evaluación:</b> sin ayudas en pantalla; tú decides qué hacer' }],
+  sel => { setModo(sel); return pasos(); },
+  `Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Fundamento verificado en el DOF: ${N04} (31/05/1999) y ${N29} (29/12/2011), vigentes. Lo marcado como buena práctica (OSHA 1910.147) NO es obligatorio en México. ` +
+  'Esta celda está hecha para el Meta Quest 3S: ábrela en el navegador del visor y entra con 🥽 VR.');
+
+// VR de la celda: el panel 3D del motor (xr.js) más las manos que agarran (manos.js)
+W.activarXR({ inicio: [0, 2.4], piso: N.piso, entorno: N.entorno });
+
+if (location.search.includes('qa')) window.__qa = { W, TB, EQ, CAND, TARJ, DET, FC, PM, aroPB, manos,
+  tocar: W.tocar, qa: W.qa, PB, FC_P, PM_P };
+</script>
+</body>
+</html>
