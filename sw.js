@@ -2,7 +2,7 @@
 // la señal sea débil (Meta Quest, celular, APK). Solo se registra en https (Cloudflare / GitHub Pages), nunca en la red local.
 // - Páginas, scripts y acceso/control.json: primero internet (máx. 5 s) y, si no hay, la copia guardada → siempre lo más nuevo.
 // - Modelos 3D, texturas, imágenes y three.js local: primero la copia guardada (se actualiza en segundo plano).
-const VERSION = 'campus-2026-11-16d';   // 16/11/2026: edificio de Simulación Inmersiva (celda de extintores con manos) y LOTO mudado a Industria; iconos repuestos, mejoras de graficos y sin la ficha Vendas
+const VERSION = 'campus-2026-11-17a';   // 16/11/2026: edificio de Simulación Inmersiva (celda de extintores con manos) y LOTO mudado a Industria; 17/11/2026: la app instalada ya gira a vertical (orientation any)
 const BASICO = ['./', './index.html', './manifest.webmanifest', './recursos/logo_cers.png', './recursos/icono_192.png',
   './motor/vendor/three/build/three.module.js', './motor/vendor/three/examples/jsm/controls/OrbitControls.js',
   './motor/vendor/three/examples/jsm/loaders/FontLoader.js', './motor/vendor/three/examples/jsm/geometries/TextGeometry.js',

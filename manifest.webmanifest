@@ -9,7 +9,7 @@
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui", "browser"],
-  "orientation": "landscape",
+  "orientation": "any",
   "background_color": "#0E3A6B",
   "theme_color": "#0E3A6B",
   "categories": ["education", "productivity"],

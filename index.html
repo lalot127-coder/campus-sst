@@ -612,8 +612,12 @@ function actualizarEtiquetas() {
   const vr = xr.activo(), fuera = !dentro && !vr;
   AREAS.forEach(a => { const el = etqEd[a.id]; el.style.display = fuera ? 'block' : 'none'; if (fuera) proyectar(ED[a.id].techo.clone().applyMatrix4(ED[a.id].g.matrixWorld), el); });
   Z.ZONAS.forEach(z => { const el = etqZo[z.id], d = yo.position.distanceTo(z.centro); el.style.display = fuera ? 'block' : 'none'; el.style.opacity = d < 60 ? 1 : .85; if (fuera) proyectar(z.puertaMundo.clone().setY(6), el); });
-  const anchoPx = 150; etqPu.forEach(({ el, p }) => { const on = !!dentro && !vr && p.ancla.distanceTo(yo.position) < 14; el.style.display = on ? 'block' : 'none';
-    if (on) { el.style.setProperty('--w', anchoPx + 'px'); el.style.setProperty('--fs', '.95rem'); proyectar(p.ancla, el, anchoPx + 16); } });
+  // (17/11/2026) En vertical la pantalla es la mitad de ancha: con el letrero de 150 px las puertas de un pasillo se
+  // encaraman unas sobre otras. Se achican y se muestran solo las cercanas. En horizontal (y en el celular acostado,
+  // que mide ~800 px) no cambia nada.
+  const angosto = innerWidth < 520, anchoPx = angosto ? 104 : 150;
+  etqPu.forEach(({ el, p }) => { const on = !!dentro && !vr && p.ancla.distanceTo(yo.position) < (angosto ? 9 : 14); el.style.display = on ? 'block' : 'none';
+    if (on) { el.style.setProperty('--w', anchoPx + 'px'); el.style.setProperty('--fs', angosto ? '.72rem' : '.95rem'); proyectar(p.ancla, el, anchoPx + 16); } });
   OTROS.forEach(o => { const on = o.g.visible && !vr; o.el.style.display = on ? 'block' : 'none'; if (on) proyectar(o.g.position.clone().setY(2.25), o.el); });
   const ahora = Date.now(); [YO_NUBE, ...OTROS.values()].forEach(o => { const n = o.nube; if (!n) return;
     if (ahora > o.nubeHasta) { n.parent && n.parent.remove(n); n.material.map.dispose(); o.nube = null; return; }

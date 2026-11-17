@@ -163,6 +163,18 @@
       principal: 'ruido', evalua: { f: 'E', s: 'III', pista: 'La exposición ocurre todos los días durante el turno y la hipoacusia puede dejar una incapacidad permanente parcial. (Ejemplo didáctico.)' },
       control: [{ t: 'Reducir el ruido con medidas técnicas de control y mantener el programa de conservación de la audición con exámenes anuales', ok: true, fb: 'Primero los controles técnicos; el EPP auditivo es complementario.', f: 'NOM-011-STPS-2001, 8.6 y 8.7.1 a)' },
         SOLO_EPP, NO_CUIDADO] },
+    // Curso "NOM-030 Servicios preventivos de SST" · verificado 16/11/2026
+    { id: 'sst_preventivo', titulo: 'Gestión de servicios preventivos (NOM-030-STPS-2009)', modulos: ['industria/nom030_sst'],
+      escena: 'Oficina de SST de una planta de manufactura mediana (120 trabajadores). [FICTICIO]',
+      riesgos: [
+        { id: 'sin_diagnostico', prop: 'carpeta', icono: '📂', nombre: 'Sin diagnóstico de SST elaborado ni actualizado', real: true, tipo: 'Organizativo', fb: 'Sin diagnóstico no es posible identificar ni controlar riesgos; incumple la NOM-030, que lo exige con 4 contenidos mínimos.', f: 'NOM-030-STPS-2009, 4.3 y 6.1' },
+        { id: 'sin_programa', prop: 'cajas', icono: '📋', nombre: 'Sin programa de SST para los 120 trabajadores', real: true, tipo: 'Organizativo', fb: 'Los centros con 100 o más trabajadores deben tener un programa de SST con 5 elementos y actualizarlo al menos una vez por año.', f: 'NOM-030-STPS-2009, 4.4 y 7.1' },
+        { id: 'sin_respuesta', prop: 'extintor', icono: '🚨', nombre: 'Sin mecanismo de respuesta ante riesgo grave e inminente', real: true, tipo: 'Organizativo', fb: 'El responsable debe establecer mecanismos de respuesta inmediata. Sin ellos, una emergencia puede causar daño grave o la muerte.', f: 'NOM-030-STPS-2009, 5.3 y 3.13' },
+        { id: 'responsable_ok', prop: 'persona_epp', icono: '👷', nombre: 'Responsable de SST designado con constancia de capacitación vigente', real: false, fb: 'Es un control correcto. El patrón designó al responsable y lo capacitó, con evidencia (diplomas, constancias).', f: 'NOM-030-STPS-2009, 4.1 y 4.7' },
+      ],
+      principal: 'sin_diagnostico', evalua: { f: 'B', s: 'III', pista: 'El incumplimiento administrativo expone constantemente a los 120 trabajadores a riesgos no identificados.' },
+      control: [{ t: 'Elaborar el diagnóstico de SST con los 4 contenidos mínimos y, con base en él, diseñar el programa de SST con sus 5 elementos', ok: true, fb: 'El diagnóstico es la base del programa; sin diagnóstico no se puede priorizar por riesgo.', f: 'NOM-030-STPS-2009, 5.1, 5.2, 6.1 y 7.1' },
+        SOLO_EPP, NO_CUIDADO] },
   ] },
 
   construccion: { nombre: 'Obra en construcción', icono: '🏗️', color: 0xE07A1F, zonas: [

@@ -969,6 +969,131 @@ window.BANCO_TRIVIA = [
 ]
 },
 {
+"tema": "NOM030 SST 5h",
+"preguntas": [
+{
+"p": "¿Qué son los servicios preventivos de SST?",
+"o": [
+"Seguros médicos contratados por el patrón",
+"Personal capacitado (interno, externo o mixto) que realiza funciones preventivas de SST",
+"Los inspectores de la STPS que visitan el centro de trabajo",
+"Las brigadas de emergencia del centro de trabajo"
+],
+"r": 1,
+"f": "NOM-030-STPS-2009, 3.14 y 3.15",
+"rf": ""
+},
+{
+"p": "¿Cuántas obligaciones del patrón establece la NOM-030-STPS-2009?",
+"o": [
+"5",
+"7",
+"9",
+"11"
+],
+"r": 2,
+"f": "NOM-030-STPS-2009, 4.1–4.9",
+"rf": ""
+},
+{
+"p": "¿Cuál de los siguientes SÍ es parte del diagnóstico de SST?",
+"o": [
+"Libro de registro de vacaciones del personal",
+"Identificación de agentes físicos, químicos y biológicos",
+"Nómina quincenal de trabajadores",
+"Reglamento interior de trabajo"
+],
+"r": 1,
+"f": "NOM-030-STPS-2009, 6.1 b)",
+"rf": ""
+},
+{
+"p": "Un tanque de amoniaco de alta concentración está a punto de romperse por corrosión. ¿Cómo clasifica la NOM-030 este escenario?",
+"o": [
+"Riesgo latente de largo plazo",
+"Peligro circundante",
+"Riesgo grave e inminente",
+"Condición insegura menor"
+],
+"r": 2,
+"f": "NOM-030-STPS-2009, 3.13",
+"rf": ""
+},
+{
+"p": "Una microempresa tiene 45 trabajadores. ¿Qué documento de SST debe elaborar según la NOM-030?",
+"o": [
+"Programa de SST con los 5 elementos del Cap. 7.1",
+"Relación de acciones preventivas y correctivas",
+"Informe trimestral de riesgos al IMSS",
+"No está obligada a ningún documento porque tiene menos de 50 trabajadores"
+],
+"r": 1,
+"f": "NOM-030-STPS-2009, 4.4.1 y 7.2",
+"rf": ""
+},
+{
+"p": "Para acreditar por entrevista que se comunicó el diagnóstico y el programa de SST, ¿qué porcentaje de trabajadores entrevistados debe conocerlos?",
+"o": [
+"50%",
+"75%",
+"80%",
+"90%"
+],
+"r": 3,
+"f": "NOM-030-STPS-2009, 4.5",
+"rf": ""
+},
+{
+"p": "El botiquín de primeros auxilios de una empresa está bajo llave en la oficina del gerente. ¿Cumple con la Guía de Referencia II de la NOM-030?",
+"o": [
+"Sí, porque está en un lugar seguro",
+"Sí, si el gerente siempre está disponible",
+"No, el botiquín debe estar sin candado y ser de fácil acceso",
+"No es obligatorio tener botiquín en centros pequeños"
+],
+"r": 2,
+"f": "NOM-030-STPS-2009, Guía de Referencia II, II.2.3",
+"rf": ""
+},
+{
+"p": "¿Cuál de las siguientes es una acción de promoción a la salud que menciona la Guía II de la NOM-030?",
+"o": [
+"Pago de prima de riesgo al IMSS",
+"Campañas de vacunación, nutrición e higiene",
+"Elaboración del reglamento interior de trabajo",
+"Registro de accidentes ante la STPS"
+],
+"r": 1,
+"f": "NOM-030-STPS-2009, Guía de Referencia II, II.1.1",
+"rf": ""
+},
+{
+"p": "¿Con qué frecuencia mínima debe el responsable de SST entregar un reporte escrito de seguimiento?",
+"o": [
+"Cada trimestre",
+"Cada 6 meses",
+"Al menos una vez al año",
+"Cada 2 años"
+],
+"r": 2,
+"f": "NOM-030-STPS-2009, 5.7",
+"rf": ""
+},
+{
+"p": "¿Qué exención obtiene un centro de trabajo con SAST acreditado (Ley del Seguro Social art. 72)?",
+"o": [
+"Exención del pago de cuotas al IMSS",
+"Exención de la verificación de la NOM-030-STPS-2009",
+"Exención de tener comisión de SST",
+"Exención del programa de vigilancia médica"
+],
+"r": 1,
+"f": "NOM-030-STPS-2009, 9.6",
+"rf": ""
+}
+]
+},
+{
 "tema": "NOM-035 · Directivos y jefes",
 "preguntas": [
 {

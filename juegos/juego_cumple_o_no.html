@@ -43,7 +43,7 @@
     d.onclick = e => { if (e.target === d) d.remove(); };
     const q = s => d.querySelector(s);
     if (q('#envComp')) q('#envComp').onclick = () => navigator.share({ title: document.title, text: t }).catch(() => { });
-    q('#envCop').onclick = () => (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { q('#envCop').textContent = '✅ Copiado'; }).catch(() => prompt('Copia tus resultados:', t));
+    q('#envCop').onclick = () => (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { q('#envCop').textContent = '✅ Copiado'; }).catch(() => { const r = document.createRange(); r.selectNodeContents(q('pre')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); q('#envCop').textContent = '👆 Selecciona y copia el texto de arriba'; });   // (16/11/2026) antes era prompt(): dentro del visor no se ve y deja la pagina trabada (regla 2 de CLAUDE.md). El texto ya esta a la vista en el <pre>, solo hay que seleccionarlo.
     q('#envDesc').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + t], { type: 'text/plain' }));
       a.download = 'resultados_' + (document.title.replace(/[^\wáéíóúñ]+/gi, '_').slice(0, 40)) + '.txt'; a.click(); };
     q('#envCer').onclick = () => d.remove();
