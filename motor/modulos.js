@@ -9,7 +9,6 @@ export const MODULOS = {
       { k: 'primeros-auxilios', c: 'botiquin', n: 'Botiquín', d: 'Material de curación disponible y revisado. La LFT (art. 504, fr. I) obliga al patrón a mantener medicamentos y material de curación.' },
       { k: 'primeros-auxilios', c: 'botiquin_pared', n: 'Botiquín de pared', d: 'Ubicado en lugar visible y señalizado con la señal verde de primeros auxilios (NOM-026-STPS-2008, Apéndice D 2).' },
       { k: 'primeros-auxilios', c: 'dea', n: 'DEA (desfibrilador automático externo)', d: 'Equipo que analiza el ritmo del corazón y, si corresponde, indica descargar. Se usa junto con la RCP de alta calidad (guías AHA 2025).' },
-      { k: 'primeros-auxilios', c: 'vendas', n: 'Vendas', d: 'Para cubrir heridas y sujetar apósitos.' },
       { k: 'props', c: 'camilla', n: 'Camilla rígida (tabla)', d: 'Para inmovilizar y trasladar a una persona lesionada; se usa con correas.' },
       { k: 'props', c: 'collarin', n: 'Collarín cervical', d: 'Elemento de inmovilización del cuello; solo debe colocarlo personal capacitado.' },
       { k: 'props', c: 'cobija', n: 'Cobija térmica', d: 'Manta de emergencia que ayuda a conservar la temperatura del cuerpo.' },
