@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulación inmersiva · Alturas: arnés y anclaje</title>
+<script type="importmap">{"imports":{"three":"../../../motor/vendor/three/build/three.module.js","three/addons/":"../../../motor/vendor/three/examples/jsm/"}}</script>
+<script src="../../../motor/realismo.js"></script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../../motor/manos.js"></script>
+<script src="../../riesgo/comun.js"></script>
+<script src="../../construccion/comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Props } from '../../../motor/props.js';
+
+// =====================================================================================================
+// CELDA INMERSIVA DE ALTURAS — Edificio de Simulación Inmersiva (17/11/2026)
+//
+// Qué la hace distinta de mundos/construccion/alturas_* (que siguen existiendo y NO se tocaron): allá la
+// colocación del arnés y la elección del anclaje se resuelven TOCANDO. Aquí lo que importa se hace AGARRANDO:
+// se toma el mosquetón con la mano y se LLEVA hasta el punto de anclaje. Elegir mal el anclaje no es marcar
+// una opción en una lista: es ir físicamente a engancharse al tubo equivocado.
+// La secuencia detallada de colocación del arnés (5 piezas en orden) sigue viviendo en
+// mundos/construccion/alturas_colocacion: aquí no se repite, esta celda es la del ANCLAJE.
+//
+// FUENTES: NO se inventó ningún numeral. Todas las citas de NOM-009-STPS-2011 que usa esta celda ya estaban
+// verificadas (02_fuentes_verificadas/registro_fuentes.md, consulta 06/10/2026) y en uso en
+// mundos/construccion/alturas_anclaje y alturas_colocacion. La ficha del fabricante es FICTICIA (window.Alturas.FICHA),
+// igual que en el resto del curso: la NOM pide seguir al fabricante, no fija los números.
+//
+// PENDIENTE DE CALIBRAR EN EL VISOR: la pose con la que el mosquetón queda sujeto en la mano. Mismo pendiente
+// que las celdas de extintores y de LOTO; el radio para colocarlo (R_COLOCAR) ya se probó bien con el Quest.
+// =====================================================================================================
+const { N09, FIC, FICHA, COL, exterior, obra, trabajador, lineaVida, mosqueton, marcador } = window.Alturas;
+const { decidir, intro } = window.Riesgo;
+
+const POSE_MOSQ = [0, -0.05, -0.11, -0.4, 0, 0], R_AGARRE = 0.38;
+const R_COLOCAR = 0.40;   // probado con el Quest el 17/11/2026 en la celda de LOTO: a 40 cm se coloca bien
+const INSTR = `Instructivo del fabricante "Arnés AR-4" ${FIC}`;
+
+const W = MotorSim.crearMundo(THREE, OrbitControls, {
+  titulo: 'Trabajos en altura: arnés y anclaje', icono: '🪜', clave: 'sim_alturas',
+  criterio: { pct: 80, sinCriticos: true }, fondo: 0xBFD9EC, xr: false,
+  campus: '../../../index.html?mundo=loto',   // el edificio sigue teniendo el id 'loto' (ver index.html)
+  vistas: [[[0, 1.9, 4.6], [0, 1.3, -0.6]], [[-2.2, 1.7, 1.6], [-2.2, 1.2, 0.2]],
+    [[1.2, 2.6, 2.2], [0.6, 3.1, -1.0]], [[0, 2.2, 1.2], [0, 1.4, -3.4]]] });
+const { scene, camera, renderer, caja, letrero } = W;
+W.controls.maxDistance = 16;
+exterior(W);
+const O = obra(W, { altura: 4, bordeZ: -3.5 });
+const P3 = Props(THREE);
+
+// La persona que practica. En pantalla se ve de cuerpo entero; en el visor tú eres ella.
+const YO = trabajador(W, { x: 0, z: 0.6, arnes: false });
+const rotYo = letrero('TÚ', 0.4, 0.14, '#0E3A6B'); rotYo.position.set(0, 2.1, 0.6); scene.add(rotYo);
+
+// ------------------------------------------------------------------ percha del arnés
+const mesa = caja(1.1, 0.06, 0.6, COL.madera, -2.2, 0.85, 0.6);
+[[-2.65, 0.3], [-1.75, 0.3], [-2.65, 0.9], [-1.75, 0.9]].forEach(([x, z]) => caja(0.07, 0.85, 0.07, COL.madera, x, 0.42, z));
+const mkArnes = marcador(W, { x: -2.2, y: 1.25, z: 0.6, tipo: 'arnes', icono: '🎽', etiqueta: 'Arnés de cuerpo completo', mira: [0, 1.6, 4], escala: 0.7 });
+const rotM = letrero('EQUIPO REVISADO', 0.7, 0.12, '#2E7D32'); rotM.position.set(-2.2, 1.55, 0.6); scene.add(rotM);
+
+// ------------------------------------------------------------------ los tres anclajes candidatos
+// Solo UNO sirve: el punto de anclaje estructural certificado. Los otros dos son los errores reales de obra.
+const ancla = (x, y, z, tipo, icono, etiqueta) => {
+  const mk = marcador(W, { x, y: y + 0.35, z, tipo, icono, etiqueta, mira: [0, 1.6, 4], escala: 0.7 });
+  return { mk, p: [x, y, z], tipo };
+};
+const A_BUENO = P3.anclaje(); A_BUENO.position.set(0.9, 3.95, -1.6); A_BUENO.rotation.x = Math.PI; scene.add(A_BUENO);
+const ANCLAS = {
+  certificado: ancla(0.9, 3.9, -1.6, 'a_certificado', '✅', 'Punto de anclaje estructural (placa certificada)'),
+  tubo: ancla(-1.9, 2.3, -1.9, 'a_tubo', '🧱', 'Tubo del andamio vecino'),
+  varilla: ancla(2.3, 1.35, -2.6, 'a_varilla', '⚠️', 'Varilla de la losa'),
+};
+// algo que se vea donde están los anclajes malos
+const tuboAnd = caja(0.06, 2.4, 0.06, COL.acero, -1.9, 1.2, -1.9);
+for (let i = 0; i < 3; i++) caja(0.025, 1.0, 0.025, COL.acero, 2.2 + i * 0.12, 0.5, -2.6);
+
+// ------------------------------------------------------------------ línea de vida y mosquetón que se agarra
+const LV = lineaVida(W); LV.g.visible = false;
+const MOSQ = mosqueton(W, { x: -2.0, y: 0.92, z: 0.6 });
+W.tocable(MOSQ, 'mosqueton', 0.32);
+const manos = Manos.activar(W);
+manos.agarrable(MOSQ, { r: R_AGARRE, pose: POSE_MOSQ });
+
+const estado = { arnes: false, anclado: false };
+const vMosq = new THREE.Vector3(), vTmp = new THREE.Vector3();
+// La cuerda se redibuja cada cuadro entre el anillo dorsal y el mosquetón, vaya donde vaya la mano.
+W.cuadro.push(() => {
+  if (!estado.arnes) return;
+  LV.g.visible = true; MOSQ.getWorldPosition(vMosq);
+  LV.set(YO.anillo(), vMosq.clone(), 0, estado.anclado ? 0.12 : 0.3);   // .anillo es una función: devuelve la posición en el mundo
+});
+
+// Llevar el mosquetón a un punto. En el VISOR se engancha solo al acercarlo (es el gesto que se enseña); en
+// PANTALLA no, porque cuelga de la cámara: ahí se engancha tocando el anclaje.
+function alLlevar(punto, fn) {
+  let hecho = false;
+  W.cuadro.push(() => {
+    if (hecho || !renderer.xr.isPresenting || !manos.enMano(MOSQ)) return;
+    MOSQ.getWorldPosition(vMosq);
+    if (vMosq.distanceTo(vTmp.set(punto[0], punto[1], punto[2])) > R_COLOCAR) return;
+    hecho = true; fn();
+  });
+}
+// 'evaluacion' quita las ayudas de pantalla: el panel deja de resaltar en azul lo que toca. (La versión de
+// mundos/loto/comun.js hace lo mismo, pero esa carpeta no se carga aquí.)
+const setModo = sel => { if (sel === 'evaluacion') W.resaltar = () => { }; };
+
+const exigeMosq = () => { if (manos.enMano(MOSQ)) return true; W.toast('info', 'Primero toma el mosquetón.'); return false; };
+
+// ------------------------------------------------------------------ pasos
+function pasos() {
+  return [
+    intro(W, `<h2>🪜 Alturas: arnés y anclaje</h2>
+      <p>Vas a trabajar junto al <b>borde de la losa, a 4 m</b>, y no hay pretil.</p>
+      <p><b>En el visor:</b> acerca la mano al mosquetón y aprieta el <b>gatillo</b> o el botón lateral para
+      tomarlo; con manos libres, <b>pellizca</b>. Luego <b>llévalo</b> hasta el punto de anclaje: se engancha solo.</p>
+      <p><b>En pantalla:</b> toca el mosquetón para tomarlo y después toca el anclaje.</p>
+      <p>La secuencia completa para colocarte el arnés pieza por pieza está en la puerta
+      «Colócate y ajusta el arnés» del edificio Obra en construcción. Aquí lo que se practica es el <b>anclaje</b>.</p>`,
+      `Obra, empresa y ficha de fabricante ficticias. La NOM-009 pide seguir al fabricante; los números de la ficha son ${FIC}.`),
+
+    { titulo: '1 · Antes de ponértelo', texto: 'Tomaste un arnés del almacén. Decide.', fuente: `${N09}, 8.4.3 g)`,
+      iniciar() { W.irVista(1); W.resaltar([mkArnes.marco]);
+        decidir(W, '¿Qué haces ANTES de ponerte el arnés?', [
+          { t: 'Lo reviso conforme al fabricante: metal, herrajes, conectores, bandas y etiquetas', ok: true, fb: 'Revisión previa antes de cada uso.', f: `${N09}, 8.4.3 g)` },
+          { t: 'Me lo pongo de una vez: lo revisaron el año pasado', ok: false, fb: 'La revisión es antes de cada uso, además de la revisión anual.', f: `${N09}, 7.3, 7.14 y 8.4.3 g)` },
+          { t: 'Solo veo que sea de mi talla', ok: false, fb: 'La talla importa, pero también los puntos de revisión del fabricante.', f: `${N09}, 8.4.3 g)` },
+        ], () => W.siguiente()); } },
+
+    { titulo: '2 · Ponte el arnés', texto: 'Toca el arnés de la mesa para colocártelo, ajustado conforme al instructivo.',
+      fuente: `${N09}, 8.4.3 a) y 16.2 c) 2); ${INSTR}`,
+      iniciar() { W.resaltar([mkArnes.marco]); },
+      tocar(o) { if (o.userData.tipo !== 'arnes') return W.toast('info', 'Toca el arnés de la mesa.');
+        estado.arnes = true; Object.values(YO.partes).forEach(p => p.visible = true);
+        mkArnes.marco.material.color.set(0x2E7D32); W.resaltar([]);
+        W.bien('Arnés colocado y ajustado. El anillo dorsal queda en la espalda, entre los omóplatos.', `${N09}, 8.4.3 a); ${INSTR}`);
+        W.siguiente(); } },
+
+    { titulo: '3 · Toma el mosquetón', texto: 'La línea de vida con absorbedor ya cuelga de tu anillo dorsal. <b>Toma el mosquetón del otro extremo con la mano.</b>',
+      fuente: `${N09}, 8.4.3 b)`,
+      iniciar() { W.irVista(0); W.resaltar([MOSQ]);
+        this._f = () => { if (this._listo || !manos.enMano(MOSQ)) return; this._listo = true; this.listo(); };
+        W.cuadro.push(this._f); },
+      listo() { W.resaltar([]); W.bien('Mosquetón en la mano. Ahora busca dónde anclarte.', `${N09}, 8.4.3 b)`); W.siguiente(); },
+      tocar(o) { if (o.userData.tipo !== 'mosqueton') return W.toast('info', 'Toma el mosquetón.');
+        manos.tomar(MOSQ); if (!this._listo) { this._listo = true; this.listo(); } } },
+
+    { titulo: '4 · Llévalo al anclaje correcto', puntos: 10, fuente: `${N09}, 8.4.3 c) y e)`,
+      texto: 'Hay tres sitios donde podrías engancharte. <b>Solo uno sirve.</b> Lleva el mosquetón al que resista y esté certificado.',
+      iniciar() { W.irVista(2); W.resaltar(Object.values(ANCLAS).map(a => a.mk.marco));
+        Object.values(ANCLAS).forEach(a => alLlevar(a.p, () => this.enganchar(a.tipo))); },
+      enganchar(tipo) {
+        if (this._listo) return;
+        if (tipo === 'a_tubo') { manos.soltar(MOSQ);
+          return W.mal('El tubo de un andamio vecino no es un punto de anclaje: no está diseñado ni certificado para detener una caída, y el andamio puede moverse.', `${N09}, 8.4.3 c) y e)`, true); }
+        if (tipo === 'a_varilla') { manos.soltar(MOSQ);
+          return W.mal('Una varilla de la losa no resiste una detención de caída y puede desgarrar la línea. No es un punto de anclaje.', `${N09}, 8.4.3 c), e) y f)`, true); }
+        this._listo = true; manos.soltar(MOSQ, scene);
+        MOSQ.position.set(ANCLAS.certificado.p[0], ANCLAS.certificado.p[1], ANCLAS.certificado.p[2]);
+        estado.anclado = true; W.resaltar([]);
+        ANCLAS.certificado.mk.marco.material.color.set(0x2E7D32);
+        W.bien('Enganchado al punto de anclaje estructural certificado, por encima de tu anillo dorsal.', `${N09}, 8.4.3 c) y e)`);
+        W.siguiente(); },
+      tocar(o) { const t = o.userData.tipo;
+        if (t === 'mosqueton') { manos.tomar(MOSQ); return W.toast('ok', 'Mosquetón en la mano: llévalo al anclaje.'); }
+        if (!t || !t.startsWith('a_')) return;
+        if (exigeMosq()) this.enganchar(t); } },
+
+    { titulo: '5 · ¿Alcanzas el suelo si caes?', fuente: `${N09}, 8.4.3 n); ficha ${FIC}`,
+      texto: 'Estás a 4 m sobre el piso. Haz la cuenta con la ficha del equipo antes de asomarte.',
+      iniciar() { W.irVista(3);
+        const nec = FICHA.caidaLibreMax + FICHA.despliegue + FICHA.anilloPies + FICHA.margen;
+        decidir(W, `Ficha ${FIC}: caída libre máx. ${FICHA.caidaLibreMax} m + despliegue del absorbedor ${FICHA.despliegue} m + del anillo a los pies ${FICHA.anilloPies} m + margen ${FICHA.margen} m. Estás a 4 m del piso. ¿Puedes trabajar así?`, [
+          { t: `No: se necesitan ${nec.toFixed(1)} m libres y solo hay 4 m. Hay que subir el anclaje, acortar la línea o usar otro sistema`, ok: true, fb: `Con ${nec.toFixed(1)} m necesarios y 4 m de altura, en una caída llegarías al piso.`, f: `${N09}, 8.4.3 n); ficha ${FIC}` },
+          { t: 'Sí: el arnés y el anclaje están bien puestos', ok: false, crit: true, fb: 'Estar bien anclado no basta: si no hay distancia libre suficiente, el sistema no alcanza a detenerte antes del piso.', f: `${N09}, 8.4.3 n)` },
+          { t: 'Sí, porque el absorbedor frena de inmediato', ok: false, crit: true, fb: 'El absorbedor se despliega: por eso su despliegue entra en la cuenta.', f: `${N09}, 8.4.3 n); ficha ${FIC}` },
+        ], () => W.siguiente()); } },
+
+    { titulo: '6 · Antes de empezar', texto: 'Una última decisión sobre el equipo que ya traes puesto.',
+      fuente: `${N09}, 8.4.3 o) y p)-q)`,
+      iniciar() { decidir(W, 'Durante la jornada, ¿qué NO debes hacer con tu equipo?', [
+        { t: 'Desconectarme un momento para pasar un obstáculo sin tener otra conexión', ok: true, fb: 'Correcto: eso es lo que NO se hace. Si hay que cambiar de punto, se usa una línea de dos colas para no quedar nunca suelto.', f: `${N09}, 8.4.3 o)` },
+        { t: 'Revisar el equipo antes de cada uso', ok: false, fb: 'Eso sí se hace, y es obligatorio.', f: `${N09}, 8.4.3 g)` },
+        { t: 'Retirar del servicio un equipo que ya detuvo una caída', ok: false, fb: 'Eso sí se hace: un equipo que detuvo una caída se retira.', f: `${N09}, 8.4.3 p)-q)` },
+      ], () => W.siguiente()); } },
+
+    { titulo: 'Caso terminado', texto: 'Revisa lo que hiciste.', sinPuntos: true,
+      iniciar() { W.resaltar([]);
+        W.aviso(`<h2>🪜 Celda terminada</h2>
+          <p>Revisaste el equipo, te colocaste el arnés y <b>llevaste el mosquetón con la mano</b> hasta un punto
+          de anclaje estructural certificado, descartando el tubo del andamio y la varilla.</p>
+          <p>Después comprobaste que, aun bien anclado, <b>a 4 m no hay distancia libre suficiente</b> para que el
+          sistema te detenga: eso se calcula ANTES de subir, con la ficha del equipo.</p>
+          <p class="ficticio">Obra, empresa y ficha del fabricante ficticias. La NOM-009-STPS-2011 pide instalar,
+          colocar, ajustar y usar el sistema conforme a las instrucciones del fabricante: los números salen de la
+          ficha real de tu equipo, no de la norma.</p>`, () => W.siguiente(), 'Ver resultado'); } },
+  ];
+}
+
+W.inicio([{ id: 'practica', txt: '🧑‍🏫 <b>Práctica guiada:</b> el panel resalta en azul lo que toca' },
+  { id: 'evaluacion', txt: '📝 <b>Evaluación:</b> sin ayudas en pantalla; tú decides qué hacer' }],
+  sel => { setModo(sel); return pasos(); },
+  `Documento interno de capacitación: no es un DC-3 ni una certificación oficial. Basado en NOM-009-STPS-2011 (DOF 06/05/2011): 7.3, 7.14, 8.4.3 a), b), c), e), f), g), n), o), p)-q) y 16.2 c) 2). Obra, empresa y ficha del fabricante ficticias. ` +
+  'Esta celda está hecha para el Meta Quest 3S: ábrela en el navegador del visor y entra con 🥽 VR.');
+
+W.activarXR({ inicio: [0, 2.2], piso: O.piso, entorno: O.entorno.filter(e => e !== O.piso) });
+
+if (location.search.includes('qa')) window.__qa = { W, YO, MOSQ, ANCLAS, LV, manos, estado, mkArnes,
+  tocar: W.tocar, qa: W.qa };
+</script>
+</body>
+</html>
