@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Simulador · Química segura (NOM-005-STPS-2025)</title>
+<script type="importmap">{"imports":{"three":"../../../motor/vendor/three/build/three.module.js","three/addons/":"../../../motor/vendor/three/examples/jsm/"}}</script>
+<script src="../../../motor/motor.js"></script>
+<script src="../../riesgo/comun.js"></script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Fuentes VERIFICADAS contra el DOF: 02_fuentes_verificadas/documentos_oficiales/NOM-005-STPS-2025_DOF_24-11-2026.pdf
+// y registro_fuentes.md (consulta 24/11/2026). Empresa y escena [FICTICIO – ejercicio didáctico].
+const N = 'NOM-005-STPS-2025';
+const N98 = 'NOM-005-STPS-1998 (DOF 02/02/1999)';
+const W = MotorSim.crearMundo(THREE, OrbitControls, { titulo: 'Química segura · NOM-005-STPS-2025', icono: '🧪',
+  clave: 'industria_quimicos', criterio: { pct: 80, sinCriticos: true }, fondo: 0xE9EEF2,
+  vistas: [[[0, 1.7, 2.4], [0, 1.1, -3]], [[-2.5, 1.7, 0.6], [-5.5, 1.1, -3]], [[2.5, 1.7, 0.6], [5.5, 1.1, -3]]] });
+const { caja, scene, letrero } = W;
+const { sala, prop, persona, situacion, encuentra, tocaYDecide, decide, intro, PALETA } = window.Riesgo;
+
+// ------------------------------------------------ SOLVENTES DEL VALLE [FICTICIO]: almacén de sustancias químicas
+const { piso, entorno, z0 } = sala(W, { ancho: 18, fondo: 13, rotulo: 'SOLVENTES DEL VALLE · ALMACÉN DE SUSTANCIAS QUÍMICAS PELIGROSAS' });
+W.activarXR({ inicio: [0, 0.6], piso, entorno });
+
+// Objetos de la escena. Cada clave es un "tipo" tocable.
+const OBJ = [
+  { t: 'tambos', p: 'tambo', x: -6.2, z: -7.4, y: 1.2, i: '🛢️', e: 'Tambos de solvente' },
+  { t: 'lleno', p: 'tambo', x: -4.6, z: -7.4, y: 1.2, i: '🪣', e: 'Tambo lleno al tope' },
+  { t: 'tanque', p: 'tanque', x: 6.4, z: -7.6, y: 1.9, i: '⛽', e: 'Tanque de almacenamiento' },
+  { t: 'anaquel', p: 'anaquel', x: -1.6, z: -8.2, y: 2.1, i: '🧴', e: 'Anaquel de reactivos' },
+  { t: 'derrame', p: 'charco', x: 1.6, z: -5.2, y: 0.9, i: '💧', e: 'Derrame en el piso' },
+  { t: 'tablero', p: 'tablero', x: 8.2, z: -4.6, y: 1.9, i: '⚡', e: 'Tablero eléctrico' },
+  { t: 'regadera', p: 'regadera', x: -8.2, z: -4.0, y: 2.5, i: '🚿', e: 'Regadera y lavaojos' },
+  { t: 'extintor', p: 'extintor', x: -8.2, z: -1.6, y: 1.0, i: '🧯', e: 'Extintor' },
+  { t: 'cilindro', p: 'cilindro_encadenado', x: 4.2, z: -8.4, y: 1.4, i: '🔗', e: 'Cilindro sujetado' },
+  { t: 'salida', p: 'senal_salida', x: 8.2, z: -8.6, y: 2.4, i: '🟩', e: 'Salida de emergencia' },
+  { t: 'hds', p: 'buzon', x: 2.6, z: -1.8, y: 1.8, i: '📄', e: 'Carpeta de hojas de datos de seguridad' },
+  { t: 'comedor', p: 'mesa', x: -3.0, z: -2.0, y: 1.2, i: '🥤', e: 'Mesa con refresco y comida' },
+];
+const S = {}, OBST = [];
+OBJ.forEach(o => { OBST.push(prop(W, o.p, o.x, o.z, o.ry || 0));
+  S[o.t] = situacion(W, { x: o.x, z: o.z, y: o.y, tipo: o.t, icono: o.i, etiqueta: o.e }); });
+OBST.push(prop(W, 'franja', 0, -3.4), prop(W, 'basurero', 7.4, -1.6), prop(W, 'botiquin', -8.3, -6.6));
+OBST.push(persona(W, { x: 0.8, z: -4.2, ry: Math.PI, ropa: 0xFF9800, casco: 0xFDD835 }).g);
+const rot = letrero('🧑‍🔧 Persona ocupacionalmente expuesta', 2.3, 0.22, PALETA.noche); rot.position.set(0.8, 2.0, -4.2); scene.add(rot);
+setTimeout(() => W.recorrido({ piso, limites: { x0: -9, x1: 9, z0: -11, z1: 2.4 }, obstaculos: OBST,
+  muros: entorno.filter(m => m.geometry && m.geometry.type === 'BoxGeometry' && m.geometry.parameters.height > 1), inicio: [0, 0.9] }), 300);
+
+const R = (t, n, fb, f) => ({ tipo: t, nombre: n, fb, f, obj: S[t] });
+
+// ------------------------------------------------------------------ CASO 1: el almacén
+const MALAS_ALMACEN = [
+  R('regadera', 'Regadera y lavaojos', 'Es una medida de seguridad: el almacén debe contar con equipos para controlar salpicaduras y acumulación de sustancias.', `${N}, 9.1.11`),
+  R('extintor', 'Extintor', 'Es un recurso de atención de emergencias, no una falla.', `${N}, 10.1 i)`),
+  R('cilindro', 'Cilindro sujetado y protegido', 'Está sujetado: así se evita su caída y el daño al contenedor.', `${N}, 9.2.2 c)`),
+  R('salida', 'Señal de salida de emergencia', 'Es parte de la señalización que la Norma pide.', `${N}, 5.7`),
+];
+
+const CASOS = {
+  almacen: () => [
+    intro(W, `<h2>🧪 Recorrido en el almacén</h2><p>Eres responsable de seguridad en <b>Solventes del Valle</b>. El almacén guarda solventes inflamables y reactivos. Vas a recorrerlo con la nueva <b>NOM-005-STPS-2025</b> en la mano y después decidirás qué corregir primero.</p><p>Ojo: hoy la Norma <b>todavía no es exigible</b> — entra en vigor el 24 de noviembre de 2029 — pero las adaptaciones ya se pueden hacer sin sanción.</p>`,
+      'Solventes del Valle · 60 personas trabajadoras · almacén de solventes inflamables y reactivos.'),
+    encuentra(W, { titulo: 'Lo que no cumple', texto: 'Toca las <b>6 condiciones que no cumplen</b> la NOM-005-STPS-2025. Cuidado: hay objetos que sí son medidas de seguridad.',
+      fuente: `${N}, 5.2, 9.1.2, 9.2.2, 9.2.3, 9.2.5 y 9.5.2`, buenas: [
+        R('tambos', 'Tambos de solvente sin contención de derrames', 'Falta tarima, charola, dique, canalización o fosa: la Norma pide al menos una de esas instalaciones de contención.', `${N}, 9.2.5 a)-e)`),
+        R('lleno', 'Tambo llenado al 100 % de su capacidad', 'Los contenedores se llenan a MENOS del cien por ciento de su capacidad nominal.', `${N}, 9.2.2 d)`),
+        R('anaquel', 'Reactivos incompatibles juntos en el mismo anaquel', 'Se almacenan separadas según su compatibilidad, considerando al menos la Tabla I.1 del Apéndice I.', `${N}, 9.2.3 y 9.2.4`),
+        R('derrame', 'Derrame de solvente en el piso, sin atender', 'Hay que contar con instalaciones, dispositivos o equipos para controlar derrames, fugas y salpicaduras.', `${N}, 9.1.9 y 9.1.10`),
+        R('tablero', 'Tablero eléctrico común donde se manejan inflamables', 'En áreas con líquidos o gases inflamables la instalación eléctrica debe ser clasificada (clase I, II o III, divisiones 1 y 2).', `${N}, 9.5.2 g); NOM-001-SEDE-2012`),
+        R('comedor', 'Mesa con alimentos y bebidas dentro del área', 'Se prohíbe fumar e ingerir alimentos o bebidas en las áreas donde se manejan sustancias químicas peligrosas.', `${N}, 9.1.2`),
+      ], malas: MALAS_ALMACEN }),
+    tocaYDecide(W, 'La hoja de datos de seguridad', 'Toca la <b>carpeta de hojas de datos de seguridad</b>.', S.hds.marco, 'hds',
+      '¿Qué exige la Norma sobre las hojas de datos de seguridad (HDS)?', [
+        { t: 'Tenerlas conforme a la NOM-018-STPS-2015 y disponibles para consulta del personal expuesto', ok: true, fb: 'Y además hay que señalizar los contenedores y áreas de almacenamiento.', f: `${N}, 5.2 y 5.6` },
+        { t: 'Basta con tenerlas archivadas en la oficina del gerente, bajo llave', ok: false, fb: 'Deben estar disponibles para quien maneja la sustancia.', f: `${N}, 5.2` },
+        { t: 'Solo se necesitan cuando la autoridad las pide', ok: false, crit: true, fb: 'La HDS se consulta ANTES del uso de la sustancia.', f: `${N}, 9.3 a)` },
+      ], `${N}, 5.2`),
+    decide(W, 'Los diques de contención', 'El tanque mayor del almacén tiene 20 000 litros. Si se decide construir un dique, ¿qué debe cumplir?', [
+      { t: 'Contener al menos 1.25 veces el volumen del tanque más grande y estar señalizado con su capacidad nominal', ok: true, fb: 'Son los incisos a) y b) del numeral 9.2.5.1.', f: `${N}, 9.2.5.1 a) y b)` },
+      { t: 'Contener exactamente el volumen del tanque más grande', ok: false, fb: 'La Norma pide al menos 1.25 veces ese volumen.', f: `${N}, 9.2.5.1 b)` },
+      { t: 'Cualquier capacidad, siempre que tenga una coladera al drenaje municipal', ok: false, crit: true, fb: 'El dique es para contener, no para drenar la sustancia.', f: `${N}, 9.2.5.1` },
+    ], `${N}, 9.2.5.1`),
+    decide(W, 'Antes de trasvasar', 'Una persona va a trasvasar solvente de un tambo a un recipiente de 20 litros. ¿Qué debe existir primero?', [
+      { t: 'Un procedimiento de seguridad por escrito, en español, vigente y con código de identificación, y el equipo de protección personal que indiquen la HDS o el embalaje', ok: true, fb: 'Procedimiento (8.1 y 8.2) más EPP acorde con la HDS (5.10).', f: `${N}, 8.1 a), 8.2 b) y 5.10 a)` },
+      { t: 'Nada más el permiso verbal del supervisor', ok: false, crit: true, fb: 'El trasvase es una de las actividades que el procedimiento debe contemplar por escrito.', f: `${N}, 8.2 c)` },
+      { t: 'Solo guantes, porque el EPP lo elige cada quien', ok: false, fb: 'El patrón proporciona el EPP acorde con la HDS o el embalaje.', f: `${N}, 5.10 a) y b)` },
+    ], `${N}, 8.1 y 8.2`),
+    decide(W, 'Herramienta y electricidad estática', 'En el área de solventes inflamables, ¿qué pide la Norma además de la instalación clasificada?', [
+      { t: 'Herramientas, dispositivos o equipos que no produzcan chispa o flama, y sistemas de puesta a tierra para disipar la electricidad estática', ok: true, fb: 'Son los numerales 9.1.4 y 9.1.8.', f: `${N}, 9.1.4 y 9.1.8` },
+      { t: 'Solo un letrero de "no fumar"', ok: false, fb: 'La prohibición existe (9.1.2), pero no sustituye el control de las fuentes de ignición.', f: `${N}, 9.1.4` },
+    ], `${N}, 9.1.4 y 9.1.8`),
+  ],
+
+  // ------------------------------------------------------------------ CASO 2: qué me exige hoy y qué en 2029
+  vigencia: () => [
+    intro(W, `<h2>📅 ¿Qué me exige hoy y qué en 2029?</h2><p>La dirección de Solventes del Valle te pregunta si ya hay que cambiar todo. Antes de gastar, hay que saber <b>qué está vigente</b>, <b>a quién aplica</b> y <b>qué se puede ir adelantando</b>.</p>`,
+      'Solventes del Valle · 60 personas trabajadoras · reunión con la dirección.'),
+    decide(W, 'Vigencia', 'La NOM-005-STPS-2025 se publicó en el DOF el 24 de noviembre de 2026. ¿Desde cuándo es exigible?', [
+      { t: 'A los tres años de su publicación: el 24 de noviembre de 2029', ok: true, fb: 'Transitorio PRIMERO. Mientras tanto se cumple la de 1998 o se adoptan las adaptaciones sin sanción.', f: `${N}, Transitorios PRIMERO y SEGUNDO` },
+      { t: 'Desde el día siguiente de su publicación', ok: false, crit: true, fb: 'Entra en vigor a los tres años. Decir lo contrario expone a la empresa a gastos innecesarios y a la propia consultoría.', f: `${N}, Transitorio PRIMERO` },
+      { t: 'Nunca: fue cancelada', ok: false, fb: 'Está publicada y entra en vigor en 2029; la que queda sin efectos ese día es la de 1998.', f: `${N}, Transitorio TERCERO` },
+    ], `${N}, Transitorio PRIMERO`),
+    decide(W, 'Mientras llega 2029', 'Durante estos tres años, ¿qué puede hacer el patrón?', [
+      { t: 'Cumplir la NOM-005-STPS-1998 o realizar las adaptaciones para observar la nueva Norma, sin que la autoridad lo sancione por ello', ok: true, fb: 'Y puede solicitar asesoría y asistencia técnica a la autoridad laboral.', f: `${N}, Transitorio SEGUNDO` },
+      { t: 'Dejar de cumplir cualquier norma sobre sustancias químicas', ok: false, crit: true, fb: 'La de 1998 sigue vigente hasta el 23 de noviembre de 2029.', f: `${N}, Transitorio TERCERO; ${N98}` },
+    ], `${N}, Transitorio SEGUNDO`),
+    decide(W, 'Cumplimiento reducido', 'Una bodega solo comercializa producto embalado, no lo trasvasa, y nada excede de 10 kg o 10 L por envase. ¿Qué le aplica?', [
+      { t: 'Cumplimiento reducido: solo algunos numerales de la Norma, siempre que no se trate de sustancias pirofóricas ni explosivas', ok: true, fb: 'Son los dos supuestos del numeral 2.1; la excepción no alcanza a pirofóricas ni explosivas.', f: `${N}, 2.1 a) y b)` },
+      { t: 'Queda fuera por completo de la Norma', ok: false, fb: 'No queda fuera: cumple un conjunto reducido de numerales.', f: `${N}, 2.1` },
+      { t: 'Cumple todo igual que una planta química, sin excepción', ok: false, fb: 'La Norma sí prevé el cumplimiento reducido para esos casos.', f: `${N}, 2.1` },
+    ], `${N}, 2.1`),
+    decide(W, 'Lo que NO entra', '¿Cuál de estos queda FUERA del campo de aplicación de la NOM-005-STPS-2025?', [
+      { t: 'El gas licuado de petróleo y los carros-tanque regulados por la Secretaría de Infraestructura, Comunicaciones y Transportes', ok: true, fb: 'También los residuos peligrosos (SEMARNAT) y los recipientes sujetos a presión de la NOM-020-STPS-2011.', f: `${N}, 2.2 a)-d)` },
+      { t: 'Los solventes inflamables del almacén', ok: false, fb: 'Esos son justamente el centro de la Norma.', f: `${N}, 2` },
+      { t: 'Las sustancias con peligro para la salud', ok: false, fb: 'Tienen medidas específicas en el numeral 9.5.6.', f: `${N}, 9.5.6` },
+    ], `${N}, 2.2`),
+    tocaYDecide(W, 'El documento que cambia', 'Toca el <b>anaquel de reactivos</b>: a partir de él se arma el documento central de la Norma.', S.anaquel.marco, 'anaquel',
+      '¿Cuál es el documento central y cada cuándo se actualiza, como máximo, si nada cambia?', [
+        { t: 'El análisis de riesgos; se actualiza al menos cada cinco años, y antes si cambian cantidades, sustancias, procesos o instalaciones', ok: true, fb: 'El inciso e) del 7.4 fija los cinco años; los incisos a)-d) son los cambios que obligan a actualizarlo antes.', f: `${N}, 7.4 a)-e)` },
+        { t: 'El "estudio para analizar el riesgo potencial" de la norma de 1998, cada dos años', ok: false, fb: 'Ese era el documento de 1998; la nueva Norma lo sustituye por el análisis de riesgos del Capítulo 7.', f: `${N98}, 5.2 vs ${N}, 7` },
+        { t: 'El Programa Específico de Seguridad e Higiene, cada año', ok: false, fb: 'Ese programa de 1998 desaparece: su contenido se reparte en los capítulos 8, 9 y 10.', f: `${N98}, 5.12 vs ${N}, 8, 9 y 10` },
+      ], `${N}, 7.4`),
+    decide(W, 'Capacitación', '¿Con qué periodicidad se capacita y adiestra al personal ocupacionalmente expuesto?', [
+      { t: 'Al menos cada doce meses, y además cuando aumenten las sustancias, cambien los procesos o se modifique el análisis de riesgos', ok: true, fb: 'La de 1998 no fijaba periodicidad ni temario mínimo; la nueva pide ocho temas y un plazo.', f: `${N}, 11.1 y 11.3` },
+      { t: 'Una sola vez, al ingresar', ok: false, fb: 'Se repite al menos cada doce meses.', f: `${N}, 11.3` },
+      { t: 'Cada cinco años, igual que el análisis de riesgos', ok: false, fb: 'Cinco años es el plazo del análisis de riesgos (7.4 e)), no de la capacitación.', f: `${N}, 11.3` },
+    ], `${N}, 11.3`),
+    decide(W, 'Evaluación de la conformidad', 'La dirección pregunta si está obligada a contratar una Unidad de Inspección. ¿Qué respondes?', [
+      { t: 'Es una opción del patrón, no una obligación; si la contrata, el dictamen tiene vigencia de un año', ok: true, fb: 'Y las evidencias y registros se conservan al menos dos años. La norma de 1998 no tenía este capítulo.', f: `${N}, 12.1, 12.4 y 13.6` },
+      { t: 'Es obligatorio contratarla cada año', ok: false, fb: 'El patrón TIENE LA OPCIÓN de contratarla.', f: `${N}, 12.1` },
+      { t: 'No existe esa figura en esta Norma', ok: false, fb: 'Sí existe: capítulos 12 y 13. Es una de las novedades frente a 1998.', f: `${N}, 12 y 13` },
+    ], `${N}, 12.1`),
+  ],
+};
+
+W.inicio([{ id: 'almacen', txt: '🧪 <b>Caso 1:</b> Recorrido en el almacén — lo que no cumple' },
+          { id: 'vigencia', txt: '📅 <b>Caso 2:</b> ¿Qué me exige hoy y qué en 2029?' }],
+  id => CASOS[id](),
+  `Basado en: NOM-005-STPS-2025 (DOF 24/11/2026), numerales 2, 2.1, 2.2, 5.2, 5.6, 5.7, 5.10, 7.4, 8.1, 8.2, 9.1, 9.2, 9.3, 9.5.2, 9.5.6, 11.1, 11.3, 12, 13.6 y Transitorios PRIMERO, SEGUNDO y TERCERO; ${N98}; NOM-018-STPS-2015; NOM-001-SEDE-2012. Entra en vigor el 24/11/2029. Empresa y escena [FICTICIO – ejercicio didáctico]. 🥽 En visor: botón VR.`);
+
+if (location.search.includes('qa')) window.__qa = { S: Object.fromEntries(Object.entries(S).map(([k, v]) => [k, v.marco])), tocar: W.tocar, estado: W.qa };
+</script>
+</body>
+</html>

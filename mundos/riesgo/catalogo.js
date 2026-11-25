@@ -18,6 +18,8 @@
   const N87 = 'NOM-087-SEMARNAT-SSA1-2002', N45 = 'NOM-045-SSA2-2005', LGPC = 'LGPC art. 2';
   // LOTO (22/10/2026): numerales VERIFICADOS contra el DOF (matriz del curso BASE_loto_bloqueo_etiquetado_8h).
   const N04V = 'NOM-004-STPS-1999, 7.2.2 c)';
+  // NOM-005-STPS-2025 (24/11/2026): numerales VERIFICADOS contra el DOF. Entra en vigor el 24/11/2029.
+  const N05 = 'NOM-005-STPS-2025';
   const N29V = 'NOM-029-STPS-2011, 8.1 a)';
   const NO_CUIDADO = { t: 'Pedir que "tengan cuidado" y nada más', ok: false, fb: 'Depende solo de la conducta: es el control menos confiable.', f: NIOSH };
   const SOLO_EPP = { t: 'Solo dar equipo de protección personal', ok: false, fb: 'El EPP es transitorio o complementario, no la primera opción.', f: `${N17}, 5.2` };
@@ -175,6 +177,19 @@
       principal: 'sin_diagnostico', evalua: { f: 'B', s: 'III', pista: 'El incumplimiento administrativo expone constantemente a los 120 trabajadores a riesgos no identificados.' },
       control: [{ t: 'Elaborar el diagnóstico de SST con los 4 contenidos mínimos y, con base en él, diseñar el programa de SST con sus 5 elementos', ok: true, fb: 'El diagnóstico es la base del programa; sin diagnóstico no se puede priorizar por riesgo.', f: 'NOM-030-STPS-2009, 5.1, 5.2, 6.1 y 7.1' },
         SOLO_EPP, NO_CUIDADO] },
+    { id: 'almacen_quimicos', titulo: 'Almacén de sustancias químicas peligrosas (NOM-005-STPS-2025)', modulos: ['industria/quimicos'],
+      escena: 'Almacén de solventes inflamables y reactivos de una planta de 60 trabajadores. [FICTICIO]',
+      riesgos: [
+        { id: 'sin_contencion', prop: 'tambo', icono: '🛢️', nombre: 'Tambos de solvente sin tarima, charola, dique ni canalización de contención', real: true, tipo: 'Incendio / químico-tecnológico', fb: 'Un derrame se extiende por el piso del almacén. La Norma pide al menos una instalación de contención de derrames.', f: `${N05}, 9.2.5 a)-e)` },
+        { id: 'incompatibles', prop: 'anaquel', icono: '🧴', nombre: 'Reactivos incompatibles almacenados juntos en el mismo anaquel', real: true, tipo: 'Químico', fb: 'Se almacenan separadas según su compatibilidad, considerando al menos la Tabla I.1 del Apéndice I.', f: `${N05}, 9.2.3 y 9.2.4` },
+        { id: 'electrico_q', prop: 'tablero', icono: '⚡', nombre: 'Instalación eléctrica común en el área de líquidos inflamables', real: true, tipo: 'Incendio / químico-tecnológico', fb: 'En áreas con líquidos o gases inflamables la instalación debe ser clasificada (clase I, II o III, divisiones 1 y 2).', f: `${N05}, 9.5.2 g); NOM-001-SEDE-2012` },
+        { id: 'alimentos', prop: 'mesa', icono: '🥤', nombre: 'Mesa con alimentos y bebidas dentro del área de manejo', real: true, tipo: 'Químico', fb: 'Se prohíbe fumar e ingerir alimentos o bebidas donde se manejan sustancias químicas peligrosas: hay ingestión por contaminación.', f: `${N05}, 9.1.2` },
+        { id: 'regadera_ok', prop: 'regadera', icono: '🚿', nombre: 'Regadera y lavaojos instalados y señalizados', real: false, fb: 'Es un control correcto: equipos para controlar salpicaduras y el contacto con la piel y los ojos.', f: `${N05}, 9.1.11` },
+        { id: 'hds_ok', prop: 'buzon', icono: '📄', nombre: 'Hojas de datos de seguridad disponibles para consulta del personal', real: false, fb: 'Es un control correcto: la HDS conforme a la NOM-018-STPS-2015 debe estar disponible y consultarse antes del uso.', f: `${N05}, 5.2 y 9.3 a)` },
+      ],
+      principal: 'sin_contencion', evalua: { f: 'D', s: 'III', pista: 'Los derrames pequeños se repiten con periodicidad durante el trasvase, y una quemadura química puede dejar incapacidad permanente parcial.' },
+      control: [{ t: 'Instalar la contención de derrames (tarima, charola, dique o canalización) y aplicar el procedimiento escrito de trasvase', ok: true, fb: 'Control de ingeniería que contiene el derrame en su origen, más el procedimiento que la Norma exige por escrito.', f: `${N05}, 9.2.5 y 8.1 a)` },
+        SOLO_EPP, { t: 'Echar aserrín cuando ya ocurrió el derrame', ok: false, crit: true, fb: 'Actúa después del daño y no evita la liberación de la sustancia.', f: `${N05}, 9.1.9` }] },
   ] },
 
   construccion: { nombre: 'Obra en construcción', icono: '🏗️', color: 0xE07A1F, zonas: [
