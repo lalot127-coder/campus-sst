@@ -2,7 +2,7 @@
 // la señal sea débil (Meta Quest, celular, APK). Solo se registra en https (Cloudflare / GitHub Pages), nunca en la red local.
 // - Páginas, scripts y acceso/control.json: primero internet (máx. 5 s) y, si no hay, la copia guardada → siempre lo más nuevo.
 // - Modelos 3D, texturas, imágenes y three.js local: primero la copia guardada (se actualiza en segundo plano).
-const VERSION = 'campus-2026-11-17g';   // 16/11/2026: edificio de Simulación Inmersiva (celda de extintores con manos) y LOTO mudado a Industria; 17/11/2026: la app instalada ya gira a vertical (orientation any) y celdas inmersivas de LOTO, alturas, las siete celdas del edificio de Simulacion Inmersiva completas y mejoras de graficos en ellas
+const VERSION = 'campus-2026-11-24a';   // 17/11/2026: las siete celdas del edificio de Simulación Inmersiva; 24/11/2026: luz con sombras visibles en todo el campus, los muros dejan de tapar la vista al girar la cámara, los parches salen de dentro del DEA, oficina amueblada en la celda de primeros auxilios y enlaces de YouTube en la biblioteca
 const BASICO = ['./', './index.html', './manifest.webmanifest', './recursos/logo_cers.png', './recursos/icono_192.png',
   './motor/vendor/three/build/three.module.js', './motor/vendor/three/examples/jsm/controls/OrbitControls.js',
   './motor/vendor/three/examples/jsm/loaders/FontLoader.js', './motor/vendor/three/examples/jsm/geometries/TextGeometry.js',

@@ -179,8 +179,49 @@ function crearMundo(THREE, OrbitControls, cfg) {
     // (22/10/2026) En el visor NO se toca la cámara: la maneja el casco. OrbitControls.update() la recolocaba en cada
     // cuadro y peleaba con el movimiento de la cabeza (el campus ya lo hacía así; a los sub-mundos les faltaba).
     if (!renderer.xr.isPresenting) controls.update();
+    murosVista(ahora);
     renderer.render(scene, camera);
   });
+
+  // (24/11/2026) Muros que tapan la vista. Al girar la cámara alrededor de la escena, el muro de atrás llenaba la
+  // pantalla y no se veía nada de lo que hay dentro. Los muros se reconocen solos (caja delgada, larga y alta: la
+  // misma regla con la que realismo.js los texturiza) y se vuelven casi transparentes mientras estorban.
+  // Los mundos que se recorren a pie ya lo hacían con su propia lista (api.recorrido): ahí manda ese y este no toca.
+  const MUROS = [], rayM = new THREE.Raycaster(), vM = new THREE.Vector3(), dM = new THREE.Vector3(), sM = new THREE.Vector3();
+  function buscarMuros() {
+    scene.traverse(m => {
+      if (!m.isMesh || m.userData.muro || m.userData.sinTransparentar || Array.isArray(m.material) || !m.material) return;
+      const p = m.geometry && m.geometry.type === 'BoxGeometry' && m.geometry.parameters; if (!p) return;
+      m.getWorldScale(sM); const an = p.width * sM.x, al = p.height * sM.y, fo = p.depth * sM.z;
+      if (Math.min(an, fo) > 0.35 || Math.max(an, fo) < 2.5 || al < 1.6) return;
+      // realismo.js no les pone sombra a los materiales transparentes: se las ponemos antes de transparentarlos.
+      m.userData.muro = 1; m.userData.op = 1; m.castShadow = true; m.receiveShadow = true; MUROS.push(m);
+    });
+  }
+  [400, 1500, 4000].forEach(ms => setTimeout(buscarMuros, ms));
+  let tMuro = performance.now();
+  function murosVista(ahora) {
+    const dt = Math.min(0.05, (ahora - tMuro) / 1000); tMuro = ahora;
+    if (!MUROS.length || renderer.xr.isPresenting) return;
+    // el recorrido a pie se activa un segundo después de cargar: si para entonces ya habíamos transparentado algún
+    // muro, se lo devolvemos opaco y a partir de ahí manda él (si no, se quedaría translúcido para siempre).
+    if (REC.activo) { if (!MUROS.rec) { MUROS.rec = 1; MUROS.forEach(m => { m.userData.op = 1; m.material.opacity = 1; m.material.depthWrite = true; }); } return; }
+    const tapan = new Set();   // rayos de la cámara a lo que se está mirando y a su alrededor
+    for (const d of [[0, 0, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1], [0, 1, 0]]) {
+      dM.copy(controls.target).add(vM.set(d[0], d[1], d[2])).sub(camera.position);
+      // 0.3 m de menos: el muro que está JUSTO detrás de lo que se mira (un tablero, una señal en la pared) no
+      // cuenta como estorbo; si no, al mirar algo pegado al muro el propio muro se volvía transparente.
+      const L = dM.length() - 0.3; if (L < 0.3) continue;
+      rayM.set(camera.position, dM.normalize()); rayM.far = L;
+      rayM.intersectObjects(MUROS, false).forEach(h => tapan.add(h.object));
+    }
+    MUROS.forEach(m => {
+      if (m.userData.mat !== m.material) { m.userData.mat = m.material; m.material.transparent = true; }   // realismo.js cambia el material al texturizar
+      const meta = tapan.has(m) ? 0.12 : 1;
+      m.userData.op += (meta - m.userData.op) * Math.min(1, dt * 8);
+      m.material.opacity = m.userData.op; m.material.depthWrite = m.userData.op > 0.9;
+    });
+  }
   addEventListener('campus-liberado', () => renderer.setAnimationLoop(null));   // otra pestaña tomó la sesión (motor/acceso.js)
   addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
   function resaltar(lista) { objetivos.forEach(o => { o.material && o.material.emissive && o.material.emissive.setRGB(0, 0, 0); o.scale.setScalar(1); }); objetivos = lista.filter(Boolean); }

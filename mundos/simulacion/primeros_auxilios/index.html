@@ -14,6 +14,7 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Kit3D } from '../../../motor/kit3d.js';
 
 // =====================================================================================================
 // CELDA INMERSIVA DE PRIMEROS AUXILIOS — Edificio de Simulación Inmersiva (17/11/2026)
@@ -22,7 +23,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 // TOCANDO y decidiendo. Aquí las tres cosas que se hacen con el cuerpo se hacen con el cuerpo:
 //   · llevar la MANO al punto correcto del pecho (el error clásico es comprimir sobre la boca del estómago),
 //   · ir por el DEA y traerlo junto a la persona,
-//   · colocar los DOS parches, cada uno en su sitio.
+//   · abrirlo, sacar de dentro los DOS parches y colocarlos, cada uno en su sitio.
 // Lo que es decisión (seguridad de la escena, ritmo y profundidad, qué hacer al indicar descarga) sigue siendo
 // decisión: no todo se gana convirtiéndolo en gesto.
 //
@@ -65,6 +66,17 @@ const esc = caja(1.6, 0.06, 0.8, 0x9C7A5B, 2.4, 0.75, -2.2, entorno);
 caja(0.06, 0.72, 0.7, 0x7A5C40, 1.65, 0.37, -2.2, entorno); caja(0.06, 0.72, 0.7, 0x7A5C40, 3.15, 0.37, -2.2, entorno);
 const rot = letrero('OFICINA · PISO 2 [FICTICIO]', 1.8, 0.3, '#B01824'); rot.position.set(0, 2.4, -4.42); entorno.add(rot);
 
+// Muebles del kit de oficina que YA existe (assets/oficina/oficina.glb, el mismo de mundos/riesgo/analisis):
+// la celda era un cuarto vacío de paredes lisas. Si el kit no está (copias parciales del simulador) la escena
+// sigue funcionando sin ellos. Nada se pone cerca de la persona ni del gabinete del DEA, para no estorbar.
+const kit = new Kit3D(THREE, '../../../');
+const pon = (clave, x, z, ry = 0, y = 0) => kit.poner({ kit: 'oficina', clave, x, z, ry, padre: entorno })
+  .then(g => { if (g) g.position.y = y; return g; }).catch(() => null);
+pon('escritorio', -1.2, -3.6); pon('monitor', -1.2, -3.78, 0, 0.76); pon('teclado', -1.2, -3.48, 0, 0.76);
+pon('silla', -1.2, -2.85, Math.PI); pon('silla', 2.4, -1.45, Math.PI);
+pon('librero_abierto', -5.05, -1.6, Math.PI / 2); pon('planta', 4.6, -3.9); pon('bote', 1.2, -3.9);
+pon('mesa', 4.1, 1.3); pon('caja', -4.9, -4.0);
+
 // teléfono del escritorio: desde ahí se activan las emergencias
 const tel = caja(0.22, 0.08, 0.16, 0x263238, 2.4, 0.82, -2.2, entorno);
 tocable(tel, 'telefono', 0.45);
@@ -99,14 +111,19 @@ const rotG = letrero('DEA', 0.3, 0.14, '#FFFFFF', '#2E7D32'); rotG.position.set(
 
 const DEA = new THREE.Group(); DEA.position.set(-3.4, 1.2, -4.12); scene.add(DEA);
 caja(0.3, 0.22, 0.12, 0xF9A825, 0, 0, 0, DEA); caja(0.12, 0.07, 0.01, 0x212121, 0, 0.04, 0.065, DEA);
+const TAPA = caja(0.3, 0.025, 0.13, 0xF57F17, 0, 0.122, 0, DEA);   // tapa del compartimento: debajo vienen los parches
 tocable(DEA, 'dea', 0.42);
 
-// Dos parches. Cada uno va a UN sitio: no son intercambiables (así lo dibuja el propio parche).
-const parche = (x, y, z, tipo) => { const g = new THREE.Group(); g.position.set(x, y, z); scene.add(g);
+// Los DOS parches vienen DENTRO del DEA (24/11/2026). Antes colgaban de la pared, junto al gabinete: se traía el
+// aparato y había que volver por ellos, que no es de donde salen en la realidad. Ahora son hijos del DEA (viajan
+// con él) y aparecen al abrirlo, en el paso 7. Cada uno va a UN sitio: no son intercambiables (así lo dibuja el
+// propio parche).
+const parche = (x, tipo) => { const g = new THREE.Group(); g.position.set(x, 0.128, 0); g.visible = false; DEA.add(g);
   caja(0.11, 0.015, 0.11, 0xECEFF1, 0, 0, 0, g); caja(0.05, 0.004, 0.05, 0xD32F2F, 0, 0.01, 0, g);
   tocable(g, tipo, 0.26); return g; };
-const PAR_D = parche(-3.6, 1.34, -4.1, 'parche_d');   // bajo la clavícula derecha
-const PAR_I = parche(-3.2, 1.34, -4.1, 'parche_i');   // costado izquierdo, bajo la axila
+const PAR_D = parche(-0.07, 'parche_d');   // bajo la clavícula derecha
+const PAR_I = parche(0.07, 'parche_i');    // costado izquierdo, bajo la axila
+const abrirDEA = () => { TAPA.visible = false; PAR_D.visible = PAR_I.visible = true; };
 // Dónde va cada parche sobre el pecho (coordenadas del mundo: la persona está en el origen)
 const DEST_D = [-0.13, 0.22, 0.2], DEST_I = [0.17, 0.2, -0.16];
 const marcaDest = (p, c) => { const m = new THREE.Mesh(new THREE.RingGeometry(0.06, 0.08, 20), M(c));
@@ -215,9 +232,9 @@ function pasos() {
         if (t === 'dea') { manos.tomar(DEA); return W.toast('ok', 'DEA en la mano: llévalo junto a la persona.'); }
         if (t === 'victima' && manos.enMano(DEA)) this.traer(); } },
 
-    { titulo: '7 · Coloca los dos parches', puntos: 20, fuente: F.dea,
-      texto: 'Cada parche va en <b>su</b> sitio, en el pecho desnudo: uno bajo la clavícula derecha y el otro en el costado izquierdo, bajo la axila. Llévalos a los dos aros azules.',
-      iniciar() { W.resaltar([PAR_D, PAR_I, MK_D, MK_I]);
+    { titulo: '7 · Saca los parches del DEA y colócalos', puntos: 20, fuente: F.dea,
+      texto: 'El DEA ya está abierto: <b>los parches vienen dentro del aparato</b>. Cada uno va en <b>su</b> sitio, en el pecho desnudo: uno bajo la clavícula derecha y el otro en el costado izquierdo, bajo la axila. Llévalos a los dos aros azules.',
+      iniciar() { abrirDEA(); W.resaltar([PAR_D, PAR_I, MK_D, MK_I]);
         alLlevar(PAR_D, DEST_D, () => this.pegar('parche_d'));
         alLlevar(PAR_I, DEST_I, () => this.pegar('parche_i')); },
       pegar(t) {
@@ -246,7 +263,7 @@ function pasos() {
       iniciar() { W.resaltar([]);
         W.aviso(`<h2>⛑️ Celda terminada</h2>
           <p>Comprobaste la escena, reconociste el paro, activaste emergencias, pusiste <b>la mano en la mitad
-          inferior del esternón</b>, trajiste el DEA y colocaste <b>los dos parches</b> en su sitio.</p>
+          inferior del esternón</b>, trajiste el DEA y sacaste de dentro <b>los dos parches</b> para ponerlos en su sitio.</p>
           <p>Lo que más se falla en la realidad es justo lo que aquí hiciste con la mano: comprimir demasiado abajo,
           sobre la boca del estómago, y no dejar que el pecho vuelva a subir entre compresión y compresión.</p>
           <p class="ficticio">${FIC} Guías AHA 2025 e IFRC 2025. No existe una NOM mexicana exclusiva de primeros

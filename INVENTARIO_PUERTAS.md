@@ -128,8 +128,8 @@ Actualización 11/10/2026: las puertas «Análisis de riesgo del edificio» son 
 | Sala de lectura | 3d | ✅ activa | No (2D en el visor) | `mundos/biblioteca/index.html` |
 | Reto: encuentra la norma | 3d | ✅ activa | No (2D en el visor) | `mundos/biblioteca/index.html?reto` |
 | Libro interactivo: LOTO | doc | ✅ activa | — | `../03_cursos/BASE_loto_bloqueo_etiquetado_8h/05_recursos_digitales/libro3d_loto.html` |
-| Videos explicativos | doc | ✅ activa (sin enlaces aún) | — | `mundos/biblioteca/videos.html` |
-| Presentaciones narradas | doc | ✅ activa (sin enlaces aún) | — | `mundos/biblioteca/presentaciones.html` |
+| Videos explicativos | doc | ✅ activa (6 enlaces de YouTube, 24/11/2026) | — | `mundos/biblioteca/videos.html` |
+| Presentaciones narradas | doc | ✅ activa (7 de 8 enlaces, falta el receso) | — | `mundos/biblioteca/presentaciones.html` |
 
 **Las tres puertas de arriba se agregaron el 03/11/2026.** Los videos y las presentaciones **no se
 alojan en el campus**: van a YouTube como «no listado» y estas puertas guardan el enlace. La lista

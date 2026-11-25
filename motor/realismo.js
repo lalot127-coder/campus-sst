@@ -19,9 +19,15 @@
     g.fillStyle = d; g.fillRect(0, 0, 4, 256);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.mapping = THREE.EquirectangularReflectionMapping; return t;
   }
+  // (24/11/2026) El mapa de entorno iluminaba con fuerza 1 por todos lados: las sombras del sol casi no se veían y
+  // todo quedaba plano («gráficos pobres»). Bajarlo a 0.5 deja los reflejos pero devuelve el claroscuro. Se hace
+  // aquí porque esta pasada ya recorre la escena cada 4 s y así alcanza también a lo que nace después.
+  const ENV = 0.5;
   function sombras(scene) {
     scene.traverse(m => { if (!m.isMesh || m.userData.sinSombra) return; const mt = Array.isArray(m.material) ? m.material[0] : m.material;
-      if (!mt || mt.transparent || mt.type === 'MeshBasicMaterial' || mt.type === 'SpriteMaterial') return;
+      if (!mt) return;
+      if (mt.isMeshStandardMaterial && mt.envMapIntensity > ENV) mt.envMapIntensity = ENV;
+      if (mt.transparent || mt.type === 'MeshBasicMaterial' || mt.type === 'SpriteMaterial') return;
       m.castShadow = true; m.receiveShadow = true; });
   }
   // Nitidez (16/11/2026): los letreros, pizarrones y pisos que se dibujan con lienzo (canvas) nacen con anisotropía 1 y
@@ -52,7 +58,8 @@
     if (calidad === 'baja') return;
     // (20/10/2026) en el visor (Meta Quest) sin sombras salvo calidad 'alta' forzada: cada cuadro se dibuja dos veces (un ojo
     // cada vez) y las sombras suaves bajaban los cuadros por segundo → imagen a saltos y congelamientos.
-    if (o.sol && o.sombras !== false && !(o.soloAlta && calidad !== 'alta') && !(visor && calidad !== 'alta')) {
+    const conSombras = !!(o.sol && o.sombras !== false && !(o.soloAlta && calidad !== 'alta') && !(visor && calidad !== 'alta'));
+    if (conSombras) {
       renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       const s = o.sol, t = calidad === 'alta' ? 2048 : 1024, r = o.radio || 9;
       s.castShadow = true; s.shadow.mapSize.set(t, t); Object.assign(s.shadow.camera, { left: -r, right: r, top: r, bottom: -r, near: 0.5, far: r * 6 });
@@ -63,7 +70,11 @@
     try {
       const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
       const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; pm.dispose();
-      if (o.hemi) o.hemi.intensity *= 0.65;   // el entorno ya aporta luz ambiental
+      // Donde hay sombras, el sol tiene que MANDAR: con la luz de cielo y el entorno a tope todo se veía igual de
+      // iluminado por los cuatro costados y las sombras no aparecían. Sin sombras (visor, calidad media) se deja como
+      // estaba: bajar la luz ambiental ahí solo oscurecería la escena.
+      if (o.hemi) o.hemi.intensity *= conSombras ? 0.38 : 0.65;   // el entorno ya aporta luz ambiental
+      if (conSombras) o.sol.intensity *= 1.5;
     } catch (e) { }
     nitidez(THREE, renderer, scene); [1500, 4000].forEach(ms => setTimeout(() => nitidez(THREE, renderer, scene), ms));
   }
