@@ -5,8 +5,9 @@
 //   const manos = Manos.activar(W);
 //   manos.agarrable(extintor, { pose: [0, -0.1, -0.12, -0.5, 0, 0], alAgarrar: () => …, alUsar: si => … });
 //   manos.tomar(extintor);          // lo pone en la mano (o frente a la cámara, en pantalla)
-//   manos.soltar(extintor);         // lo devuelve a donde estaba
+//   manos.soltar(extintor);         // lo devuelve a donde estaba (manos.soltar(pieza, padre) la deja ahí)
 //   manos.enMano(extintor)          // ¿lo trae en la mano?      manos.usando(extintor) → gatillo apretado
+//   manos.fijar(extintor, true);    // deja de poder agarrarse (sigue en la lista); false lo vuelve a soltar
 //
 // Cómo se maneja (NO se inventa un control nuevo: son los del Quest y los de siempre):
 //   · Visor con controles: acercar la mano a la pieza y apretar el GATILLO o el botón lateral = tomarla.
@@ -73,6 +74,11 @@ window.Manos = (function () {
       p.alSoltar && p.alSoltar();
     }
 
+    // (26/11/2026) Fijar una pieza = sigue en la lista pero ya no se puede agarrar. Con dos piezas juntas (los parches
+    // DENTRO del DEA) la mano agarraba la que no era, y como no hay forma de soltar, el paso se quedaba trabado en el
+    // visor. El paso que solo quiere una de las dos fija la otra: manos.fijar(DEA, true).
+    const fijar = (obj, si = true) => { const p = dato(obj); if (p) p.fijo = !!si; };
+
     const usar = (p, si, m) => { if (!p || p.__usando === si) return; p.__usando = si; if (m) m.usando = si; else pantalla.usando = si; p.alUsar && p.alUsar(si); };
 
     // Pieza libre al alcance de este control (para decidir si el gatillo toma algo o es del rayo del panel)
@@ -80,7 +86,7 @@ window.Manos = (function () {
       c.getWorldPosition(vTmp);
       let cerca = null, dmin = Infinity;
       for (const p of piezas) {
-        if (enMano(p.obj) || !p.obj.visible) continue;
+        if (enMano(p.obj) || !p.obj.visible || p.fijo) continue;
         p.obj.getWorldPosition(vTmp2); const d = vTmp.distanceTo(vTmp2);
         if (d <= p.r && d < dmin) { dmin = d; cerca = p; }
       }
@@ -108,7 +114,7 @@ window.Manos = (function () {
     // Tocar la pieza la toma. Para usarla, la celda llama manos.usarPantalla(true/false) desde su botón.
     const usarPantalla = si => { if (pantalla.pieza) usar(pantalla.pieza, si, null); };
 
-    const api = { agarrable, tomar, soltar, enMano, usando, ocupado, usarPantalla, alAlcance,
+    const api = { agarrable, tomar, soltar, enMano, usando, ocupado, usarPantalla, alAlcance, fijar,
       pieza: () => (manos.find(m => m.pieza) || pantalla).pieza, piezas,
       // mano (o cámara) que trae la pieza: de ahí sale el chorro del extintor
       origen: obj => { const m = manoDe(obj); return m ? m.c : (pantalla.pieza && pantalla.pieza.obj === obj ? camera : null); } };

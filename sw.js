@@ -2,7 +2,7 @@
 // la señal sea débil (Meta Quest, celular, APK). Solo se registra en https (Cloudflare / GitHub Pages), nunca en la red local.
 // - Páginas, scripts y acceso/control.json: primero internet (máx. 5 s) y, si no hay, la copia guardada → siempre lo más nuevo.
 // - Modelos 3D, texturas, imágenes y three.js local: primero la copia guardada (se actualiza en segundo plano).
-const VERSION = 'campus-2026-11-24a';   // 17/11/2026: las siete celdas del edificio de Simulación Inmersiva; 24/11/2026: luz con sombras visibles en todo el campus, los muros dejan de tapar la vista al girar la cámara, los parches salen de dentro del DEA, oficina amueblada en la celda de primeros auxilios y enlaces de YouTube en la biblioteca
+const VERSION = 'campus-2026-11-26a';   // 24/11/2026: luz con sombras, muros que no tapan, parches dentro del DEA; 26/11/2026: en la celda de primeros auxilios ya se dan las 30 compresiones y las 2 ventilaciones, y el DEA deja de agarrarse al colocar los parches (se trababa en el Quest)
 const BASICO = ['./', './index.html', './manifest.webmanifest', './recursos/logo_cers.png', './recursos/icono_192.png',
   './motor/vendor/three/build/three.module.js', './motor/vendor/three/examples/jsm/controls/OrbitControls.js',
   './motor/vendor/three/examples/jsm/loaders/FontLoader.js', './motor/vendor/three/examples/jsm/geometries/TextGeometry.js',

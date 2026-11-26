@@ -3397,7 +3397,7 @@ window.BANCO_TRIVIA = [
 ]
 },
 {
-"tema": "Primeros Auxilios Coats Tlaxcala 6h",
+"tema": "Primeros Auxilios Coats Tlaxcala",
 "preguntas": [
 {
 "p": "Llegas a una emergencia. ¿Qué haces primero?",

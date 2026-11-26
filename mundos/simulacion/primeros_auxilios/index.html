@@ -22,6 +22,7 @@ import { Kit3D } from '../../../motor/kit3d.js';
 // Qué la hace distinta de mundos/hospital/rcp_dea (que sigue existiendo y NO se tocó): allá todo se resuelve
 // TOCANDO y decidiendo. Aquí las tres cosas que se hacen con el cuerpo se hacen con el cuerpo:
 //   · llevar la MANO al punto correcto del pecho (el error clásico es comprimir sobre la boca del estómago),
+//   · COMPRIMIR de verdad: 30 compresiones al ritmo correcto y 2 ventilaciones (26/11/2026),
 //   · ir por el DEA y traerlo junto a la persona,
 //   · abrirlo, sacar de dentro los DOS parches y colocarlos, cada uno en su sitio.
 // Lo que es decisión (seguridad de la escena, ritmo y profundidad, qué hacer al indicar descarga) sigue siendo
@@ -40,6 +41,7 @@ const F = {
   act: 'AHA 2025, Parte 7 (activar emergencias y empezar RCP)',
   mano: 'AHA 2025, Parte 7 (talón de la mano, mitad inferior del esternón)',
   cal: 'AHA 2025, Parte 7 (100-120/min, 5-6 cm, reexpansión)',
+  vent: 'AHA 2025, Parte 7 (30:2, 1 s por ventilación)',   // misma cita verificada de mundos/hospital/rcp_dea
   dea: 'AHA 2025, Parte 7 (algoritmo para legos: parches, indicaciones, reanudar RCP 2 min)',
 };
 const FIC = 'Escena, oficina y personas ficticias, para ejercicio didáctico.';
@@ -164,14 +166,96 @@ function manoAlPecho(fn) {
 const setModo = sel => { if (sel === 'evaluacion') W.resaltar = () => { }; };
 const estado = { dea: false, parches: 0 };
 
+// Devuelve a su sitio lo que se traiga en la mano. En el visor NO hay forma de soltar una pieza (el gatillo pasa a
+// usarla), así que agarrar la que no era dejaba el paso trabado: pasó el 26/11/2026 con el DEA y los parches.
+// El botón sale en el panel, que en el visor se ve en 3D, así que vale igual con mandos y con manos libres.
+function soltarEnSuSitio() {
+  const p = manos.pieza(); if (!p) return W.toast('info', 'No traes nada en la mano.');
+  if (p.obj === DEA) { manos.soltar(DEA, scene); DEA.position.set(...(estado.dea ? [0.45, 0.12, 0] : [-3.4, 1.2, -4.12])); DEA.rotation.set(0, 0, 0); }
+  else { manos.soltar(p.obj, DEA); p.obj.position.set(p.obj === PAR_D ? -0.07 : 0.07, 0.128, 0); p.obj.rotation.set(0, 0, 0); }
+  W.toast('ok', 'Lo dejaste en su sitio. Vuelve a intentarlo.');
+}
+const BOTON_SOLTAR = ['✋ Soltar lo que traigo', () => soltarEnSuSitio(), 'sec'];
+
+// ------------------------------------------------------------------ RCP de verdad (26/11/2026)
+// El paso de antes solo DECIDE cómo se comprime; aquí se COMPRIME: 30 compresiones al ritmo de 100 a 120 por minuto
+// y 2 ventilaciones de 1 segundo. El criterio y las citas son los que ya estaban verificados en el mundo de preguntas
+// (mundos/hospital/rcp_dea, 14/10/2026): AHA 2025, Parte 7 → 30:2, 5-6 cm, reexpansión y 1 s por ventilación.
+// En el VISOR se hace con el cuerpo: la mano baja y sube sobre el pecho, y la mano a la cabeza ventila. Los dos
+// botones del panel siguen ahí (es lo que se usa en pantalla y lo que salva si el gesto no se detecta).
+const PECHO = [0, 0.2, 0.02], CAB = [0, 0.13, 0.42], N_COMP = 30, N_VENT = 2;
+function pasoRCP() {
+  const base = 'Comprime <b>30 veces</b> en el punto del pecho, de <b>100 a 120 por minuto</b>, dejando que el pecho vuelva a subir. ' +
+    'Después, abre la vía aérea y da <b>2 ventilaciones</b> de 1 segundo.<br>' +
+    '<small>En el visor: baja y sube la mano sobre el pecho; para ventilar, acerca la mano a la cabeza. En pantalla, con los botones.</small>';
+  let t = [], v = 0, fRit = 0, fin = false, ocupado = false;
+  const abajo = [false, false], enCab = [false, false];
+  const marcador = () => {
+    const u = t.slice(-6).map((x, i, a) => (i ? x - a[i - 1] : 0)).slice(1);
+    const f = u.length ? Math.round(60000 / (u.reduce((a, b) => a + b, 0) / u.length)) : 0;
+    W.$('pTxt').innerHTML = base +
+      `<div style="display:flex;gap:10px;align-items:center;margin-top:6px"><b style="font-size:1.6rem;color:#0E3A6B">${t.length}/${N_COMP}</b>` +
+      `<span>compresiones${f ? ` · ritmo <b style="color:${f >= 100 && f <= 120 ? '#2E7D32' : '#C62828'}">${f}/min</b>` : ''}</span></div>` +
+      `<div>Ventilaciones: <b>${v}/${N_VENT}</b></div>`;
+  };
+  const comprimir = () => {
+    if (fin || ocupado || t.length >= N_COMP) return;
+    t.push(performance.now()); W.efecto('compresion');
+    torso.scale.y = 0.78; setTimeout(() => { torso.scale.y = 1; }, 150);
+    if (t.length === N_COMP) {
+      const u = t.slice(1).map((x, i) => x - t[i]), f = Math.round(60000 / (u.reduce((a, b) => a + b, 0) / u.length));
+      if (f < 95 || f > 125) {
+        W.mal(`Tu ritmo promedio fue de ${f} por minuto y debe ser de 100 a 120: ${f < 100 ? 'más rápido' : 'más lento'}. Repite las ${N_COMP} compresiones.`, F.cal);
+        t = []; marcador(); return;
+      }
+      fRit = f; cabeza.rotation.x = -0.35;   // vía aérea abierta: cabeza atrás, mentón arriba
+      W.toast('ok', `${N_COMP} compresiones a ${f} por minuto. Ahora ${N_VENT} ventilaciones de 1 segundo.`, F.vent);
+      W.resaltar([cabeza]); W.botones([['🌬️ Ventilar (1 segundo)', ventilar]]);
+    }
+    marcador();
+  };
+  async function ventilar() {
+    if (fin || ocupado || t.length < N_COMP || v >= N_VENT) return;
+    ocupado = true;
+    await W.animar(1000, k => { const s = Math.sin(k * Math.PI); torso.scale.y = 1 + 0.22 * s; torso.scale.x = 1 + 0.08 * s; });
+    torso.scale.set(1, 1, 1); v++; ocupado = false; marcador();
+    if (v < N_VENT) return;
+    fin = true; cabeza.rotation.x = 0; W.resaltar([]); W.botones([]);
+    W.bien(`Ciclo 30:2 completo: ${N_COMP} compresiones a ${fRit} por minuto y ${N_VENT} ventilaciones de 1 segundo.`, F.vent);
+    W.siguiente();
+  }
+  return { titulo: '6 · Da RCP: 30 compresiones y 2 ventilaciones', puntos: 10, fuente: `${F.cal}; ${F.vent}`, texto: base,
+    iniciar() {
+      t = []; v = 0; fin = false; cabeza.rotation.x = 0; W.irVista(3); W.resaltar([P_BIEN]);
+      marcador(); W.botones([['💓 Comprimir', comprimir]]);
+      W.cuadro.push(() => {
+        if (fin || !renderer.xr.isPresenting) return;
+        for (const i of [0, 1]) {
+          const c = renderer.xr.getController(i); if (!c) continue;
+          c.getWorldPosition(vO);
+          if (t.length < N_COMP) {   // compresiones: la mano cruza hacia abajo sobre el pecho
+            if (Math.hypot(vO.x - PECHO[0], vO.z - PECHO[2]) > 0.3) { abajo[i] = false; continue; }
+            if (!abajo[i] && vO.y < PECHO[1] - 0.035) { abajo[i] = true; comprimir(); }
+            else if (abajo[i] && vO.y > PECHO[1] + 0.07) abajo[i] = false;
+          } else {                   // ventilaciones: la mano llega a la cabeza
+            const cerca = vO.distanceTo(vD.set(CAB[0], CAB[1], CAB[2])) < 0.26;
+            if (cerca && !enCab[i]) { enCab[i] = true; ventilar(); } else if (!cerca) enCab[i] = false;
+          }
+        }
+      });
+    },
+    tocar(o) { const tp = o.userData.tipo; if (tp === 'victima' || (tp || '').startsWith('p_')) comprimir(); } };
+}
+
 // ------------------------------------------------------------------ pasos
 function pasos() {
   return [
     intro(W, `<h2>⛑️ Atiendo a la persona</h2>
       <p>Una persona se desploma en la oficina. Tú eres quien está más cerca.</p>
       <p><b>En el visor:</b> acerca la mano a lo que quieras tomar y aprieta el <b>gatillo</b> o el botón lateral;
-      con manos libres, <b>pellizca</b>. Para comprimir, lleva la <b>mano abierta</b> al punto del pecho.</p>
-      <p><b>En pantalla:</b> toca para tomar y vuelve a tocar donde va.</p>
+      con manos libres, <b>pellizca</b>. Para comprimir, <b>baja y sube la mano</b> sobre el punto del pecho; para
+      ventilar, acércala a la cabeza. Si tomas lo que no era, usa <b>✋ Soltar lo que traigo</b> en el panel.</p>
+      <p><b>En pantalla:</b> toca para tomar y vuelve a tocar donde va; para la RCP, usa los botones del panel.</p>
       <p>No existe una NOM mexicana exclusiva de primeros auxilios: esto se enseña con las guías
       <b>AHA 2025</b> e <b>IFRC 2025</b>, que son las que cita cada paso.</p>`, FIC),
 
@@ -219,9 +303,11 @@ function pasos() {
           { t: 'Unas 60 por minuto, suave para no lastimar', ok: false, crit: true, fb: 'Demasiado lento y superficial no hace circular la sangre. El daño por no comprimir es mayor que el de una costilla rota.', f: F.cal },
         ], () => W.siguiente()); } },
 
-    { titulo: '6 · Trae el DEA', texto: 'Ya llegó el DEA al gabinete de la pared. <b>Tómalo y tráelo junto a la persona.</b>',
+    pasoRCP(),
+
+    { titulo: '7 · Trae el DEA', texto: 'Ya llegó el DEA al gabinete de la pared. <b>Tómalo y tráelo junto a la persona.</b>',
       fuente: F.dea,
-      iniciar() { W.irVista(2); W.resaltar([DEA]);
+      iniciar() { W.irVista(2); W.resaltar([DEA]); W.botones([BOTON_SOLTAR]);
         alLlevar(DEA, [0.45, 0.15, 0], () => this.traer()); },
       traer() { if (this._listo) return; this._listo = true;
         manos.soltar(DEA, scene); DEA.position.set(0.45, 0.12, 0); estado.dea = true; W.resaltar([]);
@@ -232,9 +318,11 @@ function pasos() {
         if (t === 'dea') { manos.tomar(DEA); return W.toast('ok', 'DEA en la mano: llévalo junto a la persona.'); }
         if (t === 'victima' && manos.enMano(DEA)) this.traer(); } },
 
-    { titulo: '7 · Saca los parches del DEA y colócalos', puntos: 20, fuente: F.dea,
+    { titulo: '8 · Saca los parches del DEA y colócalos', puntos: 20, fuente: F.dea,
       texto: 'El DEA ya está abierto: <b>los parches vienen dentro del aparato</b>. Cada uno va en <b>su</b> sitio, en el pecho desnudo: uno bajo la clavícula derecha y el otro en el costado izquierdo, bajo la axila. Llévalos a los dos aros azules.',
-      iniciar() { abrirDEA(); W.resaltar([PAR_D, PAR_I, MK_D, MK_I]);
+      // El DEA deja de poder agarrarse: está a diez centímetros de los parches y en el visor la mano tomaba el
+      // aparato en vez del parche, sin forma de soltarlo (26/11/2026, probado con el Quest).
+      iniciar() { abrirDEA(); manos.fijar(DEA, true); W.botones([BOTON_SOLTAR]); W.resaltar([PAR_D, PAR_I, MK_D, MK_I]);
         alLlevar(PAR_D, DEST_D, () => this.pegar('parche_d'));
         alLlevar(PAR_I, DEST_I, () => this.pegar('parche_i')); },
       pegar(t) {
@@ -251,7 +339,7 @@ function pasos() {
         if (manos.enMano(PAR_D)) this.pegar('parche_d'); else if (manos.enMano(PAR_I)) this.pegar('parche_i');
         else W.toast('info', 'Toma un parche primero.'); } },
 
-    { titulo: '8 · El DEA dice: descarga indicada', texto: 'El aparato ya analizó. Última decisión.', fuente: F.dea,
+    { titulo: '9 · El DEA dice: descarga indicada', texto: 'El aparato ya analizó. Última decisión.', fuente: F.dea,
       iniciar() { W.irVista(0);
         decidir(W, 'El DEA indica descarga. ¿Qué haces?', [
           { t: 'Aviso en voz alta, compruebo que nadie toque a la persona, aprieto el botón y reanudo las compresiones enseguida', ok: true, fb: 'Y se sigue dos minutos antes de que el DEA vuelva a analizar.', f: F.dea },
@@ -263,7 +351,10 @@ function pasos() {
       iniciar() { W.resaltar([]);
         W.aviso(`<h2>⛑️ Celda terminada</h2>
           <p>Comprobaste la escena, reconociste el paro, activaste emergencias, pusiste <b>la mano en la mitad
-          inferior del esternón</b>, trajiste el DEA y sacaste de dentro <b>los dos parches</b> para ponerlos en su sitio.</p>
+          inferior del esternón</b>, diste un ciclo completo de <b>30 compresiones y 2 ventilaciones</b>, trajiste el DEA
+          y sacaste de dentro <b>los dos parches</b> para ponerlos en su sitio.</p>
+          <p>Después de la descarga se <b>reanudan las compresiones enseguida</b> y se sigue en ciclos de 30:2 durante
+          dos minutos, hasta que el DEA vuelva a analizar o llegue la ambulancia.</p>
           <p>Lo que más se falla en la realidad es justo lo que aquí hiciste con la mano: comprimir demasiado abajo,
           sobre la boca del estómago, y no dejar que el pecho vuelva a subir entre compresión y compresión.</p>
           <p class="ficticio">${FIC} Guías AHA 2025 e IFRC 2025. No existe una NOM mexicana exclusiva de primeros
